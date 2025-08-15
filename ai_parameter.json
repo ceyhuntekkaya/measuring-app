@@ -1,0 +1,351 @@
+/*Ollama'yı sunucuna kurduysan ve lokalde Postman üzerinden test etmek istiyorsan, Ollama'nın `/api/generate` endpoint'ine detaylı bir POST isteği göndereceksin.
+
+İşte **en detaylı ve açıklamalı örnek `POST /api/generate` body** (Ollama'nın `llama3`, `mistral`, `phi3` gibi modelleriyle uyumlu):
+
+```json
+*/
+{
+  "model": "llama3",
+  "prompt": "Bir yapay zeka eğitim platformu nasıl tasarlanmalı? Öğrenci etkileşimini artırmak için hangi yöntemler kullanılmalı?",
+  "system": "Sen bir eğitim uzmanısın. Cevaplarını sade, yapıcı ve örneklerle destekleyerek ver.",
+  "stream": false,
+  "options": {
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "top_k": 40,
+    "num_predict": 512,
+    "repeat_penalty": 1.1,
+    "presence_penalty": 0.2,
+    "frequency_penalty": 0.1,
+    "stop": [
+      "User:",
+      "Assistant:"
+    ]
+  }
+}
+/*
+```
+
+---
+
+### Açıklamalar:
+
+* `"model"`: Sunucunda yüklü modelin adı (örneğin `llama3`, `mistral`, `phi3`, vs.). `ollama list` komutuyla yüklü modelleri görebilirsin.
+* `"prompt"`: Kullanıcının sorusu/girdisi.
+* `"system"`: Rol tanımı. Modelin nasıl yanıt vereceğini yönlendirir (OpenAI'deki system prompt gibi).
+* `"stream"`: `true` yaparsan yanıtı parça parça (streaming) alırsın. `Postman` ile testte genelde `false` kullanılır.
+* `"options"`:
+
+* `temperature`: Yanıtların çeşitliliğini artırır. (0.0–1.0)
+* `top_p`: Nükleus örnekleme. (0–1)
+* `top_k`: En iyi k olasılık içinden seçim.
+* `num_predict`: Maksimum üretilecek token sayısı.
+* `repeat_penalty`, `presence_penalty`, `frequency_penalty`: Tekrar eden kelimeleri veya içerikleri azaltmak için kullanılır.
+* `stop`: Modelin çıktısını durduracağı özel ifadeler (örneğin diyalog stili için `User:` vs.)
+
+---
+
+### Postman Ayarları
+
+* **URL**: `http://<sunucu-ip-adresi>:11434/api/generate`
+(Varsayılan Ollama API portu 11434'tür. Açık olduğundan emin ol.)
+
+* **Method**: `POST`
+
+* **Headers**:
+
+* `Content-Type: application/json`
+
+---
+
+İstersen çok daha spesifik use-case'lere göre body'yi yeniden şekillendirebiliriz (örneğin: kod yazdırma, özet çıkarma, soru yanıtlama vs.). Bunun için sadece ne yapmak istediğini söylemen yeterli.
+
+Hazır bir `curl` örneği istersen onu da gönderebilirim.
+
+
+Elbette Ceyhun. Ollama'nın `/api/generate` endpoint'ine gönderilen istek gövdesindeki tüm parametreleri **detaylı ve sade bir şekilde** açıklıyorum:
+
+---
+
+## 🔧 Temel Parametreler
+
+### 🔹 `model` (string)
+
+**Zorunlu.**
+Kullanmak istediğin modelin adı.
+Örnek: `"llama3"`, `"mistral"`, `"phi3"`, `"codellama"`
+→ Modeli yüklemek için: `ollama run llama3` veya `ollama pull llama3`
+
+---
+
+### 🔹 `prompt` (string)
+
+**Zorunlu.**
+Kullanıcının modelden istediği şey.
+→ Bu modelin cevap vermesi gereken asıl metin.
+Örnek: `"Yapay zeka ile kişiselleştirilmiş eğitim nasıl tasarlanır?"`
+
+---
+
+### 🔹 `system` (string)
+
+**İsteğe bağlı.**
+Modelin rolünü veya davranışını tanımlar.
+→ "Sen bir uzman mısın? Asistan mısın? Cevapları nasıl vermelisin?" gibi yönlendirmeleri içerir.
+Örnek: `"Sen bir eğitim danışmanısın. Cevaplarını sade, önerilerle ve örneklerle ver."`
+
+---
+
+### 🔹 `template` (string)
+
+**İsteğe bağlı.**
+Kullanıcıdan ve sistemden gelen metinleri özel bir yapıda birleştirmek için kullanılır.
+→ Eğer modelin belirli bir giriş formatı varsa (örneğin chat tarzında), bunu özelleştirmek için kullanılır.
+Genelde kullanılmaz çünkü Ollama varsayılan şablonları iyi işler.
+
+---
+
+### 🔹 `stream` (boolean)
+
+**Varsayılan: true**
+Yanıtın **parça parça (stream)** mı yoksa **tek seferde** mi gelmesini istediğini belirler.
+
+* `true`: Yanıt parçalar halinde akar (real-time deneyim için iyidir).
+* `false`: Tüm yanıt bittikten sonra gelir (Postman ile test için daha uygundur).
+
+---
+
+## 🧠 Gelişmiş `options` Parametreleri
+
+Bu bölüm `"options"` alanında bir nesne olarak tanımlanır.
+
+### 🔹 `temperature` (float)
+
+**Varsayılan: 0.8**
+Modelin **yaratıcılık derecesi**.
+
+* 0.0 → Deterministik, daha kesin cevaplar
+* 1.0 → Daha rastlantısal, yaratıcı ama dengesiz
+
+---
+
+### 🔹 `top_p` (float)
+
+**Varsayılan: 0.9 – 1.0**
+**Nucleus sampling**. Modelin, yüksek olasılıklı kelimeler arasından seçim yapma sınırını belirler.
+
+* 1.0 → Tüm olasılıkları dikkate alır
+* 0.9 → En yüksek olasılıklı %90 içinde seçim yapar
+  (Bazen `temperature` yerine tercih edilir.)
+
+---
+
+### 🔹 `top_k` (integer)
+
+**Varsayılan: 40 – 100**
+Model, yanıt verirken en yüksek puanlı `k` kelime arasından rastgele seçer.
+
+* `top_k = 1` → En olası kelime seçilir
+* `top_k = 50` → En iyi 50 içinden biri seçilir
+
+---
+
+### 🔹 `num_predict` (integer)
+
+**Varsayılan: 128 – 512**
+Modelin oluşturabileceği maksimum token (kelime/kısım) sayısıdır.
+→ Yanıtın uzunluğunu kontrol eder.
+
+---
+
+### 🔹 `repeat_penalty` (float)
+
+**Varsayılan: 1.0 – 1.2**
+Modelin **aynı kelimeyi tekrar etme olasılığını azaltır**.
+
+* 1.0 → Etkisiz
+* > 1.0 → Tekrarı cezalandırır
+  > (Özellikle uzun ve tekrar eden metinlerde işe yarar.)
+
+---
+
+### 🔹 `presence_penalty` (float)
+
+**OpenAI tarzı bir parametre**
+Yeni kelimeler kullanma eğilimini artırır.
+
+* Yüksekse, model daha önce kullanılmamış kelimeleri tercih eder.
+
+---
+
+### 🔹 `frequency_penalty` (float)
+
+**OpenAI tarzı bir parametre**
+Modelin aynı kelimeyi **sık kullanmasını** azaltır.
+→ `repeat_penalty`'ye benzer ama kelimenin ne kadar tekrarlandığına göre çalışır.
+
+---
+
+### 🔹 `stop` (string listesi)
+
+Modelin **yanıtı durduracağı özel kelimeleri** tanımlar.
+→ Özellikle diyalog formatlarında kullanılır.
+
+Örnek:
+
+```json
+"stop": ["User:", "Assistant:"]
+```
+
+Model bu kelimeleri gördüğünde yanıtı keser.
+
+---
+
+## 🧪 Ekstra Parametreler (belge dışı/ileri kullanım)
+
+* `raw`: Tokenize edilmiş veriyi gösterir (debug amaçlı)
+* `context`: Daha önceki konuşmaların ID’si veya belleği
+* `images`: Görsel tabanlı modellerde base64 görsel verisi (örneğin `llava` için)
+
+---
+
+## 🔚 Özetle:
+
+```json
+{
+  "model": "llama3",
+  "prompt": "Yapay zeka ile eğitimi nasıl kişiselleştirebiliriz?",
+  "system": "Sen bir eğitim uzmanısın. Cevapların öğretici, sade ve örnekli olsun.",
+  "stream": false,
+  "options": {
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "top_k": 40,
+    "num_predict": 512,
+    "repeat_penalty": 1.1,
+    "presence_penalty": 0.3,
+    "frequency_penalty": 0.1,
+    "stop": ["User:", "Assistant:"]
+  }
+}
+```
+
+---
+
+İstersen kendi kullanımına özel `preset` JSON’ları oluşturabiliriz.
+Ayrıca `curl`, Python, JavaScript gibi dillerden nasıl istek atılır, onu da gösterebilirim.
+
+İstersen bir örnek de birlikte test edebiliriz. Hazır mısın?
+
+
+
+Harika ve çok yerinde bir soru Ceyhun!
+
+Ollama’daki `context` parametresi biraz kafa karıştırıcı olabilir çünkü:
+
+### 🔹 `context` → Aslında *token belleği*'dir
+
+Ve bu parametreyi **OpenAI'deki "chat history" gibi doğrudan metin olarak değil**, Ollama'nın **önceden oluşturduğu bir *token listesi*** olarak kullanırsın.
+
+---
+
+## 💡 Kısaca:
+
+* `context` = Önceki sohbetlerin "token" ID’lerini tutan bir yapı.
+* Direkt insan okunabilir metin değil.
+* Ollama'nın verdiği yanıttan `context`'i alırsın, bir sonraki istekte tekrar gönderirsin.
+
+---
+
+## 🔁 Nasıl çalışır?
+
+1. İlk isteği gönderirsin:
+
+   ```json
+   {
+     "model": "llama3",
+     "prompt": "Merhaba, sana birkaç soru soracağım.",
+     "stream": false
+   }
+   ```
+
+2. Yanıt şu şekilde gelir:
+
+   ```json
+   {
+     "response": "Merhaba! Elbette, sorunuzu bekliyorum.",
+     "context": [1234, 5678, 9012, 3456, ...]
+   }
+   ```
+
+   👆 Bu `context` bir `int[]` (token ID listesi) olarak gelir.
+
+3. İkinci soruyu sorduğunda, bu `context`'i geri gönderirsin:
+
+   ```json
+   {
+     "model": "llama3",
+     "prompt": "Yapay zeka eğitimde nasıl kullanılır?",
+     "context": [1234, 5678, 9012, 3456, ...],
+     "stream": false
+   }
+   ```
+
+4. Ollama bu `context` sayesinde **önceki diyaloğu hatırlar**, böylece çok daha tutarlı, bağlamsal yanıt verir.
+
+---
+
+## ❓ Peki "ID" nereden geliyor?
+
+* `context` bir ID değil, aslında **token geçmişinin tamamı**.
+* Bu veri, bir önceki `response` JSON’unda `context` alanı içinde otomatik olarak gelir.
+* Senin elle oluşturman gerekmez — sadece yanıtın içinden alıp bir sonraki istekte gönderirsin.
+
+---
+
+## 👀 Örnek Akış (Postman üzerinden bile mümkün):
+
+### 1. İlk mesajı gönder:
+
+```json
+{
+  "model": "llama3",
+  "prompt": "Merhaba!",
+  "stream": false
+}
+```
+
+Yanıt:
+
+```json
+{
+  "response": "Merhaba! Size nasıl yardımcı olabilirim?",
+  "context": [1432, 2598, 8123, 9999, ...]
+}
+```
+
+### 2. Yeni mesajla birlikte önceki `context`’i gönder:
+
+```json
+{
+  "model": "llama3",
+  "prompt": "Yapay zeka eğitimde nasıl kullanılabilir?",
+  "context": [1432, 2598, 8123, 9999, ...],
+  "stream": false
+}
+```
+
+---
+
+## ⚠️ Dikkat Edilecekler
+
+* `context` belleği çok büyürse token limiti dolabilir.
+* Tek seferde uzun geçmişler yerine, kritik konuşmaları tutmak daha verimli olur.
+* `context` olmadan gönderirsen model sıfırdan başlar (önceki konuşmayı hatırlamaz).
+
+---
+
+İstersen bu akışı Python veya JavaScript ile otomatikleştirmek için örnek bir kod da yazabilirim.
+Sen bu işlemi **manuel mi** yoksa **API üzerinden bir uygulamayla mı yapacaksın?** Ona göre uyarlayabilirim.
+
+*/

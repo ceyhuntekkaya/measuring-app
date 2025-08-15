@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  postgres:
+    container_name: postgres-db
+    image: postgres:15.4-alpine
+    restart: always
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+    env_file:
+      - .env
+    ports:
+      - '5432:5432'
+    volumes:
+      - D:/db_files:/var/lib/postgresql/data
+    networks:
+      - genixo-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-genixo} -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  genixo-server:
+    container_name: liv-parent
+    image: ctekkaya/liv-enerji-parent:2.0
+    restart: always
+    networks:
+      - genixo-network
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+    healthcheck:
+      test: [ "CMD-SHELL", "curl --silent --fail http://genixo-server:8080/health || exit 1" ]
+      interval: 10s
+      retries: 5
+
+  genixo-app:
+    container_name: liv-app
+    image: ctekkaya/liv-enerji-app:2.0
+    restart: always
+    environment:
+      - NEXT_PUBLIC_API_URL=${API_URL:-http://genixo-server:8080/api}
+    depends_on:
+      - genixo-server
+    networks:
+      - genixo-network
+    ports:
+      - "3000:3000"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+networks:
+  genixo-network:
+    name: genixo-network

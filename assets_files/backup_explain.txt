@@ -1,0 +1,17 @@
+
+İşte istediğiniz iki bat dosyası hazır:
+
+1. **Veritabanı Yedekleme Script (backup-script.bat)**:
+   - Bu script çalıştırıldığında "Backups" klasörü içinde tarih ve saat ile (YYYYMMDD_HHMMSS formatında) isimlendirilmiş bir klasör oluşturur.
+   - Docker içindeki PostgreSQL veritabanınızın tam yedeğini alır ve oluşturulan klasöre kaydeder.
+   - Yedek dosyası "liv_enerji_20250404_123456.backup" formatında isimlendirilir.
+
+2. **Veritabanı Geri Yükleme Script (restore-script.bat)**:
+   - Bu script, içinde bulunduğu klasördeki tüm .backup uzantılı dosyaları listeler.
+   - Kullanıcıya geri yüklemek istediği dosyayı seçme imkanı sunar.
+   - Seçilen yedek dosyasını veritabanına geri yükler.
+   - İşlem sırasında mevcut veritabanı bağlantıları kapatılır, veritabanı silinip yeniden oluşturulur ve yedek geri yüklenir.
+
+Kullanım:
+1. Yedek almak için: Sadece `backup-script.bat` dosyasını çalıştırın.
+2. Yedek geri yüklemek için: `restore-script.bat` dosyasını yedek dosyasının bulunduğu klasöre kopyalayın ve çalıştırın, ardından geri yüklemek istediğiniz yedeğin numarasını seçin.

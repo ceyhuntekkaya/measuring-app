@@ -1,0 +1,21 @@
+
+İşte SQL script olarak yedekleme ve geri yükleme için iki yeni bat dosyası:
+
+1. **SQL Script Olarak Veritabanı Yedekleme (backup-sql-script.bat)**:
+   - Bu script, veritabanınızı SQL script formatında yedekler
+   - Üç farklı dosya oluşturur:
+     - `*_schema.sql`: Sadece veritabanı yapısını (tablolar, indeksler vb.) içerir
+     - `*_data.sql`: Sadece verileri içerir
+     - `*_full.sql`: Hem yapı hem de verileri içeren tam yedek
+
+2. **SQL Script'ten Veritabanı Geri Yükleme (restore-sql-script.bat)**:
+   - Bu script, SQL formatındaki yedek dosyalarını listeler
+   - Kullanıcı tarafından seçilen tam SQL yedek dosyasını (`*_full.sql`) veritabanına geri yükler
+
+SQL script formatındaki yedekler:
+- Metin tabanlı olduğundan okunabilir ve gerektiğinde düzenlenebilir
+- Farklı PostgreSQL sürümleri arasında daha iyi uyumluluk sağlayabilir
+- Sadece schema veya sadece veri gibi kısmi geri yüklemeler yapabilirsiniz
+- Binary formattan daha büyük dosya boyutları oluşturabilir ama okunabilir olma avantajı vardır
+
+Bu dosyaları kullanarak veritabanınızı hem binary formatta hem de SQL script formatında yedekleyebilirsiniz. İhtiyacınıza göre uygun olanı seçebilirsiniz.

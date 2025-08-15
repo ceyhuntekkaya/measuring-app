@@ -1,0 +1,28 @@
+@echo off
+setlocal EnableDelayedExpansion
+
+:: Tarih ve zaman formatını ayarla (YYYYMMDD_HHMMSS)
+for /f "tokens=2 delims==" %%G in ('wmic os get localdatetime /format:list') do set "datetime=%%G"
+set "TIMESTAMP=!datetime:~0,8!_!datetime:~8,6!"
+
+:: Yedekleme klasörünü oluştur
+set "BACKUP_DIR=Backups\!TIMESTAMP!"
+mkdir %BACKUP_DIR%
+
+:: Container adı
+set "CONTAINER_NAME=postgres-db"
+
+:: Veritabanı bilgileri
+set "DB_NAME=liv_enerji"
+set "DB_USER=GenUser2025"
+set "DB_PASSWORD=Gen114765Str!"
+
+echo Veritabanı yedekleniyor: %DB_NAME% - %TIMESTAMP%
+
+:: Docker üzerinden pg_dump komutuyla yedeği al
+docker exec -i %CONTAINER_NAME% pg_dump -U %DB_USER% -F c %DB_NAME% > "%BACKUP_DIR%\%DB_NAME%_%TIMESTAMP%.backup"
+
+echo Yedekleme tamamlandı!
+echo Yedek dosyası: %BACKUP_DIR%\%DB_NAME%_%TIMESTAMP%.backup
+
+endlocal

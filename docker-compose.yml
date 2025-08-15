@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  postgres:
+    container_name: postgres-db
+    image: postgres:15.4-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=genixo
+      - POSTGRES_PASSWORD=genixo
+    ports:
+      - '5432:5432'
+    volumes:
+      - /root/db_files:/var/lib/postgresql/data
+    networks:
+      - genixo-network
+
+
+  genixo-server:
+    container_name: liv-parent
+    image: ctekkaya/study-score-parent:1.0
+    restart: always
+    networks:
+      - genixo-network
+    ports:
+      - "8080:8080"
+    volumes:
+      - /root/uploads:/app/uploads/
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+ 
+
+networks:
+  genixo-network:

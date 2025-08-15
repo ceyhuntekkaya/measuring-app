@@ -1,0 +1,32 @@
+@echo off
+setlocal EnableDelayedExpansion
+
+:: Tarih ve zaman formatını ayarla (YYYYMMDD_HHMMSS)
+for /f "tokens=2 delims==" %%G in ('wmic os get localdatetime /format:list') do set "datetime=%%G"
+set "TIMESTAMP=!datetime:~0,8!_!datetime:~8,6!"
+
+:: Yedekleme klasörünü oluştur
+set "BACKUP_DIR=Backups\!TIMESTAMP!"
+mkdir %BACKUP_DIR%
+
+:: Container adı
+set "CONTAINER_NAME=postgres-db"
+
+:: Veritabanı bilgileri
+set "DB_NAME=liv_enerji"
+set "DB_USER=GenUser2025"
+set "DB_PASSWORD=Gen114765Str!"
+
+echo Veritabanı SQL script olarak yedekleniyor: %DB_NAME% - %TIMESTAMP%
+
+:: Docker üzerinden pg_dump komutuyla SQL script olarak yedeği al
+docker exec -i %CONTAINER_NAME% pg_dump -U %DB_USER% --format=plain --schema-only %DB_NAME% > "%BACKUP_DIR%\%DB_NAME%_%TIMESTAMP%_schema.sql"
+docker exec -i %CONTAINER_NAME% pg_dump -U %DB_USER% --format=plain --data-only %DB_NAME% > "%BACKUP_DIR%\%DB_NAME%_%TIMESTAMP%_data.sql"
+docker exec -i %CONTAINER_NAME% pg_dump -U %DB_USER% --format=plain %DB_NAME% > "%BACKUP_DIR%\%DB_NAME%_%TIMESTAMP%_full.sql"
+
+echo Yedekleme tamamlandı!
+echo Schema dosyası: %BACKUP_DIR%\%DB_NAME%_%TIMESTAMP%_schema.sql
+echo Veri dosyası: %BACKUP_DIR%\%DB_NAME%_%TIMESTAMP%_data.sql
+echo Tam yedek dosyası: %BACKUP_DIR%\%DB_NAME%_%TIMESTAMP%_full.sql
+
+endlocal

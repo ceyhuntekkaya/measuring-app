@@ -1,0 +1,50 @@
+@echo off
+setlocal EnableDelayedExpansion
+
+:: Container adı
+set "CONTAINER_NAME=postgres-db"
+
+:: Veritabanı bilgileri
+set "DB_NAME=liv_enerji"
+set "DB_USER=GenUser2025"
+set "DB_PASSWORD=Gen114765Str!"
+
+:: Mevcut klasörde bulunan yedek dosyalarını bul
+echo Mevcut yedek dosyaları:
+set /a counter=0
+for %%f in (*.backup) do (
+    set /a counter+=1
+    echo !counter!. %%f
+    set "file!counter!=%%f"
+)
+
+if %counter% EQU 0 (
+    echo Bu klasörde yedek dosyası bulunamadı.
+    goto :EOF
+)
+
+:: Kullanıcıdan hangi dosyayı geri yüklemek istediğini sor
+set /p selection=Geri yüklemek istediğiniz dosya numarasını girin: 
+
+if not defined file%selection% (
+    echo Geçersiz seçim.
+    goto :EOF
+)
+
+set "BACKUP_FILE=!file%selection%!"
+
+echo %BACKUP_FILE% dosyası geri yükleniyor...
+
+:: Veritabanı bağlantılarını kapat
+docker exec -i %CONTAINER_NAME% psql -U %DB_USER% -c "SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = '%DB_NAME%' AND pid <> pg_backend_pid();"
+
+:: Veritabanını sil ve yeniden oluştur
+docker exec -i %CONTAINER_NAME% dropdb -U %DB_USER% --if-exists %DB_NAME%
+docker exec -i %CONTAINER_NAME% createdb -U %DB_USER% %DB_NAME%
+
+:: Yedeği geri yükle
+type "%BACKUP_FILE%" | docker exec -i %CONTAINER_NAME% pg_restore -U %DB_USER% -d %DB_NAME%
+
+echo Geri yükleme tamamlandı!
+
+endlocal

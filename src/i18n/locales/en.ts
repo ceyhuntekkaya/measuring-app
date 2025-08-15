@@ -1,0 +1,70 @@
+// en.ts
+export const en = {
+    welcome: "Welcome",
+    hello: "Hello",  // Direkt erişim için
+    greeting: "Hello, {{name}}! You have {{count}} notifications.",
+    navbar: {
+        home: "Home",
+        about: "About",
+        contact: "Contact"
+    },
+    menu: {
+        dashboard: 'Dashboard',
+        users: 'Users',
+        reports: 'Reports',
+        settings: 'Settings',
+        hello: "Hello 2",
+    },
+    auth: {
+        logout: 'Logout'
+    },
+    status: {
+        ACTIVE: 'ACTIVE',
+        PASSIVE: 'PASSIVE',
+        DELETED: 'DELETED',
+        WAITING: 'WAITING',
+        CONFIRMED: 'CONFIRMED',
+        REJECTED: 'REJECTED',
+        CANCELLED: 'CANCELLED',
+        COMPLETED: 'COMPLETED',
+        IN_PROGRESS: 'IN_PROGRESS',
+        NOT_STARTED: 'NOT_STARTED',
+        PENDING: 'PENDING',
+        SUSPENDED: 'SUSPENDED',
+        WORKING: 'WORKING',
+        NEW: 'NEW',
+        FINISHED: 'FINISHED',
+        PAUSED: 'PAUSED',
+        PENDING_APPROVAL: 'PENDING APPROVAL',
+        APPROVED: 'APPROVED',
+        CONTRACT: 'CONTRACT',
+        STARTED: 'STARTED',
+        ISSUE: 'ISSUE',
+        INVOICED: 'INVOICED',
+    },
+    user: {
+        ADMIN: 'İç Personel',
+        TRANSPORTER: 'Nakliye Firması',
+        USER: 'Şoför',
+        COMPANY: 'Müşteri',
+        ACCOUNTING: 'Muhasebe',
+        MANAGEMENT: 'Yönetim',
+        EXTERNAL: 'Dış Kullanıcı',
+        FINANCE: 'Finans',
+        SALES: 'Satış',
+        APPROVAL: 'Onay Yetkisi',
+        GENERAL: 'Genel Yetkiler',
+        ACCOUNTING_OPERATION: 'Muhasebe İşlemleri',
+        CUSTOMER_OPERATION: 'Müşteri İlemleri',
+        ORDER_OPERATION: 'Sipariş İşlmleri',
+        TRANSPORTATION_OPERATION: 'Sevkiyat İşemleri',
+        USER_CREATE: 'Kullanıcı İşlemleri',
+        FINANCE_OPERATION: 'Finans İşlmeleri',
+        DELIVERY_OPERATION: 'Teslimat İşlemleri',
+        OFFER_OPERATION: 'Tekif İşlemleri',
+        SUPPLIER_OPERATION: 'Tedarikçi İşlemleri',
+        DELIVERY_DOCUMENT: 'Teslimat Dokumanarı',
+        SETTING: 'Ayar Yetkisi',
+
+    }
+};

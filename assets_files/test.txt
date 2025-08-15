@@ -1,0 +1,9 @@
+DB_NAME=liv_enerji
+DB_USER=GenUser2025
+DB_PASSWORD=Gen114765Str!
+API_URL=http://genixo-server:8080/api
+
+DB_URL=jdbc:postgresql://postgres:5432/
+STORAGE_BASE_PATH=/app/uploads/
+SECRET_KEY=uLO6QrqPEmyHZfU1jR3vS8wX2nKgT4iN9bAcDhMkVpYe7tWsJxG5aFdB0CzI4nPmQvUyL8kR3wT9
+SQL_API_URL=http://85.105.26.240/api/query
