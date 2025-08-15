@@ -33,14 +33,28 @@ export const adminRoutes: RouteConfig = {
             requiredRoles: ['ADMIN'],
         },
         {
-            title: 'Courses',
-            path: '/admin/course',
+            title: 'Sınavlar',
+            path: '/admin/exams',
             icon: Settings,
             requiredRoles: ['ADMIN'],
         },
         {
-            title: 'Exams',
-            path: '/admin/exam',
+            title: 'Soru Bankası',
+            path: '/admin/questions',
+            icon: Settings,
+            requiredRoles: ['ADMIN'],
+        }
+        ,
+        {
+            title: 'Başvurular',
+            path: '/admin/attends',
+            icon: Settings,
+            requiredRoles: ['ADMIN'],
+        }
+        ,
+        {
+            title: 'Uygulamalar',
+            path: '/admin/applications',
             icon: Settings,
             requiredRoles: ['ADMIN'],
         }
