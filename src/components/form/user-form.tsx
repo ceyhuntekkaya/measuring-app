@@ -83,7 +83,7 @@ const UserForm: React.FC<UserFormProps> = ({
                 id: selectedUser.id,
                 createdAt: Date.now(),
                 deletedAt: null,
-                status: selectedUser.status as EStatus | EStatus.NEW,
+                status: selectedUser.status as EStatus | EStatus.ACTIVE,
                 username: selectedUser.username,
                 password: '',
                 lastLoginTime: null,

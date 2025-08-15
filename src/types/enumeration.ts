@@ -109,17 +109,7 @@ export enum ELogType {
     ERROR = "ERROR"
 }
 
-// EMediaType.ts
-export enum EMediaType {
-    IMAGE = "IMAGE",
-    VIDEO = "VIDEO",
-    AUDIO = "AUDIO",
-    DOCUMENT = "DOCUMENT",
-    PDF = "PDF",
-    TEXT = "TEXT",
-    LINK = "LINK",
-    OTHER = "OTHER"
-}
+
 
 // ELessonLevel.ts
 export enum ELessonLevel {
@@ -153,13 +143,4 @@ export enum ActionType {
     LOGOUT = "LOGOUT",
     OTHER = "OTHER"
 }
-
-// ECurriculumLevel.ts
-export enum ECurriculumLevel {
-    UNIT = "UNIT",
-    TOPIC = "TOPIC",
-    SUB_TOPIC = "SUB_TOPIC",
-    GAIN = "GAIN"
-}
-
 
