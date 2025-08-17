@@ -50,11 +50,64 @@ export const adminRoutes: RouteConfig = {
             path: '/admin/attends',
             icon: Settings,
             requiredRoles: ['ADMIN'],
-        }
-        ,
+        },
         {
             title: 'Uygulamalar',
             path: '/admin/applications',
+            icon: Settings,
+            requiredRoles: ['ADMIN'],
+        }
+
+
+
+
+
+        ,
+        {
+            title: 'Approval Setting',
+            path: '/admin/settings/approval',
+            icon: Settings,
+            requiredRoles: ['ADMIN'],
+        }
+        ,
+        {
+            title: 'Exam Type',
+            path: '/admin/exam-type',
+            icon: Settings,
+            requiredRoles: ['ADMIN'],
+        }
+        ,
+        {
+            title: 'Exam Section',
+            path: '/admin/exam-type/{examTypeId}/section',
+            icon: Settings,
+            requiredRoles: ['ADMIN'],
+        }
+        ,
+        {
+            title: 'Question Group Type',
+            path: '/admin/exam-type/{examTypeId}/section/{sectionId}/group',
+            icon: Settings,
+            requiredRoles: ['ADMIN'],
+        }
+        ,
+        {
+            title: 'Question Group',
+            path: '/admin/question-group',
+            icon: Settings,
+            requiredRoles: ['ADMIN'],
+        }
+        ,
+        {
+            title: 'Question',
+            path: '/admin/question-group/{groupId}/question',
+            icon: Settings,
+            requiredRoles: ['ADMIN'],
+        }
+        ,
+        {
+            title: 'Approvals',
+            path: '/admin/approvals',
             icon: Settings,
             requiredRoles: ['ADMIN'],
         }

@@ -81,6 +81,32 @@ export interface LearnerUser extends User{
 }
 
 
+export interface UserDto {
+    id: string;
+    createdAt: number;
+    deletedAt: null | number;
+    status: string;
+    username: string;
+    password: string;
+    lastLoginTime: null | string;
+    mobilePhone: string;
+    activationCode: string;
+    name: string;
+    lastName: string;
+    authoritySet: Permission[];
+    departmentSet: Department[];
+    brandSet: Brand[];
+    roleSet: Role[];
+    enabled: boolean;
+    credentialsNonExpired: boolean;
+    accountNonLocked: boolean;
+    accountNonExpired: boolean;
+    email: string;
+    identityNumber?: string | null;
+    connectionId?: string | null;
+}
+
+
 export interface UserFormData {
     id: string;
     createdAt: number;

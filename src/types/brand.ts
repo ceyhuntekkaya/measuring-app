@@ -1,6 +1,7 @@
 import {EStatus} from "@/types/enumeration";
+import {DatabaseObjectDto} from "@/types/exam/miscDtos";
 
-export interface BrandFormData {
+export interface BrandDto extends DatabaseObjectDto {
     name: string;
     code?: string;
     description?: string;
@@ -11,11 +12,15 @@ export interface BrandFormData {
     address?: string;
     taxNumber?: string;
     taxOffice?: string;
-    status?: EStatus | null;
-    id?: string | null;
-    createdAt?: Date | null;
-    deletedAt?: Date | null;
 }
+
+export interface BranchDto extends DatabaseObjectDto{
+    branchName: string;
+    code?: string;
+    brand?: BrandDto;
+}
+
+
 
 
 export interface Brand {
@@ -35,4 +40,4 @@ export interface Brand {
     taxOffice?: string;
 }
 
-export type BrandFormErrors = Partial<Record<keyof BrandFormData, string>>;
+export type BrandFormErrors = Partial<Record<keyof BrandDto, string>>;
