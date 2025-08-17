@@ -1,12 +1,14 @@
 import {EApprovalStatus, EMediaType, EStatus} from "@/types/exam/enum";
+import {RecordType} from "@/types/ui/table";
 
-export type DatabaseObjectDto = {
-    id?: string;
-    createdAt?: string;
-    deletedAt?: string;
-    status?: EStatus; // Example enum values
-    createdById?: string;
-    deletedById?: string;
+
+export interface DatabaseObjectDto extends RecordType{
+    id: string;
+    createdAt: Date | null;
+    deletedAt: Date | null;
+    status: EStatus | null;
+    createdById: string | null;
+    deletedById: string | null;
 }
 
 

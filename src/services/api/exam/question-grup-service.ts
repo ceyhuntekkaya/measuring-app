@@ -94,6 +94,12 @@ class QuestionGroupService {
         const response = await api.post<ApiResponse<QuestionGroupDto[]>>(`${this.baseUrl}/bulk`, createRequests);
         return response.data;
     }
+
+
+    async getAllQuestionGroup(): Promise<ApiResponse<QuestionGroupDto[]>> {
+        const response = await api.get<ApiResponse<QuestionGroupDto[]>>(`${this.baseUrl}/`);
+        return response.data;
+    }
 }
 
 export const questionGroupService = new QuestionGroupService();

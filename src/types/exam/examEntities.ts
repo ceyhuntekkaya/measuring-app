@@ -12,6 +12,30 @@ import {
 import {BranchDto, BrandDto} from "@/types/brand";
 import {UserDto} from "@/types/auth";
 import {DatabaseObjectDto} from "@/types/exam/miscDtos";
+import {
+    AudioResponseTemplateDto,
+    BaseQuestionTemplateDto, DragAndDropTemplateDto, EssayTemplateDto,
+    FillInTheBlanksTemplateDto, HotSpotTemplateDto, ImageResponseTemplateDto, MatchingTemplateDto,
+    MultipleChoiceTemplateDto, MultipleResponseTemplateDto, OrderingTemplateDto, ShortAnswerTemplateDto,
+    TrueFalseTemplateDto, VideoResponseTemplateDto
+} from "@/types/exam/questionTemplates";
+
+
+
+export type QuestionTemplateType =
+    | MultipleChoiceTemplateDto
+    | TrueFalseTemplateDto
+    | FillInTheBlanksTemplateDto
+    | ShortAnswerTemplateDto
+    | MatchingTemplateDto
+    | EssayTemplateDto
+    | OrderingTemplateDto
+    | MultipleResponseTemplateDto
+    | HotSpotTemplateDto
+    | DragAndDropTemplateDto
+    | AudioResponseTemplateDto
+    | VideoResponseTemplateDto
+    | ImageResponseTemplateDto;
 
 
 
@@ -23,7 +47,7 @@ export type QuestionDto = DatabaseObjectDto & {
     isAutomaticallyEvaluated?: boolean;
     maximumScore?: number;
     durationInSeconds?: number;
-    questionTemplateId?: string;
+    questionTemplate?: BaseQuestionTemplateDto;
     approvalStatus?: EApprovalStatus; // Example enum values
     currentApprovalCount?: number;
     requiredApprovalCount?: number;

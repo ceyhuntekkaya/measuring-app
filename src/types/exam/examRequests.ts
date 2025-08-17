@@ -1,6 +1,7 @@
 // examRequests.ts
 
 import {EMediaType, EQuestionGroupType, EQuestionType} from "@/types/exam/enum";
+import {QuestionTemplateType} from "@/types/exam/examEntities";
 
 export type CreateQuestionGroupRequest = {
     name: string;
@@ -20,7 +21,7 @@ export type CreateQuestionRequest = {
     isAutomaticallyEvaluated?: boolean;
     maximumScore?: number;
     durationInSeconds?: number;
-    questionTemplateId: string;
+    questionTemplate?: QuestionTemplateType | null;
     parts?: CreateQuestionPartRequest[];
     options?: CreateQuestionOptionRequest[];
 }

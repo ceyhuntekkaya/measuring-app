@@ -3,14 +3,14 @@
 
 import {EMediaType, EQuestionType, EStatus} from "@/types/exam/enum";
 
-export type OrderingTemplateDto = BaseQuestionTemplateDto & {
+export interface OrderingTemplateDto extends BaseQuestionTemplateDto  {
     instructions?: string;
     options?: OrderingOptions;
     shuffleItems?: boolean;
     explanation?: string;
 }
 
-export type VideoResponseTemplateDto = BaseQuestionTemplateDto & {
+export interface VideoResponseTemplateDto extends BaseQuestionTemplateDto  {
     prompt?: string;
     videoPromptUrl?: string;
     maxRecordingDuration?: number;
@@ -22,7 +22,7 @@ export type VideoResponseTemplateDto = BaseQuestionTemplateDto & {
     allowScreenRecording?: boolean;
 }
 
-export type ImageResponseTemplateDto = BaseQuestionTemplateDto & {
+export interface ImageResponseTemplateDto extends BaseQuestionTemplateDto  {
     prompt?: string;
     referenceImageUrl?: string;
     maxFileSize?: number;
@@ -34,16 +34,16 @@ export type ImageResponseTemplateDto = BaseQuestionTemplateDto & {
     allowsUpload?: boolean;
 }
 
-export type ShortAnswerTemplateDto = BaseQuestionTemplateDto & {
+export interface ShortAnswerTemplateDto extends BaseQuestionTemplateDto  {
     question?: string;
-    options?: ShortAnswerOptions; // This could be a more specific type
+    options?: ShortAnswerOptions;
     maxCharacters?: number;
     minCharacters?: number;
     rubric?: string;
     requiresManualGrading?: boolean;
 }
 
-export type FillInTheBlanksTemplateDto = BaseQuestionTemplateDto & {
+export interface FillInTheBlanksTemplateDto extends BaseQuestionTemplateDto  {
     textWithBlanks?: string;
     options?: FillInTheBlanksOptions;
     caseSensitive?: boolean;
@@ -51,14 +51,14 @@ export type FillInTheBlanksTemplateDto = BaseQuestionTemplateDto & {
     explanation?: string;
 }
 
-export type MatchingTemplateDto = BaseQuestionTemplateDto & {
+export interface MatchingTemplateDto extends BaseQuestionTemplateDto  {
     instructions?: string;
-    options?: MatchingOptions; // This could be a more specific type
+    options?: MatchingOptions;
     shuffleItems?: boolean;
     explanation?: string;
 }
 
-export type MultipleChoiceTemplateDto = BaseQuestionTemplateDto & {
+export interface MultipleChoiceTemplateDto extends BaseQuestionTemplateDto  {
     question?: string;
     options?: MultipleChoiceOptions;
     correctOptionIndex?: number;
@@ -66,14 +66,14 @@ export type MultipleChoiceTemplateDto = BaseQuestionTemplateDto & {
     shuffleOptions?: boolean;
 }
 
-export type TrueFalseTemplateDto = BaseQuestionTemplateDto & {
+export interface TrueFalseTemplateDto extends BaseQuestionTemplateDto  {
     statement?: string;
     options?: TrueFalseOptions;
     correctAnswer?: boolean;
     explanation?: string;
 }
 
-export type HotSpotTemplateDto = BaseQuestionTemplateDto & {
+export interface HotSpotTemplateDto extends BaseQuestionTemplateDto  {
     instructions?: string;
     imageUrl?: string;
     options?: HotSpotOptions; // This could be a more specific type
@@ -82,7 +82,7 @@ export type HotSpotTemplateDto = BaseQuestionTemplateDto & {
     explanation?: string;
 }
 
-export type MultipleResponseTemplateDto = BaseQuestionTemplateDto & {
+export interface MultipleResponseTemplateDto extends BaseQuestionTemplateDto  {
     question?: string;
     options?: MultipleResponseOptions;
     correctOptionIndices?: number[];
@@ -94,7 +94,7 @@ export type MultipleResponseTemplateDto = BaseQuestionTemplateDto & {
 
 // templateDtos.ts
 
-export type BaseQuestionTemplateDto = {
+export interface BaseQuestionTemplateDto {
     id?: string;
     title?: string;
     description?: string;
@@ -105,15 +105,15 @@ export type BaseQuestionTemplateDto = {
     instructions?: string;
     tags?: string[];
     isActive?: boolean;
-    questionType?: EQuestionType; // Example enum values from @JsonSubTypes
+    questionType?: EQuestionType;
     createdAt?: string;
     deletedAt?: string;
-    status?: EStatus; // Example enum values
+    status?: EStatus;
     createdById?: string;
     deletedById?: string;
 }
 
-export type DragAndDropTemplateDto = BaseQuestionTemplateDto & {
+export interface DragAndDropTemplateDto extends BaseQuestionTemplateDto  {
     instructions?: string;
     options?: string;
     allowMultipleItemsPerZone?: boolean;
@@ -121,7 +121,7 @@ export type DragAndDropTemplateDto = BaseQuestionTemplateDto & {
     explanation?: string;
 }
 
-export type EssayTemplateDto = BaseQuestionTemplateDto & {
+export interface EssayTemplateDto extends BaseQuestionTemplateDto  {
     prompt?: string;
     gradingCriteria?: string[];
     minWords?: number;
@@ -131,7 +131,7 @@ export type EssayTemplateDto = BaseQuestionTemplateDto & {
     requiresManualGrading?: boolean;
 }
 
-export type AudioResponseTemplateDto = BaseQuestionTemplateDto & {
+export interface AudioResponseTemplateDto extends BaseQuestionTemplateDto  {
     prompt?: string;
     audioPromptUrl?: string;
     maxRecordingDuration?: number;
@@ -185,7 +185,7 @@ export type ChoiceOption = {
     isCorrect?: boolean;
     feedback?: string;
     mediaUrl?: string;
-    mediaType?: EMediaType; // Example string literal type
+    mediaType?: EMediaType;
 }
 
 export type MultipleResponseOptions = {

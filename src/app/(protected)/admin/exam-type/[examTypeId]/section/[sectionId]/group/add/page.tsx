@@ -1,6 +1,11 @@
 'use client';
+import QuestionGroupTypeForm from "@/components/form/QuestionGroupTypeForm";
 
-
-export default function AdminPage() {
-    return <div>About</div>;
+export default function QuestionGroupTypeAdd() {
+    return (
+        <div className="space-y-6">
+            <QuestionGroupTypeForm onSubmit={() => {
+            }} examSections={[]}/>
+        </div>
+    )
 }

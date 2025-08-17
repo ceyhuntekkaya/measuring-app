@@ -1,19 +1,20 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { NumberInput } from "@/components/ui/number-input";
-import { CreateQuestionRequest, CreateQuestionPartRequest, CreateQuestionOptionRequest } from "@/types/exam/examRequests";
-import { QuestionDto, QuestionGroupDto } from "@/types/exam/examEntities";
-import { Trash2, Plus } from "lucide-react";
+import React, {useEffect, useState} from 'react';
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {Alert, AlertDescription} from "@/components/ui/alert";
+import {Button} from "@/components/ui/button";
+import {Label} from "@/components/ui/label";
+import {Input} from "@/components/ui/input";
+import {Textarea} from "@/components/ui/textarea";
+import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {NumberInput} from "@/components/ui/number-input";
+import {CreateQuestionOptionRequest, CreateQuestionPartRequest, CreateQuestionRequest} from "@/types/exam/examRequests";
+import {QuestionDto, QuestionGroupDto, QuestionTemplateType} from "@/types/exam/examEntities";
+import {Plus, Trash2} from "lucide-react";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
 import Checkbox from "@/components/ui/checkbox";
+
 
 interface QuestionFormData {
     name: string;
@@ -23,7 +24,7 @@ interface QuestionFormData {
     isAutomaticallyEvaluated?: boolean;
     maximumScore?: number;
     durationInSeconds?: number;
-    questionTemplateId: string;
+    questionTemplate: QuestionTemplateType | null;
     parts: CreateQuestionPartRequest[];
     options: CreateQuestionOptionRequest[];
 }
@@ -35,7 +36,7 @@ interface QuestionFormErrors {
     orderNumber?: string;
     maximumScore?: string;
     durationInSeconds?: string;
-    questionTemplateId?: string;
+    questionTemplate?: string;
     parts?: string;
     options?: string;
 }
@@ -61,7 +62,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
         isAutomaticallyEvaluated: true,
         maximumScore: undefined,
         durationInSeconds: undefined,
-        questionTemplateId: '',
+        questionTemplate: null,
         parts: [],
         options: []
     });
@@ -78,7 +79,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                 isAutomaticallyEvaluated: question.isAutomaticallyEvaluated ?? true,
                 maximumScore: question.maximumScore,
                 durationInSeconds: question.durationInSeconds,
-                questionTemplateId: question.questionTemplateId || '',
+                questionTemplate: question.questionTemplate || null,
                 parts: [],
                 options: []
             });
@@ -99,7 +100,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
     const addPart = () => {
         const newPart: CreateQuestionPartRequest = {
             orderNumber: formData.parts.length + 1,
-            mediaType: 'TEXT',
+            mediaType: EMediaType.TEXT,
             content: '',
             label: '',
             maximumScore: undefined,
@@ -137,7 +138,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
     const addOption = () => {
         const newOption: CreateQuestionOptionRequest = {
             orderNumber: formData.options.length + 1,
-            mediaType: 'TEXT',
+            mediaType: EMediaType.TEXT,
             content: '',
             baseContent: '',
             isTrueOption: false
@@ -188,18 +189,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
         }
     };
 
-    const getMediaTypeDisplayName = (mediaType: string): string => {
-        switch (mediaType) {
-            case 'IMAGE': return 'Resim';
-            case 'VIDEO': return 'Video';
-            case 'AUDIO': return 'Ses';
-            case 'DOCUMENT': return 'Doküman';
-            case 'PDF': return 'PDF';
-            case 'TEXT': return 'Metin';
-            case 'OTHER': return 'Diğer';
-            default: return mediaType;
-        }
-    };
+
 
     const validateForm = (): boolean => {
         const newErrors: QuestionFormErrors = {};
@@ -218,8 +208,8 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
             newErrors.questionType = 'Soru tipi seçimi zorunludur';
         }
 
-        if (!formData.questionTemplateId.trim()) {
-            newErrors.questionTemplateId = 'Soru şablonu ID zorunludur';
+        if (!formData.questionTemplate) {
+            newErrors.questionTemplate = 'Soru şablonu ID zorunludur';
         }
 
         if (formData.orderNumber !== undefined && formData.orderNumber <= 0) {
@@ -256,7 +246,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                 name: formData.name.trim(),
                 questionGroupId: formData.questionGroupId,
                 questionType: formData.questionType as EQuestionType,
-                questionTemplateId: formData.questionTemplateId.trim(),
+                questionTemplate: formData.questionTemplate || null,
                 ...(formData.orderNumber !== undefined && { orderNumber: formData.orderNumber }),
                 ...(formData.isAutomaticallyEvaluated !== undefined && { isAutomaticallyEvaluated: formData.isAutomaticallyEvaluated }),
                 ...(formData.maximumScore !== undefined && { maximumScore: formData.maximumScore }),
@@ -361,18 +351,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                         {/* Şablon ID */}
                         <div className="space-y-2">
                             <Label htmlFor="questionTemplateId">Soru Şablonu ID *</Label>
-                            <Input
-                                id="questionTemplateId"
-                                value={formData.questionTemplateId}
-                                onChange={(e) => handleChange('questionTemplateId', e.target.value)}
-                                className={errors.questionTemplateId ? 'border-red-500' : ''}
-                                placeholder="Şablon ID giriniz"
-                            />
-                            {errors.questionTemplateId && (
-                                <Alert variant="destructive">
-                                    <AlertDescription>{errors.questionTemplateId}</AlertDescription>
-                                </Alert>
-                            )}
+                            TEPLATE EKLEMEK İÇİN BURAYA TIKLAYIN
                         </div>
 
                         {/* Sıra Numarası */}
@@ -484,13 +463,11 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectGroup>
-                                                <SelectItem value="TEXT">{getMediaTypeDisplayName('TEXT')}</SelectItem>
-                                                <SelectItem value="IMAGE">{getMediaTypeDisplayName('IMAGE')}</SelectItem>
-                                                <SelectItem value="VIDEO">{getMediaTypeDisplayName('VIDEO')}</SelectItem>
-                                                <SelectItem value="AUDIO">{getMediaTypeDisplayName('AUDIO')}</SelectItem>
-                                                <SelectItem value="DOCUMENT">{getMediaTypeDisplayName('DOCUMENT')}</SelectItem>
-                                                <SelectItem value="PDF">{getMediaTypeDisplayName('PDF')}</SelectItem>
-                                                <SelectItem value="OTHER">{getMediaTypeDisplayName('OTHER')}</SelectItem>
+                                                {Object.entries(EMediaType).map(([key, value]) => (
+                                                    <SelectItem key={key} value={key}>
+                                                        {value}
+                                                    </SelectItem>
+                                                ))}
                                             </SelectGroup>
                                         </SelectContent>
                                     </Select>
@@ -573,13 +550,11 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectGroup>
-                                                <SelectItem value="TEXT">{getMediaTypeDisplayName('TEXT')}</SelectItem>
-                                                <SelectItem value="IMAGE">{getMediaTypeDisplayName('IMAGE')}</SelectItem>
-                                                <SelectItem value="VIDEO">{getMediaTypeDisplayName('VIDEO')}</SelectItem>
-                                                <SelectItem value="AUDIO">{getMediaTypeDisplayName('AUDIO')}</SelectItem>
-                                                <SelectItem value="DOCUMENT">{getMediaTypeDisplayName('DOCUMENT')}</SelectItem>
-                                                <SelectItem value="PDF">{getMediaTypeDisplayName('PDF')}</SelectItem>
-                                                <SelectItem value="OTHER">{getMediaTypeDisplayName('OTHER')}</SelectItem>
+                                                {Object.entries(EMediaType).map(([key, value]) => (
+                                                    <SelectItem key={key} value={key}>
+                                                        {value}
+                                                    </SelectItem>
+                                                ))}
                                             </SelectGroup>
                                         </SelectContent>
                                     </Select>

@@ -35,7 +35,7 @@ import OrderingTemplateForm from "@/components/form/template/OrderingTemplateFor
 import MultipleResponseTemplateForm from "@/components/form/template/MultipleResponseTemplateForm";
 import HotSpotTemplateForm from "@/components/form/template/HotSpotTemplateForm";
 import DragAndDropTemplateForm from "@/components/form/template/DragAndDropTemplate Form";
-import AudioResponseTemplateForm from "@/components/form/template/AudioResponseTemplate Form";
+import AudioResponseTemplateForm from "@/components/form/template/AudioResponseTemplateForm";
 import ImageResponseTemplateForm from "@/components/form/template/ImageResponseTemplateForm";
 import VideoResponseTemplateForm from "@/components/form/template/VideoResponseTemplateForm";
 

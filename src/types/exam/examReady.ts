@@ -1,7 +1,7 @@
 // examReady.ts
 
 
-import {EExamType, EQuestionGroupTemplateLevel, EQuestionGroupType, EQuestionType} from "@/types/exam/enum";
+import {EExamType, EMediaType, EQuestionGroupTemplateLevel, EQuestionGroupType, EQuestionType} from "@/types/exam/enum";
 import {BaseQuestionTemplateDto} from "@/types/exam/questionTemplates";
 
 export type ExamReadyDto = {
@@ -63,14 +63,14 @@ export type QuestionReadyDto = {
 export type QuestionGroupHeaderReadyDto = {
     headerId: string;
     orderNumber: number;
-    mediaType: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'TEXT'; // Example enum values
+    mediaType: EMediaType; // Example enum values
     content: string;
 }
 
 export type QuestionOptionReadyDto = {
     optionId: string;
     orderNumber: number;
-    mediaType: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'TEXT'; // Example enum values
+    mediaType: EMediaType; // Example enum values
     content: string;
     baseContent: string;
 }
@@ -78,7 +78,7 @@ export type QuestionOptionReadyDto = {
 export type QuestionPartReadyDto = {
     partId: string;
     orderNumber: number;
-    mediaType: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'TEXT'; // Example enum values
+    mediaType: EMediaType; // Example enum values
     content: string;
     label: string;
     maximumScore: number;

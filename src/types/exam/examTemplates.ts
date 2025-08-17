@@ -33,7 +33,7 @@ export type QuestionGroupTypeDto = DatabaseObjectDto & {
     approvalCompletedDate?: string;
 }
 
-export type ExamSectionDto = DatabaseObjectDto & {
+export interface ExamSectionDto extends DatabaseObjectDto {
     name?: string;
     examType?: ExamTypeDto;
     orderNumber?: number;

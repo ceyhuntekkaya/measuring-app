@@ -125,7 +125,7 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
     const addHeader = () => {
         const newHeader: CreateQuestionGroupHeaderRequest = {
             orderNumber: formData.headers.length + 1,
-            mediaType: 'TEXT',
+            mediaType: EMediaType.TEXT,
             content: ''
         };
 
@@ -151,18 +151,7 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
         }));
     };
 
-    const getMediaTypeDisplayName = (mediaType: string): string => {
-        switch (mediaType) {
-            case 'IMAGE': return 'Resim';
-            case 'VIDEO': return 'Video';
-            case 'AUDIO': return 'Ses';
-            case 'DOCUMENT': return 'Doküman';
-            case 'PDF': return 'PDF';
-            case 'TEXT': return 'Metin';
-            case 'OTHER': return 'Diğer';
-            default: return mediaType;
-        }
-    };
+
 
     const validateForm = (): boolean => {
         const newErrors: QuestionGroupFormErrors = {};
@@ -407,13 +396,12 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectGroup>
-                                                <SelectItem value="TEXT">{getMediaTypeDisplayName('TEXT')}</SelectItem>
-                                                <SelectItem value="IMAGE">{getMediaTypeDisplayName('IMAGE')}</SelectItem>
-                                                <SelectItem value="VIDEO">{getMediaTypeDisplayName('VIDEO')}</SelectItem>
-                                                <SelectItem value="AUDIO">{getMediaTypeDisplayName('AUDIO')}</SelectItem>
-                                                <SelectItem value="DOCUMENT">{getMediaTypeDisplayName('DOCUMENT')}</SelectItem>
-                                                <SelectItem value="PDF">{getMediaTypeDisplayName('PDF')}</SelectItem>
-                                                <SelectItem value="OTHER">{getMediaTypeDisplayName('OTHER')}</SelectItem>
+
+                                                {Object.entries(EMediaType).map(([key, value]) => (
+                                                    <SelectItem key={key} value={key}>
+                                                        {value}
+                                                    </SelectItem>
+                                                ))}
                                             </SelectGroup>
                                         </SelectContent>
                                     </Select>

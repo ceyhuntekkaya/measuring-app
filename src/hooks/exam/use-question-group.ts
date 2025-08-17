@@ -36,6 +36,7 @@ interface UseQuestionGroupReturn {
     validateQuestionGroup: (id: string) => Promise<void>;
     bulkCreateQuestionGroups: (createRequests: CreateQuestionGroupRequest[]) => Promise<void>;
     clearQuestionGroupData: () => void;
+    getAllQuestionGroup: () => Promise<void>;
 }
 
 export const useQuestionGroup = (): UseQuestionGroupReturn => {
@@ -87,6 +88,28 @@ export const useQuestionGroup = (): UseQuestionGroupReturn => {
             setLoading(false);
         }
     }, []);
+
+
+    const getAllQuestionGroup = useCallback(async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await questionGroupService.getAllQuestionGroup();
+            if (response.data && response.success) {
+                setQuestionGroups(response.data);
+            } else {
+                throw new Error(response.message);
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err : new Error('An error occurred'));
+            showNotification.error('Soru grubu alınırken bir hata oluştu!');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+
+
 
     const getQuestionGroupById = useCallback(async (id: string) => {
         try {
@@ -349,6 +372,7 @@ export const useQuestionGroup = (): UseQuestionGroupReturn => {
         getQuestionGroupsSummary,
         validateQuestionGroup,
         bulkCreateQuestionGroups,
-        clearQuestionGroupData
+        clearQuestionGroupData,
+        getAllQuestionGroup
     };
 };

@@ -3,10 +3,11 @@
 
 import ExamTypeForm from "@/components/form/ExamTypeForm";
 
-export default function AdminPage() {
-    return <div>
-
-
-        <ExamTypeForm onSubmit={()=>{}}/>
-    </div>;
+export default function ExamTypeAdd() {
+    return (
+        <div className="space-y-6">
+            <ExamTypeForm onSubmit={() => {
+            }}/>
+        </div>
+)
 }

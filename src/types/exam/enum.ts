@@ -73,7 +73,7 @@ export type ELogType =
 
 // moreEnums.ts
 
-export type EMediaType =
+export type EMediaType2 =
     | 'IMAGE'
     | 'VIDEO'
     | 'AUDIO'
@@ -81,6 +81,17 @@ export type EMediaType =
     | 'PDF'
     | 'TEXT'
     | 'OTHER';
+
+
+export enum EMediaType {
+    IMAGE = "IMAGE",
+    VIDEO = "VIDEO",
+    AUDIO = "AUDIO",
+    DOCUMENT = "DOCUMENT",
+    PDF = "PDF",
+    TEXT = "TEXT",
+    OTHER = "OTHER"
+}
 
 export type EQuestionGroupType =
     | 'LISTENING'

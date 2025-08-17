@@ -411,7 +411,7 @@ export interface UpdateExamTypeRequest {
 }
 
 // Response DTOs
-export interface ExamTypeListResponse {
+export interface ExamTypeListResponse{
     examTypes: ExamTypeDto[];
     totalElements: number;
     totalPages: number;
