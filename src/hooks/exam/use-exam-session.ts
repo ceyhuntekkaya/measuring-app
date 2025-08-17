@@ -136,7 +136,7 @@ export const useExamSession = (): UseExamSessionReturn => {
             setLoading(true);
             setError(null);
             const response = await examSessionService.deleteExamSession(id);
-            if (response.data && response.success) {
+            if (response.success) {
                 showNotification.success('Sınav oturumu başarıyla silindi!');
             } else {
                 throw new Error(response.message);

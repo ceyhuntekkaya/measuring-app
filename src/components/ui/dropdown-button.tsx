@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { ChevronDown } from 'lucide-react';
-import { DropdownButtonProps, DropdownItem } from '@/types/dropdown';
+import { DropdownButtonProps, DropdownItem } from '@/types/ui/dropdown';
 
 const DropdownButton: React.FC<DropdownButtonProps> = ({
                                                            label,

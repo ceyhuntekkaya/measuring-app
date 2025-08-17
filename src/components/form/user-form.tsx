@@ -10,7 +10,7 @@ import {Permission, Department, Role, UserFormData, User} from "@/types/auth";
 import {useDataContext} from "@/contexts/data-context";
 import {useLanguage} from "@/contexts/language-context";
 import {Brand} from "@/types/brand";
-import {EStatus} from "@/types/enumeration";
+import {EStatus} from "@/types/exam/enum";
 
 interface UserFormProps {
     onSubmit: (arg0: UserFormData) => void;

@@ -1,10 +1,17 @@
-import {DatabaseObject} from "@/types/base";
 import {Brand} from "@/types/brand";
-import {EGrade} from "@/types/enumeration";
+import {RecordType} from "@/types/ui/table";
+import {EStatus} from "@/types/exam/enum";
 
 export type Role = 'ADMIN' | 'USER' | 'LEARNER' | 'INSTRUCTOR' | 'OBSERVER' | 'COMPANY';
 
-//export type Role = '' | '' | '' | 'INSTRUCTOR' | 'OBSERVER' | '';
+export interface DatabaseObject extends RecordType{
+    id: string;
+    createdAt: Date | null;
+    deletedAt?: Date | null;
+    status: EStatus | null;
+    createdBy: User | null;
+    deletedBy: User | null;
+}
 
 export interface Authority {
     authority: string;
@@ -75,10 +82,7 @@ export interface User extends DatabaseObject{
     connectionId?: string | null;
 }
 
-export interface LearnerUser extends User{
-    grade: EGrade;
 
-}
 
 
 export interface UserDto {

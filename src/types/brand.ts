@@ -1,5 +1,5 @@
-import {EStatus} from "@/types/enumeration";
 import {DatabaseObjectDto} from "@/types/exam/miscDtos";
+import {EStatus} from "@/types/exam/enum";
 
 export interface BrandDto extends DatabaseObjectDto {
     name: string;

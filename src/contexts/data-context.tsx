@@ -1,8 +1,7 @@
 'use client';
 
 import {createContext, useState, useEffect, useContext} from 'react';
-import {Department, Permission, Role} from '@/types/auth';
-import {DataContextType} from "@/types/base-data";
+import {Department, Permission, Role, User} from '@/types/auth';
 import {useUsers} from "@/hooks/use-user";
 
 
@@ -20,6 +19,15 @@ const _departments: Department[] = [
 const _roles: Role[] = [
     'ADMIN', 'USER', 'LEARNER', 'COMPANY', 'INSTRUCTOR', 'OBSERVER'
 ];
+
+export interface DataContextType {
+    users: User[] | null;
+    loading: boolean;
+    error: string | null;
+    permissions: Permission[];
+    departments: Department[];
+    roles: Role[];
+}
 
 
 export const DataContext = createContext<DataContextType | undefined>(undefined);

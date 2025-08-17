@@ -1,18 +1,11 @@
 // questionTemplates.ts
 
 
-
-import {
-    FillInTheBlanksOptions,
-    MultipleChoiceOptions,
-    MultipleResponseOptions,
-    TrueFalseOptions
-} from "@/types/exam/templateOptions";
-import {EQuestionType, EStatus} from "@/types/exam/enum";
+import {EMediaType, EQuestionType, EStatus} from "@/types/exam/enum";
 
 export type OrderingTemplateDto = BaseQuestionTemplateDto & {
     instructions?: string;
-    options?: string; // This could be a more specific type like an array of objects
+    options?: OrderingOptions;
     shuffleItems?: boolean;
     explanation?: string;
 }
@@ -43,7 +36,7 @@ export type ImageResponseTemplateDto = BaseQuestionTemplateDto & {
 
 export type ShortAnswerTemplateDto = BaseQuestionTemplateDto & {
     question?: string;
-    options?: string; // This could be a more specific type
+    options?: ShortAnswerOptions; // This could be a more specific type
     maxCharacters?: number;
     minCharacters?: number;
     rubric?: string;
@@ -60,7 +53,7 @@ export type FillInTheBlanksTemplateDto = BaseQuestionTemplateDto & {
 
 export type MatchingTemplateDto = BaseQuestionTemplateDto & {
     instructions?: string;
-    options?: string; // This could be a more specific type
+    options?: MatchingOptions; // This could be a more specific type
     shuffleItems?: boolean;
     explanation?: string;
 }
@@ -83,7 +76,7 @@ export type TrueFalseTemplateDto = BaseQuestionTemplateDto & {
 export type HotSpotTemplateDto = BaseQuestionTemplateDto & {
     instructions?: string;
     imageUrl?: string;
-    options?: string; // This could be a more specific type
+    options?: HotSpotOptions; // This could be a more specific type
     maxSelections?: number;
     allowMultipleSpots?: boolean;
     explanation?: string;
@@ -148,3 +141,163 @@ export type AudioResponseTemplateDto = BaseQuestionTemplateDto & {
     requiresManualGrading?: boolean;
     allowedFormats?: string;
 }
+
+// Request DTOs
+export interface TemplateFilterDto {
+    type?: EQuestionType;
+    subject?: string;
+    difficulty?: string;
+    minPoints?: number;
+    maxPoints?: number;
+    minTimeLimit?: number;
+    maxTimeLimit?: number;
+    isActive?: boolean;
+    tags?: string[];
+}
+
+// Response DTOs
+export interface TemplateTypeStatistics {
+    [key: string]: number;
+}
+
+export interface TemplateUsageStatsDto {
+    templateId: string;
+    usageCount: number;
+    examCount: number;
+    lastUsed?: string;
+}
+
+export interface TemplateValidationResult {
+    templateId: string;
+    isValid: boolean;
+    errors: string[];
+}
+
+
+
+export type MultipleChoiceOptions = {
+    choices?: ChoiceOption[];
+}
+
+export type ChoiceOption = {
+    id?: string;
+    text?: string;
+    isCorrect?: boolean;
+    feedback?: string;
+    mediaUrl?: string;
+    mediaType?: EMediaType; // Example string literal type
+}
+
+export type MultipleResponseOptions = {
+    choices?: ResponseOption[];
+    selectionInstruction?: string;
+}
+
+export type ResponseOption = {
+    id?: string;
+    text?: string;
+    isCorrect?: boolean;
+    feedback?: string;
+    mediaUrl?: string;
+    mediaType?: string;
+}
+
+export type TrueFalseOptions = {
+    correctAnswer?: boolean;
+    trueLabel?: string;
+    falseLabel?: string;
+    trueFeedback?: string;
+    falseFeedback?: string;
+}
+
+export type ShortAnswerOptions = {
+    acceptableAnswers?: AcceptableAnswer[];
+    caseSensitive?: boolean;
+    exactMatch?: boolean;
+    placeholder?: string;
+}
+
+export type AcceptableAnswer = {
+    answer?: string;
+    score?: number;
+    feedback?: string;
+}
+
+export type FillInTheBlanksOptions = {
+    blanks?: BlankAnswer[];
+}
+
+export type BlankAnswer = {
+    blankId?: string;
+    acceptableAnswers?: string[];
+    caseSensitive?: boolean;
+    exactMatch?: boolean;
+    score?: number;
+    feedback?: string;
+}
+
+export type MatchingOptions = {
+    pairs?: MatchingPair[];
+    distractors?: string[];
+}
+
+export type MatchingPair = {
+    leftId?: string;
+    leftText?: string;
+    leftMediaUrl?: string;
+    rightId?: string;
+    rightText?: string;
+    rightMediaUrl?: string;
+    feedback?: string;
+}
+
+export type OrderingOptions = {
+    items?: OrderingItem[];
+    orderingType?: string; // Example string literal type
+}
+
+export type OrderingItem = {
+    id?: string;
+    text?: string;
+    correctPosition?: number;
+    mediaUrl?: string;
+    mediaType?: string;
+    feedback?: string;
+}
+
+export type DragAndDropOptions = {
+    draggableItems?: DraggableItem[];
+    dropZones?: DropZone[];
+}
+
+export type DraggableItem = {
+    id?: string;
+    text?: string;
+    mediaUrl?: string;
+    mediaType?: string;
+    correctZones?: string[];
+}
+
+export type DropZone = {
+    id?: string;
+    label?: string;
+    maxItems?: number;
+    feedback?: string;
+    position?: string;
+}
+
+export type HotSpotOptions = {
+    backgroundImageUrl?: string;
+    hotSpots?: HotSpotArea[];
+    selectionType?: string; // Example string literal type
+}
+
+export type HotSpotArea = {
+    id?: string;
+    shape?: string; // Example string literal type
+    coordinates?: string;
+    isCorrect?: boolean;
+    feedback?: string;
+    label?: string;
+}
+

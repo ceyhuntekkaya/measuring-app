@@ -90,7 +90,7 @@ export type EQuestionGroupType =
     | 'GRAMMAR'
     | 'VOCABULARY'
     | 'GENERAL';
-
+/*
 export type EStatus =
     | 'ACTIVE'
     | 'PASSIVE'
@@ -99,6 +99,21 @@ export type EStatus =
     | 'CANCELLED'
     | 'PENDING'
     | 'SUSPENDED';
+
+ */
+
+
+export enum EStatus {
+    ACTIVE = "ACTIVE",
+    PASSIVE = "PASSIVE",
+    DELETED = "DELETED",
+    WAITING = "WAITING",
+    CONFIRMED = "CONFIRMED",
+    REJECTED = "REJECTED",
+    CANCELLED = "CANCELLED",
+    PENDING = "PENDING",
+    SUSPENDED = "SUSPENDED"
+}
 
 export type EQuestionGroupTemplateLevel =
     | 'GROUP'

@@ -1,4 +1,4 @@
-import {EApprovalStatus, EMediaType, EQuestionType, EStatus} from "@/types/exam/enum";
+import {EApprovalStatus, EMediaType, EStatus} from "@/types/exam/enum";
 
 export type DatabaseObjectDto = {
     id?: string;
@@ -9,17 +9,7 @@ export type DatabaseObjectDto = {
     deletedById?: string;
 }
 
-export type TemplateFilterDto = {
-    type?: EQuestionType; // Example enum values
-    subject?: string;
-    difficulty?: string;
-    minPoints?: number;
-    maxPoints?: number;
-    minTimeLimit?: number;
-    maxTimeLimit?: number;
-    isActive?: boolean;
-    tags?: string[];
-}
+
 
 export type UploadedFileDto = DatabaseObjectDto & {
     path?: string;

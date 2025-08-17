@@ -1,273 +1,249 @@
 import { useState, useCallback } from 'react';
 
 import {
-    UpdateQuestionGroupTypeRequest,
-    QuestionGroupTypeSearchRequest,
-    QuestionGroupTypeStatistics,
-    QuestionGroupTypeTemplate,
-    LevelInfo,
-    GroupTypeInfo,
-    CreateQuestionGroupTypeRequest
+    QuestionGroupsSummary,
+    QuestionGroupStatistics,
+    QuestionGroupValidation,
 } from '@/types/exam/examResponses';
 import { showNotification } from '@/lib/notification';
-import {QuestionGroupTypeDto} from "@/types/exam/examTemplates";
-import {EQuestionGroupTemplateLevel, EQuestionGroupType} from "@/types/exam/enum";
-import {questionGroupTypeService} from "@/services/api/exam/question-group-type-service";
+import {QuestionGroupDto} from "@/types/exam/examEntities";
+import {CreateQuestionGroupRequest, CreateQuestionGroupHeaderRequest} from "@/types/exam/examRequests";
+import { questionGroupService } from "@/services/api/exam/question-grup-service";
 
-
-interface UseQuestionGroupTypeReturn {
-    questionGroupTypes: QuestionGroupTypeDto[];
-    selectedType: QuestionGroupTypeDto | null;
-    typesByExamSection: QuestionGroupTypeDto[];
-    typesByLevel: QuestionGroupTypeDto[];
-    typesByGroupType: QuestionGroupTypeDto[];
-    searchResults: QuestionGroupTypeDto[];
-    typeStatistics: QuestionGroupTypeStatistics | null;
-    availableTemplates: QuestionGroupTypeTemplate[];
-    availableLevels: LevelInfo[];
-    availableGroupTypes: GroupTypeInfo[];
+interface UseQuestionGroupReturn {
+    questionGroups: QuestionGroupDto[];
+    selectedQuestionGroup: QuestionGroupDto | null;
+    groupsByExamSection: QuestionGroupDto[];
+    groupsByExamType: QuestionGroupDto[];
+    searchResults: QuestionGroupDto[];
+    groupStatistics: QuestionGroupStatistics | null;
+    groupsSummary: QuestionGroupsSummary | null;
+    groupValidation: QuestionGroupValidation | null;
     loading: boolean;
     error: Error | null;
-    createQuestionGroupType: (createRequest: CreateQuestionGroupTypeRequest) => Promise<void>;
-    updateQuestionGroupType: (id: string, updateRequest: UpdateQuestionGroupTypeRequest) => Promise<void>;
-    getQuestionGroupTypeById: (id: string) => Promise<void>;
-    getQuestionGroupTypesByExamSection: (examSectionId: string) => Promise<void>;
-    getQuestionGroupTypesByLevel: (level: EQuestionGroupTemplateLevel) => Promise<void>;
-    getQuestionGroupTypesByGroupType: (groupType: EQuestionGroupType) => Promise<void>;
-    deleteQuestionGroupType: (id: string) => Promise<void>;
-    reorderQuestionGroupTypes: (examSectionId: string, typeIds: string[]) => Promise<void>;
-    copyQuestionGroupType: (typeId: string, targetExamSectionId: string) => Promise<void>;
-    bulkCreateQuestionGroupTypes: (examSectionId: string, createRequests: CreateQuestionGroupTypeRequest[]) => Promise<void>;
-    getQuestionGroupTypeStatistics: (id: string) => Promise<void>;
-    searchQuestionGroupTypes: (searchRequest: QuestionGroupTypeSearchRequest) => Promise<void>;
-    getAvailableTemplates: (level?: EQuestionGroupTemplateLevel, groupType?: EQuestionGroupType) => Promise<void>;
-    getAvailableLevels: () => Promise<void>;
-    getAvailableGroupTypes: () => Promise<void>;
-    clearTypeData: () => void;
+    createQuestionGroup: (createRequest: CreateQuestionGroupRequest) => Promise<void>;
+    updateQuestionGroup: (id: string, updateRequest: CreateQuestionGroupRequest) => Promise<void>;
+    getQuestionGroupById: (id: string) => Promise<void>;
+    getQuestionGroupsByExamSection: (examSectionId: string) => Promise<void>;
+    getQuestionGroupsByExamType: (examTypeId: string) => Promise<void>;
+    deleteQuestionGroup: (id: string) => Promise<void>;
+    addHeaderToQuestionGroup: (questionGroupId: string, headerRequest: CreateQuestionGroupHeaderRequest) => Promise<void>;
+    removeHeaderFromQuestionGroup: (headerId: string) => Promise<void>;
+    copyQuestionGroup: (questionGroupId: string, targetExamSectionId: string) => Promise<void>;
+    getQuestionGroupStatistics: (id: string) => Promise<void>;
+    searchQuestionGroups: (name?: string, examTypeId?: string, examSectionId?: string, questionGroupTypeId?: string, hasQuestions?: boolean) => Promise<void>;
+    getQuestionGroupsSummary: (examSectionId: string) => Promise<void>;
+    validateQuestionGroup: (id: string) => Promise<void>;
+    bulkCreateQuestionGroups: (createRequests: CreateQuestionGroupRequest[]) => Promise<void>;
+    clearQuestionGroupData: () => void;
 }
 
-export const useQuestionGroupType = (): UseQuestionGroupTypeReturn => {
-    const [questionGroupTypes, setQuestionGroupTypes] = useState<QuestionGroupTypeDto[]>([]);
-    const [selectedType, setSelectedType] = useState<QuestionGroupTypeDto | null>(null);
-    const [typesByExamSection, setTypesByExamSection] = useState<QuestionGroupTypeDto[]>([]);
-    const [typesByLevel, setTypesByLevel] = useState<QuestionGroupTypeDto[]>([]);
-    const [typesByGroupType, setTypesByGroupType] = useState<QuestionGroupTypeDto[]>([]);
-    const [searchResults, setSearchResults] = useState<QuestionGroupTypeDto[]>([]);
-    const [typeStatistics, setTypeStatistics] = useState<QuestionGroupTypeStatistics | null>(null);
-    const [availableTemplates, setAvailableTemplates] = useState<QuestionGroupTypeTemplate[]>([]);
-    const [availableLevels, setAvailableLevels] = useState<LevelInfo[]>([]);
-    const [availableGroupTypes, setAvailableGroupTypes] = useState<GroupTypeInfo[]>([]);
+export const useQuestionGroup = (): UseQuestionGroupReturn => {
+    const [questionGroups, setQuestionGroups] = useState<QuestionGroupDto[]>([]);
+    const [selectedQuestionGroup, setSelectedQuestionGroup] = useState<QuestionGroupDto | null>(null);
+    const [groupsByExamSection, setGroupsByExamSection] = useState<QuestionGroupDto[]>([]);
+    const [groupsByExamType, setGroupsByExamType] = useState<QuestionGroupDto[]>([]);
+    const [searchResults, setSearchResults] = useState<QuestionGroupDto[]>([]);
+    const [groupStatistics, setGroupStatistics] = useState<QuestionGroupStatistics | null>(null);
+    const [groupsSummary, setGroupsSummary] = useState<QuestionGroupsSummary | null>(null);
+    const [groupValidation, setGroupValidation] = useState<QuestionGroupValidation | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
 
-    const createQuestionGroupType = useCallback(async (createRequest: CreateQuestionGroupTypeRequest) => {
+    const createQuestionGroup = useCallback(async (createRequest: CreateQuestionGroupRequest) => {
         try {
             setLoading(true);
             setError(null);
-            const response = await questionGroupTypeService.createQuestionGroupType(createRequest);
+            const response = await questionGroupService.createQuestionGroup(createRequest);
             if (response.data && response.success) {
-                setSelectedType(response.data);
-                showNotification.success('Soru grubu tipi başarıyla oluşturuldu!');
+                setSelectedQuestionGroup(response.data);
+                showNotification.success('Soru grubu başarıyla oluşturuldu!');
             } else {
                 throw new Error(response.message);
             }
         } catch (err) {
             setError(err instanceof Error ? err : new Error('An error occurred'));
-            showNotification.error('Soru grubu tipi oluşturulurken bir hata oluştu!');
+            showNotification.error('Soru grubu oluşturulurken bir hata oluştu!');
         } finally {
             setLoading(false);
         }
     }, []);
 
-    const updateQuestionGroupType = useCallback(async (id: string, updateRequest: UpdateQuestionGroupTypeRequest) => {
+    const updateQuestionGroup = useCallback(async (id: string, updateRequest: CreateQuestionGroupRequest) => {
         try {
             setLoading(true);
             setError(null);
-            const response = await questionGroupTypeService.updateQuestionGroupType(id, updateRequest);
+            const response = await questionGroupService.updateQuestionGroup(id, updateRequest);
             if (response.data && response.success) {
-                setSelectedType(response.data);
-                showNotification.success('Soru grubu tipi başarıyla güncellendi!');
+                setSelectedQuestionGroup(response.data);
+                showNotification.success('Soru grubu başarıyla güncellendi!');
             } else {
                 throw new Error(response.message);
             }
         } catch (err) {
             setError(err instanceof Error ? err : new Error('An error occurred'));
-            showNotification.error('Soru grubu tipi güncellenirken bir hata oluştu!');
+            showNotification.error('Soru grubu güncellenirken bir hata oluştu!');
         } finally {
             setLoading(false);
         }
     }, []);
 
-    const getQuestionGroupTypeById = useCallback(async (id: string) => {
+    const getQuestionGroupById = useCallback(async (id: string) => {
         try {
             setLoading(true);
             setError(null);
-            const response = await questionGroupTypeService.getQuestionGroupTypeById(id);
+            const response = await questionGroupService.getQuestionGroupById(id);
             if (response.data && response.success) {
-                setSelectedType(response.data);
+                setSelectedQuestionGroup(response.data);
             } else {
                 throw new Error(response.message);
             }
         } catch (err) {
             setError(err instanceof Error ? err : new Error('An error occurred'));
-            showNotification.error('Soru grubu tipi alınırken bir hata oluştu!');
+            showNotification.error('Soru grubu alınırken bir hata oluştu!');
         } finally {
             setLoading(false);
         }
     }, []);
 
-    const getQuestionGroupTypesByExamSection = useCallback(async (examSectionId: string) => {
+    const getQuestionGroupsByExamSection = useCallback(async (examSectionId: string) => {
         try {
             setLoading(true);
             setError(null);
-            const response = await questionGroupTypeService.getQuestionGroupTypesByExamSection(examSectionId);
+            const response = await questionGroupService.getQuestionGroupsByExamSection(examSectionId);
             if (response.data && response.success) {
-                setTypesByExamSection(response.data);
+                setGroupsByExamSection(response.data);
             } else {
                 throw new Error(response.message);
             }
         } catch (err) {
             setError(err instanceof Error ? err : new Error('An error occurred'));
-            showNotification.error('Sınav bölümü tipleri alınırken bir hata oluştu!');
+            showNotification.error('Sınav bölümü soru grupları alınırken bir hata oluştu!');
         } finally {
             setLoading(false);
         }
     }, []);
 
-    const getQuestionGroupTypesByLevel = useCallback(async (level: EQuestionGroupTemplateLevel) => {
+    const getQuestionGroupsByExamType = useCallback(async (examTypeId: string) => {
         try {
             setLoading(true);
             setError(null);
-            const response = await questionGroupTypeService.getQuestionGroupTypesByLevel(level);
+            const response = await questionGroupService.getQuestionGroupsByExamType(examTypeId);
             if (response.data && response.success) {
-                setTypesByLevel(response.data);
+                setGroupsByExamType(response.data);
             } else {
                 throw new Error(response.message);
             }
         } catch (err) {
             setError(err instanceof Error ? err : new Error('An error occurred'));
-            showNotification.error('Seviye tipleri alınırken bir hata oluştu!');
+            showNotification.error('Sınav tipi soru grupları alınırken bir hata oluştu!');
         } finally {
             setLoading(false);
         }
     }, []);
 
-    const getQuestionGroupTypesByGroupType = useCallback(async (groupType: EQuestionGroupType) => {
+    const deleteQuestionGroup = useCallback(async (id: string) => {
         try {
             setLoading(true);
             setError(null);
-            const response = await questionGroupTypeService.getQuestionGroupTypesByGroupType(groupType);
-            if (response.data && response.success) {
-                setTypesByGroupType(response.data);
+            const response = await questionGroupService.deleteQuestionGroup(id);
+            if (response.success) {
+                showNotification.success('Soru grubu başarıyla silindi!');
             } else {
                 throw new Error(response.message);
             }
         } catch (err) {
             setError(err instanceof Error ? err : new Error('An error occurred'));
-            showNotification.error('Grup tipi tipleri alınırken bir hata oluştu!');
+            showNotification.error('Soru grubu silinirken bir hata oluştu!');
         } finally {
             setLoading(false);
         }
     }, []);
 
-    const deleteQuestionGroupType = useCallback(async (id: string) => {
+    const addHeaderToQuestionGroup = useCallback(async (questionGroupId: string, headerRequest: CreateQuestionGroupHeaderRequest) => {
         try {
             setLoading(true);
             setError(null);
-            const response = await questionGroupTypeService.deleteQuestionGroupType(id);
+            const response = await questionGroupService.addHeaderToQuestionGroup(questionGroupId, headerRequest);
             if (response.data && response.success) {
-                showNotification.success('Soru grubu tipi başarıyla silindi!');
+                showNotification.success('Başlık başarıyla eklendi!');
             } else {
                 throw new Error(response.message);
             }
         } catch (err) {
             setError(err instanceof Error ? err : new Error('An error occurred'));
-            showNotification.error('Soru grubu tipi silinirken bir hata oluştu!');
+            showNotification.error('Başlık eklenirken bir hata oluştu!');
         } finally {
             setLoading(false);
         }
     }, []);
 
-    const reorderQuestionGroupTypes = useCallback(async (examSectionId: string, typeIds: string[]) => {
+    const removeHeaderFromQuestionGroup = useCallback(async (headerId: string) => {
         try {
             setLoading(true);
             setError(null);
-            const response = await questionGroupTypeService.reorderQuestionGroupTypes(examSectionId, typeIds);
-            if (response.data && response.success) {
-                setTypesByExamSection(response.data);
-                showNotification.success('Soru grubu tipleri başarıyla yeniden sıralandı!');
+            const response = await questionGroupService.removeHeaderFromQuestionGroup(headerId);
+            if (response.success) {
+                showNotification.success('Başlık başarıyla silindi!');
             } else {
                 throw new Error(response.message);
             }
         } catch (err) {
             setError(err instanceof Error ? err : new Error('An error occurred'));
-            showNotification.error('Soru grubu tipleri sıralanırken bir hata oluştu!');
+            showNotification.error('Başlık silinirken bir hata oluştu!');
         } finally {
             setLoading(false);
         }
     }, []);
 
-    const copyQuestionGroupType = useCallback(async (typeId: string, targetExamSectionId: string) => {
+    const copyQuestionGroup = useCallback(async (questionGroupId: string, targetExamSectionId: string) => {
         try {
             setLoading(true);
             setError(null);
-            const response = await questionGroupTypeService.copyQuestionGroupType(typeId, targetExamSectionId);
+            const response = await questionGroupService.copyQuestionGroup(questionGroupId, targetExamSectionId);
             if (response.data && response.success) {
-                setSelectedType(response.data);
-                showNotification.success('Soru grubu tipi başarıyla kopyalandı!');
+                setSelectedQuestionGroup(response.data);
+                showNotification.success('Soru grubu başarıyla kopyalandı!');
             } else {
                 throw new Error(response.message);
             }
         } catch (err) {
             setError(err instanceof Error ? err : new Error('An error occurred'));
-            showNotification.error('Soru grubu tipi kopyalanırken bir hata oluştu!');
+            showNotification.error('Soru grubu kopyalanırken bir hata oluştu!');
         } finally {
             setLoading(false);
         }
     }, []);
 
-    const bulkCreateQuestionGroupTypes = useCallback(async (examSectionId: string, createRequests: CreateQuestionGroupTypeRequest[]) => {
+    const getQuestionGroupStatistics = useCallback(async (id: string) => {
         try {
             setLoading(true);
             setError(null);
-            const response = await questionGroupTypeService.bulkCreateQuestionGroupTypes(examSectionId, createRequests);
+            const response = await questionGroupService.getQuestionGroupStatistics(id);
             if (response.data && response.success) {
-                setQuestionGroupTypes(response.data);
-                showNotification.success('Soru grubu tipleri başarıyla toplu oluşturuldu!');
+                setGroupStatistics(response.data);
             } else {
                 throw new Error(response.message);
             }
         } catch (err) {
             setError(err instanceof Error ? err : new Error('An error occurred'));
-            showNotification.error('Soru grubu tipleri toplu oluşturulurken bir hata oluştu!');
+            showNotification.error('Soru grubu istatistikleri alınırken bir hata oluştu!');
         } finally {
             setLoading(false);
         }
     }, []);
 
-    const getQuestionGroupTypeStatistics = useCallback(async (id: string) => {
+    const searchQuestionGroups = useCallback(async (
+        name?: string,
+        examTypeId?: string,
+        examSectionId?: string,
+        questionGroupTypeId?: string,
+        hasQuestions?: boolean
+    ) => {
         try {
             setLoading(true);
             setError(null);
-            const response = await questionGroupTypeService.getQuestionGroupTypeStatistics(id);
-            if (response.data && response.success) {
-                setTypeStatistics(response.data);
-            } else {
-                throw new Error(response.message);
-            }
-        } catch (err) {
-            setError(err instanceof Error ? err : new Error('An error occurred'));
-            showNotification.error('Tip istatistikleri alınırken bir hata oluştu!');
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    const searchQuestionGroupTypes = useCallback(async (searchRequest: QuestionGroupTypeSearchRequest) => {
-        try {
-            setLoading(true);
-            setError(null);
-            const response = await questionGroupTypeService.searchQuestionGroupTypes(searchRequest);
+            const response = await questionGroupService.searchQuestionGroups(name, examTypeId, examSectionId, questionGroupTypeId, hasQuestions);
             if (response.data && response.success) {
                 setSearchResults(response.data);
             } else {
@@ -275,108 +251,104 @@ export const useQuestionGroupType = (): UseQuestionGroupTypeReturn => {
             }
         } catch (err) {
             setError(err instanceof Error ? err : new Error('An error occurred'));
-            showNotification.error('Soru grubu tipleri aranırken bir hata oluştu!');
+            showNotification.error('Soru grupları aranırken bir hata oluştu!');
         } finally {
             setLoading(false);
         }
     }, []);
 
-    const getAvailableTemplates = useCallback(async (level?: EQuestionGroupTemplateLevel, groupType?: EQuestionGroupType) => {
+    const getQuestionGroupsSummary = useCallback(async (examSectionId: string) => {
         try {
             setLoading(true);
             setError(null);
-            const response = await questionGroupTypeService.getAvailableTemplates(level, groupType);
+            const response = await questionGroupService.getQuestionGroupsSummary(examSectionId);
             if (response.data && response.success) {
-                setAvailableTemplates(response.data);
+                setGroupsSummary(response.data);
             } else {
                 throw new Error(response.message);
             }
         } catch (err) {
             setError(err instanceof Error ? err : new Error('An error occurred'));
-            showNotification.error('Mevcut şablonlar alınırken bir hata oluştu!');
+            showNotification.error('Soru grupları özeti alınırken bir hata oluştu!');
         } finally {
             setLoading(false);
         }
     }, []);
 
-    const getAvailableLevels = useCallback(async () => {
+    const validateQuestionGroup = useCallback(async (id: string) => {
         try {
             setLoading(true);
             setError(null);
-            const response = await questionGroupTypeService.getAvailableLevels();
+            const response = await questionGroupService.validateQuestionGroup(id);
             if (response.data && response.success) {
-                setAvailableLevels(response.data);
+                setGroupValidation(response.data);
             } else {
                 throw new Error(response.message);
             }
         } catch (err) {
             setError(err instanceof Error ? err : new Error('An error occurred'));
-            showNotification.error('Mevcut seviyeler alınırken bir hata oluştu!');
+            showNotification.error('Soru grubu doğrulanırken bir hata oluştu!');
         } finally {
             setLoading(false);
         }
     }, []);
 
-    const getAvailableGroupTypes = useCallback(async () => {
+    const bulkCreateQuestionGroups = useCallback(async (createRequests: CreateQuestionGroupRequest[]) => {
         try {
             setLoading(true);
             setError(null);
-            const response = await questionGroupTypeService.getAvailableGroupTypes();
+            const response = await questionGroupService.bulkCreateQuestionGroups(createRequests);
             if (response.data && response.success) {
-                setAvailableGroupTypes(response.data);
+                setQuestionGroups(response.data);
+                showNotification.success('Soru grupları başarıyla toplu oluşturuldu!');
             } else {
                 throw new Error(response.message);
             }
         } catch (err) {
             setError(err instanceof Error ? err : new Error('An error occurred'));
-            showNotification.error('Mevcut grup tipleri alınırken bir hata oluştu!');
+            showNotification.error('Soru grupları toplu oluşturulurken bir hata oluştu!');
         } finally {
             setLoading(false);
         }
     }, []);
 
-    const clearTypeData = useCallback(() => {
-        setQuestionGroupTypes([]);
-        setSelectedType(null);
-        setTypesByExamSection([]);
-        setTypesByLevel([]);
-        setTypesByGroupType([]);
+    const clearQuestionGroupData = useCallback(() => {
+        setQuestionGroups([]);
+        setSelectedQuestionGroup(null);
+        setGroupsByExamSection([]);
+        setGroupsByExamType([]);
         setSearchResults([]);
-        setTypeStatistics(null);
-        setAvailableTemplates([]);
-        setAvailableLevels([]);
-        setAvailableGroupTypes([]);
+        setGroupStatistics(null);
+        setGroupsSummary(null);
+        setGroupValidation(null);
         setError(null);
     }, []);
 
     return {
-        questionGroupTypes,
-        selectedType,
-        typesByExamSection,
-        typesByLevel,
-        typesByGroupType,
+        questionGroups,
+        selectedQuestionGroup,
+        groupsByExamSection,
+        groupsByExamType,
         searchResults,
-        typeStatistics,
-        availableTemplates,
-        availableLevels,
-        availableGroupTypes,
+        groupStatistics,
+        groupsSummary,
+        groupValidation,
         loading,
         error,
-        createQuestionGroupType,
-        updateQuestionGroupType,
-        getQuestionGroupTypeById,
-        getQuestionGroupTypesByExamSection,
-        getQuestionGroupTypesByLevel,
-        getQuestionGroupTypesByGroupType,
-        deleteQuestionGroupType,
-        reorderQuestionGroupTypes,
-        copyQuestionGroupType,
-        bulkCreateQuestionGroupTypes,
-        getQuestionGroupTypeStatistics,
-        searchQuestionGroupTypes,
-        getAvailableTemplates,
-        getAvailableLevels,
-        getAvailableGroupTypes,
-        clearTypeData
+        createQuestionGroup,
+        updateQuestionGroup,
+        getQuestionGroupById,
+        getQuestionGroupsByExamSection,
+        getQuestionGroupsByExamType,
+        deleteQuestionGroup,
+        addHeaderToQuestionGroup,
+        removeHeaderFromQuestionGroup,
+        copyQuestionGroup,
+        getQuestionGroupStatistics,
+        searchQuestionGroups,
+        getQuestionGroupsSummary,
+        validateQuestionGroup,
+        bulkCreateQuestionGroups,
+        clearQuestionGroupData
     };
 };

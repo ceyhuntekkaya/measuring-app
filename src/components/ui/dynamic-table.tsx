@@ -4,7 +4,7 @@ import {
     ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
     ChevronsLeft, ChevronsRight, Search,
 } from 'lucide-react';
-import {Column, RecordType} from "@/types/table";
+import {Column, RecordType} from "@/types/ui/table";
 
 interface TableProps<T> {
     data?: T[] | null;

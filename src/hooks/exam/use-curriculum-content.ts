@@ -161,7 +161,7 @@ export const useCurriculumContent = (): UseCurriculumContentReturn => {
             setLoading(true);
             setError(null);
             const response = await curriculumContentService.deleteCurriculumContent(id);
-            if (response.data && response.success) {
+            if (response.success) {
                 showNotification.success('Müfredat içeriği başarıyla silindi!');
             } else {
                 throw new Error(response.message);

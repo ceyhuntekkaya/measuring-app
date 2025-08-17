@@ -1,0 +1,359 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import Checkbox from "@/components/ui/checkbox";
+import { NumberInput } from "@/components/ui/number-input";
+import { OrderingTemplateDto, OrderingOptions, OrderingItem } from "@/types/exam/questionTemplates";
+import { Trash2, Plus, ArrowUp, ArrowDown } from "lucide-react";
+
+interface OrderingTemplateFormProps {
+    value?: OrderingTemplateDto | null;
+    onChange: (data: OrderingTemplateDto) => void;
+    loading?: boolean;
+}
+
+interface OrderingTemplateFormData {
+    instructions: string;
+    options: OrderingOptions;
+    shuffleItems: boolean;
+    explanation: string;
+}
+
+interface OrderingTemplateFormErrors {
+    instructions?: string;
+    options?: string;
+    explanation?: string;
+}
+
+const OrderingTemplateForm: React.FC<OrderingTemplateFormProps> = ({
+                                                                       value,
+                                                                       onChange,
+                                                                       loading = false
+                                                                   }) => {
+    const [formData, setFormData] = useState<OrderingTemplateFormData>({
+        instructions: '',
+        options: {
+            items: [],
+            orderingType: 'SEQUENTIAL'
+        },
+        shuffleItems: true,
+        explanation: ''
+    });
+
+    const [errors, setErrors] = useState<OrderingTemplateFormErrors>({});
+
+    useEffect(() => {
+        if (value) {
+            setFormData({
+                instructions: value.instructions || '',
+                options: value.options || {
+                    items: [],
+                    orderingType: 'SEQUENTIAL'
+                },
+                shuffleItems: value.shuffleItems ?? true,
+                explanation: value.explanation || ''
+            });
+        }
+    }, [value]);
+
+    const handleChange = <T extends keyof OrderingTemplateFormData>(
+        name: T,
+        value: OrderingTemplateFormData[T]
+    ) => {
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const addItem = () => {
+        const newItem: OrderingItem = {
+            id: `item_${Date.now()}`,
+            text: '',
+            correctPosition: (formData.options.items?.length || 0) + 1,
+            mediaUrl: '',
+            mediaType: '',
+            feedback: ''
+        };
+
+        setFormData(prev => ({
+            ...prev,
+            options: {
+                ...prev.options,
+                items: [...(prev.options.items || []), newItem]
+            }
+        }));
+    };
+
+    const removeItem = (index: number) => {
+        setFormData(prev => ({
+            ...prev,
+            options: {
+                ...prev.options,
+                items: prev.options.items?.filter((_, i) => i !== index) || []
+            }
+        }));
+    };
+
+    const updateItem = <K extends keyof OrderingItem>(
+        index: number,
+        field: K,
+        value: OrderingItem[K]
+    ) => {
+        setFormData(prev => ({
+            ...prev,
+            options: {
+                ...prev.options,
+                items: prev.options.items?.map((item, i) =>
+                    i === index ? { ...item, [field]: value } : item
+                ) || []
+            }
+        }));
+    };
+
+    const moveItem = (index: number, direction: 'up' | 'down') => {
+        const items = [...(formData.options.items || [])];
+        const newIndex = direction === 'up' ? index - 1 : index + 1;
+
+        if (newIndex >= 0 && newIndex < items.length) {
+            [items[index], items[newIndex]] = [items[newIndex], items[index]];
+
+            // Correct position'ları güncelle
+            items.forEach((item, i) => {
+                item.correctPosition = i + 1;
+            });
+
+            setFormData(prev => ({
+                ...prev,
+                options: {
+                    ...prev.options,
+                    items
+                }
+            }));
+        }
+    };
+
+    const validateForm = (): boolean => {
+        const newErrors: OrderingTemplateFormErrors = {};
+
+        if (!formData.instructions.trim()) {
+            newErrors.instructions = 'Talimatlar zorunludur';
+        }
+
+        if (!formData.options.items || formData.options.items.length < 2) {
+            newErrors.options = 'En az 2 öğe olmalıdır';
+        } else {
+            const hasEmptyItems = formData.options.items.some(item => !item.text?.trim());
+            if (hasEmptyItems) {
+                newErrors.options = 'Tüm öğe metinleri doldurulmalıdır';
+            }
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handleSubmit = () => {
+        if (validateForm()) {
+            const submitData: OrderingTemplateDto = {
+                ...value,
+                instructions: formData.instructions.trim(),
+                options: formData.options,
+                shuffleItems: formData.shuffleItems,
+                explanation: formData.explanation.trim()
+            };
+
+            onChange(submitData);
+        }
+    };
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Sıralama Şablonu Ayarları</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-6">
+                    {/* Talimatlar */}
+                    <div className="space-y-2">
+                        <Label htmlFor="instructions">Talimatlar *</Label>
+                        <Textarea
+                            id="instructions"
+                            value={formData.instructions}
+                            onChange={(e) => handleChange('instructions', e.target.value)}
+                            className={`min-h-[100px] ${errors.instructions ? 'border-red-500' : ''}`}
+                            placeholder="Sıralama talimatlarını giriniz"
+                        />
+                        {errors.instructions && (
+                            <Alert variant="destructive">
+                                <AlertDescription>{errors.instructions}</AlertDescription>
+                            </Alert>
+                        )}
+                    </div>
+
+                    {/* Sıralama Tipi */}
+                    <div className="space-y-2">
+                        <Label htmlFor="orderingType">Sıralama Tipi</Label>
+                        <Select
+                            onValueChange={(value) => handleChange('options', {
+                                ...formData.options,
+                                orderingType: value as keyof OrderingOptions
+                            })}
+                            value={formData.options.orderingType as keyof OrderingOptions}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Sıralama tipi seçin" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                    <SelectItem value="SEQUENTIAL">Sıralı</SelectItem>
+                                    <SelectItem value="CHRONOLOGICAL">Kronolojik</SelectItem>
+                                    <SelectItem value="PRIORITY">Öncelik Sırasına Göre</SelectItem>
+                                    <SelectItem value="ALPHABETICAL">Alfabetik</SelectItem>
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {/* Öğeleri Karıştır */}
+                    <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                            <Checkbox
+                                id="shuffleItems"
+                                checked={formData.shuffleItems}
+                                onChange={(checked) => handleChange('shuffleItems', !!checked)}
+                            />
+                            <Label htmlFor="shuffleItems">Öğeleri Karıştır</Label>
+                        </div>
+                    </div>
+
+                    {/* Sıralama Öğeleri */}
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            <Label>Sıralama Öğeleri</Label>
+                            <Button
+                                type="button"
+                                onClick={addItem}
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                                size="sm"
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Öğe Ekle
+                            </Button>
+                        </div>
+
+                        {formData.options.items?.map((item, index) => (
+                            <div key={item.id || index} className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg">
+                                <div className="col-span-1">
+                                    <Label>Sıra</Label>
+                                    <NumberInput
+                                        value={item.correctPosition || index + 1}
+                                        onChange={(value) => updateItem(index, 'correctPosition', value)}
+                                        minValue={1}
+                                        decimalPlaces={0}
+                                        disabled
+                                    />
+                                </div>
+
+                                <div className="col-span-4">
+                                    <Label>Metin *</Label>
+                                    <Textarea
+                                        value={item.text || ''}
+                                        onChange={(e) => updateItem(index, 'text', e.target.value)}
+                                        placeholder="Öğe metnini giriniz"
+                                        className="min-h-[60px]"
+                                    />
+                                </div>
+
+                                <div className="col-span-3">
+                                    <Label>Medya URL</Label>
+                                    <Input
+                                        value={item.mediaUrl || ''}
+                                        onChange={(e) => updateItem(index, 'mediaUrl', e.target.value)}
+                                        placeholder="Medya URL (opsiyonel)"
+                                    />
+                                </div>
+
+                                <div className="col-span-3">
+                                    <Label>Geri Bildirim</Label>
+                                    <Input
+                                        value={item.feedback || ''}
+                                        onChange={(e) => updateItem(index, 'feedback', e.target.value)}
+                                        placeholder="Geri bildirim (opsiyonel)"
+                                    />
+                                </div>
+
+                                <div className="col-span-1 flex flex-col gap-1">
+                                    <Button
+                                        type="button"
+                                        onClick={() => moveItem(index, 'up')}
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={index === 0}
+                                    >
+                                        <ArrowUp className="w-3 h-3" />
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        onClick={() => moveItem(index, 'down')}
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={index === (formData.options.items?.length || 0) - 1}
+                                    >
+                                        <ArrowDown className="w-3 h-3" />
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        onClick={() => removeItem(index)}
+                                        variant="destructive"
+                                        size="sm"
+                                    >
+                                        <Trash2 className="w-3 h-3" />
+                                    </Button>
+                                </div>
+                            </div>
+                        ))}
+
+                        {errors.options && (
+                            <Alert variant="destructive">
+                                <AlertDescription>{errors.options}</AlertDescription>
+                            </Alert>
+                        )}
+                    </div>
+
+                    {/* Açıklama */}
+                    <div className="space-y-2">
+                        <Label htmlFor="explanation">Açıklama</Label>
+                        <Textarea
+                            id="explanation"
+                            value={formData.explanation}
+                            onChange={(e) => handleChange('explanation', e.target.value)}
+                            className="min-h-[100px]"
+                            placeholder="Sıralama açıklaması giriniz (opsiyonel)"
+                        />
+                    </div>
+
+                    {/* Submit Button */}
+                    <div className="flex justify-end space-x-4">
+                        <Button
+                            onClick={handleSubmit}
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                            disabled={loading}
+                        >
+                            {loading ? "İşleniyor..." : "Kaydet"}
+                        </Button>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+};
+
+export default OrderingTemplateForm;
