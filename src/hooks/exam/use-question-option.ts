@@ -5,12 +5,13 @@ import {
     QuestionOptionStatistics,
     QuestionOptionAnalysis,
     QuestionOptionValidation,
-    questionOptionService
-} from '@/services/api/exam/question-option-service';
+
+} from '@/types/exam/examResponses';;
 import { showNotification } from '@/lib/notification';
 import {QuestionOptionDto} from "@/types/exam/examEntities";
 import {CreateQuestionOptionRequest} from "@/types/exam/examRequests";
 import {EMediaType} from "@/types/exam/enum";
+import {questionOptionService} from "@/services/api/exam/question-option-service";
 
 interface UseQuestionOptionReturn {
     questionOptions: QuestionOptionDto[];

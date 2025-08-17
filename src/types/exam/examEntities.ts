@@ -11,12 +11,9 @@ import {
 } from "@/types/exam/enum";
 import {BranchDto, BrandDto} from "@/types/brand";
 import {UserDto} from "@/types/auth";
+import {DatabaseObjectDto} from "@/types/exam/miscDtos";
 
-export type DatabaseObjectDto = {
-    id: string;
-    createdAt: string;
-    updatedAt: string;
-}
+
 
 export type QuestionDto = DatabaseObjectDto & {
     name?: string;

@@ -1,91 +1,15 @@
 
 import api from "@/services/api/base-api";
-import { EExamType } from "@/types/exam/enum";
 import { ExamSessionDto } from "@/types/exam/examEntities";
 import {ApiResponse} from "@/types/exam/examValidationAndAnalytics";
+import {
+    CopySessionRequest,
+    CreateExamSessionRequest,
+    ExamSessionListResponse,
+    ExamSessionSearchRequest, ExamSessionStatistics, SessionApplicationDto, SessionDashboard,
+    UpdateExamSessionRequest, UpdateStatusRequest
+} from "@/types/exam/examResponses";
 
-// Request DTOs
-export interface CreateExamSessionRequest {
-    name: string;
-    branchId: string;
-    brandId: string;
-    examTemplate: EExamType;
-    startDate: string;
-    endDate?: string;
-    capacity?: number;
-    description?: string;
-}
-
-export interface UpdateExamSessionRequest {
-    name?: string;
-    startDate?: string;
-    endDate?: string;
-    capacity?: number;
-    description?: string;
-}
-
-export interface ExamSessionSearchRequest {
-    name?: string;
-    branchId?: string;
-    brandId?: string;
-    examTemplate?: EExamType;
-    startDateFrom?: string;
-    startDateTo?: string;
-    status?: string;
-    page?: number;
-    size?: number;
-    sortBy?: string;
-    sortDirection?: string;
-}
-
-export interface CopySessionRequest {
-    newName: string;
-    newStartDate: string;
-}
-
-export interface UpdateStatusRequest {
-    newStatus: string;
-    reason?: string;
-}
-
-// Response DTOs
-export interface ExamSessionListResponse {
-    examSessions: ExamSessionDto[];
-    totalElements: number;
-    totalPages: number;
-    currentPage: number;
-    size: number;
-}
-
-export interface ExamSessionStatistics {
-    sessionId: string;
-    totalApplications: number;
-    approvedApplications: number;
-    pendingApplications: number;
-    rejectedApplications: number;
-    capacityUtilization: number;
-    averageScore?: number;
-}
-
-export interface SessionDashboard {
-    totalSessions: number;
-    upcomingSessions: number;
-    activeSessions: number;
-    completedSessions: number;
-    totalApplications: number;
-    approvedApplications: number;
-    pendingApplications: number;
-    averageCapacity: number;
-}
-
-export interface SessionApplicationDto {
-    applicationId: string;
-    applicantName: string;
-    applicantEmail: string;
-    status: string;
-    appliedAt: string;
-    notes?: string;
-}
 
 class ExamSessionService {
     private readonly baseUrl = '/exam-sessions';

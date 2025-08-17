@@ -3,10 +3,10 @@ import {
     AuditLogSearchParams,
     ActivityStatsParams,
     ActivityStatItem,
-    auditService
-} from '@/services/api/audit-service';
+} from '@/types/exam/examResponses';
 import { showNotification } from '@/lib/notification';
 import {AuditLog, PageResponse} from "@/types/exam/examEntities";
+import {auditService} from "@/services/api/audit-service";
 
 interface UseAuditReturn {
     auditLogs: PageResponse<AuditLog> | null;

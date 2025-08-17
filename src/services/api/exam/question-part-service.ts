@@ -4,45 +4,13 @@ import { EMediaType } from "@/types/exam/enum";
 import { CreateQuestionPartRequest } from "@/types/exam/examRequests";
 import {ApiResponse} from "@/types/exam/examValidationAndAnalytics";
 import {QuestionPartDto} from "@/types/exam/examEntities";
+import {
+    QuestionPartPreview,
+    QuestionPartStatistics,
+    QuestionPartTemplate,
+    UpdateQuestionPartRequest
+} from "@/types/exam/examResponses";
 
-// Request DTOs
-export interface UpdateQuestionPartRequest {
-    orderNumber?: number;
-    mediaType?: EMediaType;
-    content?: string;
-    label?: string;
-    maximumScore?: number;
-    durationInSeconds?: number;
-    repetitionCount?: number;
-}
-
-// Response DTOs
-export interface QuestionPartStatistics {
-    questionId: string;
-    totalParts: number;
-    partsByMediaType: Record<string, number>;
-    totalScore: number;
-    totalDuration: number;
-    averagePartScore: number;
-}
-
-export interface QuestionPartTemplate {
-    templateId: string;
-    name: string;
-    mediaType: EMediaType;
-    description: string;
-}
-
-export interface QuestionPartPreview {
-    partId: string;
-    orderNumber: number;
-    mediaType: EMediaType;
-    content: string;
-    label?: string;
-    hasScore: boolean;
-    hasDuration: boolean;
-    isRepeatable: boolean;
-}
 
 class QuestionPartService {
     private readonly baseUrl = '/question-parts';

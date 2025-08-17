@@ -7,11 +7,12 @@ import {
     QuestionGroupTypeTemplate,
     LevelInfo,
     GroupTypeInfo,
-    questionGroupTypeService, CreateQuestionGroupTypeRequest
-} from '@/services/api/exam/question-group-type-service';
+    CreateQuestionGroupTypeRequest
+} from '@/types/exam/examResponses';
 import { showNotification } from '@/lib/notification';
 import {QuestionGroupTypeDto} from "@/types/exam/examTemplates";
 import {EQuestionGroupTemplateLevel, EQuestionGroupType} from "@/types/exam/enum";
+import {questionGroupTypeService} from "@/services/api/exam/question-group-type-service";
 
 
 interface UseQuestionGroupTypeReturn {

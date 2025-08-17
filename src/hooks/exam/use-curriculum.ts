@@ -8,11 +8,11 @@ import {
     CurriculumListResponse,
     CurriculumStatistics,
     CurriculumContentSummary,
-    curriculumService
-} from '@/services/api/exam/curriculum-service';
+} from '@/types/exam/examResponses';
 import { showNotification } from '@/lib/notification';
 import {CurriculumDto} from "@/types/exam/examEntities";
 import {EExamCategory} from "@/types/exam/enum";
+import {curriculumService} from "@/services/api/exam/curriculum-service";
 
 interface UseCurriculumReturn {
     curricula: CurriculumListResponse | null;

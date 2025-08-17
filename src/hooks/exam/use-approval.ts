@@ -10,7 +10,7 @@ import {
     UpdateRequirementsResult,
     PendingApprovalItem,
     ApprovalStatistics
-} from '@/services/api/exam/approval-service';
+} from '@/types/exam/examResponses';
 import { approvalService } from '@/services/api/exam/approval-service';
 import { showNotification } from '@/lib/notification';
 import {ObjectType} from "@/types/exam/enum";

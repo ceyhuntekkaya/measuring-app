@@ -1,12 +1,9 @@
 // examTemplates.ts
 
 import {EApprovalStatus, EExamType, EQuestionGroupTemplateLevel, EQuestionGroupType} from "@/types/exam/enum";
+import {DatabaseObjectDto} from "@/types/exam/miscDtos";
 
-export type DatabaseObjectDto = {
-    id: string;
-    createdAt: string;
-    updatedAt: string;
-}
+
 
 export type ExamTypeDto = DatabaseObjectDto & {
     name?: string;

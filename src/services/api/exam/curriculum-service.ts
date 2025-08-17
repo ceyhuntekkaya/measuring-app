@@ -1,62 +1,15 @@
 
 import api from "@/services/api/base-api";
 import { EExamCategory } from "@/types/exam/enum";
-import {CurriculumContentDto, CurriculumDto} from "@/types/exam/examEntities";
+import {CurriculumDto} from "@/types/exam/examEntities";
 import {ApiResponse} from "@/types/exam/examValidationAndAnalytics";
+import {
+    CreateCurriculumRequest, CurriculumContentSummary, CurriculumListResponse,
+    CurriculumSearchRequest, CurriculumStatistics,
+    CurriculumWithContentDto,
+    UpdateCurriculumRequest
+} from "@/types/exam/examResponses";
 
-// Request DTOs
-export interface CreateCurriculumRequest {
-    name: string;
-    description?: string;
-    category: EExamCategory;
-}
-
-export interface UpdateCurriculumRequest {
-    name?: string;
-    description?: string;
-    category?: EExamCategory;
-}
-
-export interface CurriculumSearchRequest {
-    name?: string;
-    description?: string;
-    category?: EExamCategory;
-    page?: number;
-    size?: number;
-    sortBy?: string;
-    sortDirection?: string;
-}
-
-// Response DTOs
-export interface CurriculumWithContentDto {
-    curriculum: CurriculumDto;
-    rootContents: CurriculumContentDto[];
-    totalContents: number;
-}
-
-export interface CurriculumListResponse {
-    curricula: CurriculumDto[];
-    totalElements: number;
-    totalPages: number;
-    currentPage: number;
-    size: number;
-}
-
-export interface CurriculumStatistics {
-    curriculumId: string;
-    totalContents: number;
-    contentsByLevel: Record<string, number>;
-    lastModified: string;
-    isActive: boolean;
-}
-
-export interface CurriculumContentSummary {
-    curriculumId: string;
-    totalContents: number;
-    maxDepth: number;
-    rootContents: number;
-    contentsByLevel: Record<string, number>;
-}
 
 class CurriculumService {
     private readonly baseUrl = '/curricula';

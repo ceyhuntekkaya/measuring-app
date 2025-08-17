@@ -1,86 +1,14 @@
 import api from "@/services/api/base-api";
-import {EApprovalStatus, EApprovalType, ObjectType} from "@/types/exam/enum";
+import {ObjectType} from "@/types/exam/enum";
+
+import {
+    ApprovalHistoryItem, ApprovalInitializationResult, ApprovalRequest, ApprovalResult,
+    ApprovalStatistics, ApprovalStatusResult, InitializeApprovalRequest,
+    PendingApprovalItem, RefereeApprovalRequest, RejectionRequest,
+    UpdateRequirementsResult
+} from "@/types/exam/examResponses";
 import {ApiResponse} from "@/types/exam/examValidationAndAnalytics";
 
-// Request DTOs
-export interface ApprovalRequest {
-    objectType: ObjectType;
-    objectId: string;
-    comment?: string;
-}
-
-export interface RejectionRequest {
-    objectType: ObjectType;
-    objectId: string;
-    comment?: string;
-    rejectionType: EApprovalStatus;
-}
-
-export interface RefereeApprovalRequest {
-    objectType: ObjectType;
-    objectId: string;
-    comment?: string;
-    finalDecision: EApprovalStatus;
-}
-
-export interface InitializeApprovalRequest {
-    objectType: ObjectType;
-    objectId: string;
-}
-
-// Response DTOs
-export interface ApprovalResult {
-    objectType: ObjectType;
-    objectId: string;
-    approvalAdded: boolean;
-    objectFullyApproved: boolean;
-    approverId: string;
-    isRefereeDecision?: boolean;
-    finalStatus?: EApprovalStatus;
-}
-
-export interface ApprovalInitializationResult {
-    objectType: ObjectType;
-    objectId: string;
-    initialized: boolean;
-}
-
-export interface ApprovalStatusResult {
-    objectType: ObjectType;
-    objectId: string;
-    isApproved: boolean;
-}
-
-export interface ApprovalHistoryItem {
-    approvalId: string;
-    approvalStatus: EApprovalStatus;
-    approvalType: EApprovalType;
-    approverName: string;
-    comment?: string;
-    createdAt: string;
-}
-
-export interface UpdateRequirementsResult {
-    updateStarted: boolean;
-    message: string;
-}
-
-export interface PendingApprovalItem {
-    objectType: ObjectType;
-    objectId: string;
-    objectName: string;
-    requiredApprovals: number;
-    currentApprovals: number;
-    createdAt: string;
-}
-
-export interface ApprovalStatistics {
-    totalObjects: number;
-    approvedObjects: number;
-    pendingObjects: number;
-    rejectedObjects: number;
-    cancelledObjects: number;
-}
 
 class ApprovalService {
     private readonly baseUrl = '/approvals';

@@ -4,42 +4,13 @@ import { EMediaType } from "@/types/exam/enum";
 import { QuestionOptionDto } from "@/types/exam/examEntities";
 import {CreateQuestionOptionRequest} from "@/types/exam/examRequests";
 import { ApiResponse } from "@/types/exam/examValidationAndAnalytics";
+import {
+    QuestionOptionAnalysis,
+    QuestionOptionStatistics,
+    QuestionOptionValidation,
+    UpdateQuestionOptionRequest
+} from "@/types/exam/examResponses";
 
-// Request DTOs
-export interface UpdateQuestionOptionRequest {
-    orderNumber?: number;
-    mediaType?: EMediaType;
-    content?: string;
-    isTrueOption?: boolean;
-}
-
-// Response DTOs
-export interface QuestionOptionStatistics {
-    questionId: string;
-    totalOptions: number;
-    correctOptions: number;
-    optionsByMediaType: Record<string, number>;
-    averageOptionLength: number;
-}
-
-export interface QuestionOptionAnalysis {
-    questionId: string;
-    totalOptions: number;
-    correctOptions: number;
-    hasCorrectAnswers: boolean;
-    isBalanced: boolean;
-    qualityScore: number;
-    recommendations: string[];
-}
-
-export interface QuestionOptionValidation {
-    questionId: string;
-    isValid: boolean;
-    issues: string[];
-    hasMinimumOptions: boolean;
-    hasCorrectAnswers: boolean;
-    isReadyForExam: boolean;
-}
 
 class QuestionOptionService {
     private readonly baseUrl = '/question-options';

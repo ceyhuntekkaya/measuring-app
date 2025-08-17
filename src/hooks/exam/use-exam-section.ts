@@ -4,11 +4,11 @@ import {
     UpdateExamSectionRequest,
     ExamSectionStatistics,
     ExamSectionsSummary,
-    examSectionService
-} from '@/services/api/exam/exam-section-service';
+} from '@/types/exam/examResponses';
 import { showNotification } from '@/lib/notification';
 import {ExamSectionDto} from "@/types/exam/examTemplates";
 import {CreateExamSectionRequest} from "@/types/exam/examEntities";
+import {examSectionService} from "@/services/api/exam/exam-section-service";
 
 interface UseExamSectionReturn {
     examSections: ExamSectionDto[];

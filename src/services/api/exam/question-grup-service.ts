@@ -3,36 +3,8 @@ import api from "@/services/api/base-api";
 import {ApiResponse} from "@/types/exam/examValidationAndAnalytics";
 import {CreateQuestionGroupHeaderRequest, CreateQuestionGroupRequest} from "@/types/exam/examRequests";
 import {QuestionGroupDto, QuestionGroupHeaderDto} from "@/types/exam/examEntities";
+import {QuestionGroupsSummary, QuestionGroupStatistics, QuestionGroupValidation} from "@/types/exam/examResponses";
 
-// Response DTOs
-export interface QuestionGroupStatistics {
-    questionGroupId: string;
-    totalQuestions: number;
-    totalHeaders: number;
-    totalScore: number;
-    averageQuestionScore: number;
-    totalDuration: number;
-    lastModified: string;
-}
-
-export interface QuestionGroupsSummary {
-    examSectionId: string;
-    totalGroups: number;
-    groupsWithQuestions: number;
-    emptyGroups: number;
-    totalQuestions: number;
-    totalMaximumScore: number;
-    totalDuration: number;
-}
-
-export interface QuestionGroupValidation {
-    questionGroupId: string;
-    isValid: boolean;
-    issues: string[];
-    isReady: boolean;
-    hasQuestions: boolean;
-    hasHeaders: boolean;
-}
 
 class QuestionGroupService {
     private readonly baseUrl = '/question-groups';

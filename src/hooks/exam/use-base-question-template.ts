@@ -1,13 +1,12 @@
 import { useState, useCallback } from 'react';
 
 import {
-    TemplateUsageInfo,
     baseQuestionTemplateService
 } from '@/services/api/exam/base-question-template-service';
 import { showNotification } from '@/lib/notification';
 import {
     QuestionTemplateListResponse,
-    QuestionTemplateResponse, QuestionTemplateSearchRequest
+    QuestionTemplateResponse, QuestionTemplateSearchRequest, TemplateUsageInfo
 } from "@/types/exam/examResponses";
 import {TemplateUsageStatistics, TemplateValidationResult} from "@/types/exam/examValidationAndAnalytics";
 import {CreateQuestionTemplateRequest, UpdateQuestionTemplateRequest} from "@/types/exam/examRequests";

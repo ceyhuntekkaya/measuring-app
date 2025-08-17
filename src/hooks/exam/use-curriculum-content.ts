@@ -4,11 +4,11 @@ import {
     UpdateCurriculumContentRequest,
     CurriculumContentSearchRequest,
     CurriculumContentStatistics,
-    curriculumContentService
-} from '@/services/api/exam/curriculum-content-service';
+} from '@/types/exam/examResponses';
 import { showNotification } from '@/lib/notification';
 import { CurriculumContentDto } from "@/types/exam/examEntities";
 import {ECurriculumLevel} from "@/types/exam/enum";
+import { curriculumContentService } from "@/services/api/exam/curriculum-content-service";
 
 interface UseCurriculumContentReturn {
     curriculumContents: CurriculumContentDto[];

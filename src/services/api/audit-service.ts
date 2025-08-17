@@ -1,31 +1,7 @@
 import api from "@/services/api/base-api";
 import {AuditLog, PageResponse} from "@/types/exam/examEntities";
+import {ActivityStatItem, ActivityStatsParams, AuditLogSearchParams} from "@/types/exam/examResponses";
 
-// Request interfaces
-export interface AuditLogSearchParams {
-    userId?: string;
-    httpMethod?: string;
-    resourceType?: string;
-    responseStatus?: number;
-    startDate?: string; // ISO date string
-    endDate?: string; // ISO date string
-    page?: number;
-    size?: number;
-    sortBy?: string;
-    sortDir?: 'asc' | 'desc';
-}
-
-export interface ActivityStatsParams {
-    startDate?: string; // ISO date string (YYYY-MM-DD)
-    endDate?: string; // ISO date string (YYYY-MM-DD)
-}
-
-// Response interfaces
-export interface ActivityStatItem {
-    resourceType: string;
-    httpMethod: string;
-    count: number;
-}
 
 class AuditService {
     private readonly baseUrl = '/audit';

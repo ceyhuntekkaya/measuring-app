@@ -3,49 +3,8 @@ import api from "@/services/api/base-api";
 import {ApiResponse} from "@/types/exam/examValidationAndAnalytics";
 import {ExamReadyDto, ExamSectionReadyDto, QuestionGroupReadyDto, QuestionReadyDto} from "@/types/exam/examReady";
 import {ExamNavigationDto, ExamReadinessValidation} from "@/types/exam/examEntities";
+import {ExamPreview, ExamSessionInfo, ExamSessionResult, ExamSessionStatus} from "@/types/exam/examResponses";
 
-// Response DTOs
-export interface ExamPreview {
-    examId: string;
-    examName: string;
-    examLevel: string;
-    examType: string;
-    description?: string;
-    maximumScore: number;
-    durationInSeconds: number;
-    totalSections: number;
-    totalQuestions: number;
-    isFinalized: boolean;
-    estimatedTime: string;
-}
-
-export interface ExamSessionInfo {
-    examId: string;
-    userId: string;
-    sessionId: string;
-    startTime: string;
-    isActive: boolean;
-}
-
-export interface ExamSessionStatus {
-    sessionId: string;
-    isActive: boolean;
-    timeRemaining: number;
-    questionsAnswered: number;
-    totalQuestions: number;
-    currentSectionId?: string;
-    currentQuestionId?: string;
-}
-
-export interface ExamSessionResult {
-    sessionId: string;
-    userId: string;
-    endTime: string;
-    isCompleted: boolean;
-    finalScore?: number;
-    questionsAnswered: number;
-    totalQuestions: number;
-}
 
 class ExamReadyService {
     private readonly baseUrl = '/exam-ready';

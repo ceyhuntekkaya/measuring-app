@@ -3,59 +3,14 @@ import api from "@/services/api/base-api";
 import {EQuestionGroupTemplateLevel, EQuestionGroupType} from "@/types/exam/enum";
 import { ApiResponse } from "@/types/exam/examValidationAndAnalytics";
 import {QuestionGroupTypeDto} from "@/types/exam/examTemplates";
+import {
+    CreateQuestionGroupTypeRequest,
+    GroupTypeInfo,
+    LevelInfo,
+    QuestionGroupTypeSearchRequest, QuestionGroupTypeStatistics,
+    QuestionGroupTypeTemplate, UpdateQuestionGroupTypeRequest
+} from "@/types/exam/examResponses";
 
-// Request DTOs
-export interface UpdateQuestionGroupTypeRequest {
-    name?: string;
-    level?: EQuestionGroupTemplateLevel;
-    groupType?: EQuestionGroupType;
-    orderNumber?: number;
-    description?: string;
-}
-
-export interface QuestionGroupTypeSearchRequest {
-    name?: string;
-    level?: EQuestionGroupTemplateLevel;
-    groupType?: EQuestionGroupType;
-    examSectionId?: string;
-}
-
-// Response DTOs
-export interface QuestionGroupTypeStatistics {
-    typeId: string;
-    totalQuestionGroups: number;
-    totalQuestions: number;
-    averageQuestionsPerGroup: number;
-    usageCount: number;
-}
-
-export interface QuestionGroupTypeTemplate {
-    templateId: string;
-    name: string;
-    level: EQuestionGroupTemplateLevel;
-    groupType: EQuestionGroupType;
-}
-
-export interface LevelInfo {
-    level: EQuestionGroupTemplateLevel;
-    displayName: string;
-    description: string;
-}
-
-export interface GroupTypeInfo {
-    groupType: EQuestionGroupType;
-    displayName: string;
-    description: string;
-}
-
-export interface CreateQuestionGroupTypeRequest {
-
-    name: string;
-    examSectionId: string;
-    orderNumber: number;
-    level: EQuestionGroupTemplateLevel;
-    groupType: EQuestionGroupType;
-}
 
 class QuestionGroupTypeService {
     private readonly baseUrl = '/question-group-types';

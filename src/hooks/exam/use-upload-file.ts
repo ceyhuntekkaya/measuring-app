@@ -7,11 +7,11 @@ import {
     UploadedFileListResponse,
     FileStatistics,
     CleanupResult,
-    uploadedFileService
-} from '@/services/api/exam/upload-file-service';
+} from '@/types/exam/examResponses';;
 import { showNotification } from '@/lib/notification';
 import {UploadedFileDto} from "@/types/exam/miscDtos";
 import {EMediaType} from "@/types/exam/enum";
+import { uploadedFileService } from "@/services/api/exam/upload-file-service";
 
 interface UseUploadedFileReturn {
     uploadedFiles: UploadedFileListResponse | null;

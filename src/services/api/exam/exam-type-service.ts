@@ -1,59 +1,15 @@
 
 import api from "@/services/api/base-api";
-import { EExamType } from "@/types/exam/enum";
 import {CreateExamTypeRequest, ExamTypeSearchRequest} from "@/types/exam/examEntities";
 import { ApiResponse } from "@/types/exam/examValidationAndAnalytics";
 import {ExamTypeDto} from "@/types/exam/examTemplates";
+import {
+    ExamTypeListResponse,
+    ExamTypeStatistics, ExamTypeSummary,
+    ExamTypeValidationResult,
+    UpdateExamTypeRequest
+} from "@/types/exam/examResponses";
 
-// Request DTOs
-export interface UpdateExamTypeRequest {
-    name?: string;
-    examLevel?: string;
-    examType?: EExamType;
-    description?: string;
-    durationInSeconds?: number;
-    maximumScore?: number;
-    passingScore?: number;
-    isActive?: boolean;
-}
-
-// Response DTOs
-export interface ExamTypeListResponse {
-    examTypes: ExamTypeDto[];
-    totalElements: number;
-    totalPages: number;
-    currentPage: number;
-    size: number;
-}
-
-export interface ExamTypeValidationResult {
-    examTypeId: string;
-    isValid: boolean;
-    canBeFinalized: boolean;
-    issues: string[];
-    warnings: string[];
-    sectionsCount: number;
-    questionsCount: number;
-    totalScore: number;
-}
-
-export interface ExamTypeStatistics {
-    examTypeId: string;
-    totalSections: number;
-    totalQuestionGroups: number;
-    totalQuestions: number;
-    totalScore: number;
-    averageQuestionsPerSection: number;
-    isFinalized: boolean;
-    lastModified: string;
-}
-
-export interface ExamTypeSummary {
-    totalExamTypes: number;
-    finalizedExamTypes: number;
-    draftExamTypes: number;
-    activeExamTypes: number;
-}
 
 class ExamTypeService {
     private readonly baseUrl = '/exam-types';

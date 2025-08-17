@@ -4,18 +4,13 @@ import {CreateQuestionTemplateRequest, UpdateQuestionTemplateRequest} from "@/ty
 import {
     QuestionTemplateListResponse,
     QuestionTemplateResponse,
-    QuestionTemplateSearchRequest
+    QuestionTemplateSearchRequest, TemplateUsageInfo
 } from "@/types/exam/examResponses";
 import {ApiResponse, TemplateUsageStatistics, TemplateValidationResult} from "@/types/exam/examValidationAndAnalytics";
 import {EQuestionType} from "@/types/exam/enum";
 
 // Response DTOs
-export interface TemplateUsageInfo {
-    templateId: string;
-    usageCount: number;
-    usedInQuestions: string[];
-    canBeDeleted: boolean;
-}
+
 
 class BaseQuestionTemplateService {
     private readonly baseUrl = '/question-templates';

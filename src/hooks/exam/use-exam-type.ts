@@ -6,11 +6,11 @@ import {
     ExamTypeValidationResult,
     ExamTypeStatistics,
     ExamTypeSummary,
-    examTypeService
-} from '@/services/api/exam/exam-type-service';
+} from '@/types/exam/examResponses';
 import { showNotification } from '@/lib/notification';
 import {ExamTypeDto} from "@/types/exam/examTemplates";
 import {CreateExamTypeRequest, ExamTypeSearchRequest} from "@/types/exam/examEntities";
+import { examTypeService } from "@/services/api/exam/exam-type-service";
 
 interface UseExamTypeReturn {
     examTypes: ExamTypeListResponse | null;

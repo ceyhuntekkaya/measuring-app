@@ -5,11 +5,11 @@ import {
     ExamSessionInfo,
     ExamSessionStatus,
     ExamSessionResult,
-    examReadyService
-} from '@/services/api/exam/exam-ready-service';
+} from '@/types/exam/examResponses';
 import { showNotification } from '@/lib/notification';
 import {ExamReadyDto, ExamSectionReadyDto, QuestionGroupReadyDto, QuestionReadyDto} from "@/types/exam/examReady";
 import {ExamNavigationDto, ExamReadinessValidation} from "@/types/exam/examEntities";
+import {examReadyService} from "@/services/api/exam/exam-ready-service";
 
 interface UseExamReadyReturn {
     examReady: ExamReadyDto | null;

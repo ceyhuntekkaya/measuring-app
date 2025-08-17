@@ -5,12 +5,12 @@ import {
     QuestionPartStatistics,
     QuestionPartTemplate,
     QuestionPartPreview,
-    questionPartService
-} from '@/services/api/exam/question-part-service';
+} from '@/types/exam/examResponses';;
 import { showNotification } from '@/lib/notification';
 import { QuestionPartDto } from "@/types/exam/examEntities";
 import {CreateQuestionPartRequest} from "@/types/exam/examRequests";
 import {EMediaType} from "@/types/exam/enum";
+import {questionPartService} from "@/services/api/exam/question-part-service";
 
 interface UseQuestionPartReturn {
     questionParts: QuestionPartDto[];

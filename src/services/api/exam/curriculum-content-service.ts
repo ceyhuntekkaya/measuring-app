@@ -2,38 +2,14 @@ import api from "@/services/api/base-api";
 import {ECurriculumLevel} from "@/types/exam/enum";
 import {ApiResponse} from "@/types/exam/examValidationAndAnalytics";
 import {CurriculumContentDto} from "@/types/exam/examEntities";
+import {
+    CreateCurriculumContentRequest, CurriculumContentSearchRequest,
+    CurriculumContentStatistics,
+    UpdateCurriculumContentRequest
+} from "@/types/exam/examResponses";
 
 // Request DTOs
-export interface CreateCurriculumContentRequest {
-    curriculumId: string;
-    parentId?: string;
-    code: string;
-    content: string;
-    level: ECurriculumLevel;
-    orderNumber?: number;
-}
 
-export interface UpdateCurriculumContentRequest {
-    code?: string;
-    content?: string;
-    level?: ECurriculumLevel;
-    orderNumber?: number;
-}
-
-export interface CurriculumContentSearchRequest {
-    curriculumId?: string;
-    code?: string;
-    content?: string;
-    level?: ECurriculumLevel;
-}
-
-export interface CurriculumContentStatistics {
-    curriculumId: string;
-    totalContents: number;
-    contentsByLevel: Record<string, number>;
-    maxDepth: number;
-    rootContents: number;
-}
 
 class CurriculumContentService {
     private readonly baseUrl = '/curriculum-contents';

@@ -3,34 +3,8 @@ import api from "@/services/api/base-api";
 import {CreateExamSectionRequest} from "@/types/exam/examEntities";
 import { ApiResponse } from "@/types/exam/examValidationAndAnalytics";
 import {ExamSectionDto} from "@/types/exam/examTemplates";
+import {ExamSectionsSummary, ExamSectionStatistics, UpdateExamSectionRequest} from "@/types/exam/examResponses";
 
-// Request DTOs
-export interface UpdateExamSectionRequest {
-    name?: string;
-    description?: string;
-    orderNumber?: number;
-    durationInSeconds?: number;
-    maximumScore?: number;
-}
-
-// Response DTOs
-export interface ExamSectionStatistics {
-    sectionId: string;
-    totalQuestionGroups: number;
-    totalQuestions: number;
-    totalScore: number;
-    totalDuration: number;
-    averageQuestionsPerGroup: number;
-    lastModified: string;
-}
-
-export interface ExamSectionsSummary {
-    examTypeId: string;
-    totalSections: number;
-    sectionsWithQuestionGroups: number;
-    emptySections: number;
-    totalQuestionGroups: number;
-}
 
 class ExamSectionService {
     private readonly baseUrl = '/exam-sections';

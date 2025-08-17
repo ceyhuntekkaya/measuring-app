@@ -6,10 +6,6 @@ const API_URL =  siteConfig.api.invokeUrl;
 class AuthService {
     async login(username: string, password: string): Promise<AuthResponse> {
         try {
-            
-            
-            
-
             const config = {
                 headers: {
                     "Content-Type": "application/json"
@@ -22,7 +18,6 @@ class AuthService {
                 config
             );
             const data = response.data;
-
 
             if (data.accessToken) {
                 localStorage.setItem('accessToken', data.accessToken);

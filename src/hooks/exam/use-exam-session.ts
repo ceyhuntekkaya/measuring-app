@@ -8,10 +8,10 @@ import {
     SessionDashboard,
     SessionApplicationDto,
     UpdateStatusRequest,
-    examSessionService
-} from '@/services/api/exam/exam-session-service';
+} from '@/types/exam/examResponses';
 import { showNotification } from '@/lib/notification';
 import {ExamSessionDto} from "@/types/exam/examEntities";
+import {examSessionService} from "@/services/api/exam/exam-session-service";
 
 interface UseExamSessionReturn {
     examSessions: ExamSessionListResponse | null;

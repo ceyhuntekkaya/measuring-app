@@ -4,29 +4,8 @@ import {CreateQuestionRequest} from "@/types/exam/examRequests";
 import { ApiResponse } from "@/types/exam/examValidationAndAnalytics";
 import {QuestionDto, QuestionSearchRequest} from "@/types/exam/examEntities";
 import {EQuestionType} from "@/types/exam/enum";
+import {QuestionGroupQuestionStatistics, QuestionValidation} from "@/types/exam/examResponses";
 
-// Response DTOs
-export interface QuestionGroupQuestionStatistics {
-    questionGroupId: string;
-    totalQuestions: number;
-    autoEvaluatedQuestions: number;
-    manualEvaluatedQuestions: number;
-    questionsWithParts: number;
-    questionsWithOptions: number;
-    totalMaximumScore: number;
-    totalDuration: number;
-}
-
-export interface QuestionValidation {
-    questionId: string;
-    isValid: boolean;
-    issues: string[];
-    isComplete: boolean;
-    hasParts: boolean;
-    hasOptions: boolean;
-    hasCorrectAnswers: boolean;
-    isReadyForExam: boolean;
-}
 
 class QuestionService {
     private readonly baseUrl = '/questions';

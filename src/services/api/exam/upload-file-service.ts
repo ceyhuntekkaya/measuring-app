@@ -3,73 +3,13 @@ import api from "@/services/api/base-api";
 import {UploadedFileDto} from "@/types/exam/miscDtos";
 import {EMediaType} from "@/types/exam/enum";
 import {ApiResponse} from "@/types/exam/examValidationAndAnalytics";
+import {
+    BulkUploadResult, CleanupResult,
+    FileContentResponse, FileStatistics, UpdateFileMetadataRequest,
+    UploadedFileListResponse,
+    UploadedFileSearchRequest
+} from "@/types/exam/examResponses";
 
-// Request DTOs
-export interface UpdateFileMetadataRequest {
-    fileName?: string;
-    documentType?: EMediaType;
-    description?: string;
-}
-
-export interface UploadedFileSearchRequest {
-    fileName?: string;
-    documentType?: EMediaType;
-    minFileSize?: number;
-    maxFileSize?: number;
-    uploadedAfter?: string;
-    uploadedBefore?: string;
-    page?: number;
-    size?: number;
-    sortBy?: string;
-    sortDirection?: string;
-}
-
-// Response DTOs
-export interface BulkUploadResult {
-    successfulUploads: UploadedFileDto[];
-    failedUploads: string[];
-    totalFiles: number;
-    successCount: number;
-    failureCount: number;
-}
-
-export interface FileContentResponse {
-    content: ArrayBuffer;
-    fileName: string;
-    contentType: string;
-    fileSize: number;
-}
-
-export interface FileContentDto {
-    base64Content: string;
-    contentType: string;
-    fileName: string;
-    fileSize: number;
-}
-
-export interface UploadedFileListResponse {
-    files: UploadedFileDto[];
-    totalElements: number;
-    totalPages: number;
-    currentPage: number;
-    size: number;
-}
-
-export interface FileStatistics {
-    totalFiles: number;
-    totalSizeBytes: number;
-    filesByType: Record<string, number>;
-    averageFileSize: number;
-    largestFile: number;
-    smallestFile: number;
-}
-
-export interface CleanupResult {
-    orphanedFilesFound: number;
-    orphanedFilesDeleted: number;
-    spaceSavedBytes: number;
-    errors: string[];
-}
 
 class UploadedFileService {
     private readonly baseUrl = '/files';

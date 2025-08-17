@@ -3,12 +3,12 @@ import { useState, useCallback } from 'react';
 import {
     QuestionGroupQuestionStatistics,
     QuestionValidation,
-    questionService
-} from '@/services/api/exam/question-service';
+} from '@/types/exam/examResponses';
 import { showNotification } from '@/lib/notification';
 import {QuestionDto, QuestionSearchRequest} from "@/types/exam/examEntities";
 import {CreateQuestionRequest} from "@/types/exam/examRequests";
 import {EQuestionType} from "@/types/exam/enum";
+import {questionService} from "@/services/api/exam/question-service";
 
 interface UseQuestionReturn {
     questions: QuestionDto[];
