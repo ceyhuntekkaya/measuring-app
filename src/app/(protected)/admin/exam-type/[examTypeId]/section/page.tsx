@@ -27,7 +27,7 @@ export default function ExamSectionPage() {
 
         {
             key: 'name',
-            header: 'name',
+            header: 'Ad',
             render: (value, record) => (
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
@@ -40,7 +40,7 @@ export default function ExamSectionPage() {
         ,
         {
             key: 'status',
-            header: 'status',
+            header: 'durum',
             render: (value, record) => (
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
@@ -58,7 +58,7 @@ export default function ExamSectionPage() {
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
                 >
-                    <Link href={`/admin/exam-type/${examTypeId}/section/${value}/group`}>GROUPS</Link>
+                    <Link href={`/admin/exam-type/${examTypeId}/section/${value}/group`}>GRUPLAR</Link>
                 </div>
             )
         }
@@ -78,10 +78,10 @@ export default function ExamSectionPage() {
             <PageHeader actions={
                 <ActionButtons
                     onAdd={handleAdd}
-                    addButtonText="Müşteri Bilgierini Çek"
+                    addButtonText="Yeni Bölüm Tanımla"
                 />
             }/>
-            <div className="p-6">
+            <div className="p-6 pt-1">
                 {
                     sectionsByExamType &&
                     <DynamicTable columns={columns} data={sectionsByExamType}/>

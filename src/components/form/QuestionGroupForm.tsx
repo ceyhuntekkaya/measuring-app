@@ -322,6 +322,7 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                         <div className="space-y-2">
                             <Label htmlFor="maximumScore">Maksimum Puan</Label>
                             <NumberInput
+                                inputType={"number"}
                                 id="maximumScore"
                                 value={formData.maximumScore || 0}
                                 onChange={(value) => handleChange('maximumScore', value || undefined)}
@@ -342,6 +343,7 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                             <Label htmlFor="durationInSeconds">Süre (saniye)</Label>
                             <NumberInput
                                 id="durationInSeconds"
+                                inputType={"number"}
                                 value={formData.durationInSeconds || 0}
                                 onChange={(value) => handleChange('durationInSeconds', value || undefined)}
                                 minValue={0}
@@ -378,6 +380,7 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                                 <div className="col-span-1">
                                     <Label>Sıra</Label>
                                     <NumberInput
+                                        inputType={"number"}
                                         value={header.orderNumber}
                                         onChange={(value) => updateHeader(index, 'orderNumber', value)}
                                         minValue={1}

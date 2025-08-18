@@ -2,23 +2,23 @@
 
 import {useParams} from "next/navigation";
 import React, {useEffect} from "react";
-import {useQuestionGroup} from "@/hooks/exam/use-question-group";
-import QuestionGroupDetail from "@/components/detail/QuestionGroupDetail";
+import {useExamType} from "@/hooks/exam/use-exam-type";
+import ExamTypeDetail from "@/components/detail/ExamTypeDetail";
 import PageHeader from "@/components/layout/page-header";
 import LoadingComp from "@/components/ui/loading-comp";
 
-export default function QuestionGroupDetailPage() {
+export default function ExamTypeDetailPage() {
     const params = useParams();
-    const groupId = params.groupId as string;
+    const examTypeId = params.examTypeId as string;
 
     const {
-        selectedQuestionGroup,
-        getQuestionGroupById,
+        selectedExamType,
+        getExamTypeById,
         loading
-    } = useQuestionGroup();
+    } = useExamType();
 
     useEffect(() => {
-        getQuestionGroupById(groupId);
+        getExamTypeById(examTypeId);
     }, []);
 
     if (loading) {
@@ -27,12 +27,11 @@ export default function QuestionGroupDetailPage() {
         );
     }
 
-
     return (
         <div className="space-y-6">
             <PageHeader/>
             <div className="p-1">
-                <QuestionGroupDetail selectedQuestionGroup={selectedQuestionGroup}/>
+                <ExamTypeDetail selectedExamType={selectedExamType}/>
 
             </div>
         </div>

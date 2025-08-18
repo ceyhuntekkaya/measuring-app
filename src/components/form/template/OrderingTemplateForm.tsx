@@ -254,6 +254,7 @@ const OrderingTemplateForm: React.FC<OrderingTemplateFormProps> = ({
                                 <div className="col-span-1">
                                     <Label>Sıra</Label>
                                     <NumberInput
+                                        inputType={"number"}
                                         value={item.correctPosition || index + 1}
                                         onChange={(value) => updateItem(index, 'correctPosition', value)}
                                         minValue={1}

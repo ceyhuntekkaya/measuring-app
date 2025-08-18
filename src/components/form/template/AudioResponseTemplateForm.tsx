@@ -157,6 +157,7 @@ const AudioResponseTemplateForm: React.FC<AudioResponseTemplateFormProps> = ({
                             <Label htmlFor="minRecordingDuration">Minimum Kayıt Süresi (saniye)</Label>
                             <NumberInput
                                 id="minRecordingDuration"
+                                inputType={"number"}
                                 value={formData.minRecordingDuration || 10}
                                 onChange={(value) => handleChange('minRecordingDuration', value)}
                                 minValue={1}
@@ -175,6 +176,7 @@ const AudioResponseTemplateForm: React.FC<AudioResponseTemplateFormProps> = ({
                         <div className="space-y-2">
                             <Label htmlFor="maxRecordingDuration">Maksimum Kayıt Süresi (saniye)</Label>
                             <NumberInput
+                                inputType={"number"}
                                 id="maxRecordingDuration"
                                 value={formData.maxRecordingDuration || 300}
                                 onChange={(value) => handleChange('maxRecordingDuration', value)}

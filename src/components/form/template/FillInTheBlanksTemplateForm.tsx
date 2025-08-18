@@ -241,6 +241,7 @@ const FillInTheBlanksTemplateForm: React.FC<FillInTheBlanksTemplateFormProps> = 
                             <div className="col-span-2">
                                 <Label>Puan</Label>
                                 <NumberInput
+                                    inputType={"number"}
                                     value={blank.score || 1}
                                     onChange={(value) => updateBlank(blankIndex, 'score', value)}
                                     minValue={0}

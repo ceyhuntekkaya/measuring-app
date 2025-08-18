@@ -25,7 +25,7 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
     ({
          value = 0,
          onChange,
-         inputType = 'money',
+         inputType = 'number',
          currency = "TRY",
          locale = "tr-TR",
          allowNegative = false,

@@ -176,6 +176,7 @@ const ImageResponseTemplateForm: React.FC<ImageResponseTemplateFormProps> = ({
                             <Label htmlFor="maxFileSize">Maksimum Dosya Boyutu (MB)</Label>
                             <NumberInput
                                 id="maxFileSize"
+                                inputType={"number"}
                                 value={formData.maxFileSize || 0}
                                 onChange={(value) => handleChange('maxFileSize', value || undefined)}
                                 minValue={0.1}

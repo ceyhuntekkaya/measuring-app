@@ -173,6 +173,7 @@ const EssayTemplateForm: React.FC<EssayTemplateFormProps> = ({
                     <Label htmlFor="minWords">Minimum Kelime Sayısı</Label>
                     <NumberInput
                         id="minWords"
+                        inputType={"number"}
                         value={formData.minWords}
                         onChange={(value) => handleChange('minWords', value)}
                         minValue={1}
@@ -191,6 +192,7 @@ const EssayTemplateForm: React.FC<EssayTemplateFormProps> = ({
                     <Label htmlFor="maxWords">Maksimum Kelime Sayısı</Label>
                     <NumberInput
                         id="maxWords"
+                        inputType={"number"}
                         value={formData.maxWords}
                         onChange={(value) => handleChange('maxWords', value)}
                         minValue={1}

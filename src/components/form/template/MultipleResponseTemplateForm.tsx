@@ -247,6 +247,7 @@ const MultipleResponseTemplateForm: React.FC<MultipleResponseTemplateFormProps> 
                         <div className="space-y-2">
                             <Label htmlFor="minSelections">Minimum Seçim</Label>
                             <NumberInput
+                                inputType={"number"}
                                 id="minSelections"
                                 value={formData.minSelections || 1}
                                 onChange={(value) => handleChange('minSelections', value || undefined)}
@@ -260,6 +261,7 @@ const MultipleResponseTemplateForm: React.FC<MultipleResponseTemplateFormProps> 
                             <Label htmlFor="maxSelections">Maksimum Seçim</Label>
                             <NumberInput
                                 id="maxSelections"
+                                inputType={"number"}
                                 value={formData.maxSelections || 0}
                                 onChange={(value) => handleChange('maxSelections', value || undefined)}
                                 minValue={1}

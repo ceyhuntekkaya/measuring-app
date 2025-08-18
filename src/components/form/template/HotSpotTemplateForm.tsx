@@ -261,6 +261,7 @@ const HotSpotTemplateForm: React.FC<HotSpotTemplateFormProps> = ({
                             <Label htmlFor="maxSelections">Maksimum Seçim</Label>
                             <NumberInput
                                 id="maxSelections"
+                                inputType={"number"}
                                 value={formData.maxSelections || 1}
                                 onChange={(value) => handleChange('maxSelections', value || undefined)}
                                 minValue={1}

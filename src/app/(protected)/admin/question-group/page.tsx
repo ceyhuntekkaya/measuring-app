@@ -105,7 +105,7 @@ export default function QuestionGroupPage() {
     ];
 
     const handleAdd = () => {
-        router.push('/admin/exam-type/add');
+        router.push('/admin/question-group/add');
     };
 
 
@@ -119,10 +119,10 @@ export default function QuestionGroupPage() {
             <PageHeader actions={
                 <ActionButtons
                     onAdd={handleAdd}
-                    addButtonText="Müşteri Bilgierini Çek"
+                    addButtonText="Yeni Soru Grubu"
                 />
             }/>
-            <div className="p-6">
+            <div className="p-6 pt-1">
                 {
                     questionGroups &&
                     <DynamicTable columns={columns} data={questionGroups}/>

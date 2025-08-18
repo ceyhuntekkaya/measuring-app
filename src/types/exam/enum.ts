@@ -162,7 +162,7 @@ export type ObjectType =
     | 'QUESTION_PART'
     | 'UPLOADED_FILE';
 
-export type EQuestionType =
+export type EQuestionType2 =
     | 'MULTIPLE_CHOICE'
     | 'TRUE_FALSE'
     | 'FILL_IN_THE_BLANKS'
@@ -176,5 +176,22 @@ export type EQuestionType =
     | 'AUDIO_RESPONSE'
     | 'VIDEO_RESPONSE'
     | 'IMAGE_RESPONSE';
+
+
+export enum EQuestionType {
+    MULTIPLE_CHOICE = "MULTIPLE_CHOICE",
+    TRUE_FALSE = "TRUE_FALSE",
+    FILL_IN_THE_BLANKS = "FILL_IN_THE_BLANKS",
+    SHORT_ANSWER = "SHORT_ANSWER",
+    MATCHING = "MATCHING",
+    ESSAY = "ESSAY",
+    ORDERING = "ORDERING",
+    MULTIPLE_RESPONSE = "MULTIPLE_RESPONSE",
+    HOT_SPOT = "HOT_SPOT",
+    DRAG_AND_DROP = "DRAG_AND_DROP",
+    AUDIO_RESPONSE = "AUDIO_RESPONSE",
+    VIDEO_RESPONSE = "VIDEO_RESPONSE",
+    IMAGE_RESPONSE = "IMAGE_RESPONSE"
+}
 
 

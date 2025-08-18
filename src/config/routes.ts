@@ -27,17 +27,12 @@ export interface RouteConfig {
 export const adminRoutes: RouteConfig = {
     menuItems: [
         {
-            title: 'Dashboard',
+            title: 'Ana Sayfa',
             path: '/admin',
             icon: LayoutDashboard,
             requiredRoles: ['ADMIN'],
         },
-        {
-            title: 'Sınavlar',
-            path: '/admin/exams',
-            icon: Settings,
-            requiredRoles: ['ADMIN'],
-        },
+
         {
             title: 'Soru Bankası',
             path: '/admin/questions',
@@ -64,49 +59,49 @@ export const adminRoutes: RouteConfig = {
 
         ,
         {
-            title: 'Approval Setting',
+            title: 'Onay Ayarları',
             path: '/admin/settings/approval',
             icon: Settings,
             requiredRoles: ['ADMIN'],
         }
         ,
         {
-            title: 'Exam Type',
+            title: 'Sınav Tipleri',
             path: '/admin/exam-type',
             icon: Settings,
             requiredRoles: ['ADMIN'],
         }
         ,
         {
-            title: 'Exam Section',
+            title: 'Sınav Bölümleri',
             path: '/admin/exam-type/{examTypeId}/section',
             icon: Settings,
             requiredRoles: ['ADMIN'],
         }
         ,
         {
-            title: 'Question Group Type',
+            title: 'Soru Grup Tipleri',
             path: '/admin/exam-type/{examTypeId}/section/{sectionId}/group',
             icon: Settings,
             requiredRoles: ['ADMIN'],
         }
         ,
         {
-            title: 'Question Group',
+            title: 'Soru Grupları',
             path: '/admin/question-group',
             icon: Settings,
             requiredRoles: ['ADMIN'],
         }
         ,
         {
-            title: 'Question',
+            title: 'Sorular',
             path: '/admin/question-group/{groupId}/question',
             icon: Settings,
             requiredRoles: ['ADMIN'],
         }
         ,
         {
-            title: 'Approvals',
+            title: 'Onaylar',
             path: '/admin/approvals',
             icon: Settings,
             requiredRoles: ['ADMIN'],

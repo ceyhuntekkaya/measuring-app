@@ -240,6 +240,7 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
                             <Label htmlFor="maximumScore">Maksimum Puan *</Label>
                             <NumberInput
                                 id="maximumScore"
+                                inputType={"number"}
                                 value={formData.maximumScore}
                                 onChange={(value) => handleChange('maximumScore', value)}
                                 minValue={1}
@@ -259,6 +260,7 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
                             <Label htmlFor="durationInSeconds">Süre (saniye) *</Label>
                             <NumberInput
                                 id="durationInSeconds"
+                                inputType={"number"}
                                 value={formData.durationInSeconds}
                                 onChange={(value) => handleChange('durationInSeconds', value)}
                                 minValue={1}
@@ -279,6 +281,7 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
                             <Label htmlFor="screenRecordTime">Ekran Kayıt Süresi (saniye)</Label>
                             <NumberInput
                                 id="screenRecordTime"
+                                inputType={"number"}
                                 value={formData.screenRecordTime}
                                 onChange={(value) => handleChange('screenRecordTime', value)}
                                 minValue={0}

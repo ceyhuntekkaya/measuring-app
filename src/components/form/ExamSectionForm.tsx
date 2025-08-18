@@ -132,6 +132,7 @@ const ExamSectionForm: React.FC<ExamSectionFormProps> = ({
                             <Label htmlFor="orderNumber">Sıra Numarası *</Label>
                             <NumberInput
                                 id="orderNumber"
+                                inputType={"number"}
                                 value={formData.orderNumber}
                                 onChange={(value) => handleChange('orderNumber', value)}
                                 minValue={1}

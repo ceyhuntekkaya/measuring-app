@@ -170,6 +170,7 @@ const ShortAnswerTemplateForm: React.FC<ShortAnswerTemplateFormProps> = ({
                     <Label htmlFor="minCharacters">Minimum Karakter Sayısı</Label>
                     <NumberInput
                         id="minCharacters"
+                        inputType={"number"}
                         value={formData.minCharacters}
                         onChange={(value) => handleChange('minCharacters', value)}
                         minValue={1}
@@ -187,6 +188,7 @@ const ShortAnswerTemplateForm: React.FC<ShortAnswerTemplateFormProps> = ({
                     <Label htmlFor="maxCharacters">Maksimum Karakter Sayısı</Label>
                     <NumberInput
                         id="maxCharacters"
+                        inputType={"number"}
                         value={formData.maxCharacters}
                         onChange={(value) => handleChange('maxCharacters', value)}
                         minValue={1}
@@ -271,6 +273,7 @@ const ShortAnswerTemplateForm: React.FC<ShortAnswerTemplateFormProps> = ({
                         <div className="col-span-2">
                             <Label>Puan</Label>
                             <NumberInput
+                                inputType={"number"}
                                 value={answer.score || 1}
                                 onChange={(value) => updateAcceptableAnswer(index, 'score', value)}
                                 minValue={0}

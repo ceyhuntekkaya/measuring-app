@@ -186,6 +186,7 @@ const VideoResponseTemplateForm: React.FC<VideoResponseTemplateFormProps> = ({
                             <Label htmlFor="maxRecordingDuration">Maksimum Kayıt Süresi (saniye)</Label>
                             <NumberInput
                                 id="maxRecordingDuration"
+                                inputType={"number"}
                                 value={formData.maxRecordingDuration || 0}
                                 onChange={(value) => handleChange('maxRecordingDuration', value || undefined)}
                                 minValue={1}
@@ -206,6 +207,7 @@ const VideoResponseTemplateForm: React.FC<VideoResponseTemplateFormProps> = ({
                             <Label htmlFor="minRecordingDuration">Minimum Kayıt Süresi (saniye)</Label>
                             <NumberInput
                                 id="minRecordingDuration"
+                                inputType={"number"}
                                 value={formData.minRecordingDuration || 0}
                                 onChange={(value) => handleChange('minRecordingDuration', value || undefined)}
                                 minValue={1}

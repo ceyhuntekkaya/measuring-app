@@ -65,6 +65,8 @@ export type QuestionGroupDto = DatabaseObjectDto & {
     currentApprovalCount?: number;
     requiredApprovalCount?: number;
     approvalCompletedDate?: string;
+    questions?: QuestionDto[];
+    headers?: QuestionGroupHeaderDto[];
 }
 
 export type QuestionGroupHeaderDto = DatabaseObjectDto & {

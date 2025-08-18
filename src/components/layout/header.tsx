@@ -29,7 +29,7 @@ export default function Header() {
                             <button
                                 className="flex items-center space-x-2 px-2 py-2 rounded-md hover:bg-gray-100"
                             >
-                                <span><b>{activeBrand?.name} NISH</b></span>
+                                <span><b>{activeBrand?.name} TÖMER - MERKEZ</b></span>
                             </button>
 
 

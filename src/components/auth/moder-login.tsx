@@ -2,7 +2,7 @@ import React, {FormEvent, useEffect, useState} from 'react';
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
 import {useAuthContext} from "@/contexts/auth-context";
 import {useRouter, useSearchParams} from "next/navigation";
-import logo from '@/assets/logo.png';
+import logo from '@/assets/eyadis.png';
 import Image from "next/image";
 
 export default function CorporateLoginPage() {
@@ -62,7 +62,7 @@ export default function CorporateLoginPage() {
             <div
                 className="absolute inset-0 bg-cover bg-center bg-no-repeat"
                 style={{
-                    backgroundImage: 'url("https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D")'
+                    backgroundImage: 'url("https://www.meb.gov.tr/meb_iys_dosyalar/2022_06/30082312_WhatsApp_Image_2022-06-30_at_08.19.38.jpg")'
                 }}
             >
                 {/* Overlay */}
@@ -83,16 +83,14 @@ export default function CorporateLoginPage() {
 
                     {/* Logo Container */}
                     <div className="text-center mb-8">
-                        <div className="inline-flex items-center justify-center mb-6 group ">
+                        <div className="inline-flex items-center justify-center mb-6 group bg-white rounded-full p-2 shadow-lg hover:shadow-xl transition-shadow duration-300">
                                 <Image
                                     src={logo}
                                     alt="Logo"
-                                    className="h-14 w-auto"
+                                    className="h-36 w-auto"
                                 />
                         </div>
-                        <h1 className="text-3xl font-bold text-white mb-2">Welcome to Study Score AI</h1>
-                        <p className="text-white/70 text-sm">Please enter your login credentials.
-                        </p>
+
                     </div>
 
                     {/* Login Form */}
@@ -102,7 +100,7 @@ export default function CorporateLoginPage() {
                             {/* Email Input */}
                             <div className="relative">
                                 <label className="block text-white text-sm font-medium mb-2">
-                                    Username
+                                    Kullanıcı Adı
                                 </label>
                                 <div className="relative">
                                     <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/50 w-5 h-5" />
@@ -124,7 +122,7 @@ export default function CorporateLoginPage() {
                             {/* Password Input */}
                             <div className="relative">
                                 <label className="block text-white text-sm font-medium mb-2">
-                                    Password
+                                    Şifre
                                 </label>
                                 <div className="relative">
                                     <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/50 w-5 h-5" />
@@ -198,7 +196,7 @@ export default function CorporateLoginPage() {
                             {/* Help Text */}
                             <div className="text-center">
                                 <p className="text-white/60 text-xs">
-                                    If you are experiencing issues while logging in, please contact our IT support team at helpdesk@studyscore.ai.
+                                    Giriş yaparken sorun yaşıyorsanız lütfen hello@genixo.ai adresinden BT destek ekibimizle iletişime geçin.
                                 </p>
                             </div>
                         </div>

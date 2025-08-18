@@ -1,7 +1,7 @@
 'use client';
 
 import React, {useEffect, useState} from 'react';
-import {Card, CardContent} from "@/components/ui/card";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Alert, AlertDescription} from "@/components/ui/alert";
 import {Button} from "@/components/ui/button";
 import {Label} from "@/components/ui/label";
@@ -72,13 +72,11 @@ interface BaseQuestionTemplateFormProps {
     onSubmit: (data: BaseQuestionTemplateDto) => void;
     template?: BaseQuestionTemplateDto | null;
     loading?: boolean;
-    questionType?: EQuestionType;
 }
 
-const BaseQuestionTemplateForm: React.FC<BaseQuestionTemplateFormProps> = ({
+const BaseQuestionTemplateFormYedek: React.FC<BaseQuestionTemplateFormProps> = ({
                                                                                onSubmit,
                                                                                template,
-                                                                               questionType,
                                                                                loading = false
                                                                            }) => {
     const [formData, setFormData] = useState<BaseQuestionTemplateFormData>({
@@ -91,7 +89,7 @@ const BaseQuestionTemplateForm: React.FC<BaseQuestionTemplateFormProps> = ({
         instructions: '',
         tags: [],
         isActive: true,
-        questionType: questionType? questionType : '',
+        questionType: '',
         templateData: null
     });
 
@@ -115,17 +113,6 @@ const BaseQuestionTemplateForm: React.FC<BaseQuestionTemplateFormProps> = ({
             });
         }
     }, [template]);
-
-
-
-    useEffect(() => {
-        if (questionType) {
-            setFormData({
-                ...formData,
-                questionType: questionType,
-            });
-        }
-    }, [questionType]);
 
     // Template tipine göre özel veriyi çıkar
     const getTemplateSpecificData = (template: BaseQuestionTemplateDto) => {
@@ -265,9 +252,9 @@ const BaseQuestionTemplateForm: React.FC<BaseQuestionTemplateFormProps> = ({
         const newErrors: BaseQuestionTemplateFormErrors = {};
 
         if (!formData.title.trim()) {
-            newErrors.title = 'Soru başlığı zorunludur';
+            newErrors.title = 'Şablon başlığı zorunludur';
         } else if (formData.title.trim().length < 3) {
-            newErrors.title = 'Soru başlığı en az 3 karakter olmalıdır';
+            newErrors.title = 'Şablon başlığı en az 3 karakter olmalıdır';
         }
 
         if (!formData.subject.trim()) {
@@ -392,18 +379,23 @@ const BaseQuestionTemplateForm: React.FC<BaseQuestionTemplateFormProps> = ({
 
     return (
         <Card>
-
+            <CardHeader>
+                <CardTitle>
+                    {template ? "Soru Şablonu Güncelle" : "Yeni Soru Şablonu Oluştur"}
+                </CardTitle>
+            </CardHeader>
             <CardContent>
-                <div>
+                <div className="space-y-6">
                     <div className="grid grid-cols-2 gap-4">
+                        {/* Şablon Başlığı */}
                         <div className="space-y-2">
-                            <Label htmlFor="title">Soru Başlığı *</Label>
+                            <Label htmlFor="title">Şablon Başlığı *</Label>
                             <Input
                                 id="title"
                                 value={formData.title}
                                 onChange={(e) => handleChange('title', e.target.value)}
                                 className={errors.title ? 'border-red-500' : ''}
-                                placeholder="Soru başlığını giriniz"
+                                placeholder="Şablon başlığını giriniz"
                             />
                             {errors.title && (
                                 <Alert variant="destructive">
@@ -455,58 +447,51 @@ const BaseQuestionTemplateForm: React.FC<BaseQuestionTemplateFormProps> = ({
                         </div>
 
                         {/* Soru Tipi */}
-
-
-                        {
-                            !questionType &&
-                            <div className="space-y-2">
-                                <Label htmlFor="questionType">Soru Tipi *</Label>
-                                <Select
-                                    onValueChange={(value) => handleChange('questionType', value as EQuestionType)}
-                                    value={formData.questionType}
-                                >
-                                    <SelectTrigger className={errors.questionType ? 'border-red-500' : ''}>
-                                        <SelectValue placeholder="Soru tipi seçin"/>
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectGroup>
-                                            <SelectItem
-                                                value="MULTIPLE_CHOICE">{getQuestionTypeDisplayName('MULTIPLE_CHOICE')}</SelectItem>
-                                            <SelectItem
-                                                value="TRUE_FALSE">{getQuestionTypeDisplayName('TRUE_FALSE')}</SelectItem>
-                                            <SelectItem
-                                                value="FILL_IN_THE_BLANKS">{getQuestionTypeDisplayName('FILL_IN_THE_BLANKS')}</SelectItem>
-                                            <SelectItem
-                                                value="SHORT_ANSWER">{getQuestionTypeDisplayName('SHORT_ANSWER')}</SelectItem>
-                                            <SelectItem
-                                                value="MATCHING">{getQuestionTypeDisplayName('MATCHING')}</SelectItem>
-                                            <SelectItem value="ESSAY">{getQuestionTypeDisplayName('ESSAY')}</SelectItem>
-                                            <SelectItem
-                                                value="ORDERING">{getQuestionTypeDisplayName('ORDERING')}</SelectItem>
-                                            <SelectItem
-                                                value="MULTIPLE_RESPONSE">{getQuestionTypeDisplayName('MULTIPLE_RESPONSE')}</SelectItem>
-                                            <SelectItem
-                                                value="HOT_SPOT">{getQuestionTypeDisplayName('HOT_SPOT')}</SelectItem>
-                                            <SelectItem
-                                                value="DRAG_AND_DROP">{getQuestionTypeDisplayName('DRAG_AND_DROP')}</SelectItem>
-                                            <SelectItem
-                                                value="AUDIO_RESPONSE">{getQuestionTypeDisplayName('AUDIO_RESPONSE')}</SelectItem>
-                                            <SelectItem
-                                                value="VIDEO_RESPONSE">{getQuestionTypeDisplayName('VIDEO_RESPONSE')}</SelectItem>
-                                            <SelectItem
-                                                value="IMAGE_RESPONSE">{getQuestionTypeDisplayName('IMAGE_RESPONSE')}</SelectItem>
-                                        </SelectGroup>
-                                    </SelectContent>
-                                </Select>
-                                {errors.questionType && (
-                                    <Alert variant="destructive">
-                                        <AlertDescription>{errors.questionType}</AlertDescription>
-                                    </Alert>
-                                )}
-                            </div>
-                        }
-
-
+                        <div className="space-y-2">
+                            <Label htmlFor="questionType">Soru Tipi *</Label>
+                            <Select
+                                onValueChange={(value) => handleChange('questionType', value as EQuestionType)}
+                                value={formData.questionType}
+                            >
+                                <SelectTrigger className={errors.questionType ? 'border-red-500' : ''}>
+                                    <SelectValue placeholder="Soru tipi seçin"/>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectItem
+                                            value="MULTIPLE_CHOICE">{getQuestionTypeDisplayName('MULTIPLE_CHOICE')}</SelectItem>
+                                        <SelectItem
+                                            value="TRUE_FALSE">{getQuestionTypeDisplayName('TRUE_FALSE')}</SelectItem>
+                                        <SelectItem
+                                            value="FILL_IN_THE_BLANKS">{getQuestionTypeDisplayName('FILL_IN_THE_BLANKS')}</SelectItem>
+                                        <SelectItem
+                                            value="SHORT_ANSWER">{getQuestionTypeDisplayName('SHORT_ANSWER')}</SelectItem>
+                                        <SelectItem
+                                            value="MATCHING">{getQuestionTypeDisplayName('MATCHING')}</SelectItem>
+                                        <SelectItem value="ESSAY">{getQuestionTypeDisplayName('ESSAY')}</SelectItem>
+                                        <SelectItem
+                                            value="ORDERING">{getQuestionTypeDisplayName('ORDERING')}</SelectItem>
+                                        <SelectItem
+                                            value="MULTIPLE_RESPONSE">{getQuestionTypeDisplayName('MULTIPLE_RESPONSE')}</SelectItem>
+                                        <SelectItem
+                                            value="HOT_SPOT">{getQuestionTypeDisplayName('HOT_SPOT')}</SelectItem>
+                                        <SelectItem
+                                            value="DRAG_AND_DROP">{getQuestionTypeDisplayName('DRAG_AND_DROP')}</SelectItem>
+                                        <SelectItem
+                                            value="AUDIO_RESPONSE">{getQuestionTypeDisplayName('AUDIO_RESPONSE')}</SelectItem>
+                                        <SelectItem
+                                            value="VIDEO_RESPONSE">{getQuestionTypeDisplayName('VIDEO_RESPONSE')}</SelectItem>
+                                        <SelectItem
+                                            value="IMAGE_RESPONSE">{getQuestionTypeDisplayName('IMAGE_RESPONSE')}</SelectItem>
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                            {errors.questionType && (
+                                <Alert variant="destructive">
+                                    <AlertDescription>{errors.questionType}</AlertDescription>
+                                </Alert>
+                            )}
+                        </div>
 
                         {/* Puan */}
                         <div className="space-y-2">
@@ -557,7 +542,7 @@ const BaseQuestionTemplateForm: React.FC<BaseQuestionTemplateFormProps> = ({
                                     checked={formData.isActive}
                                     onChange={(checked) => handleChange('isActive', !!checked)}
                                 />
-                                <Label htmlFor="isActive">Soru Aktif</Label>
+                                <Label htmlFor="isActive">Şablon Aktif</Label>
                             </div>
                         </div>
                     </div>
@@ -570,7 +555,7 @@ const BaseQuestionTemplateForm: React.FC<BaseQuestionTemplateFormProps> = ({
                             value={formData.description}
                             onChange={(e) => handleChange('description', e.target.value)}
                             className="min-h-[100px]"
-                            placeholder="Soru hakkında açıklama giriniz (opsiyonel)"
+                            placeholder="Şablon hakkında açıklama giriniz (opsiyonel)"
                         />
                     </div>
 
@@ -633,10 +618,10 @@ const BaseQuestionTemplateForm: React.FC<BaseQuestionTemplateFormProps> = ({
                             </div>
                         )}
                     </div>
-<div className="mt-3">
+
                     {/* Template-Specific Form */}
-                    { renderTemplateSpecificForm()}
-                </div>
+                    {renderTemplateSpecificForm()}
+
                     {/* Submit Button */}
                     <div className="flex justify-end space-x-4">
                         <Button
@@ -644,7 +629,7 @@ const BaseQuestionTemplateForm: React.FC<BaseQuestionTemplateFormProps> = ({
                             className="bg-blue-600 hover:bg-blue-700 text-white"
                             disabled={loading}
                         >
-                            {loading ? "İşleniyor..." : template ? "Soru Güncelle" : "Soru Oluştur"}
+                            {loading ? "İşleniyor..." : template ? "Şablon Güncelle" : "Şablon Oluştur"}
                         </Button>
                     </div>
                 </div>
@@ -653,4 +638,4 @@ const BaseQuestionTemplateForm: React.FC<BaseQuestionTemplateFormProps> = ({
     );
 };
 
-export default BaseQuestionTemplateForm;
+export default BaseQuestionTemplateFormYedek;

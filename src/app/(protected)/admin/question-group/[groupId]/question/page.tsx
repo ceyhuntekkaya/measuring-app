@@ -8,8 +8,17 @@ import {useParams, useRouter} from "next/navigation";
 import LoadingComp from "@/components/ui/loading-comp";
 import Link from "next/link";
 import {useQuestionGroup} from "@/hooks/exam/use-question-group";
-import {QuestionDto} from "@/types/exam/examEntities";
+import {QuestionDto, QuestionTemplateType} from "@/types/exam/examEntities";
 import {useQuestion} from "@/hooks/exam/use-question";
+import {EQuestionType} from "@/types/exam/enum";
+import {
+    FillInTheBlanksTemplateDto,
+    MultipleChoiceTemplateDto,
+    TrueFalseTemplateDto
+} from "@/types/exam/questionTemplates";
+import MultipleChoiceQuestion from "@/components/template/MultipleChoiceQuestion";
+import TrueFalseQuestion from "@/components/template/TrueFalseQuestion";
+import FillInTheBlanksQuestion from "@/components/template/FillInTheBlanksQuestion";
 
 export default function QuestionPage() {
     const router = useRouter();
@@ -111,14 +120,71 @@ export default function QuestionPage() {
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
                 >
-                    <Link href={`/admin/question-group/${value}/question`}>Sorular</Link>
+                    <Link href={`/admin/question-group/${value}/question`}>Düzenle</Link>
                 </div>
             )
         }
     ];
 
     const handleAdd = () => {
-        router.push('/admin/exam-type/add');
+        router.push('/admin/question-group/${value}/question/add');
+    };
+
+
+    const renderTemplateSpecificForm = (type: EQuestionType, template: QuestionTemplateType) => {
+
+
+        switch (type) {
+            case 'MULTIPLE_CHOICE':
+                return <MultipleChoiceQuestion template={template as MultipleChoiceTemplateDto}/>;
+
+            case 'TRUE_FALSE':
+                return <TrueFalseQuestion template={template as TrueFalseTemplateDto}/>;
+            case 'FILL_IN_THE_BLANKS':
+                return <FillInTheBlanksQuestion template={template as FillInTheBlanksTemplateDto}/>;
+            /*  case 'SHORT_ANSWER':
+                    return <ShortAnswerTemplateForm onChange={commonProps.onChange}
+                                                    value={commonProps.value as ShortAnswerTemplateDto}/>;
+                case 'ESSAY':
+                    return <EssayTemplateForm onChange={commonProps.onChange}
+                                              value={commonProps.value as EssayTemplateDto}/>;
+                case 'MATCHING':
+                    return <MatchingTemplateForm onChange={commonProps.onChange}
+                                                 value={commonProps.value as MatchingTemplateDto}/>;
+                case 'ORDERING':
+                    return <OrderingTemplateForm onChange={commonProps.onChange}
+                                                 value={commonProps.value as OrderingTemplateDto}/>;
+                case 'MULTIPLE_RESPONSE':
+                    return <MultipleResponseTemplateForm onChange={commonProps.onChange}
+                                                         value={commonProps.value as MultipleResponseTemplateDto}/>;
+                case 'HOT_SPOT':
+                    return <HotSpotTemplateForm onChange={commonProps.onChange}
+                                                value={commonProps.value as HotSpotTemplateDto}/>;
+                case 'DRAG_AND_DROP':
+                    return <DragAndDropTemplateForm onChange={commonProps.onChange}
+                                                    value={commonProps.value as DragAndDropTemplateDto}/>;
+                case 'AUDIO_RESPONSE':
+                    return <AudioResponseTemplateForm onChange={commonProps.onChange}
+                                                      value={commonProps.value as AudioResponseTemplateDto}/>;
+                case 'VIDEO_RESPONSE':
+                    return <VideoResponseTemplateForm onChange={commonProps.onChange}
+                                                      value={commonProps.value as VideoResponseTemplateDto}/>;
+                case 'IMAGE_RESPONSE':
+                    return <ImageResponseTemplateForm onChange={commonProps.onChange}
+                                                      value={commonProps.value as ImageResponseTemplateDto}/>;
+
+
+                     */
+
+            default:
+                return (
+                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                        <p className="text-yellow-800">
+                            Bu soru tipi için henüz özel form komponenti hazırlanmamıştır.
+                        </p>
+                    </div>
+                );
+        }
     };
 
 
@@ -132,19 +198,37 @@ export default function QuestionPage() {
             <PageHeader actions={
                 <ActionButtons
                     onAdd={handleAdd}
-                    addButtonText="Müşteri Bilgierini Çek"
+                    addButtonText="Yeni Soru Ekle"
                 />
             }/>
-            <div className="p-6">
+            <div className="p-6 pt-1">
                 {
                     questionsByGroup &&
                     <DynamicTable columns={columns} data={questionsByGroup}/>
                 }
 
-                {
-                    //<MultipleChoiceQuestion template={}/>
-                }
+                <div className="pt-4">
+                    <h3>SORU:</h3>
+                    <hr/>
+                    {
+                        selectedQuestionGroup?.headers?.map((header, key) => (
+                            <div key={key}>{header.content}</div>
+                        ))
+                    }
 
+
+                    {
+                        questionsByGroup.map((question, key) => (
+                            <div key={key} className="p-4 border-b">
+                                {
+                                    question.questionType && question.questionTemplate &&
+                                    renderTemplateSpecificForm(question.questionType, question.questionTemplate)
+                                }
+                            </div>
+                        ))
+                        //<MultipleChoiceQuestion template={}/>
+                    }
+                </div>
             </div>
         </div>
     );

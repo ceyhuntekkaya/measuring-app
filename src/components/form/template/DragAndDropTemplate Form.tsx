@@ -295,6 +295,7 @@ const DragAndDropTemplateForm: React.FC<DragAndDropTemplateFormProps> = ({
                                 <div className="col-span-2">
                                     <Label>Maksimum Öğe</Label>
                                     <NumberInput
+                                        inputType={"number"}
                                         value={zone.maxItems || 1}
                                         onChange={(value) => updateDropZone(index, 'maxItems', value)}
                                         minValue={1}

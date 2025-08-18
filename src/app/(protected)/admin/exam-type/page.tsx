@@ -25,7 +25,7 @@ export default function ExamTypePage() {
 
         {
             key: 'name',
-            header: 'name',
+            header: 'Ad',
             render: (value, record) => (
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
@@ -38,7 +38,7 @@ export default function ExamTypePage() {
         ,
         {
             key: 'examLevel',
-            header: 'exam Level',
+            header: 'Seviye',
             render: (value, record) => (
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
@@ -50,7 +50,7 @@ export default function ExamTypePage() {
         },
         {
             key: 'examType',
-            header: 'exam Type',
+            header: 'Sınav Tipi',
             render: (value, record) => (
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
@@ -63,7 +63,7 @@ export default function ExamTypePage() {
         ,
         {
             key: 'status',
-            header: 'status',
+            header: 'durum',
             render: (value, record) => (
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
@@ -102,10 +102,10 @@ export default function ExamTypePage() {
             <PageHeader actions={
                 <ActionButtons
                     onAdd={handleAdd}
-                    addButtonText="Müşteri Bilgierini Çek"
+                    addButtonText="Yeni Sınav Tipi Tanımla"
                 />
             }/>
-            <div className="p-6">
+            <div className="p-6 pt-1">
                 {
                     examTypes &&
                     <DynamicTable columns={columns} data={examTypes.examTypes}/>

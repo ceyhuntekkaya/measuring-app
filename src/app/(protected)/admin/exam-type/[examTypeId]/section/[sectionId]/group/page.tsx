@@ -27,7 +27,7 @@ export default function QuestionGroupTypePage() {
 
         {
             key: 'name',
-            header: 'name',
+            header: 'Ad',
             render: (value, record) => (
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
@@ -40,7 +40,7 @@ export default function QuestionGroupTypePage() {
         ,
         {
             key: 'status',
-            header: 'status',
+            header: 'durum',
             render: (value, record) => (
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
@@ -67,10 +67,10 @@ export default function QuestionGroupTypePage() {
             <PageHeader actions={
                 <ActionButtons
                     onAdd={handleAdd}
-                    addButtonText="Müşteri Bilgierini Çek"
+                    addButtonText="Yeni Grup Tanımla"
                 />
             }/>
-            <div className="p-6">
+            <div className="p-6 pt-1">
                 {
                     typesByExamSection &&
                     <DynamicTable columns={columns} data={typesByExamSection}/>

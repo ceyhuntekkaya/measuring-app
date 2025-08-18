@@ -14,6 +14,7 @@ import {QuestionDto, QuestionGroupDto, QuestionTemplateType} from "@/types/exam/
 import {Plus, Trash2} from "lucide-react";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
 import Checkbox from "@/components/ui/checkbox";
+import BaseQuestionTemplateForm from "@/components/form/template/BaseQuestionTemplateForm";
 
 
 interface QuestionFormData {
@@ -129,7 +130,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
         setFormData(prev => ({
             ...prev,
             parts: prev.parts.map((part, i) =>
-                i === index ? { ...part, [field]: value } : part
+                i === index ? {...part, [field]: value} : part
             )
         }));
     };
@@ -165,30 +166,43 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
         setFormData(prev => ({
             ...prev,
             options: prev.options.map((option, i) =>
-                i === index ? { ...option, [field]: value } : option
+                i === index ? {...option, [field]: value} : option
             )
         }));
     };
 
     const getQuestionTypeDisplayName = (questionType: string): string => {
         switch (questionType) {
-            case 'MULTIPLE_CHOICE': return 'Çoktan Seçmeli';
-            case 'TRUE_FALSE': return 'Doğru-Yanlış';
-            case 'FILL_IN_THE_BLANKS': return 'Boşluk Doldurma';
-            case 'SHORT_ANSWER': return 'Kısa Cevap';
-            case 'MATCHING': return 'Eşleştirme';
-            case 'ESSAY': return 'Kompozisyon';
-            case 'ORDERING': return 'Sıralama';
-            case 'MULTIPLE_RESPONSE': return 'Çoklu Yanıt';
-            case 'HOT_SPOT': return 'Sıcak Nokta';
-            case 'DRAG_AND_DROP': return 'Sürükle-Bırak';
-            case 'AUDIO_RESPONSE': return 'Ses Yanıtı';
-            case 'VIDEO_RESPONSE': return 'Video Yanıtı';
-            case 'IMAGE_RESPONSE': return 'Resim Yanıtı';
-            default: return questionType;
+            case 'MULTIPLE_CHOICE':
+                return 'Çoktan Seçmeli';
+            case 'TRUE_FALSE':
+                return 'Doğru-Yanlış';
+            case 'FILL_IN_THE_BLANKS':
+                return 'Boşluk Doldurma';
+            case 'SHORT_ANSWER':
+                return 'Kısa Cevap';
+            case 'MATCHING':
+                return 'Eşleştirme';
+            case 'ESSAY':
+                return 'Kompozisyon';
+            case 'ORDERING':
+                return 'Sıralama';
+            case 'MULTIPLE_RESPONSE':
+                return 'Çoklu Yanıt';
+            case 'HOT_SPOT':
+                return 'Sıcak Nokta';
+            case 'DRAG_AND_DROP':
+                return 'Sürükle-Bırak';
+            case 'AUDIO_RESPONSE':
+                return 'Ses Yanıtı';
+            case 'VIDEO_RESPONSE':
+                return 'Video Yanıtı';
+            case 'IMAGE_RESPONSE':
+                return 'Resim Yanıtı';
+            default:
+                return questionType;
         }
     };
-
 
 
     const validateForm = (): boolean => {
@@ -247,17 +261,18 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                 questionGroupId: formData.questionGroupId,
                 questionType: formData.questionType as EQuestionType,
                 questionTemplate: formData.questionTemplate || null,
-                ...(formData.orderNumber !== undefined && { orderNumber: formData.orderNumber }),
-                ...(formData.isAutomaticallyEvaluated !== undefined && { isAutomaticallyEvaluated: formData.isAutomaticallyEvaluated }),
-                ...(formData.maximumScore !== undefined && { maximumScore: formData.maximumScore }),
-                ...(formData.durationInSeconds !== undefined && { durationInSeconds: formData.durationInSeconds }),
-                ...(formData.parts.length > 0 && { parts: formData.parts }),
-                ...(formData.options.length > 0 && { options: formData.options })
+                ...(formData.orderNumber !== undefined && {orderNumber: formData.orderNumber}),
+                ...(formData.isAutomaticallyEvaluated !== undefined && {isAutomaticallyEvaluated: formData.isAutomaticallyEvaluated}),
+                ...(formData.maximumScore !== undefined && {maximumScore: formData.maximumScore}),
+                ...(formData.durationInSeconds !== undefined && {durationInSeconds: formData.durationInSeconds}),
+                ...(formData.parts.length > 0 && {parts: formData.parts}),
+                ...(formData.options.length > 0 && {options: formData.options})
             };
 
             onSubmit(submitData);
         }
     };
+
 
     return (
         <Card>
@@ -294,7 +309,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                                 value={formData.questionGroupId}
                             >
                                 <SelectTrigger className={errors.questionGroupId ? 'border-red-500' : ''}>
-                                    <SelectValue placeholder="Soru grubu seçin" />
+                                    <SelectValue placeholder="Soru grubu seçin"/>
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectGroup>
@@ -321,23 +336,35 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                                 value={formData.questionType}
                             >
                                 <SelectTrigger className={errors.questionType ? 'border-red-500' : ''}>
-                                    <SelectValue placeholder="Soru tipi seçin" />
+                                    <SelectValue placeholder="Soru tipi seçin"/>
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectGroup>
-                                        <SelectItem value="MULTIPLE_CHOICE">{getQuestionTypeDisplayName('MULTIPLE_CHOICE')}</SelectItem>
-                                        <SelectItem value="TRUE_FALSE">{getQuestionTypeDisplayName('TRUE_FALSE')}</SelectItem>
-                                        <SelectItem value="FILL_IN_THE_BLANKS">{getQuestionTypeDisplayName('FILL_IN_THE_BLANKS')}</SelectItem>
-                                        <SelectItem value="SHORT_ANSWER">{getQuestionTypeDisplayName('SHORT_ANSWER')}</SelectItem>
-                                        <SelectItem value="MATCHING">{getQuestionTypeDisplayName('MATCHING')}</SelectItem>
+                                        <SelectItem
+                                            value="MULTIPLE_CHOICE">{getQuestionTypeDisplayName('MULTIPLE_CHOICE')}</SelectItem>
+                                        <SelectItem
+                                            value="TRUE_FALSE">{getQuestionTypeDisplayName('TRUE_FALSE')}</SelectItem>
+                                        <SelectItem
+                                            value="FILL_IN_THE_BLANKS">{getQuestionTypeDisplayName('FILL_IN_THE_BLANKS')}</SelectItem>
+                                        <SelectItem
+                                            value="SHORT_ANSWER">{getQuestionTypeDisplayName('SHORT_ANSWER')}</SelectItem>
+                                        <SelectItem
+                                            value="MATCHING">{getQuestionTypeDisplayName('MATCHING')}</SelectItem>
                                         <SelectItem value="ESSAY">{getQuestionTypeDisplayName('ESSAY')}</SelectItem>
-                                        <SelectItem value="ORDERING">{getQuestionTypeDisplayName('ORDERING')}</SelectItem>
-                                        <SelectItem value="MULTIPLE_RESPONSE">{getQuestionTypeDisplayName('MULTIPLE_RESPONSE')}</SelectItem>
-                                        <SelectItem value="HOT_SPOT">{getQuestionTypeDisplayName('HOT_SPOT')}</SelectItem>
-                                        <SelectItem value="DRAG_AND_DROP">{getQuestionTypeDisplayName('DRAG_AND_DROP')}</SelectItem>
-                                        <SelectItem value="AUDIO_RESPONSE">{getQuestionTypeDisplayName('AUDIO_RESPONSE')}</SelectItem>
-                                        <SelectItem value="VIDEO_RESPONSE">{getQuestionTypeDisplayName('VIDEO_RESPONSE')}</SelectItem>
-                                        <SelectItem value="IMAGE_RESPONSE">{getQuestionTypeDisplayName('IMAGE_RESPONSE')}</SelectItem>
+                                        <SelectItem
+                                            value="ORDERING">{getQuestionTypeDisplayName('ORDERING')}</SelectItem>
+                                        <SelectItem
+                                            value="MULTIPLE_RESPONSE">{getQuestionTypeDisplayName('MULTIPLE_RESPONSE')}</SelectItem>
+                                        <SelectItem
+                                            value="HOT_SPOT">{getQuestionTypeDisplayName('HOT_SPOT')}</SelectItem>
+                                        <SelectItem
+                                            value="DRAG_AND_DROP">{getQuestionTypeDisplayName('DRAG_AND_DROP')}</SelectItem>
+                                        <SelectItem
+                                            value="AUDIO_RESPONSE">{getQuestionTypeDisplayName('AUDIO_RESPONSE')}</SelectItem>
+                                        <SelectItem
+                                            value="VIDEO_RESPONSE">{getQuestionTypeDisplayName('VIDEO_RESPONSE')}</SelectItem>
+                                        <SelectItem
+                                            value="IMAGE_RESPONSE">{getQuestionTypeDisplayName('IMAGE_RESPONSE')}</SelectItem>
                                     </SelectGroup>
                                 </SelectContent>
                             </Select>
@@ -348,16 +375,12 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                             )}
                         </div>
 
-                        {/* Şablon ID */}
-                        <div className="space-y-2">
-                            <Label htmlFor="questionTemplateId">Soru Şablonu ID *</Label>
-                            TEPLATE EKLEMEK İÇİN BURAYA TIKLAYIN
-                        </div>
 
                         {/* Sıra Numarası */}
                         <div className="space-y-2">
                             <Label htmlFor="orderNumber">Sıra Numarası</Label>
                             <NumberInput
+                                inputType={"number"}
                                 id="orderNumber"
                                 value={formData.orderNumber || 0}
                                 onChange={(value) => handleChange('orderNumber', value || undefined)}
@@ -378,6 +401,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                             <Label htmlFor="maximumScore">Maksimum Puan</Label>
                             <NumberInput
                                 id="maximumScore"
+                                inputType={"number"}
                                 value={formData.maximumScore || 0}
                                 onChange={(value) => handleChange('maximumScore', value || undefined)}
                                 minValue={0}
@@ -397,6 +421,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                             <Label htmlFor="durationInSeconds">Süre (saniye)</Label>
                             <NumberInput
                                 id="durationInSeconds"
+                                inputType={"number"}
                                 value={formData.durationInSeconds || 0}
                                 onChange={(value) => handleChange('durationInSeconds', value || undefined)}
                                 minValue={0}
@@ -435,7 +460,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                                 className="bg-green-600 hover:bg-green-700 text-white"
                                 size="sm"
                             >
-                                <Plus className="w-4 h-4 mr-2" />
+                                <Plus className="w-4 h-4 mr-2"/>
                                 Parça Ekle
                             </Button>
                         </div>
@@ -445,6 +470,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                                 <div className="col-span-1">
                                     <Label>Sıra</Label>
                                     <NumberInput
+                                        inputType={"number"}
                                         value={part.orderNumber}
                                         onChange={(value) => updatePart(index, 'orderNumber', value)}
                                         minValue={1}
@@ -459,7 +485,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                                         value={part.mediaType || "TEXT"}
                                     >
                                         <SelectTrigger>
-                                            <SelectValue />
+                                            <SelectValue/>
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectGroup>
@@ -499,7 +525,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                                         variant="primary"
                                         size="sm"
                                     >
-                                        <Trash2 className="w-4 h-4" />
+                                        <Trash2 className="w-4 h-4"/>
                                     </Button>
                                 </div>
                             </div>
@@ -522,7 +548,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                                 className="bg-green-600 hover:bg-green-700 text-white"
                                 size="sm"
                             >
-                                <Plus className="w-4 h-4 mr-2" />
+                                <Plus className="w-4 h-4 mr-2"/>
                                 Seçenek Ekle
                             </Button>
                         </div>
@@ -532,6 +558,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                                 <div className="col-span-1">
                                     <Label>Sıra</Label>
                                     <NumberInput
+                                        inputType={"number"}
                                         value={option.orderNumber}
                                         onChange={(value) => updateOption(index, 'orderNumber', value)}
                                         minValue={1}
@@ -546,7 +573,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                                         value={option.mediaType || "TEXT"}
                                     >
                                         <SelectTrigger>
-                                            <SelectValue />
+                                            <SelectValue/>
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectGroup>
@@ -597,7 +624,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                                         variant="primary"
                                         size="sm"
                                     >
-                                        <Trash2 className="w-4 h-4" />
+                                        <Trash2 className="w-4 h-4"/>
                                     </Button>
                                 </div>
                             </div>
@@ -621,6 +648,10 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                         </Button>
                     </div>
                 </div>
+
+
+                <BaseQuestionTemplateForm onSubmit={() => {
+                }} questionType={formData.questionType || EQuestionType.MULTIPLE_CHOICE}/>
             </CardContent>
         </Card>
     );
