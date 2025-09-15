@@ -33,13 +33,7 @@ export const adminRoutes: RouteConfig = {
             requiredRoles: ['ADMIN'],
         },
 
-        {
-            title: 'Soru Bankası',
-            path: '/admin/questions',
-            icon: Settings,
-            requiredRoles: ['ADMIN'],
-        }
-        ,
+
         {
             title: 'Başvurular',
             path: '/admin/attends',
@@ -53,9 +47,13 @@ export const adminRoutes: RouteConfig = {
             requiredRoles: ['ADMIN'],
         }
 
-
-
-
+        ,
+        {
+            title: 'Oturumlar',
+            path: '/admin/sessions',
+            icon: Settings,
+            requiredRoles: ['ADMIN'],
+        }
 
         ,
         {
@@ -71,31 +69,11 @@ export const adminRoutes: RouteConfig = {
             icon: Settings,
             requiredRoles: ['ADMIN'],
         }
-        ,
-        {
-            title: 'Sınav Bölümleri',
-            path: '/admin/exam-type/{examTypeId}/section',
-            icon: Settings,
-            requiredRoles: ['ADMIN'],
-        }
-        ,
-        {
-            title: 'Soru Grup Tipleri',
-            path: '/admin/exam-type/{examTypeId}/section/{sectionId}/group',
-            icon: Settings,
-            requiredRoles: ['ADMIN'],
-        }
+
         ,
         {
             title: 'Soru Grupları',
             path: '/admin/question-group',
-            icon: Settings,
-            requiredRoles: ['ADMIN'],
-        }
-        ,
-        {
-            title: 'Sorular',
-            path: '/admin/question-group/{groupId}/question',
             icon: Settings,
             requiredRoles: ['ADMIN'],
         }
@@ -106,7 +84,6 @@ export const adminRoutes: RouteConfig = {
             icon: Settings,
             requiredRoles: ['ADMIN'],
         }
-
 
     ]
 };

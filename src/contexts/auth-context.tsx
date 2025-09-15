@@ -4,7 +4,7 @@ import {createContext, useState, useEffect, useContext} from 'react';
 import {useRouter} from 'next/navigation';
 import {User, AuthContextType, Permission, Department} from '@/types/auth';
 import {authService} from '@/services/api/auth-service';
-import {Brand} from "@/types/brand";
+import {Brand} from "@/types/management/brand";
 
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);

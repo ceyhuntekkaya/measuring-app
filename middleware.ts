@@ -3,7 +3,7 @@ import type {NextRequest} from 'next/server';
 import {isPathAllowed} from '@/config/routes';
 import {jwtDecode} from 'jwt-decode';
 import {Department, Role, User} from "@/types/auth";
-import {Brand} from "@/types/brand";
+import {Brand} from "@/types/management/brand";
 
 interface DecodedToken {
     user: User;

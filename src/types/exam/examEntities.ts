@@ -9,7 +9,7 @@ import {
     EMediaType,
     EQuestionType
 } from "@/types/exam/enum";
-import {BranchDto, BrandDto} from "@/types/brand";
+import {BranchDto, BrandDto} from "@/types/management/brand";
 import {UserDto} from "@/types/auth";
 import {DatabaseObjectDto} from "@/types/exam/miscDtos";
 import {

@@ -1,4 +1,4 @@
-import {Brand} from "@/types/brand";
+import {Brand} from "@/types/management/brand";
 import {RecordType} from "@/types/ui/table";
 import {EStatus} from "@/types/exam/enum";
 
