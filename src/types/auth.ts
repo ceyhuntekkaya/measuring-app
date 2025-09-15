@@ -1,6 +1,7 @@
-import {Brand} from "@/types/management/brand";
+import {Brand, BrandDto} from "@/types/management/brand";
 import {RecordType} from "@/types/ui/table";
 import {EStatus} from "@/types/exam/enum";
+import {DatabaseObjectDto} from "@/types/exam/miscDtos";
 
 export type Role = 'ADMIN' | 'USER' | 'LEARNER' | 'INSTRUCTOR' | 'OBSERVER' | 'COMPANY';
 
@@ -85,11 +86,8 @@ export interface User extends DatabaseObject{
 
 
 
-export interface UserDto {
-    id: string;
-    createdAt: number;
-    deletedAt: null | number;
-    status: string;
+export interface UserDto extends DatabaseObjectDto {
+
     username: string;
     password: string;
     lastLoginTime: null | string;
@@ -158,4 +156,196 @@ export interface AuthContextType {
     isAuthenticated: boolean;
     activeBrand: Brand | null;
     changeActiveBrand: (id: string) => boolean;
+}
+
+
+
+export interface UserSearchRequest {
+    username?: string;
+    email?: string;
+    name?: string;
+    lastName?: string;
+    mobilePhone?: string;
+    identityNumber?: string;
+    departments?: Department[];
+    roles?: Role[];
+    permissions?: Permission[];
+    brandIds?: string[];
+    lastLoginAfter?: string;
+    lastLoginBefore?: string;
+    exactMatch?: boolean;
+    caseSensitive?: boolean;
+    page?: number;
+    size?: number;
+    sortBy?: string;
+    sortDirection?: 'ASC' | 'DESC';
+}
+
+// Statistics interface
+export interface UserStatistics {
+    totalUsers: number;
+    activeUsers: number;
+    inactiveUsers: number;
+    departmentCounts: Record<Department, number>;
+    roleCounts: Record<Role, number>;
+}
+
+// Summary interface
+export interface UserSummary {
+    user: UserDto;
+    statistics: UserStatistics;
+    isActive: boolean;
+    lastSeenDaysAgo?: number;
+}
+
+// Password change request
+export interface ChangePasswordRequest {
+    oldPassword: string;
+    newPassword: string;
+}
+
+// Password reset request
+export interface ResetPasswordRequest {
+    email: string;
+}
+
+// Pagination response interface
+export interface PaginatedResponse<T> {
+    content: T[];           // Sayfa içeriği
+    totalElements: number;  // Toplam eleman sayısı
+    totalPages: number;     // Toplam sayfa sayısı
+    size: number;          // Sayfa boyutu
+    number: number;        // Mevcut sayfa numarası
+    first: boolean;        // İlk sayfa mı?
+    last: boolean;         // Son sayfa mı?
+    numberOfElements: number; // Bu sayfadaki eleman sayısı
+    empty: boolean;        // Sayfa boş mu?
+}
+
+// User filter options for UI components
+export interface UserFilterOptions {
+    departments: Department[];
+    roles: Role[];
+    permissions: Permission[];
+    brands: BrandDto[];
+    searchTerm?: string;
+    isActive?: boolean;
+    dateRange?: {
+        start: string;
+        end: string;
+    };
+}
+
+// User table row interface for data grid components
+export interface UserTableRow {
+    id: string;
+    username: string;
+    email: string;
+    fullName: string;
+    departmentNames: string[];
+    roleNames: string[];
+    lastLoginTime?: string;
+    isActive: boolean;
+    brandNames: string[];
+}
+
+// User profile interface for user detail pages
+export interface UserProfile extends UserDto {
+    fullName: string;
+    displayRoles: string[];
+    displayDepartments: string[];
+    displayPermissions: string[];
+    displayBrands: string[];
+    isActiveUser: boolean;
+    daysSinceLastLogin?: number;
+}
+
+// User creation wizard steps
+export interface UserCreationStep {
+    step: number;
+    title: string;
+    description: string;
+    isCompleted: boolean;
+    isActive: boolean;
+    fields: string[];
+}
+
+// User bulk operation result
+export interface UserBulkOperationResult {
+    successful: UserDto[];
+    failed: {
+        data: UserFormData;
+        error: string;
+    }[];
+    totalProcessed: number;
+    successCount: number;
+    failureCount: number;
+}
+
+// User activity log entry
+export interface UserActivityLog {
+    id: string;
+    userId: string;
+    action: string;
+    timestamp: string;
+    ipAddress?: string;
+    userAgent?: string;
+    details?: Record<string, string>;
+}
+
+// User preferences interface
+export interface UserPreferences {
+    theme: 'light' | 'dark' | 'auto';
+    language: string;
+    timezone: string;
+    notifications: {
+        email: boolean;
+        push: boolean;
+        sms: boolean;
+    };
+    dateFormat: string;
+    timeFormat: '12h' | '24h';
+}
+
+// User session interface
+export interface UserSession {
+    userId: string;
+    username: string;
+    fullName: string;
+    email: string;
+    roles: Role[];
+    permissions: Permission[];
+    departments: Department[];
+    brands: BrandDto[];
+    lastActivity: string;
+    expiresAt: string;
+    isActive: boolean;
+}
+
+// User export options
+export interface UserExportOptions {
+    format: 'xlsx' | 'csv' | 'pdf';
+    fields: (keyof UserDto)[];
+    filters?: UserSearchRequest;
+    includeStatistics: boolean;
+    fileName?: string;
+}
+
+// User import result
+export interface UserImportResult {
+    imported: UserDto[];
+    skipped: {
+        row: number;
+        data: string;
+        reason: string;
+    }[];
+    errors: {
+        row: number;
+        data: string;
+        error: string;
+    }[];
+    totalRows: number;
+    importedCount: number;
+    skippedCount: number;
+    errorCount: number;
 }

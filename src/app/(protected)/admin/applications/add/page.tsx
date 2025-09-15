@@ -1,37 +1,34 @@
 'use client';
 
-
 import PageHeader from "@/components/layout/page-header";
 import React from "react";
-import {ActionButtons} from "@/components/ui/simple-dropdown";
-import {useRouter} from "next/navigation";
-
-export default function AdminPage() {
-    const router = useRouter();
+import {useApplication} from "@/hooks/exam/use-application";
+import ApplicationForm from "@/components/form/application-form";
 
 
+export default function ApplicationsAdd() {
 
-    const handleAdd = () => {
-        router.push('/admin/attends/add');
-    };
+
+    const {
+        createApplication,
+        loading,
+    } = useApplication();
+
+/*
+    candidates: CandidateDto[];
+    exams: ExamOption[];
+    examSessions: ExamSessionOption[];
+    */
 
 
 
     return (
         <div className="space-y-6">
-            <PageHeader actions={
-                <ActionButtons
-                    onAdd={handleAdd}
-                    addButtonText="Yeni Başvuru Tanımla"
-                />
-            }/>
-            <div className="p-6 pt-1">
-                {
-                  //  examTypes &&  <DynamicTable columns={columns} data={examTypes.examTypes}/>
-                }
+            <PageHeader/>
+            <div className="p-1">
+                <ApplicationForm candidates={[]} exams={[]} examSessions={[]} onSubmit={createApplication} loading={loading} />
 
             </div>
         </div>
-    );
-
+    )
 }

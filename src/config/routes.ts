@@ -76,15 +76,31 @@ export const adminRoutes: RouteConfig = {
             path: '/admin/question-group',
             icon: Settings,
             requiredRoles: ['ADMIN'],
-        }
-        ,
+        },
         {
             title: 'Onaylar',
             path: '/admin/approvals',
             icon: Settings,
             requiredRoles: ['ADMIN'],
+        },
+        {
+            title: 'Markalar',
+            path: '/admin/brands',
+            icon: Settings,
+            requiredRoles: ['ADMIN'],
+        },
+        {
+            title: 'Şubeler',
+            path: '/admin/branches',
+            icon: Settings,
+            requiredRoles: ['ADMIN'],
+        },
+        {
+            title: 'Katılımcılar',
+            path: '/admin/candidates',
+            icon: Settings,
+            requiredRoles: ['ADMIN'],
         }
-
     ]
 };
 

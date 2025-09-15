@@ -7,14 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CreateBranchRequest, UpdateBranchRequest, BranchDto } from "@/types/management/brand";
+import {BranchDto, BranchFormData} from "@/types/management/brand";
 import { BrandDto } from "@/types/management/brand";
+import {EStatus} from "@/types/exam/enum";
 
-interface BranchFormData {
-    branchName: string;
-    code: string;
-    brandId: string;
-}
 
 interface BranchFormErrors {
     branchName?: string;
@@ -23,7 +19,7 @@ interface BranchFormErrors {
 }
 
 interface BranchFormProps {
-    onSubmit: (data: CreateBranchRequest | UpdateBranchRequest) => void;
+    onSubmit: (data: BranchFormData) => void;
     branch?: BranchDto | null;
     brands: BrandDto[];
     loading?: boolean;
@@ -38,7 +34,13 @@ const BranchForm: React.FC<BranchFormProps> = ({
     const [formData, setFormData] = useState<BranchFormData>({
         branchName: '',
         code: '',
-        brandId: ''
+        brandId: '',
+        id: '',
+        createdAt: new Date(),
+        deletedAt: null,
+        status: EStatus.ACTIVE,
+        createdById: '',
+        deletedById: ''
     });
 
     const [errors, setErrors] = useState<BranchFormErrors>({});
@@ -46,6 +48,13 @@ const BranchForm: React.FC<BranchFormProps> = ({
     useEffect(() => {
         if (branch) {
             setFormData({
+                id: branch.id || '',
+                createdAt: branch.createdAt || new Date(),
+                deletedAt: branch.deletedAt || null,
+                status: branch.status,
+                createdById: branch.createdById || null,
+                deletedById: branch.deletedById || null,
+
                 branchName: branch.branchName || '',
                 code: branch.code || '',
                 brandId: branch.brandId || ''
@@ -92,6 +101,14 @@ const BranchForm: React.FC<BranchFormProps> = ({
         e.preventDefault();
         if (validateForm()) {
             const submitData = {
+
+                id: formData.id || '',
+                createdAt: formData.createdAt || new Date(),
+                deletedAt: formData.deletedAt || null,
+                status: formData.status,
+                createdById: formData.createdById || null,
+                deletedById: formData.deletedById || null,
+
                 branchName: formData.branchName.trim(),
                 code: formData.code.trim().toUpperCase(),
                 brandId: formData.brandId

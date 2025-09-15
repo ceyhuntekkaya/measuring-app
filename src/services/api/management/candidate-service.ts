@@ -2,22 +2,22 @@ import api from "@/services/api/base-api";
 import { ApiResponse } from "@/types/exam/examValidationAndAnalytics";
 import {
     CandidateDto,
-    CreateCandidateRequest,
-    UpdateCandidateRequest,
+    CandidateFormData,
     ChangePasswordRequest,
     CandidateStatistics,
     CandidateSearchParams
 } from "@/types/management/brand";
+import {EStatus} from "@/types/exam/enum";
 
 class CandidateService {
     private readonly baseUrl = '/candidates';
 
-    async createCandidate(createRequest: CreateCandidateRequest): Promise<ApiResponse<CandidateDto>> {
+    async createCandidate(createRequest: CandidateFormData): Promise<ApiResponse<CandidateDto>> {
         const response = await api.post<ApiResponse<CandidateDto>>(`${this.baseUrl}`, createRequest);
         return response.data;
     }
 
-    async updateCandidate(id: string, updateRequest: UpdateCandidateRequest): Promise<ApiResponse<CandidateDto>> {
+    async updateCandidate(id: string, updateRequest: CandidateFormData): Promise<ApiResponse<CandidateDto>> {
         const response = await api.put<ApiResponse<CandidateDto>>(`${this.baseUrl}/${id}`, updateRequest);
         return response.data;
     }
@@ -80,7 +80,7 @@ class CandidateService {
         return response.data;
     }
 
-    async bulkCreateCandidates(createRequests: CreateCandidateRequest[]): Promise<ApiResponse<CandidateDto[]>> {
+    async bulkCreateCandidates(createRequests: CandidateFormData[]): Promise<ApiResponse<CandidateDto[]>> {
         const response = await api.post<ApiResponse<CandidateDto[]>>(`${this.baseUrl}/bulk`, createRequests);
         return response.data;
     }
@@ -116,18 +116,40 @@ class CandidateService {
         username: string,
         password: string,
         mobilePhone: string,
-        email?: string
+        email: string
     ): Promise<ApiResponse<CandidateDto>> {
         return this.createCandidate({
+            id: '',
+            createdAt: new Date(),
+            deletedAt: null,
+            status: EStatus.ACTIVE,
+            createdById: '',
+            deletedById: '',
+            gsmPhone:'',
+            address: '',
             name,
             lastName,
             identityNumber,
             username,
             password,
             mobilePhone,
-            email
+            email,
+
+
+            country: '',
+            city: '',
+            mainTongue: '',
+            fatherName: '',
+            birthPlace: '',
+            birthDate: '',
+            photoUrl: '',
+            role: '',
         });
     }
+
+
+
+
 
     // Advanced search with filters
     async advancedSearch(filters: {
@@ -180,15 +202,7 @@ class CandidateService {
 
     // Batch operations helper
     async createCandidatesFromList(
-        candidateData: Array<{
-            name: string;
-            lastName: string;
-            identityNumber: string;
-            mobilePhone: string;
-            email?: string;
-            city?: string;
-            country?: string;
-        }>
+        candidateData: Array<CandidateFormData>
     ): Promise<ApiResponse<CandidateDto[]>> {
         const requests = candidateData.map((data, index) => ({
             ...data,

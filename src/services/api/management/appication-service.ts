@@ -2,8 +2,7 @@ import api from "@/services/api/base-api";
 import { ApiResponse } from "@/types/exam/examValidationAndAnalytics";
 import {
     ApplicationDto,
-    CreateApplicationRequest,
-    UpdateApplicationRequest,
+    ApplicationFormData,
     StartApplicationRequest,
     CompleteApplicationRequest,
     BulkCreateApplicationRequest,
@@ -11,16 +10,17 @@ import {
     ExamSessionApplicationsSummary,
     ApplicationSearchParams
 } from "@/types/management/brand";
+import {EStatus} from "@/types/exam/enum";
 
 class ApplicationService {
     private readonly baseUrl = '/applications';
 
-    async createApplication(createRequest: CreateApplicationRequest): Promise<ApiResponse<ApplicationDto>> {
+    async createApplication(createRequest: ApplicationFormData): Promise<ApiResponse<ApplicationDto>> {
         const response = await api.post<ApiResponse<ApplicationDto>>(`${this.baseUrl}`, createRequest);
         return response.data;
     }
 
-    async updateApplication(id: string, updateRequest: UpdateApplicationRequest): Promise<ApiResponse<ApplicationDto>> {
+    async updateApplication(id: string, updateRequest: ApplicationFormData): Promise<ApiResponse<ApplicationDto>> {
         const response = await api.put<ApiResponse<ApplicationDto>>(`${this.baseUrl}/${id}`, updateRequest);
         return response.data;
     }
@@ -113,6 +113,12 @@ class ApplicationService {
         username?: string
     ): Promise<ApiResponse<ApplicationDto>> {
         return this.createApplication({
+            id: '',
+            createdAt: new Date(),
+            deletedAt: null,
+            status: EStatus.ACTIVE,
+            createdById: '',
+            deletedById: '',
             name,
             code,
             examId,

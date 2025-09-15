@@ -2,8 +2,7 @@ import api from "@/services/api/base-api";
 import { ApiResponse } from "@/types/exam/examValidationAndAnalytics";
 import {
     BrandDto,
-    CreateBrandRequest,
-    UpdateBrandRequest,
+    BrandFormData,
     BrandStatistics,
     BrandSummary
 } from "@/types/management/brand";
@@ -11,12 +10,12 @@ import {
 class BrandService {
     private readonly baseUrl = '/brands';
 
-    async createBrand(createRequest: CreateBrandRequest): Promise<ApiResponse<BrandDto>> {
+    async createBrand(createRequest: BrandFormData): Promise<ApiResponse<BrandDto>> {
         const response = await api.post<ApiResponse<BrandDto>>(`${this.baseUrl}`, createRequest);
         return response.data;
     }
 
-    async updateBrand(id: string, updateRequest: UpdateBrandRequest): Promise<ApiResponse<BrandDto>> {
+    async updateBrand(id: string, updateRequest: BrandFormData): Promise<ApiResponse<BrandDto>> {
         const response = await api.put<ApiResponse<BrandDto>>(`${this.baseUrl}/${id}`, updateRequest);
         return response.data;
     }
@@ -47,7 +46,7 @@ class BrandService {
         return response.data;
     }
 
-    async bulkCreateBrands(createRequests: CreateBrandRequest[]): Promise<ApiResponse<BrandDto[]>> {
+    async bulkCreateBrands(createRequests: BrandFormData[]): Promise<ApiResponse<BrandDto[]>> {
         const response = await api.post<ApiResponse<BrandDto[]>>(`${this.baseUrl}/bulk`, createRequests);
         return response.data;
     }

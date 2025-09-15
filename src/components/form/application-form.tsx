@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CreateApplicationRequest, UpdateApplicationRequest, ApplicationDto } from "@/types/management/brand";
+import {ApplicationDto, ApplicationFormData} from "@/types/management/brand";
 import { CandidateDto } from "@/types/management/brand";
+import {EStatus} from "@/types/exam/enum";
 
 // Basit exam ve exam session type'ları
 interface ExamOption {
@@ -23,14 +24,6 @@ interface ExamSessionOption {
     startDate?: string;
 }
 
-interface ApplicationFormData {
-    name: string;
-    code: string;
-    examId: string;
-    examSessionId: string;
-    candidateId: string;
-    username: string;
-}
 
 interface ApplicationFormErrors {
     name?: string;
@@ -42,7 +35,7 @@ interface ApplicationFormErrors {
 }
 
 interface ApplicationFormProps {
-    onSubmit: (data: CreateApplicationRequest | UpdateApplicationRequest) => void;
+    onSubmit: (data: ApplicationFormData) => void;
     application?: ApplicationDto | null;
     candidates: CandidateDto[];
     exams: ExamOption[];
@@ -64,7 +57,13 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
         examId: '',
         examSessionId: '',
         candidateId: '',
-        username: ''
+        username: '',
+        id: '',
+        createdAt: new Date(),
+        deletedAt: null,
+        status: EStatus.ACTIVE,
+        createdById: '',
+        deletedById: ''
     });
 
     const [errors, setErrors] = useState<ApplicationFormErrors>({});
@@ -73,6 +72,14 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
     useEffect(() => {
         if (application) {
             setFormData({
+
+                id: application.id || '',
+                createdAt: application.createdAt || new Date(),
+                deletedAt: application.deletedAt || null,
+                status: application.status,
+                createdById: application.createdById || null,
+                deletedById: application.deletedById || null,
+
                 name: application.name || '',
                 code: application.code || '',
                 examId: application.examId || '',
@@ -142,13 +149,20 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
             newErrors.candidateId = 'Aday seçimi zorunludur';
         }
 
-        if (!formData.username.trim()) {
+        if (formData.username) {
+
+            if (!formData.username.trim()) {
+                newErrors.username = 'Kullanıcı adı zorunludur';
+            } else if (formData.username.trim().length < 3) {
+                newErrors.username = 'Kullanıcı adı en az 3 karakter olmalıdır';
+            } else if (!/^[a-zA-Z0-9._-]+$/.test(formData.username.trim())) {
+                newErrors.username = 'Kullanıcı adı sadece harf, rakam, nokta, tire ve alt çizgi içerebilir';
+            }
+        }else{
             newErrors.username = 'Kullanıcı adı zorunludur';
-        } else if (formData.username.trim().length < 3) {
-            newErrors.username = 'Kullanıcı adı en az 3 karakter olmalıdır';
-        } else if (!/^[a-zA-Z0-9._-]+$/.test(formData.username.trim())) {
-            newErrors.username = 'Kullanıcı adı sadece harf, rakam, nokta, tire ve alt çizgi içerebilir';
         }
+
+
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -158,12 +172,21 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
         e.preventDefault();
         if (validateForm()) {
             const submitData = {
+
+
+                id: formData.id || '',
+                createdAt: formData.createdAt || new Date(),
+                deletedAt: formData.deletedAt || null,
+                status: formData.status,
+                createdById: formData.createdById || null,
+                deletedById: formData.deletedById || null,
+
                 name: formData.name.trim(),
                 code: formData.code.trim().toUpperCase(),
                 examId: formData.examId,
                 examSessionId: formData.examSessionId,
                 candidateId: formData.candidateId,
-                username: formData.username.trim().toLowerCase()
+                username: formData.username ? formData.username.trim().toLowerCase() : ''
             };
 
             onSubmit(submitData);

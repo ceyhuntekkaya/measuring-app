@@ -1,5 +1,10 @@
 // types/management/brandTypes.ts
-export interface BrandDto {
+
+
+import {DatabaseObjectDto} from "@/types/exam/miscDtos";
+
+
+export type BrandDto = DatabaseObjectDto & {
     id: string;
     createdAt: string;
     deletedAt?: string;
@@ -39,7 +44,7 @@ export interface Brand {
     taxOffice?: string;
 }
 
-export interface CreateBrandRequest {
+export interface BrandFormData extends DatabaseObjectDto {
     name: string;
     code: string;
     description?: string;
@@ -52,18 +57,6 @@ export interface CreateBrandRequest {
     taxOffice?: string;
 }
 
-export interface UpdateBrandRequest {
-    name?: string;
-    code?: string;
-    description?: string;
-    logo?: string;
-    website?: string;
-    email?: string;
-    phone?: string;
-    address?: string;
-    taxNumber?: string;
-    taxOffice?: string;
-}
 
 export interface BrandStatistics {
     brandId: string;
@@ -77,7 +70,7 @@ export interface BrandSummary {
 }
 
 // types/management/branchTypes.ts
-export interface BranchDto {
+export type BranchDto = DatabaseObjectDto & {
     id: string;
     createdAt: string;
     deletedAt?: string;
@@ -88,18 +81,13 @@ export interface BranchDto {
     code: string;
     brandId: string;
 }
-
-export interface CreateBranchRequest {
+export interface BranchFormData extends DatabaseObjectDto {
     branchName: string;
     code: string;
     brandId: string;
 }
 
-export interface UpdateBranchRequest {
-    branchName?: string;
-    code?: string;
-    brandId?: string;
-}
+
 
 export interface BranchStatistics {
     branchId: string;
@@ -122,7 +110,8 @@ export interface MoveBranchRequest {
 }
 
 // types/application/applicationTypes.ts
-export interface ApplicationDto {
+export type ApplicationDto = DatabaseObjectDto & {
+
     id: string;
     createdAt: string;
     deletedAt?: string;
@@ -146,7 +135,7 @@ export interface ApplicationDto {
     isEvaluated: boolean;
 }
 
-export interface CreateApplicationRequest {
+export interface ApplicationFormData extends DatabaseObjectDto {
     name: string;
     code: string;
     examId: string;
@@ -155,11 +144,7 @@ export interface CreateApplicationRequest {
     username?: string;
 }
 
-export interface UpdateApplicationRequest {
-    name?: string;
-    code?: string;
-    username?: string;
-}
+
 
 export interface StartApplicationRequest {
     applicationId: string;
@@ -202,7 +187,7 @@ export interface ApplicationSearchParams {
 }
 
 // types/application/applicationGraderTypes.ts
-export interface ApplicationGraderDto {
+export type ApplicationGraderDto = DatabaseObjectDto & {
     id: string;
     createdAt: string;
     deletedAt?: string;
@@ -268,40 +253,7 @@ export interface GraderSearchParams {
 }
 
 // types/application/candidateTypes.ts
-export interface CandidateDto {
-    id: string;
-    createdAt: string;
-    deletedAt?: string;
-    status: string;
-    createdById?: string;
-    deletedById?: string;
-    username: string;
-    lastLoginTime: string;
-    mobilePhone: string;
-    gsmPhone?: string;
-    email?: string;
-    address?: string;
-    country?: string;
-    city?: string;
-    mainTongue?: string;
-    fatherName?: string;
-    birthPlace?: string;
-    birthDate?: string;
-    activationCode?: string;
-    photoUrl?: string;
-    name: string;
-    lastName: string;
-    identityNumber: string;
-    role: string;
-}
-// types/candidate/candidateTypes.ts
-export interface CandidateDto {
-    id: string;
-    createdAt: string;
-    deletedAt?: string;
-    status: string;
-    createdById?: string;
-    deletedById?: string;
+export type CandidateDto = DatabaseObjectDto & {
     username: string;
     lastLoginTime: string;
     mobilePhone: string;
@@ -322,10 +274,10 @@ export interface CandidateDto {
     role: string;
 }
 
-export interface CreateCandidateRequest {
+export interface CandidateFormData extends DatabaseObjectDto {
     username: string;
     password: string;
-    mobilePhone: string;
+    mobilePhone?: string;
     gsmPhone?: string;
     email?: string;
     address?: string;
@@ -342,22 +294,6 @@ export interface CreateCandidateRequest {
     role?: string;
 }
 
-export interface UpdateCandidateRequest {
-    username?: string;
-    mobilePhone?: string;
-    gsmPhone?: string;
-    email?: string;
-    address?: string;
-    country?: string;
-    city?: string;
-    mainTongue?: string;
-    fatherName?: string;
-    birthPlace?: string;
-    birthDate?: string;
-    photoUrl?: string;
-    name?: string;
-    lastName?: string;
-}
 
 export interface ChangePasswordRequest {
     currentPassword: string;

@@ -14,7 +14,8 @@ import {
 import {CurriculumContentDto, CurriculumDto, ExamSessionDto} from "@/types/exam/examEntities";
 
 import {ExamTypeDto} from "@/types/exam/examTemplates";
-import {UploadedFileDto} from "@/types/exam/miscDtos";
+import {DatabaseObjectDto, UploadedFileDto} from "@/types/exam/miscDtos";
+
 
 export type QuestionTemplateResponse = {
     id: string;
@@ -315,24 +316,19 @@ export interface ExamSectionsSummary {
 
 
 // Request DTOs
-export interface CreateExamSessionRequest {
+export interface ExamSessionFormData extends DatabaseObjectDto{
+
     name: string;
+    description: string;
+    quota: number;
+    startDate: Date | null; // veya string (ISO date string olarak kullanmak isterseniz)
+    examTemplate: EExamType | null;
     branchId: string;
     brandId: string;
-    examTemplate: EExamType;
-    startDate: string;
-    endDate?: string;
-    capacity?: number;
-    description?: string;
+    supervisorIds: string[];
 }
 
-export interface UpdateExamSessionRequest {
-    name?: string;
-    startDate?: string;
-    endDate?: string;
-    capacity?: number;
-    description?: string;
-}
+
 
 export interface ExamSessionSearchRequest {
     name?: string;
@@ -359,7 +355,7 @@ export interface UpdateStatusRequest {
 }
 
 // Response DTOs
-export interface ExamSessionListResponse {
+export interface ExamSessionListResponse{
     examSessions: ExamSessionDto[];
     totalElements: number;
     totalPages: number;

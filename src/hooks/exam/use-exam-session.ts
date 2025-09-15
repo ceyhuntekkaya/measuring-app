@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import {
-    CreateExamSessionRequest,
-    UpdateExamSessionRequest,
+    ExamSessionFormData,
     ExamSessionSearchRequest,
     ExamSessionListResponse,
     ExamSessionStatistics,
@@ -25,8 +24,8 @@ interface UseExamSessionReturn {
     sessionApplications: SessionApplicationDto[];
     loading: boolean;
     error: Error | null;
-    createExamSession: (createRequest: CreateExamSessionRequest) => Promise<void>;
-    updateExamSession: (id: string, updateRequest: UpdateExamSessionRequest) => Promise<void>;
+    createExamSession: (createRequest: ExamSessionFormData) => Promise<void>;
+    updateExamSession: (updateRequest: ExamSessionFormData) => Promise<void>;
     getExamSessionById: (id: string) => Promise<void>;
     getExamSessions: (searchRequest?: ExamSessionSearchRequest) => Promise<void>;
     deleteExamSession: (id: string) => Promise<void>;
@@ -57,7 +56,7 @@ export const useExamSession = (): UseExamSessionReturn => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
 
-    const createExamSession = useCallback(async (createRequest: CreateExamSessionRequest) => {
+    const createExamSession = useCallback(async (createRequest: ExamSessionFormData) => {
         try {
             setLoading(true);
             setError(null);
@@ -76,11 +75,11 @@ export const useExamSession = (): UseExamSessionReturn => {
         }
     }, []);
 
-    const updateExamSession = useCallback(async (id: string, updateRequest: UpdateExamSessionRequest) => {
+    const updateExamSession = useCallback(async (updateRequest: ExamSessionFormData) => {
         try {
             setLoading(true);
             setError(null);
-            const response = await examSessionService.updateExamSession(id, updateRequest);
+            const response = await examSessionService.updateExamSession(updateRequest.id, updateRequest);
             if (response.data && response.success) {
                 setSelectedExamSession(response.data);
                 showNotification.success('Sınav oturumu başarıyla güncellendi!');

@@ -2,8 +2,7 @@ import api from "@/services/api/base-api";
 import { ApiResponse } from "@/types/exam/examValidationAndAnalytics";
 import {
     BranchDto,
-    CreateBranchRequest,
-    UpdateBranchRequest,
+    BranchFormData,
     BranchStatistics,
     BrandBranchesSummary,
     CopyBranchRequest,
@@ -13,12 +12,12 @@ import {
 class BranchService {
     private readonly baseUrl = '/branches';
 
-    async createBranch(createRequest: CreateBranchRequest): Promise<ApiResponse<BranchDto>> {
+    async createBranch(createRequest: BranchFormData): Promise<ApiResponse<BranchDto>> {
         const response = await api.post<ApiResponse<BranchDto>>(`${this.baseUrl}`, createRequest);
         return response.data;
     }
 
-    async updateBranch(id: string, updateRequest: UpdateBranchRequest): Promise<ApiResponse<BranchDto>> {
+    async updateBranch(id: string, updateRequest: BranchFormData): Promise<ApiResponse<BranchDto>> {
         const response = await api.put<ApiResponse<BranchDto>>(`${this.baseUrl}/${id}`, updateRequest);
         return response.data;
     }
@@ -64,7 +63,7 @@ class BranchService {
         return response.data;
     }
 
-    async bulkCreateBranches(createRequests: CreateBranchRequest[]): Promise<ApiResponse<BranchDto[]>> {
+    async bulkCreateBranches(createRequests: BranchFormData[]): Promise<ApiResponse<BranchDto[]>> {
         const response = await api.post<ApiResponse<BranchDto[]>>(`${this.baseUrl}/bulk`, createRequests);
         return response.data;
     }

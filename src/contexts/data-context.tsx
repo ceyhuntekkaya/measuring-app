@@ -1,8 +1,8 @@
 'use client';
 
 import {createContext, useState, useEffect, useContext} from 'react';
-import {Department, Permission, Role, User} from '@/types/auth';
-import {useUsers} from "@/hooks/use-user";
+import {Department, Permission, Role, UserDto} from '@/types/auth';
+import {useUser} from "@/hooks/use-user";
 
 
 const _permissions: Permission[] = [
@@ -21,7 +21,7 @@ const _roles: Role[] = [
 ];
 
 export interface DataContextType {
-    users: User[] | null;
+    users: UserDto[] | null;
     loading: boolean;
     error: string | null;
     permissions: Permission[];
@@ -40,7 +40,7 @@ export function DataProvider({children}: { children: React.ReactNode }) {
 
 
 
-    const {users, fetchUsers} = useUsers();
+    const {users, getAllUsers} = useUser();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -51,7 +51,7 @@ export function DataProvider({children}: { children: React.ReactNode }) {
 
 
                 await Promise.all([
-                    fetchUsers(),
+                    getAllUsers(),
                 ]);
             } catch (err) {
                 setError("Veriler yüklenirken bir hata oluştu");

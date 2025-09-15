@@ -1,30 +1,20 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { NumberInput } from "@/components/ui/number-input";
-import { CreateExamSessionRequest, UpdateExamSessionRequest } from "@/types/exam/examResponses";
-import { ExamSessionDto } from "@/types/exam/examEntities";
-import { EExamType } from "@/types/exam/enum";
-import { BrandDto, BranchDto } from "@/types/management/brand";
-import { UserDto } from "@/types/auth";
+import React, {useEffect, useState} from 'react';
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {Alert, AlertDescription} from "@/components/ui/alert";
+import {Button} from "@/components/ui/button";
+import {Label} from "@/components/ui/label";
+import {Input} from "@/components/ui/input";
+import {Textarea} from "@/components/ui/textarea";
+import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {NumberInput} from "@/components/ui/number-input";
+import {ExamSessionFormData} from "@/types/exam/examResponses";
+import {ExamSessionDto} from "@/types/exam/examEntities";
+import {EExamType, EStatus} from "@/types/exam/enum";
+import {BrandDto, BranchDto} from "@/types/management/brand";
+import {UserDto} from "@/types/auth";
 
-interface ExamSessionFormData {
-    name: string;
-    description: string;
-    brandId: string;
-    branchId: string;
-    examTemplate: EExamType | '';
-    startDate: string;
-    capacity: number;
-    supervisorIds: string[];
-}
 
 interface ExamSessionFormErrors {
     name?: string;
@@ -33,19 +23,18 @@ interface ExamSessionFormErrors {
     branchId?: string;
     examTemplate?: string;
     startDate?: string;
-    endDate?: string;
-    capacity?: string;
+    quota?: string;
     supervisorIds?: string;
 }
 
 interface ExamSessionFormProps {
-    onSubmit: (data: CreateExamSessionRequest | UpdateExamSessionRequest) => void;
+    onSubmit: (data: ExamSessionFormData) => void;
     examSession?: ExamSessionDto | null;
     loading?: boolean;
-    brands?: BrandDto[];
-    branches?: BranchDto[];
-    supervisors?: UserDto[];
-    onBrandChange?: (brandId: string) => void;
+    brands: BrandDto[];
+    branches: BranchDto[];
+    supervisors: UserDto[];
+    onBrandChange: (brandId: string) => void;
 }
 
 const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
@@ -62,10 +51,16 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
         description: '',
         brandId: '',
         branchId: '',
-        examTemplate: '',
-        startDate: '',
-        capacity: 30,
-        supervisorIds: []
+        examTemplate: null,
+        startDate: null,
+        quota: 30,
+        supervisorIds: [],
+        id: '',
+        createdAt: new Date(),
+        deletedAt: null,
+        status: EStatus.ACTIVE,
+        createdById: '',
+        deletedById: ''
     });
 
     const [errors, setErrors] = useState<ExamSessionFormErrors>({});
@@ -73,21 +68,32 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
     useEffect(() => {
         if (examSession) {
             // ISO string formatında tarih dönüşümü
-            const formatDateForInput = (date: Date | string | undefined) => {
+           /* const formatDateForInput = (date: Date | string | undefined) => {
                 if (!date) return '';
                 const dateObj = typeof date === 'string' ? new Date(date) : date;
                 if (isNaN(dateObj.getTime())) return '';
                 return dateObj.toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm format
             };
 
+            */
+
             setFormData({
+
+                id: examSession.id || '',
+                createdAt: examSession.createdAt || new Date(),
+                deletedAt: examSession.deletedAt || null,
+                status: examSession.status,
+                createdById: examSession.createdById || null,
+                deletedById: examSession.deletedById || null,
+
+
                 name: examSession.name || '',
                 description: examSession.description || '',
                 brandId: examSession.brand?.id || '',
                 branchId: examSession.branch?.id || '',
                 examTemplate: examSession.examTemplate || '',
-                startDate: formatDateForInput(examSession.startDate),
-                capacity: examSession.quota || 30,
+                startDate: examSession.startDate,
+                quota: examSession.quota || 30,
                 supervisorIds: examSession.supervisors?.map(s => s.id) || []
             });
         }
@@ -105,7 +111,7 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
         // Brand seçimi değiştiğinde branch'leri güncelle
         if (name === 'brandId' && onBrandChange) {
             onBrandChange(value as string);
-            setFormData(prev => ({ ...prev, branchId: '' })); // Branch'i sıfırla
+            setFormData(prev => ({...prev, branchId: ''})); // Branch'i sıfırla
         }
     };
 
@@ -119,13 +125,14 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
         } else if (formData.name.trim().length > 100) {
             newErrors.name = 'Sınav oturumu adı en fazla 100 karakter olmalıdır';
         }
-
-        if (!formData.description.trim()) {
-            newErrors.description = 'Açıklama zorunludur';
-        } else if (formData.description.trim().length < 10) {
-            newErrors.description = 'Açıklama en az 10 karakter olmalıdır';
-        } else if (formData.description.trim().length > 500) {
-            newErrors.description = 'Açıklama en fazla 500 karakter olmalıdır';
+        if (formData.description) {
+            if (!formData.description.trim()) {
+                newErrors.description = 'Açıklama zorunludur';
+            } else if (formData.description.trim().length < 10) {
+                newErrors.description = 'Açıklama en az 10 karakter olmalıdır';
+            } else if (formData.description.trim().length > 500) {
+                newErrors.description = 'Açıklama en fazla 500 karakter olmalıdır';
+            }
         }
 
         if (!formData.brandId) {
@@ -151,11 +158,10 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
         }
 
 
-
-        if (formData.capacity <= 0) {
-            newErrors.capacity = 'Kapasite 0\'dan büyük olmalıdır';
-        } else if (formData.capacity > 1000) {
-            newErrors.capacity = 'Kapasite 1000\'den fazla olamaz';
+        if (formData.quota <= 0) {
+            newErrors.quota = 'Kapasite 0\'dan büyük olmalıdır';
+        } else if (formData.quota > 1000) {
+            newErrors.quota = 'Kapasite 1000\'den fazla olamaz';
         }
 
         if (formData.supervisorIds.length === 0) {
@@ -172,13 +178,20 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
         e.preventDefault();
         if (validateForm()) {
             const submitData = {
+                id: formData.id || '',
+                createdAt: formData.createdAt || new Date(),
+                deletedAt: formData.deletedAt || null,
+                status: formData.status,
+                createdById: formData.createdById || null,
+                deletedById: formData.deletedById || null,
+
                 name: formData.name.trim(),
                 description: formData.description.trim(),
                 brandId: formData.brandId,
                 branchId: formData.branchId,
                 examTemplate: formData.examTemplate as EExamType,
                 startDate: formData.startDate,
-                capacity: formData.capacity,
+                quota: formData.quota,
                 supervisorIds: formData.supervisorIds
             };
 
@@ -233,20 +246,20 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
 
                         {/* Kapasite */}
                         <div className="space-y-2">
-                            <Label htmlFor="capacity">Kapasite *</Label>
+                            <Label htmlFor="quota">Kapasite *</Label>
                             <NumberInput
-                                id="capacity"
+                                id="quota"
                                 inputType="number"
-                                value={formData.capacity}
-                                onChange={(value) => handleChange('capacity', value)}
+                                value={formData.quota}
+                                onChange={(value) => handleChange('quota', value)}
                                 minValue={1}
                                 maxValue={1000}
                                 decimalPlaces={0}
-                                className={errors.capacity ? 'border-red-500' : ''}
+                                className={errors.quota ? 'border-red-500' : ''}
                             />
-                            {errors.capacity && (
+                            {errors.quota && (
                                 <Alert variant="destructive">
-                                    <AlertDescription>{errors.capacity}</AlertDescription>
+                                    <AlertDescription>{errors.quota}</AlertDescription>
                                 </Alert>
                             )}
                         </div>
@@ -259,7 +272,7 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
                                 value={formData.brandId}
                             >
                                 <SelectTrigger className={errors.brandId ? 'border-red-500' : ''}>
-                                    <SelectValue placeholder="Marka seçin" />
+                                    <SelectValue placeholder="Marka seçin"/>
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectGroup>
@@ -287,7 +300,7 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
                                 disabled={!formData.brandId}
                             >
                                 <SelectTrigger className={errors.branchId ? 'border-red-500' : ''}>
-                                    <SelectValue placeholder="Şube seçin" />
+                                    <SelectValue placeholder="Şube seçin"/>
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectGroup>
@@ -311,10 +324,10 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
                             <Label htmlFor="examTemplate">Sınav Şablonu *</Label>
                             <Select
                                 onValueChange={(value) => handleChange('examTemplate', value as EExamType)}
-                                value={formData.examTemplate}
+                                value={formData.examTemplate as string}
                             >
                                 <SelectTrigger className={errors.examTemplate ? 'border-red-500' : ''}>
-                                    <SelectValue placeholder="Sınav şablonu seçin" />
+                                    <SelectValue placeholder="Sınav şablonu seçin"/>
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectGroup>
@@ -339,8 +352,8 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
                             <Input
                                 id="startDate"
                                 type="datetime-local"
-                                value={formData.startDate}
-                                onChange={(e) => handleChange('startDate', e.target.value)}
+                                value={formData.startDate?.toISOString()}
+                                onChange={(e) => handleChange('startDate', new Date(e.target.value))}
                                 className={errors.startDate ? 'border-red-500' : ''}
                             />
                             {errors.startDate && (

@@ -4,22 +4,22 @@ import { ExamSessionDto } from "@/types/exam/examEntities";
 import {ApiResponse} from "@/types/exam/examValidationAndAnalytics";
 import {
     CopySessionRequest,
-    CreateExamSessionRequest,
+    ExamSessionFormData,
     ExamSessionListResponse,
     ExamSessionSearchRequest, ExamSessionStatistics, SessionApplicationDto, SessionDashboard,
-    UpdateExamSessionRequest, UpdateStatusRequest
+    UpdateStatusRequest
 } from "@/types/exam/examResponses";
 
 
 class ExamSessionService {
     private readonly baseUrl = '/exam-sessions';
 
-    async createExamSession(createRequest: CreateExamSessionRequest): Promise<ApiResponse<ExamSessionDto>> {
+    async createExamSession(createRequest: ExamSessionFormData): Promise<ApiResponse<ExamSessionDto>> {
         const response = await api.post<ApiResponse<ExamSessionDto>>(`${this.baseUrl}`, createRequest);
         return response.data;
     }
 
-    async updateExamSession(id: string, updateRequest: UpdateExamSessionRequest): Promise<ApiResponse<ExamSessionDto>> {
+    async updateExamSession(id: string, updateRequest: ExamSessionFormData): Promise<ApiResponse<ExamSessionDto>> {
         const response = await api.put<ApiResponse<ExamSessionDto>>(`${this.baseUrl}/${id}`, updateRequest);
         return response.data;
     }

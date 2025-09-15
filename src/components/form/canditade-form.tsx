@@ -8,27 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CreateCandidateRequest, UpdateCandidateRequest, CandidateDto } from "@/types/management/brand";
+import { CandidateFormData, CandidateDto } from "@/types/management/brand";
+import {EStatus} from "@/types/exam/enum";
 
-interface CandidateFormData {
-    username: string;
-    password: string;
-    confirmPassword: string;
-    name: string;
-    lastName: string;
-    identityNumber: string;
-    mobilePhone: string;
-    gsmPhone: string;
-    email: string;
-    address: string;
-    country: string;
-    city: string;
-    mainTongue: string;
-    fatherName: string;
-    birthPlace: string;
-    birthDate: string;
-    photoUrl: string;
-}
 
 interface CandidateFormErrors {
     username?: string;
@@ -43,7 +25,7 @@ interface CandidateFormErrors {
 }
 
 interface CandidateFormProps {
-    onSubmit: (data: CreateCandidateRequest | UpdateCandidateRequest) => void;
+    onSubmit: (data: CandidateFormData) => void;
     candidate?: CandidateDto | null;
     loading?: boolean;
     mode?: 'create' | 'update';
@@ -72,7 +54,14 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
         fatherName: '',
         birthPlace: '',
         birthDate: '',
-        photoUrl: ''
+        photoUrl: '',
+
+        id: '',
+        createdAt: new Date(),
+        deletedAt: null,
+        status: EStatus.ACTIVE,
+        createdById: '',
+        deletedById: ''
     });
 
     const [errors, setErrors] = useState<CandidateFormErrors>({});
@@ -81,6 +70,16 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
     useEffect(() => {
         if (candidate && mode === 'update') {
             setFormData({
+
+                id: candidate.id || '',
+                createdAt: candidate.createdAt || new Date(),
+                deletedAt: candidate.deletedAt || null,
+                status: candidate.status,
+                createdById: candidate.createdById || null,
+                deletedById: candidate.deletedById || null,
+
+
+
                 username: candidate.username || '',
                 password: '', // Never populate password fields
                 confirmPassword: '',
@@ -172,9 +171,9 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
         }
 
         // Mobile phone validation
-        if (!formData.mobilePhone.trim()) {
+        if (formData.mobilePhone && !formData.mobilePhone.trim()) {
             newErrors.mobilePhone = 'Cep telefonu zorunludur';
-        } else if (!/^[\d\s\-\+\(\)]+$/.test(formData.mobilePhone)) {
+        } else if (formData.mobilePhone &&  !/^[\d\s\-\+\(\)]+$/.test(formData.mobilePhone)) {
             newErrors.mobilePhone = 'Geçersiz telefon formatı';
         }
 
@@ -205,26 +204,36 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (validateForm()) {
-            const submitData: CreateCandidateRequest | UpdateCandidateRequest = {
+            const submitData: CandidateFormData = {
+
+                id: formData.id || '',
+                createdAt: formData.createdAt || new Date(),
+                deletedAt: formData.deletedAt || null,
+                status: formData.status,
+                createdById: formData.createdById || null,
+                deletedById: formData.deletedById || null,
+
+                password: formData.password,
+                identityNumber: formData.identityNumber,
                 username: formData.username.trim(),
                 name: formData.name.trim(),
                 lastName: formData.lastName.trim(),
-                mobilePhone: formData.mobilePhone.trim(),
-                gsmPhone: formData.gsmPhone.trim() || undefined,
-                email: formData.email.trim() || undefined,
-                address: formData.address.trim() || undefined,
-                country: formData.country.trim() || undefined,
-                city: formData.city.trim() || undefined,
-                mainTongue: formData.mainTongue.trim() || undefined,
-                fatherName: formData.fatherName.trim() || undefined,
-                birthPlace: formData.birthPlace.trim() || undefined,
-                birthDate: formData.birthDate ? new Date(formData.birthDate).toISOString() : undefined,
-                photoUrl: formData.photoUrl.trim() || undefined
+                mobilePhone: formData.mobilePhone,
+                gsmPhone: formData.gsmPhone ,
+                email: formData.email ,
+                address: formData.address ,
+                country: formData.country ,
+                city: formData.city ,
+                mainTongue: formData.mainTongue,
+                fatherName: formData.fatherName ,
+                birthPlace: formData.birthPlace ,
+                birthDate: formData.birthDate || new Date(formData.birthDate || '').toISOString(),
+                photoUrl: formData.photoUrl
             };
 
             if (mode === 'create') {
-                (submitData as CreateCandidateRequest).password = formData.password;
-                (submitData as CreateCandidateRequest).identityNumber = formData.identityNumber.trim();
+                (submitData as CandidateFormData).password = formData.password;
+                (submitData as CandidateFormData).identityNumber = formData.identityNumber.trim();
             }
 
             onSubmit(submitData);
@@ -400,7 +409,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
                                         <Input
                                             id="confirmPassword"
                                             type="password"
-                                            value={formData.confirmPassword}
+                                            value={formData.confirmPassword as string}
                                             onChange={(e) => handleChange('confirmPassword', e.target.value)}
                                             className={errors.confirmPassword ? 'border-red-500' : ''}
                                             placeholder="Şifrenizi tekrar giriniz"
@@ -477,7 +486,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
                                 <Label htmlFor="country">Ülke</Label>
                                 <Select
                                     onValueChange={(value) => handleChange('country', value as string)}
-                                    value={formData.country}
+                                    value={formData.country || ''}
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Ülke seçin" />
@@ -510,7 +519,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
                                 <Label htmlFor="mainTongue">Ana Dil</Label>
                                 <Select
                                     onValueChange={(value) => handleChange('mainTongue', value as string)}
-                                    value={formData.mainTongue}
+                                    value={formData.mainTongue || ''}
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Ana dil seçin" />

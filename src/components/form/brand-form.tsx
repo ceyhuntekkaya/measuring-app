@@ -1,26 +1,15 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { CreateBrandRequest, UpdateBrandRequest, BrandDto } from "@/types/management/brand";
+import React, {useEffect, useState} from 'react';
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {Alert, AlertDescription} from "@/components/ui/alert";
+import {Button} from "@/components/ui/button";
+import {Label} from "@/components/ui/label";
+import {Input} from "@/components/ui/input";
+import {Textarea} from "@/components/ui/textarea";
+import {BrandDto, BrandFormData} from "@/types/management/brand";
+import {EStatus} from "@/types/exam/enum";
 
-interface BrandFormData {
-    name: string;
-    code: string;
-    description: string;
-    logo: string;
-    website: string;
-    email: string;
-    phone: string;
-    address: string;
-    taxNumber: string;
-    taxOffice: string;
-}
 
 interface BrandFormErrors {
     name?: string;
@@ -33,10 +22,11 @@ interface BrandFormErrors {
 }
 
 interface BrandFormProps {
-    onSubmit: (data: CreateBrandRequest | UpdateBrandRequest) => void;
+    onSubmit: (data: BrandFormData) => Promise<void>;
     brand?: BrandDto | null;
     loading?: boolean;
 }
+
 
 const BrandForm: React.FC<BrandFormProps> = ({
                                                  onSubmit,
@@ -53,7 +43,16 @@ const BrandForm: React.FC<BrandFormProps> = ({
         phone: '',
         address: '',
         taxNumber: '',
-        taxOffice: ''
+        taxOffice: '',
+
+
+
+        id: '',
+        createdAt: new Date(),
+        deletedAt: null,
+        status: EStatus.ACTIVE,
+        createdById: '',
+        deletedById: ''
     });
 
     const [errors, setErrors] = useState<BrandFormErrors>({});
@@ -61,6 +60,14 @@ const BrandForm: React.FC<BrandFormProps> = ({
     useEffect(() => {
         if (brand) {
             setFormData({
+                id: brand.id || '',
+                createdAt: brand.createdAt || new Date(),
+                deletedAt: brand.deletedAt || null,
+                status: brand.status,
+                createdById: brand.createdById || null,
+                deletedById: brand.deletedById || null,
+
+
                 name: brand.name || '',
                 code: brand.code || '',
                 description: brand.description || '',
@@ -126,16 +133,26 @@ const BrandForm: React.FC<BrandFormProps> = ({
         e.preventDefault();
         if (validateForm()) {
             const submitData = {
+
+                id: formData.id || '',
+                createdAt: formData.createdAt || new Date(),
+                deletedAt: formData.deletedAt || null,
+                status: formData.status,
+                createdById: formData.createdById || null,
+                deletedById: formData.deletedById || null,
+
+
+
                 name: formData.name.trim(),
                 code: formData.code.trim().toUpperCase(),
-                description: formData.description.trim() || undefined,
-                logo: formData.logo.trim() || undefined,
-                website: formData.website.trim() || undefined,
-                email: formData.email.trim() || undefined,
-                phone: formData.phone.trim() || undefined,
-                address: formData.address.trim() || undefined,
-                taxNumber: formData.taxNumber.trim() || undefined,
-                taxOffice: formData.taxOffice.trim() || undefined
+                description: formData.description || '',
+                logo: formData.logo ||  '',
+                website: formData.website ||  '',
+                email: formData.email ||  '',
+                phone: formData.phone ||  '',
+                address: formData.address ||  '',
+                taxNumber: formData.taxNumber ||  '',
+                taxOffice: formData.taxOffice ||  ''
             };
 
             onSubmit(submitData);
