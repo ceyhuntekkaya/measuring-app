@@ -321,7 +321,7 @@ export interface ExamSessionFormData extends DatabaseObjectDto{
     name: string;
     description: string;
     quota: number;
-    startDate: Date | null; // veya string (ISO date string olarak kullanmak isterseniz)
+    startDate: Date | null;
     examTemplate: EExamType | null;
     branchId: string;
     brandId: string;

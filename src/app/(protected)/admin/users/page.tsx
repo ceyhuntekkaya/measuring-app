@@ -7,29 +7,29 @@ import {Column, RecordType} from "@/types/ui/table";
 import LoadingComp from "@/components/ui/loading-comp";
 import {ActionButtons} from "@/components/ui/simple-dropdown";
 import DynamicTable from "@/components/ui/dynamic-table";
-import {useBranch} from "@/hooks/exam/use-branch";
+import {useUser} from "@/hooks/use-user";
 
-export default function BranchPage() {
+export default function CandidatePage() {
     const router = useRouter();
     const {
-        getAllBranches,
-        branches,
+        getAllUsers,
+        users,
         loading
-    } = useBranch();
+    } = useUser();
 
     useEffect(() => {
-        getAllBranches();
+        getAllUsers();
     }, []);
 
     const columns: Column<RecordType>[] = [
 
         {
-            key: 'branchName',
+            key: 'name',
             header: 'Ad',
             render: (value, record) => (
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
-                    onClick={() => router.push(`/admin/branches/${record.id}`)}
+                    onClick={() => router.push(`/admin/users/${record.id}`)}
                 >
                     {value as string}
                 </div>
@@ -37,24 +37,12 @@ export default function BranchPage() {
         }
         ,
         {
-            key: 'code',
-            header: 'Kod',
+            key: 'lastName',
+            header: 'Soyadı',
             render: (value, record) => (
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
-                    onClick={() => router.push(`/admin/branches/${record.id}`)}
-                >
-                    {value as string}
-                </div>
-            )
-        },
-        {
-            key: 'brandId',
-            header: 'Marka Id',
-            render: (value, record) => (
-                <div
-                    className="font-medium cursor-pointer hover:text-blue-600"
-                    onClick={() => router.push(`/admin/branches/${record.id}`)}
+                    onClick={() => router.push(`/admin/users/${record.id}`)}
                 >
                     {value as string}
                 </div>
@@ -63,7 +51,7 @@ export default function BranchPage() {
     ];
 
     const handleAdd = () => {
-        router.push('/admin/branches/add');
+        router.push('/admin/users/add');
     };
 
 
@@ -77,16 +65,19 @@ export default function BranchPage() {
             <PageHeader actions={
                 <ActionButtons
                     onAdd={handleAdd}
-                    addButtonText="Yeni Şube Tanımla"
+                    addButtonText="Yeni Kullanıcı Tanımla"
                 />
             }/>
             <div className="p-6 pt-1">
                 {
-                    branches &&
-                    <DynamicTable columns={columns} data={branches}/>
+                    users &&
+                    <DynamicTable columns={columns} data={users}/>
                 }
 
             </div>
         </div>
     );
 }
+
+
+

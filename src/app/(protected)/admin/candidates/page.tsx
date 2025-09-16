@@ -77,7 +77,7 @@ export default function CandidatePage() {
             <PageHeader actions={
                 <ActionButtons
                     onAdd={handleAdd}
-                    addButtonText="Yeni Marka Tanımla"
+                    addButtonText="Yeni Katılımcı Tanımla"
                 />
             }/>
             <div className="p-6 pt-1">

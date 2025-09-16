@@ -139,7 +139,7 @@ export default function ApplicationPage() {
             <PageHeader actions={
                 <ActionButtons
                     onAdd={handleAdd}
-                    addButtonText="Yeni Marka Tanımla"
+                    addButtonText="Yeni Uygulama Tanımla"
                 />
             }/>
             <div className="p-6 pt-1">

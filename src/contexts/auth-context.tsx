@@ -96,6 +96,9 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
         try {
             setLoading(true);
             const response = await authService.login(username, password);
+            console.log("ceyhun 101:", response)
+
+
             localStorage.setItem('accessToken', response.accessToken);
             localStorage.setItem('refreshToken', response.refreshToken);
             document.cookie = `accessToken=${response.accessToken}; path=/; secure; samesite=strict`;
@@ -116,7 +119,6 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
             }
 
              */
-
             const path = response.user.roleSet.includes('ADMIN') ? '/admin' :
                 response.user.roleSet.includes('USER') ? '/admin' :
                     response.user.roleSet.includes('LEARNER') ? '/learner' :

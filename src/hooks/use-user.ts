@@ -25,7 +25,7 @@ interface UseUserReturn {
 
     // CRUD Operations
     createUser: (createRequest: UserFormData) => Promise<void>;
-    updateUser: (id: string, updateRequest: Partial<UserFormData>) => Promise<void>;
+    updateUser: (updateRequest: UserFormData) => Promise<void>;
     getUserById: (id: string) => Promise<void>;
     deleteUser: (id: string) => Promise<void>;
 
@@ -106,11 +106,12 @@ export const useUser = (): UseUserReturn => {
         }
     }, []);
 
-    const updateUser = useCallback(async (id: string, updateRequest: Partial<UserFormData>) => {
+    const updateUser = useCallback(async (updateRequest: UserFormData) => {
         try {
             setLoading(true);
             setError(null);
-            const response = await userService.updateUser(id, updateRequest);
+
+            const response = await userService.updateUser(updateRequest.id || '', updateRequest);
             if (response.data && response.success) {
                 setSelectedUser(response.data);
                 showNotification.success('Kullanıcı başarıyla güncellendi!');

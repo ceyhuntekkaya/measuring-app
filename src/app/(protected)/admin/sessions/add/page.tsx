@@ -7,6 +7,7 @@ import ExamSessionForm from "@/components/form/ExamSessionForm";
 import {useExamSession} from "@/hooks/exam/use-exam-session";
 import {useBrand} from "@/hooks/exam/use-brand";
 import {useBranch} from "@/hooks/exam/use-branch";
+import {useUser} from "@/hooks/use-user";
 
 export default function SessionAdd() {
 
@@ -22,18 +23,36 @@ export default function SessionAdd() {
 
     const {
         getBranchesByBrand,
-        branches,
+        brandBranches,
     } = useBranch();
 
 
 
+    const {
+        getUsersByDepartment,
+        users,
+    } = useUser();
+
+
+
     useEffect(() => {
+        getUsersByDepartment('SUPERVISOR');
         getAllBrands();
     }, []);
+
+
+    useEffect(() => {
+        if(brands){
+            getBranchesByBrand(brands[0].id);
+        }
+    }, [brands]);
+
 
     const onBrandChange = (id: string) => {
         getBranchesByBrand(id);
     }
+
+
 
 
     //  supervisors?: UserDto[];
@@ -43,9 +62,9 @@ export default function SessionAdd() {
             <PageHeader/>
             <div className="p-1">
                 {
-                    brands && branches &&
-                    <ExamSessionForm onSubmit={createExamSession} loading={loading} supervisors={[]} brands={brands}
-                                     branches={branches} onBrandChange={onBrandChange}/>
+                    brands && brandBranches && users &&
+                    <ExamSessionForm onSubmit={createExamSession} loading={loading} supervisors={users} brands={brands}
+                                     branches={brandBranches} onBrandChange={onBrandChange}/>
                 }
 
             </div>

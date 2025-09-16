@@ -5,6 +5,7 @@ import {DatabaseObjectDto} from "@/types/exam/miscDtos";
 
 export type Role = 'ADMIN' | 'USER' | 'LEARNER' | 'INSTRUCTOR' | 'OBSERVER' | 'COMPANY';
 
+
 export interface DatabaseObject extends RecordType{
     id: string;
     createdAt: Date | null;
@@ -18,18 +19,17 @@ export interface Authority {
     authority: string;
 }
 
-export type Department = 'ACCOUNTING' | 'FINANCE' | 'MANAGEMENT' | 'SALES' | 'EXTERNAL';
+export type Department = 'GRADER' | 'SUPERVISOR' | 'MANAGEMENT' | 'IT' | 'AUTHOR_REVIEWER' | 'ADMIN' | 'REVIEWER';
 
 export const DepartmentList: Record<Department, string> = {
-    ACCOUNTING: 'ACCOUNTING',
-    FINANCE: 'FINANCE',
+    GRADER: 'GRADER',
+    SUPERVISOR: 'SUPERVISOR',
     MANAGEMENT: 'MANAGEMENT',
-    SALES: 'SALES',
-    EXTERNAL: 'EXTERNAL'
+    IT: 'IT',
+    AUTHOR_REVIEWER: 'AUTHOR_REVIEWER',
+    ADMIN: 'ADMIN',
+    REVIEWER: 'REVIEWER'
 };
-
-
-
 
 export type Permission =
     | 'APPROVAL'
@@ -97,7 +97,7 @@ export interface UserDto extends DatabaseObjectDto {
     lastName: string;
     authoritySet: Permission[];
     departmentSet: Department[];
-    brandSet: Brand[];
+    brandSet: BrandDto[];
     roleSet: Role[];
     enabled: boolean;
     credentialsNonExpired: boolean;

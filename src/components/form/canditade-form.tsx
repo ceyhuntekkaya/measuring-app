@@ -130,9 +130,10 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
             newErrors.username = 'Kullanıcı adı zorunludur';
         } else if (formData.username.trim().length < 3) {
             newErrors.username = 'Kullanıcı adı en az 3 karakter olmalıdır';
-        } else if (!/^[a-zA-Z0-9._-]+$/.test(formData.username.trim())) {
-            newErrors.username = 'Kullanıcı adı sadece harf, rakam, nokta, tire ve alt çizgi içerebilir';
+        } else if (!/^[a-zA-Z0-9._@-]+$/.test(formData.username.trim())) {
+            newErrors.username = 'Kullanıcı adı sadece harf, rakam, @, nokta, tire ve alt çizgi içerebilir';
         }
+
 
         // Password validation (only for create mode)
         if (mode === 'create') {

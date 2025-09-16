@@ -13,7 +13,7 @@ const _permissions: Permission[] = [
 ];
 
 const _departments: Department[] = [
-    'ACCOUNTING', 'FINANCE', 'MANAGEMENT', 'SALES', 'EXTERNAL'
+    'GRADER', 'SUPERVISOR', 'MANAGEMENT', 'IT', 'AUTHOR_REVIEWER', 'ADMIN', 'REVIEWER'
 ];
 
 const _roles: Role[] = [

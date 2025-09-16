@@ -42,7 +42,6 @@ export default function QuestionPage() {
     }, []);
 
 
-    console.log(selectedQuestionGroup)
 
     const columns: Column<RecordType>[] = [
 

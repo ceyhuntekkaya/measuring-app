@@ -217,6 +217,21 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
         return `${formData.supervisorIds.length} gözetmen seçildi`;
     };
 
+
+
+    const formatDateTimeLocal = (date: Date | null): string => {
+        if (!date) return '';
+        return date.toISOString().slice(0, 16);
+    };
+
+    const parseDateTimeLocal = (value: string): Date | null => {
+        if (!value) return null;
+        const date = new Date(value);
+        return isNaN(date.getTime()) ? null : date;
+    };
+
+
+
     return (
         <Card>
             <CardHeader>
@@ -352,8 +367,8 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
                             <Input
                                 id="startDate"
                                 type="datetime-local"
-                                value={formData.startDate?.toISOString()}
-                                onChange={(e) => handleChange('startDate', new Date(e.target.value))}
+                                value={formatDateTimeLocal(formData.startDate)}
+                                onChange={(e) => handleChange('startDate', parseDateTimeLocal(e.target.value))}
                                 className={errors.startDate ? 'border-red-500' : ''}
                             />
                             {errors.startDate && (

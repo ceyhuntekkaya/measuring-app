@@ -22,7 +22,7 @@ class UserService {
         return response.data;
     }
 
-    async updateUser(id: string, updateRequest: Partial<UserFormData>): Promise<ApiResponse<UserDto>> {
+    async updateUser(id: string, updateRequest: UserFormData): Promise<ApiResponse<UserDto>> {
         const response = await api.put<ApiResponse<UserDto>>(`${this.baseUrl}/${id}`, updateRequest);
         return response.data;
     }

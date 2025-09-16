@@ -100,6 +100,12 @@ export const adminRoutes: RouteConfig = {
             path: '/admin/candidates',
             icon: Settings,
             requiredRoles: ['ADMIN'],
+        },
+        {
+            title: 'Kullanıcılar',
+            path: '/admin/users',
+            icon: Settings,
+            requiredRoles: ['ADMIN'],
         }
     ]
 };
@@ -111,7 +117,7 @@ export const appRoutes: RouteConfig = {
             path: '/app/orders',
             icon: Home,
             requiredPermissions: ['APPROVAL', 'USER_CREATE', 'GENERAL', 'FINANCE_OPERATION', 'ACCOUNTING_OPERATION', 'DELIVERY_OPERATION', 'CUSTOMER_OPERATION', 'OFFER_OPERATION', 'ORDER_OPERATION', 'SUPPLIER_OPERATION', 'TRANSPORTATION_OPERATION', 'DELIVERY_DOCUMENT', 'SETTING'],
-            requiredDepartments: ['ACCOUNTING', 'SALES', 'MANAGEMENT', 'FINANCE', 'EXTERNAL'],
+            requiredDepartments: ['GRADER' , 'SUPERVISOR' , 'MANAGEMENT' , 'IT' , 'AUTHOR_REVIEWER' , 'ADMIN' , 'REVIEWER'],
             requiredRoles: ['USER'],
         }
 
@@ -147,7 +153,7 @@ export const instructorRoutes: RouteConfig = {
             path: '/learner',
             icon: Home,
             requiredPermissions: ['APPROVAL', 'USER_CREATE', 'GENERAL', 'FINANCE_OPERATION', 'ACCOUNTING_OPERATION', 'DELIVERY_OPERATION', 'CUSTOMER_OPERATION', 'OFFER_OPERATION', 'ORDER_OPERATION', 'SUPPLIER_OPERATION', 'TRANSPORTATION_OPERATION', 'DELIVERY_DOCUMENT', 'SETTING'],
-            requiredDepartments: ['EXTERNAL'],
+            requiredDepartments: ['GRADER' , 'SUPERVISOR' , 'MANAGEMENT' , 'IT' , 'AUTHOR_REVIEWER' , 'ADMIN' , 'REVIEWER'],
             requiredRoles: ['LEARNER'],
         },
         {
@@ -155,7 +161,7 @@ export const instructorRoutes: RouteConfig = {
             path: '/learner/tasks',
             icon: UserCog,
             requiredPermissions: ['APPROVAL', 'USER_CREATE', 'GENERAL', 'FINANCE_OPERATION', 'ACCOUNTING_OPERATION', 'DELIVERY_OPERATION', 'CUSTOMER_OPERATION', 'OFFER_OPERATION', 'ORDER_OPERATION', 'SUPPLIER_OPERATION', 'TRANSPORTATION_OPERATION', 'DELIVERY_DOCUMENT', 'SETTING'],
-            requiredDepartments: ['EXTERNAL'],
+            requiredDepartments: ['GRADER' , 'SUPERVISOR' , 'MANAGEMENT' , 'IT' , 'AUTHOR_REVIEWER' , 'ADMIN' , 'REVIEWER'],
             requiredRoles: ['LEARNER'],
         },
         {
@@ -163,7 +169,7 @@ export const instructorRoutes: RouteConfig = {
             path: '/learner/reports',
             icon: Mail,
             requiredPermissions: ['APPROVAL', 'USER_CREATE', 'GENERAL', 'FINANCE_OPERATION', 'ACCOUNTING_OPERATION', 'DELIVERY_OPERATION', 'CUSTOMER_OPERATION', 'OFFER_OPERATION', 'ORDER_OPERATION', 'SUPPLIER_OPERATION', 'TRANSPORTATION_OPERATION', 'DELIVERY_DOCUMENT', 'SETTING'],
-            requiredDepartments: ['EXTERNAL'],
+            requiredDepartments: ['GRADER' , 'SUPERVISOR' , 'MANAGEMENT' , 'IT' , 'AUTHOR_REVIEWER' , 'ADMIN' , 'REVIEWER'],
             requiredRoles: ['LEARNER'],
         },
         {
@@ -171,7 +177,7 @@ export const instructorRoutes: RouteConfig = {
             path: '/learner/setting',
             icon: Mail,
             requiredPermissions: ['APPROVAL', 'USER_CREATE', 'GENERAL', 'FINANCE_OPERATION', 'ACCOUNTING_OPERATION', 'DELIVERY_OPERATION', 'CUSTOMER_OPERATION', 'OFFER_OPERATION', 'ORDER_OPERATION', 'SUPPLIER_OPERATION', 'TRANSPORTATION_OPERATION', 'DELIVERY_DOCUMENT', 'SETTING'],
-            requiredDepartments: ['EXTERNAL'],
+            requiredDepartments: ['GRADER' , 'SUPERVISOR' , 'MANAGEMENT' , 'IT' , 'AUTHOR_REVIEWER' , 'ADMIN' , 'REVIEWER'],
             requiredRoles: ['LEARNER'],
         }
     ]
@@ -185,7 +191,7 @@ export const observerRoutes: RouteConfig = {
             path: '/learner',
             icon: Home,
             requiredPermissions: ['APPROVAL', 'USER_CREATE', 'GENERAL', 'FINANCE_OPERATION', 'ACCOUNTING_OPERATION', 'DELIVERY_OPERATION', 'CUSTOMER_OPERATION', 'OFFER_OPERATION', 'ORDER_OPERATION', 'SUPPLIER_OPERATION', 'TRANSPORTATION_OPERATION', 'DELIVERY_DOCUMENT', 'SETTING'],
-            requiredDepartments: ['EXTERNAL'],
+            requiredDepartments: ['GRADER' , 'SUPERVISOR' , 'MANAGEMENT' , 'IT' , 'AUTHOR_REVIEWER' , 'ADMIN' , 'REVIEWER'],
             requiredRoles: ['LEARNER'],
         },
         {
@@ -193,7 +199,7 @@ export const observerRoutes: RouteConfig = {
             path: '/learner/tasks',
             icon: UserCog,
             requiredPermissions: ['APPROVAL', 'USER_CREATE', 'GENERAL', 'FINANCE_OPERATION', 'ACCOUNTING_OPERATION', 'DELIVERY_OPERATION', 'CUSTOMER_OPERATION', 'OFFER_OPERATION', 'ORDER_OPERATION', 'SUPPLIER_OPERATION', 'TRANSPORTATION_OPERATION', 'DELIVERY_DOCUMENT', 'SETTING'],
-            requiredDepartments: ['EXTERNAL'],
+            requiredDepartments: ['GRADER' , 'SUPERVISOR' , 'MANAGEMENT' , 'IT' , 'AUTHOR_REVIEWER' , 'ADMIN' , 'REVIEWER'],
             requiredRoles: ['LEARNER'],
         },
         {
@@ -201,7 +207,7 @@ export const observerRoutes: RouteConfig = {
             path: '/learner/reports',
             icon: Mail,
             requiredPermissions: ['APPROVAL', 'USER_CREATE', 'GENERAL', 'FINANCE_OPERATION', 'ACCOUNTING_OPERATION', 'DELIVERY_OPERATION', 'CUSTOMER_OPERATION', 'OFFER_OPERATION', 'ORDER_OPERATION', 'SUPPLIER_OPERATION', 'TRANSPORTATION_OPERATION', 'DELIVERY_DOCUMENT', 'SETTING'],
-            requiredDepartments: ['EXTERNAL'],
+            requiredDepartments: ['GRADER' , 'SUPERVISOR' , 'MANAGEMENT' , 'IT' , 'AUTHOR_REVIEWER' , 'ADMIN' , 'REVIEWER'],
             requiredRoles: ['LEARNER'],
         },
         {
@@ -209,7 +215,7 @@ export const observerRoutes: RouteConfig = {
             path: '/learner/setting',
             icon: Mail,
             requiredPermissions: ['APPROVAL', 'USER_CREATE', 'GENERAL', 'FINANCE_OPERATION', 'ACCOUNTING_OPERATION', 'DELIVERY_OPERATION', 'CUSTOMER_OPERATION', 'OFFER_OPERATION', 'ORDER_OPERATION', 'SUPPLIER_OPERATION', 'TRANSPORTATION_OPERATION', 'DELIVERY_DOCUMENT', 'SETTING'],
-            requiredDepartments: ['EXTERNAL'],
+            requiredDepartments: ['GRADER' , 'SUPERVISOR' , 'MANAGEMENT' , 'IT' , 'AUTHOR_REVIEWER' , 'ADMIN' , 'REVIEWER'],
             requiredRoles: ['LEARNER'],
         }
     ]
@@ -240,7 +246,7 @@ export const companyRoutes: RouteConfig = {
             path: '/company/orders',
             icon: Home,
             requiredPermissions: ['APPROVAL', 'USER_CREATE', 'GENERAL', 'FINANCE_OPERATION', 'ACCOUNTING_OPERATION', 'DELIVERY_OPERATION', 'CUSTOMER_OPERATION', 'OFFER_OPERATION', 'ORDER_OPERATION', 'SUPPLIER_OPERATION', 'TRANSPORTATION_OPERATION', 'DELIVERY_DOCUMENT', 'SETTING'],
-            requiredDepartments: ['EXTERNAL'],
+            requiredDepartments: ['GRADER' , 'SUPERVISOR' , 'MANAGEMENT' , 'IT' , 'AUTHOR_REVIEWER' , 'ADMIN' , 'REVIEWER'],
             requiredRoles: ['COMPANY'],
         }
     ]

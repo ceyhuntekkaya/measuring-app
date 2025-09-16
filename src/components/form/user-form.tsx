@@ -3,58 +3,64 @@
 import React, {useEffect, useState} from 'react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Alert, AlertDescription} from "@/components/ui/alert";
-import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
 import {Label} from "@/components/ui/label";
-import {Permission, Department, Role, UserFormData, User} from "@/types/auth";
-import {useDataContext} from "@/contexts/data-context";
-import {useLanguage} from "@/contexts/language-context";
-import {Brand} from "@/types/management/brand";
+import {Input} from "@/components/ui/input";
+import Checkbox from "@/components/ui/checkbox";
+import {UserDto, UserFormData, Permission, Department, Role, PermissionList, DepartmentList} from "@/types/auth";
+import {BrandDto} from "@/types/management/brand";
 import {EStatus} from "@/types/exam/enum";
-
-interface UserFormProps {
-    onSubmit: (arg0: UserFormData) => void;
-    selectedUser?: User;
-}
 
 interface UserFormErrors {
     username?: string;
+    password?: string;
+    email?: string;
     name?: string;
     lastName?: string;
     mobilePhone?: string;
-    status?: string;
-    roleSet?: string;
-    brandSte?: string;
-    brandSet?: string;
-    password?: string;
-    email?: string;
-    departmentSet?: string;
+    identityNumber?: string;
     authoritySet?: string;
-    connectionId?: string;
-    transportationCompanyId?: string;
-    vehicleDriverId?: string;
-    customerId?: string;
+    departmentSet?: string;
+    brandSet?: string;
+    roleSet?: string;
 }
+
+interface UserFormProps {
+    onSubmit: (data: UserFormData) => Promise<void>;
+    user?: UserDto | null;
+    loading?: boolean;
+    brands: BrandDto[];
+    onUsernameCheck?: (username: string) => Promise<boolean>; // true if available
+    onPasswordReset?: (userId: string) => Promise<void>; // şifre yenileme fonksiyonu
+}
+
+const generateActivationCode = (): string => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+};
 
 const UserForm: React.FC<UserFormProps> = ({
                                                onSubmit,
-                                               selectedUser
+                                               user,
+                                               loading = false,
+                                               brands,
+                                               onUsernameCheck,
+                                               onPasswordReset
                                            }) => {
-    const {t} = useLanguage();
     const [formData, setFormData] = useState<UserFormData>({
         id: '',
         createdAt: Date.now(),
         deletedAt: null,
-        status: 'ACTIVE',
+        status: EStatus.ACTIVE,
         username: '',
         password: '',
         lastLoginTime: null,
         mobilePhone: '',
-        activationCode: Math.random().toString(36).substring(2, 12),
+        activationCode: generateActivationCode(),
         name: '',
         lastName: '',
         authoritySet: [],
         departmentSet: [],
+        brandSet: [],
         roleSet: [],
         enabled: true,
         credentialsNonExpired: true,
@@ -62,170 +68,38 @@ const UserForm: React.FC<UserFormProps> = ({
         accountNonExpired: true,
         email: '',
         identityNumber: '',
-        brandSet: [],
-        connectionId: null,
     });
-
-    const [connection, setConnection] = useState({
-        customerId: null,
-        vehicleDriverId: null,
-        transportationCompanyId: null
-    });
-
-
-
-
-
-
-    useEffect(() => {
-        if (selectedUser) {
-            setFormData({
-                id: selectedUser.id,
-                createdAt: Date.now(),
-                deletedAt: null,
-                status: selectedUser.status as EStatus | EStatus.ACTIVE,
-                username: selectedUser.username,
-                password: '',
-                lastLoginTime: null,
-                mobilePhone: selectedUser.mobilePhone,
-                activationCode: selectedUser.activationCode,
-                name: selectedUser.name,
-                lastName: selectedUser.lastName,
-                authoritySet: selectedUser.authoritySet,
-                departmentSet: selectedUser.departmentSet,
-                roleSet: selectedUser.roleSet,
-                enabled: selectedUser.enabled,
-                credentialsNonExpired: selectedUser.credentialsNonExpired,
-                accountNonLocked: selectedUser.accountNonLocked,
-                accountNonExpired: selectedUser.accountNonExpired,
-                email: selectedUser.email,
-                identityNumber: selectedUser.identityNumber,
-                brandSet: selectedUser.brandSet,
-                connectionId: selectedUser.connectionId,
-            });
-
-
-            if (selectedUser.roleSet.includes("LEARNER") && selectedUser.connectionId) {
-                if (!selectedUser.connectionId) {
-                    handleConnection("transportationCompanyId", selectedUser.connectionId);
-                }
-            } else if (selectedUser.roleSet.includes("COMPANY") && selectedUser.connectionId) {
-                if (!selectedUser.connectionId) {
-                    handleConnection("customerId", selectedUser.connectionId);
-                }
-            } else if (selectedUser.roleSet.includes("USER") && selectedUser.connectionId) {
-                if (!selectedUser.connectionId) {
-                    handleConnection("vehicleDriverId", selectedUser.connectionId);
-                }
-            }
-            toggleBrand(selectedUser.brandSet[0] || {id: '', name: ''} as Brand);
-
-
-        }
-    }, [selectedUser]);
-
-
-
 
     const [errors, setErrors] = useState<UserFormErrors>({});
+    const [usernameChecking, setUsernameChecking] = useState(false);
 
-    const {
-        permissions,
-        departments,
-        roles,
-    } = useDataContext();
-
-
-    const validateForm = () => {
-        const newErrors: UserFormErrors = {};
-
-        if (!formData.username) {
-            newErrors.username = 'Kullanıcı adı zorunludur';
-        }
-
-        if (!selectedUser && !formData.password) {
-            newErrors.password = 'Şifre zorunludur';
-        }
-
-        if (!formData.name) {
-            newErrors.name = 'Ad zorunludur';
-        }
-
-        if (!formData.lastName) {
-            newErrors.lastName = 'Soyad zorunludur';
-        }
-
-        if (!formData.mobilePhone) {
-            newErrors.mobilePhone = 'Telefon numarası zorunludur';
-        }
-
-        if (formData.roleSet.length === 0) {
-            newErrors.roleSet = 'En az bir rol seçilmelidir';
-        } else {
-
-            if (formData.roleSet.includes("LEARNER")) {
-                if (!formData.connectionId) {
-                    newErrors.connectionId = 'Listeden bir nakliye firması seçimi yapmalısınız.';
-                }
-            } else if (formData.roleSet.includes("COMPANY")) {
-                if (!formData.connectionId) {
-                    newErrors.connectionId = 'Listeden bir müşteri seçimi yapmalısınız.';
-                }
-            } else if (formData.roleSet.includes("USER")) {
-                if (!formData.connectionId) {
-                    newErrors.connectionId = 'Listeden bir şoför seçimi yapmalısınız.';
-                }
-            }
-        }
-
-
-        if (formData.brandSet.length === 0) {
-            newErrors.brandSet = 'En az bir marka seçilmelidir';
-        }
-
-
-        if (formData.roleSet.includes("ADMIN")) {
-            if (formData.departmentSet.length === 0) {
-                newErrors.departmentSet = 'En az bir birim seçilmelidir';
-            }
-            if (formData.authoritySet.length === 0) {
-                newErrors.authoritySet = 'En az bir yetki seçilmelidir';
-            }
-        }
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (validateForm()) {
-            onSubmit({
-                ...formData,
+    useEffect(() => {
+        if (user) {
+            setFormData({
+                id: user.id || '',
+                createdAt: user.createdAt ? new Date(user.createdAt).getTime() : Date.now(),
+                deletedAt: user.deletedAt ? new Date(user.deletedAt).getTime() : null,
+                status: user.status || EStatus.ACTIVE,
+                username: user.username || '',
+                password: '', // Always empty for edit
+                lastLoginTime: user.lastLoginTime,
+                mobilePhone: user.mobilePhone || '',
+                activationCode: user.activationCode || generateActivationCode(),
+                name: user.name || '',
+                lastName: user.lastName || '',
+                authoritySet: user.authoritySet || [],
+                departmentSet: user.departmentSet || [],
+                brandSet: user.brandSet || [],
+                roleSet: user.roleSet || [],
+                enabled: user.enabled ?? true,
+                credentialsNonExpired: user.credentialsNonExpired ?? true,
+                accountNonLocked: user.accountNonLocked ?? true,
+                accountNonExpired: user.accountNonExpired ?? true,
+                email: user.email || '',
+                identityNumber: user.identityNumber || '',
             });
         }
-
-    };
-
-
-    const handleConnection = (name: string, value: string) => {
-        setConnection(prev => ({
-            ...prev,
-            [name]: value
-        }));
-
-
-        if (formData.roleSet.includes("LEARNER")) {
-            handleChange("connectionId", value);
-        } else if (formData.roleSet.includes("COMPANY")) {
-            handleChange("connectionId", value);
-        } else if (formData.roleSet.includes("USER")) {
-            handleChange("connectionId", value);
-        } else {
-            handleChange("connectionId", null);
-        }
-
-
-    };
+    }, [user]);
 
     const handleChange = <T extends keyof UserFormData>(
         name: T,
@@ -237,98 +111,181 @@ const UserForm: React.FC<UserFormProps> = ({
         }));
     };
 
-
-    const togglePermission = (permission: Permission) => {
+    const handleMultiSelectChange = <T extends keyof UserFormData>(
+        name: T,
+        value: string,
+        checked: boolean
+    ) => {
         setFormData(prev => {
-            if (prev.authoritySet === null) return prev;
-            const authoritySet = prev.authoritySet.includes(permission)
-                ? prev.authoritySet.filter(p => p !== permission)
-                : [...prev.authoritySet, permission];
-
-            return {...prev, authoritySet};
-        });
-    };
-
-    const toggleDepartment = (department: Department) => {
-        setFormData(prev => {
-            const departmentSet = prev.departmentSet.includes(department)
-                ? prev.departmentSet.filter(d => d !== department)
-                : [...prev.departmentSet, department];
-
-            return {...prev, departmentSet};
-        });
-    };
-
-    const toggleBrand = (brand: Brand) => {
-        setFormData(prev => {
-            const brandSet = prev.brandSet.includes(brand)
-                ? prev.brandSet.filter(d => d !== brand)
-                : [...prev.brandSet, brand];
-
-            return {...prev, brandSet};
-        });
-    };
-
-    const toggleRole = (role: Role) => {
-        /*
-        setFormData(prev => {
-            const roleSet = prev.roleSet.includes(role)
-                ? prev.roleSet.filter(r => r !== role)
-                : [...prev.roleSet, role];
-
-            return {...prev, roleSet};
-        });
-
-         */
-
-        setFormData(prev => {
-            const roleSet = prev.roleSet.includes(role)
-                ? []
-                : [role];
-
-            const authoritySet: Permission[] = [];
-            const departmentSet: Department[] = [];
-            authoritySet.push('GENERAL')
-
-            if (!roleSet.includes('ADMIN')) {
-                departmentSet.push('EXTERNAL')
+            const currentArray = (prev[name] as string[]) || [];
+            if (checked) {
+                return {
+                    ...prev,
+                    [name]: [...currentArray.filter(item => item !== value), value]
+                };
+            } else {
+                return {
+                    ...prev,
+                    [name]: currentArray.filter(item => item !== value)
+                };
             }
-            return {...prev, roleSet, authoritySet, departmentSet};
         });
+    };
 
+    const checkUsername = async (username: string) => {
+        if (!onUsernameCheck || !username.trim() || username === user?.username) return;
 
-        if (formData.roleSet.includes("LEARNER")) {
-            handleChange("connectionId", connection.transportationCompanyId);
-        } else if (formData.roleSet.includes("COMPANY")) {
-            handleChange("connectionId", connection.customerId);
-        } else if (formData.roleSet.includes("USER")) {
-            handleChange("connectionId", connection.vehicleDriverId);
-        } else {
-            handleChange("connectionId", null);
+        setUsernameChecking(true);
+        try {
+            const isAvailable = await onUsernameCheck(username.trim());
+            if (!isAvailable) {
+                setErrors(prev => ({
+                    ...prev,
+                    username: 'Bu kullanıcı adı zaten kullanılıyor'
+                }));
+            } else {
+                setErrors(prev => ({
+                    ...prev,
+                    username: undefined
+                }));
+            }
+        } catch (error) {
+            console.error('Username check failed:', error);
+        } finally {
+            setUsernameChecking(false);
+        }
+    };
+
+    const validateForm = (): boolean => {
+        const newErrors: UserFormErrors = {};
+
+        // Username validation
+        if (!formData.username.trim()) {
+            newErrors.username = 'Kullanıcı adı zorunludur';
+        } else if (formData.username.trim().length < 3) {
+            newErrors.username = 'Kullanıcı adı en az 3 karakter olmalıdır';
+        } else if (!/^[a-zA-Z0-9._@-]+$/.test(formData.username.trim())) {
+            newErrors.username = 'Kullanıcı adı sadece harf, rakam, @, nokta, tire ve alt çizgi içerebilir';
         }
 
+
+        // Password validation (required for new users)
+        if (!user && !formData.password.trim()) {
+            newErrors.password = 'Şifre zorunludur';
+        } else if (formData.password && formData.password.length < 6) {
+            newErrors.password = 'Şifre en az 6 karakter olmalıdır';
+        }
+
+        // Email validation
+        if (!formData.email.trim()) {
+            newErrors.email = 'E-posta zorunludur';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+            newErrors.email = 'Geçersiz e-posta formatı';
+        }
+
+        // Name validation
+        if (!formData.name.trim()) {
+            newErrors.name = 'İsim zorunludur';
+        } else if (formData.name.trim().length < 2) {
+            newErrors.name = 'İsim en az 2 karakter olmalıdır';
+        }
+
+        // Last name validation
+        if (!formData.lastName.trim()) {
+            newErrors.lastName = 'Soyisim zorunludur';
+        } else if (formData.lastName.trim().length < 2) {
+            newErrors.lastName = 'Soyisim en az 2 karakter olmalıdır';
+        }
+
+        // Mobile phone validation
+        if (!formData.mobilePhone.trim()) {
+            newErrors.mobilePhone = 'Telefon numarası zorunludur';
+        } else if (!/^[\d\s\-\+\(\)]+$/.test(formData.mobilePhone)) {
+            newErrors.mobilePhone = 'Geçersiz telefon formatı';
+        }
+
+        // Identity number validation
+        if (formData.identityNumber && !/^\d{11}$/.test(formData.identityNumber.replace(/\s/g, ''))) {
+            newErrors.identityNumber = 'TC Kimlik numarası 11 haneli olmalıdır';
+        }
+
+        // Multi-select validations
+        if (formData.authoritySet.length === 0) {
+            newErrors.authoritySet = 'En az bir yetki seçmelisiniz';
+        }
+
+        if (formData.departmentSet.length === 0) {
+            newErrors.departmentSet = 'En az bir departman seçmelisiniz';
+        }
+
+        if (formData.brandSet.length === 0) {
+            newErrors.brandSet = 'En az bir marka seçmelisiniz';
+        }
+
+        if (formData.roleSet.length === 0) {
+            newErrors.roleSet = 'En az bir rol seçmelisiniz';
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (validateForm()) {
+            const submitData: UserFormData = {
+                ...formData,
+                username: formData.username.trim(),
+                email: formData.email.trim(),
+                name: formData.name.trim(),
+                lastName: formData.lastName.trim(),
+                mobilePhone: formData.mobilePhone.trim(),
+                identityNumber: formData.identityNumber?.trim() || '',
+            };
+
+            onSubmit(submitData);
+        }
+    };
+
+    const regenerateActivationCode = () => {
+        setFormData(prev => ({
+            ...prev,
+            activationCode: generateActivationCode()
+        }));
+    };
+
+    const roles: Role[] = ['ADMIN', 'USER', 'LEARNER', 'INSTRUCTOR', 'OBSERVER', 'COMPANY'];
+    const permissions = Object.keys(PermissionList) as Permission[];
+    const departments = Object.keys(DepartmentList) as Department[];
 
     return (
         <Card>
             <CardHeader>
-                <CardTitle>{
-                    selectedUser ? "Kullanıcıyı Güncelle" : "Yeni Kullanıcı Oluştur"
-                }</CardTitle>
+                <CardTitle>
+                    {user ? "Kullanıcı Güncelle" : "Yeni Kullanıcı Oluştur"}
+                </CardTitle>
             </CardHeader>
             <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-4 gap-4">
-                        {/* Temel Bilgiler */}
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="grid grid-cols-2 gap-4">
+                        {/* Username */}
                         <div className="space-y-2">
                             <Label htmlFor="username">Kullanıcı Adı *</Label>
-                            <Input
-                                id="username"
-                                name="username"
-                                value={formData.username}
-                                onChange={(e) => handleChange('username', e.target.value)}
-                                className={errors.username ? 'border-red-500' : ''}
-                            />
+                            <div className="relative">
+                                <Input
+                                    id="username"
+                                    value={formData.username}
+                                    onChange={(e) => handleChange('username', e.target.value)}
+                                    onBlur={(e) => checkUsername(e.target.value)}
+                                    className={errors.username ? 'border-red-500' : ''}
+                                    placeholder="Kullanıcı adını giriniz"
+                                />
+                                {usernameChecking && (
+                                    <div className="absolute right-3 top-3">
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+                                    </div>
+                                )}
+                            </div>
                             {errors.username && (
                                 <Alert variant="destructive">
                                     <AlertDescription>{errors.username}</AlertDescription>
@@ -336,34 +293,44 @@ const UserForm: React.FC<UserFormProps> = ({
                             )}
                         </div>
 
-
-
+                        {/* Password */}
                         <div className="space-y-2">
-                            <Label htmlFor="password">Şifre *</Label>
-
-                            {
-                                selectedUser ?
-
+                            <Label htmlFor="password">
+                                Şifre {!user && '*'}
+                            </Label>
+                            {user ? (
+                                <div className="flex gap-2">
                                     <Input
                                         id="password"
-                                        name="password"
-                                        value={formData.password}
-                                        onChange={(e) => handleChange('password', e.target.value)}
-                                        className={errors.password ? 'border-red-500' : ''}
+                                        type="password"
+                                        value="********"
                                         readOnly
+                                        className="bg-gray-50"
+                                        placeholder="Mevcut şifre"
                                     />
-                                    :
-
-                                    <Input
-                                        id="password"
-                                        name="password"
-                                        value={formData.password}
-                                        onChange={(e) => handleChange('password', e.target.value)}
-                                        className={errors.password ? 'border-red-500' : ''}
-                                    />
-
-                            }
-
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => {
+                                            if (onPasswordReset && user?.id) {
+                                                onPasswordReset(user.id);
+                                            }
+                                        }}
+                                        disabled={!onPasswordReset}
+                                    >
+                                        Şifre Yenile
+                                    </Button>
+                                </div>
+                            ) : (
+                                <Input
+                                    id="password"
+                                    type="password"
+                                    value={formData.password}
+                                    onChange={(e) => handleChange('password', e.target.value)}
+                                    className={errors.password ? 'border-red-500' : ''}
+                                    placeholder="Şifre giriniz"
+                                />
+                            )}
                             {errors.password && (
                                 <Alert variant="destructive">
                                     <AlertDescription>{errors.password}</AlertDescription>
@@ -371,14 +338,15 @@ const UserForm: React.FC<UserFormProps> = ({
                             )}
                         </div>
 
+                        {/* Name */}
                         <div className="space-y-2">
-                            <Label htmlFor="name">Ad *</Label>
+                            <Label htmlFor="name">İsim *</Label>
                             <Input
                                 id="name"
-                                name="name"
                                 value={formData.name}
                                 onChange={(e) => handleChange('name', e.target.value)}
                                 className={errors.name ? 'border-red-500' : ''}
+                                placeholder="İsim giriniz"
                             />
                             {errors.name && (
                                 <Alert variant="destructive">
@@ -387,14 +355,15 @@ const UserForm: React.FC<UserFormProps> = ({
                             )}
                         </div>
 
+                        {/* Last Name */}
                         <div className="space-y-2">
-                            <Label htmlFor="lastName">Soyad *</Label>
+                            <Label htmlFor="lastName">Soyisim *</Label>
                             <Input
                                 id="lastName"
-                                name="lastName"
                                 value={formData.lastName}
                                 onChange={(e) => handleChange('lastName', e.target.value)}
                                 className={errors.lastName ? 'border-red-500' : ''}
+                                placeholder="Soyisim giriniz"
                             />
                             {errors.lastName && (
                                 <Alert variant="destructive">
@@ -402,14 +371,17 @@ const UserForm: React.FC<UserFormProps> = ({
                                 </Alert>
                             )}
                         </div>
-                        <div className="space-y-4">
-                            <Label htmlFor="email">Mail Adresi</Label>
+
+                        {/* Email */}
+                        <div className="space-y-2">
+                            <Label htmlFor="email">E-posta *</Label>
                             <Input
                                 id="email"
-                                name="email"
+                                type="email"
                                 value={formData.email}
                                 onChange={(e) => handleChange('email', e.target.value)}
                                 className={errors.email ? 'border-red-500' : ''}
+                                placeholder="ornek@firma.com"
                             />
                             {errors.email && (
                                 <Alert variant="destructive">
@@ -418,14 +390,15 @@ const UserForm: React.FC<UserFormProps> = ({
                             )}
                         </div>
 
+                        {/* Mobile Phone */}
                         <div className="space-y-2">
-                            <Label htmlFor="mobilePhone">Telefon Numarası *</Label>
+                            <Label htmlFor="mobilePhone">Telefon *</Label>
                             <Input
                                 id="mobilePhone"
-                                name="mobilePhone"
                                 value={formData.mobilePhone}
                                 onChange={(e) => handleChange('mobilePhone', e.target.value)}
                                 className={errors.mobilePhone ? 'border-red-500' : ''}
+                                placeholder="+90 535 123 45 67"
                             />
                             {errors.mobilePhone && (
                                 <Alert variant="destructive">
@@ -434,204 +407,207 @@ const UserForm: React.FC<UserFormProps> = ({
                             )}
                         </div>
 
+                        {/* Identity Number */}
                         <div className="space-y-2">
-                            <Label htmlFor="identityNumber">Kimlik Numarası</Label>
+                            <Label htmlFor="identityNumber">TC Kimlik No</Label>
                             <Input
                                 id="identityNumber"
-                                name="identityNumber"
                                 value={formData.identityNumber || ''}
                                 onChange={(e) => handleChange('identityNumber', e.target.value)}
+                                className={errors.identityNumber ? 'border-red-500' : ''}
+                                placeholder="12345678901"
                             />
-
+                            {errors.identityNumber && (
+                                <Alert variant="destructive">
+                                    <AlertDescription>{errors.identityNumber}</AlertDescription>
+                                </Alert>
+                            )}
                         </div>
 
-
+                        {/* Activation Code */}
+                        <div className="space-y-2">
+                            <Label htmlFor="activationCode">Aktivasyon Kodu</Label>
+                            <div className="flex gap-2">
+                                <Input
+                                    id="activationCode"
+                                    value={formData.activationCode}
+                                    readOnly
+                                    className="bg-gray-50"
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={regenerateActivationCode}
+                                >
+                                    Yenile
+                                </Button>
+                            </div>
+                        </div>
                     </div>
-                    <hr/>
 
-
-                    {/* Markalar */}
-
-
-
-                    {/* Roller */}
+                    {/* Role Selection */}
                     <div className="space-y-2">
                         <Label>Roller *</Label>
-                        <div className="grid grid-cols-2 gap-2 mt-2">
-                            {roles.map(role => (
+                        <div className="grid grid-cols-3 gap-2 p-4 border rounded-md">
+                            {roles.map((role) => (
                                 <div key={role} className="flex items-center space-x-2">
-                                    <input
-                                        type="checkbox"
+                                    <Checkbox
                                         id={`role-${role}`}
                                         checked={formData.roleSet.includes(role)}
-                                        onChange={() => toggleRole(role)}
-                                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        onChange={(checked) =>
+                                            handleMultiSelectChange('roleSet', role, checked as boolean)
+                                        }
                                     />
-                                    <Label
-                                        htmlFor={`role-${role}`}
-                                        className="text-sm text-gray-700"
-                                    >
-
-                                        {t(`user.${role}`)}
+                                    <Label htmlFor={`role-${role}`} className="text-sm">
+                                        {role}
                                     </Label>
                                 </div>
                             ))}
                         </div>
-                        {errors.roleSet || errors.connectionId && (
+                        {errors.roleSet && (
                             <Alert variant="destructive">
-                                <AlertDescription>{errors.roleSet} {errors.connectionId}</AlertDescription>
+                                <AlertDescription>{errors.roleSet}</AlertDescription>
                             </Alert>
                         )}
                     </div>
-                    <hr/>
 
-                    {
-                        formData.roleSet.includes("ADMIN") && (
-                            <>
-                                {/* Departmanlar */}
-                                <div className="space-y-2">
-                                    <Label>Birimler</Label>
-                                    <div className="grid grid-cols-2 gap-2 mt-2">
-                                        {departments.map(department => (
-                                            <div key={department} className="flex items-center space-x-2">
-                                                <input
-                                                    type="checkbox"
-                                                    id={`dept-${department}`}
-                                                    checked={formData.departmentSet.includes(department)}
-                                                    onChange={() => toggleDepartment(department)}
-                                                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                                />
-                                                <Label
-                                                    htmlFor={`dept-${department}`}
-                                                    className="text-sm text-gray-700"
-                                                >
-                                                    {t(`user.${department}`)}
-
-                                                </Label>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    {errors.departmentSet && (
-                                        <Alert variant="destructive">
-                                            <AlertDescription>{errors.departmentSet}</AlertDescription>
-                                        </Alert>
-                                    )}
+                    {/* Department Selection */}
+                    <div className="space-y-2">
+                        <Label>Departmanlar *</Label>
+                        <div className="grid grid-cols-3 gap-2 p-4 border rounded-md">
+                            {departments.map((dept) => (
+                                <div key={dept} className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id={`dept-${dept}`}
+                                        checked={formData.departmentSet.includes(dept)}
+                                        onChange={(checked) =>
+                                            handleMultiSelectChange('departmentSet', dept, checked as boolean)
+                                        }
+                                    />
+                                    <Label htmlFor={`dept-${dept}`} className="text-sm">
+                                        {DepartmentList[dept]}
+                                    </Label>
                                 </div>
-                                <hr/>
-                                {/* İzinler */}
-                                <div className="space-y-2">
-                                    <Label>İzinler</Label>
-                                    <div className="grid grid-cols-2 gap-2 mt-2 max-h-60 overflow-y-auto">
-                                        {permissions.map(permission => (
-                                            <div key={permission} className="flex items-center space-x-2">
-                                                <input
-                                                    type="checkbox"
-                                                    id={`perm-${permission}`}
-                                                    checked={formData.authoritySet?.includes(permission) || false}
-                                                    onChange={() => togglePermission(permission)}
-                                                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                                />
-                                                <Label
-                                                    htmlFor={`perm-${permission}`}
-                                                    className="text-sm text-gray-700"
-                                                >
-                                                    {t(`user.${permission}`)}
-
-                                                </Label>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    {errors.authoritySet && (
-                                        <Alert variant="destructive">
-                                            <AlertDescription>{errors.authoritySet}</AlertDescription>
-                                        </Alert>
-                                    )}
-                                </div>
-                                <hr/>
-                            </>
-                        )
-                    }
-
-
-                    {/* Hesap Durumu Ayarları */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="flex items-center space-x-2">
-                            <input
-                                type="checkbox"
-                                disabled
-                                id="enabled"
-                                checked={formData.enabled}
-                                onChange={(e) => handleChange('enabled', e.target.checked)}
-                                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <Label
-                                htmlFor="enabled"
-                                className="text-sm text-gray-700"
-                            >
-                                Etkin
-                            </Label>
+                            ))}
                         </div>
-
-                        <div className="flex items-center space-x-2">
-                            <input
-                                type="checkbox"
-                                id="accountNonExpired"
-                                disabled
-                                checked={formData.accountNonExpired}
-                                onChange={(e) => handleChange('accountNonExpired', e.target.checked)}
-                                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <Label
-                                htmlFor="accountNonExpired"
-                                className="text-sm text-gray-700"
-                            >
-                                Hesap Süresi Dolmamış
-                            </Label>
-                        </div>
-
-                        <div className="flex items-center space-x-2">
-                            <input
-                                type="checkbox"
-                                id="accountNonLocked"
-                                disabled
-                                checked={formData.accountNonLocked}
-                                onChange={(e) => handleChange('accountNonLocked', e.target.checked)}
-                                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <Label
-                                htmlFor="accountNonLocked"
-                                className="text-sm text-gray-700"
-                            >
-                                Hesap Kilitli Değil
-                            </Label>
-                        </div>
-
-                        <div className="flex items-center space-x-2">
-                            <input
-                                type="checkbox"
-                                disabled
-                                id="credentialsNonExpired"
-                                checked={formData.credentialsNonExpired}
-                                onChange={(e) => handleChange('credentialsNonExpired', e.target.checked)}
-                                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <Label
-                                htmlFor="credentialsNonExpired"
-                                className="text-sm text-gray-700"
-                            >
-                                Kimlik Bilgileri Süresi Dolmamış
-                            </Label>
-                        </div>
+                        {errors.departmentSet && (
+                            <Alert variant="destructive">
+                                <AlertDescription>{errors.departmentSet}</AlertDescription>
+                            </Alert>
+                        )}
                     </div>
 
-                    <div className="flex justify-end space-x-4 pt-4">
-                        <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">
+                    {/* Permission Selection */}
+                    <div className="space-y-2">
+                        <Label>Yetkiler *</Label>
+                        <div className="grid grid-cols-3 gap-2 p-4 border rounded-md max-h-48 overflow-y-auto">
+                            {permissions.map((permission) => (
+                                <div key={permission} className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id={`perm-${permission}`}
+                                        checked={formData.authoritySet.includes(permission)}
+                                        onChange={(checked) =>
+                                            handleMultiSelectChange('authoritySet', permission, checked as boolean)
+                                        }
+                                    />
+                                    <Label htmlFor={`perm-${permission}`} className="text-sm">
+                                        {PermissionList[permission]}
+                                    </Label>
+                                </div>
+                            ))}
+                        </div>
+                        {errors.authoritySet && (
+                            <Alert variant="destructive">
+                                <AlertDescription>{errors.authoritySet}</AlertDescription>
+                            </Alert>
+                        )}
+                    </div>
 
-                            {
-                                selectedUser ? "Kullanıcıyı Güncelle" : "Yeni Kullanıcı Oluştur"
-                            }
+                    {/* Brand Selection */}
+                    <div className="space-y-2">
+                        <Label>Markalar *</Label>
+                        <div className="grid grid-cols-2 gap-2 p-4 border rounded-md max-h-48 overflow-y-auto">
+                            {brands && brands.map((brand) => (
+                                <div key={brand.id} className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id={`brand-${brand.id}`}
+                                        checked={formData.brandSet.some(b => b.id === brand.id)}
+                                        onChange={(checked) => {
+                                            if (checked) {
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    brandSet: [...prev.brandSet.filter(b => b.id !== brand.id), brand]
+                                                }));
+                                            } else {
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    brandSet: prev.brandSet.filter(b => b.id !== brand.id)
+                                                }));
+                                            }
+                                        }}
+                                    />
+                                    <Label htmlFor={`brand-${brand.id}`} className="text-sm">
+                                        {brand.name} ({brand.code})
+                                    </Label>
+                                </div>
+                            ))}
+                        </div>
+                        {errors.brandSet && (
+                            <Alert variant="destructive">
+                                <AlertDescription>{errors.brandSet}</AlertDescription>
+                            </Alert>
+                        )}
+                    </div>
 
+                    {/* Account Status Checkboxes (only show in edit mode) */}
+                    {user && (
+                        <div className="space-y-4">
+                            <Label>Hesap Durumu</Label>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id="enabled"
+                                        checked={formData.enabled}
+                                        onChange={(checked) => handleChange('enabled', checked as boolean)}
+                                    />
+                                    <Label htmlFor="enabled">Hesap Aktif</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id="accountNonLocked"
+                                        checked={formData.accountNonLocked}
+                                        onChange={(checked) => handleChange('accountNonLocked', checked as boolean)}
+                                    />
+                                    <Label htmlFor="accountNonLocked">Hesap Kilitli Değil</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id="accountNonExpired"
+                                        checked={formData.accountNonExpired}
+                                        onChange={(checked) => handleChange('accountNonExpired', checked as boolean)}
+                                    />
+                                    <Label htmlFor="accountNonExpired">Hesap Süresi Dolmamış</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id="credentialsNonExpired"
+                                        checked={formData.credentialsNonExpired}
+                                        onChange={(checked) => handleChange('credentialsNonExpired', checked as boolean)}
+                                    />
+                                    <Label htmlFor="credentialsNonExpired">Şifre Süresi Dolmamış</Label>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
+                    {/* Submit Button */}
+                    <div className="flex justify-end space-x-4">
+                        <Button
+                            type="submit"
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                            disabled={loading || usernameChecking}
+                        >
+                            {loading ? "İşleniyor..." : user ? "Kullanıcı Güncelle" : "Kullanıcı Oluştur"}
                         </Button>
                     </div>
                 </form>
@@ -641,3 +617,50 @@ const UserForm: React.FC<UserFormProps> = ({
 };
 
 export default UserForm;
+
+// Kullanım Örneği:
+/*
+import { useUser } from '@/hooks/use-user';
+import { useBrand } from '@/hooks/use-brand'; // Brand listesi için
+
+const UserManagementPage = () => {
+    const {
+        createUser,
+        updateUser,
+        checkUsernameAvailability,
+        resetPassword, // şifre yenileme için
+        loading
+    } = useUser();
+    const { brands } = useBrand(); // Brand listesini al
+
+    const handleSubmit = async (data: UserFormData) => {
+        if (selectedUser) {
+            await updateUser(data);
+        } else {
+            await createUser(data);
+        }
+    };
+
+    const handlePasswordReset = async (userId: string) => {
+        // Şifre yenileme işlemi
+        try {
+            const newPassword = generateRandomPassword(); // Rastgele şifre üret
+            await resetPassword({ email: selectedUser?.email || '' });
+            // Veya direkt şifre güncellemesi yapabilirsin
+        } catch (error) {
+            console.error('Şifre yenileme hatası:', error);
+        }
+    };
+
+    return (
+        <UserForm
+            onSubmit={handleSubmit}
+            user={selectedUser}
+            loading={loading}
+            brands={brands || []}
+            onUsernameCheck={checkUsernameAvailability}
+            onPasswordReset={handlePasswordReset}
+        />
+    );
+};
+*/
