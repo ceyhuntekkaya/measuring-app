@@ -14,12 +14,14 @@ import {ExamSessionDto} from "@/types/exam/examEntities";
 import {EExamType, EStatus} from "@/types/exam/enum";
 import {BrandDto, BranchDto} from "@/types/management/brand";
 import {UserDto} from "@/types/auth";
+import {ExamTypeDto} from "@/types/exam/examTemplates";
 
 
 interface ExamSessionFormErrors {
     name?: string;
     description?: string;
     brandId?: string;
+    examTypeId?: string;
     branchId?: string;
     examTemplate?: string;
     startDate?: string;
@@ -32,6 +34,7 @@ interface ExamSessionFormProps {
     examSession?: ExamSessionDto | null;
     loading?: boolean;
     brands: BrandDto[];
+    examTypes: ExamTypeDto[];
     branches: BranchDto[];
     supervisors: UserDto[];
     onBrandChange: (brandId: string) => void;
@@ -42,6 +45,7 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
                                                              examSession,
                                                              loading = false,
                                                              brands = [],
+                                                             examTypes = [],
                                                              branches = [],
                                                              supervisors = [],
                                                              onBrandChange
@@ -51,6 +55,7 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
         description: '',
         brandId: '',
         branchId: '',
+        examTypeId: '',
         examTemplate: null,
         startDate: null,
         quota: 30,
@@ -91,6 +96,7 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
                 description: examSession.description || '',
                 brandId: examSession.brand?.id || '',
                 branchId: examSession.branch?.id || '',
+                examTypeId: examSession.examType?.id || '',
                 examTemplate: examSession.examTemplate || '',
                 startDate: examSession.startDate,
                 quota: examSession.quota || 30,
@@ -98,6 +104,9 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
             });
         }
     }, [examSession]);
+
+
+    console.log(formData)
 
     const handleChange = <T extends keyof ExamSessionFormData>(
         name: T,
@@ -141,6 +150,10 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
 
         if (!formData.branchId) {
             newErrors.branchId = 'Şube seçimi zorunludur';
+        }
+
+        if (!formData.examTypeId) {
+            newErrors.examTypeId = 'Sınav Tipi seçimi zorunludur';
         }
 
         if (!formData.examTemplate) {
@@ -189,6 +202,7 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
                 description: formData.description.trim(),
                 brandId: formData.brandId,
                 branchId: formData.branchId,
+                examTypeId: formData.examTypeId,
                 examTemplate: formData.examTemplate as EExamType,
                 startDate: formData.startDate,
                 quota: formData.quota,
@@ -220,8 +234,13 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
 
 
     const formatDateTimeLocal = (date: Date | null): string => {
-        if (!date) return '';
-        return date.toISOString().slice(0, 16);
+        console.log(date)
+        if (date == null) return '';
+        const d = (date instanceof Date) ? date : new Date(date);
+
+        if (isNaN(d.getTime())) return ''; // Geçersiz tarih kontrolü
+
+        return d.toISOString().slice(0, 16);
     };
 
     const parseDateTimeLocal = (value: string): Date | null => {
@@ -255,6 +274,34 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
                             {errors.name && (
                                 <Alert variant="destructive">
                                     <AlertDescription>{errors.name}</AlertDescription>
+                                </Alert>
+                            )}
+                        </div>
+
+
+
+                        <div className="space-y-2">
+                            <Label htmlFor="examTypeId">Sınav Tipi *</Label>
+                            <Select
+                                onValueChange={(value) => handleChange('examTypeId', value as string)}
+                                value={formData.examTypeId || ''}
+                            >
+                                <SelectTrigger className={errors.examTypeId ? 'border-red-500' : ''}>
+                                    <SelectValue placeholder="Sınav tipi seçin"/>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        {examTypes.map(examType => (
+                                            <SelectItem key={examType.id} value={examType.id || ''}>
+                                                {examType.name} - {examType.examLevel}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                            {errors.examTypeId && (
+                                <Alert variant="destructive">
+                                    <AlertDescription>{errors.examTypeId}</AlertDescription>
                                 </Alert>
                             )}
                         </div>

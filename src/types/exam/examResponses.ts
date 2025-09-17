@@ -325,6 +325,7 @@ export interface ExamSessionFormData extends DatabaseObjectDto{
     examTemplate: EExamType | null;
     branchId: string;
     brandId: string;
+    examTypeId: string;
     supervisorIds: string[];
 }
 

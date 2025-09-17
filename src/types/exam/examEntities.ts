@@ -175,6 +175,20 @@ export interface ExamTypeSearchRequest {
     sortDirection?: "ASC" | "DESC"; // default: "ASC"
 }
 
+
+
+export interface ExamDto extends DatabaseObjectDto {
+    name: string;
+    code: string;
+    examType: ExamTypeDto;
+    questionGroups: QuestionGroupDto[];
+    branch: BranchDto;
+    brand: BrandDto;
+}
+
+
+
+
 export interface ExamSessionDto extends DatabaseObjectDto {
     name: string;
     description: string;
@@ -183,6 +197,7 @@ export interface ExamSessionDto extends DatabaseObjectDto {
     examTemplate: EExamType;
     branch: BranchDto;
     brand: BrandDto;
+    examType: ExamTypeDto;
     supervisors: UserDto[];
 }
 
@@ -254,3 +269,198 @@ export interface PageResponse<T> {
     empty: boolean;
 }
 
+
+
+
+export interface ExamDto extends DatabaseObjectDto {
+    name: string;
+    code: string;
+    examType: ExamTypeDto;
+    questionGroups: QuestionGroupDto[];
+    branch: BranchDto;
+    brand: BrandDto;
+}
+
+export interface CreateExamRequest {
+    name: string;
+    code: string;
+    examTypeId: string;
+    questionGroupIds: string[];
+    branchId: string;
+    brandId: string;
+}
+
+export interface UpdateExamRequest {
+    name: string;
+    code: string;
+    examTypeId: string;
+    questionGroupIds: string[];
+    branchId: string;
+    brandId: string;
+}
+
+export interface ExamFormData extends DatabaseObjectDto{
+    name: string;
+    code: string;
+    examTypeId: string;
+    questionGroupIds: string[];
+    branchId: string;
+    brandId: string;
+}
+
+export interface ExamSearchRequest {
+    name?: string;
+    code?: string;
+    examTypeId?: string;
+    questionGroupIds?: string[];
+    branchId?: string;
+    brandId?: string;
+}
+
+export interface ExamStatistics {
+    examId: string;
+    totalQuestionGroups: number;
+    totalQuestions: number;
+    hasQuestionGroups: boolean;
+}
+
+export interface ExamSummary {
+    exam: ExamDto;
+    statistics: ExamStatistics;
+}
+
+// Filter and sorting interfaces
+export interface ExamFilter {
+    name?: string;
+    code?: string;
+    examTypeName?: string;
+    branchName?: string;
+    brandName?: string;
+    status?: string;
+}
+
+export interface ExamSort {
+    field: 'name' | 'code' | 'createdAt' | 'examType' | 'branch' | 'brand';
+    direction: 'asc' | 'desc';
+}
+
+// Pagination interface
+export interface ExamPageRequest {
+    page: number;
+    size: number;
+    sort?: ExamSort;
+    filter?: ExamFilter;
+}
+
+// Bulk operations
+export interface BulkExamCreateRequest {
+    exams: CreateExamRequest[];
+}
+
+export interface BulkExamResponse {
+    successful: ExamDto[];
+    failed: BulkExamError[];
+    totalProcessed: number;
+    successCount: number;
+    failureCount: number;
+}
+
+export interface BulkExamError {
+    exam: CreateExamRequest;
+    error: string;
+    index: number;
+}
+
+// Copy and move operations
+export interface CopyExamRequest {
+    newName: string;
+    newCode: string;
+    targetBranchId?: string;
+    targetBrandId?: string;
+    copyQuestionGroups: boolean;
+}
+
+export interface MoveExamRequest {
+    targetBranchId: string;
+    targetBrandId: string;
+}
+
+// Dashboard and reporting
+export interface ExamDashboardData {
+    totalExams: number;
+    examsByBrand: ExamCountByBrand[];
+    examsByBranch: ExamCountByBranch[];
+    examsByType: ExamCountByType[];
+    recentExams: ExamDto[];
+}
+
+export interface ExamCountByBrand {
+    brandId: string;
+    brandName: string;
+    examCount: number;
+    percentage: number;
+}
+
+export interface ExamCountByBranch {
+    branchId: string;
+    branchName: string;
+    examCount: number;
+    percentage: number;
+}
+
+export interface ExamCountByType {
+    examTypeId: string;
+    examTypeName: string;
+    examCount: number;
+    percentage: number;
+}
+
+// Validation interfaces
+export interface ExamValidationResult {
+    isValid: boolean;
+    errors: ExamValidationError[];
+    warnings: ExamValidationWarning[];
+}
+
+export interface ExamValidationError {
+    field: string;
+    message: string;
+    code: string;
+}
+
+export interface ExamValidationWarning {
+    field: string;
+    message: string;
+    code: string;
+}
+
+// Export interfaces
+export interface ExamExportRequest {
+    format: 'json' | 'csv' | 'excel';
+    filters?: ExamFilter;
+    includeQuestionGroups: boolean;
+    includeStatistics: boolean;
+}
+
+export interface ExamImportRequest {
+    file: File;
+    format: 'json' | 'csv' | 'excel';
+    validateOnly: boolean;
+    overwriteExisting: boolean;
+}
+
+export interface ExamImportResult {
+    totalRecords: number;
+    successCount: number;
+    failureCount: number;
+    warnings: string[];
+    errors: ExamImportError[];
+    importedExams: ExamDto[];
+}
+
+export interface ExamImportError {
+    row: number;
+    field: string;
+    value: string;
+    error: string;
+}

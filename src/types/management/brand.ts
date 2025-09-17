@@ -2,6 +2,7 @@
 
 
 import {DatabaseObjectDto} from "@/types/exam/miscDtos";
+import {ExamSessionDto} from "@/types/exam/examEntities";
 
 
 export type BrandDto = DatabaseObjectDto & {
@@ -272,6 +273,9 @@ export type CandidateDto = DatabaseObjectDto & {
     lastName: string;
     identityNumber: string;
     role: string;
+    examSessionId?: string;
+    examSession?: ExamSessionDto;
+    application? : ApplicationDto;
 }
 
 export interface CandidateFormData extends DatabaseObjectDto {
@@ -292,6 +296,9 @@ export interface CandidateFormData extends DatabaseObjectDto {
     lastName: string;
     identityNumber: string;
     role?: string;
+    examTypeId?: string;
+    examSessionId?: string;
+    applicationId?: string;
 }
 
 

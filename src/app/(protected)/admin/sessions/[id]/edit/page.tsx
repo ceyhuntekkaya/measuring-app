@@ -9,11 +9,19 @@ import {useBrand} from "@/hooks/exam/use-brand";
 import {useBranch} from "@/hooks/exam/use-branch";
 import {useUser} from "@/hooks/use-user";
 import {useExamType} from "@/hooks/exam/use-exam-type";
+import {useParams} from "next/navigation";
 
 export default function SessionAdd() {
 
+
+    const params = useParams();
+    const id = params.id as string;
+
+
     const {
-        createExamSession,
+        updateExamSession,
+        getExamSessionById,
+        selectedExamSession,
         loading,
     } = useExamSession();
 
@@ -28,7 +36,6 @@ export default function SessionAdd() {
     } = useBranch();
 
 
-
     const {
         getUsersByDepartment,
         users,
@@ -40,8 +47,8 @@ export default function SessionAdd() {
     } = useExamType();
 
 
-
     useEffect(() => {
+        getExamSessionById(id);
         getUsersByDepartment('SUPERVISOR');
         getAllBrands();
         getAllExamTypes();
@@ -59,9 +66,6 @@ export default function SessionAdd() {
         getBranchesByBrand(id);
     }
 
-
-
-
     //  supervisors?: UserDto[];
 
     return (
@@ -69,8 +73,8 @@ export default function SessionAdd() {
             <PageHeader/>
             <div className="p-1">
                 {
-                    brands && brandBranches && users && examTypes&&
-                    <ExamSessionForm onSubmit={createExamSession} loading={loading} supervisors={users} brands={brands}
+                    brands && brandBranches && users && examTypes && selectedExamSession &&
+                    <ExamSessionForm examSession={selectedExamSession} onSubmit={updateExamSession} loading={loading} supervisors={users} brands={brands}
                                      branches={brandBranches} onBrandChange={onBrandChange} examTypes={examTypes.examTypes}/>
                 }
 
