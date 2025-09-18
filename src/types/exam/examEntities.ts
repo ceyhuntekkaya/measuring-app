@@ -188,7 +188,6 @@ export interface ExamDto extends DatabaseObjectDto {
 
 
 
-
 export interface ExamSessionDto extends DatabaseObjectDto {
     name: string;
     description: string;
@@ -272,14 +271,6 @@ export interface PageResponse<T> {
 
 
 
-export interface ExamDto extends DatabaseObjectDto {
-    name: string;
-    code: string;
-    examType: ExamTypeDto;
-    questionGroups: QuestionGroupDto[];
-    branch: BranchDto;
-    brand: BrandDto;
-}
 
 export interface CreateExamRequest {
     name: string;

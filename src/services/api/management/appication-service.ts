@@ -16,6 +16,8 @@ class ApplicationService {
     private readonly baseUrl = '/applications';
 
     async createApplication(createRequest: ApplicationFormData): Promise<ApiResponse<ApplicationDto>> {
+
+        console.log(createRequest);
         const response = await api.post<ApiResponse<ApplicationDto>>(`${this.baseUrl}`, createRequest);
         return response.data;
     }

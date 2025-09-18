@@ -112,6 +112,10 @@ export default function CandidatePage() {
     };
 
     const handleAssignApplications = async (selectedExam: ExamDto | null) => {
+
+        // ceyhun
+
+
         if (!selectedExamSession || selectedCandidates.length === 0) return;
 
         // Kota kontrolü
@@ -149,14 +153,6 @@ export default function CandidatePage() {
                 });
             }
 
-            /*
-              name: string;
-    code: string;
-    examId: string;
-    examSessionId: string;
-    candidateId: string;
-    username?: string;
-             */
 
             // İşlem tamamlandıktan sonra listeyi yenile
             await getAllCandidates();

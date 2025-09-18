@@ -106,6 +106,12 @@ export const adminRoutes: RouteConfig = {
             path: '/admin/users',
             icon: Settings,
             requiredRoles: ['ADMIN'],
+        },
+        {
+            title: 'Exams',
+            path: '/admin/exams',
+            icon: Settings,
+            requiredRoles: ['ADMIN'],
         }
     ]
 };

@@ -134,6 +134,7 @@ export type ApplicationDto = DatabaseObjectDto & {
     endedAt?: string;
     isCompleted: boolean;
     isEvaluated: boolean;
+    password?: string;
 }
 
 export interface ApplicationFormData extends DatabaseObjectDto {
