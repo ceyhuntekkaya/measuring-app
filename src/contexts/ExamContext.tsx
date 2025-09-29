@@ -17,7 +17,7 @@ interface ExamState {
     examSession: TakingExamSession | null;
 
     // Current Progress
-    currentStep: 'login' | 'welcome' | 'preparation' | 'exam-info' | 'section-selection' | 'exam-taking' | 'completed';
+    currentStep: 'login' | 'welcome' | 'camera' | 'audio' | 'section-selection' | 'exam-taking' | 'completed';
     currentSectionId: string | null;
     currentQuestionGroupIndex: number;
     completedSections: string[];

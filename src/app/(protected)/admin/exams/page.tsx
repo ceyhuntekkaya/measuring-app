@@ -46,6 +46,18 @@ export default function ExamPage() {
                     {value as string}
                 </div>
             )
+        },
+        {
+            key: 'id',
+            header: 'Seviye',
+            render: (value, record) => (
+                <div
+                    className="font-medium cursor-pointer hover:text-blue-600"
+                    onClick={() => router.push(`/admin/exam/${record.id}`)}
+                >
+                    ÖN İZLEME
+                </div>
+            )
         }
     ];
 

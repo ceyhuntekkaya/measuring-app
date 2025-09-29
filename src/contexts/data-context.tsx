@@ -48,8 +48,6 @@ export function DataProvider({children}: { children: React.ReactNode }) {
         const fetchAllData = async () => {
             setLoading(true)
             try {
-
-
                 await Promise.all([
                     getAllUsers(),
                 ]);

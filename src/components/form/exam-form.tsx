@@ -13,6 +13,8 @@ import {BranchDto, BrandDto} from "@/types/management/brand";
 import {EStatus} from "@/types/exam/enum";
 import {ExamDto, ExamFormData, QuestionGroupDto} from "@/types/exam/examEntities";
 import {ExamTypeDto} from "@/types/exam/examTemplates";
+import {Column, RecordType} from "@/types/ui/table";
+import DynamicTable from "@/components/ui/dynamic-table";
 
 interface ExamFormErrors {
     name?: string;
@@ -64,7 +66,6 @@ const ExamForm: React.FC<ExamFormProps> = ({
     const [errors, setErrors] = useState<ExamFormErrors>({});
     const [selectedQuestionGroups, setSelectedQuestionGroups] = useState<QuestionGroupDto[]>([]);
     const [availableQuestionGroups, setAvailableQuestionGroups] = useState<QuestionGroupDto[]>([]);
-
 
 
     console.log(questionGroups)
@@ -137,7 +138,7 @@ const ExamForm: React.FC<ExamFormProps> = ({
         }
 
         if (name === 'brandId') {
-            setFormData(prev => ({ ...prev, branchId: '' }));
+            setFormData(prev => ({...prev, branchId: ''}));
             if (onBrandChange) {
                 onBrandChange(value as string);
             }
@@ -224,6 +225,45 @@ const ExamForm: React.FC<ExamFormProps> = ({
         }
     };
 
+
+    const columns: Column<RecordType>[] = [
+        {
+            key: 'id',
+            header: ' ',
+            render: (value, record) => (
+                <div
+                    className="font-medium cursor-pointer hover:text-blue-600"
+                >
+                    <button onClick={() => addQuestionGroup(record.id as string)}>EKLE</button>
+                </div>
+            )
+        },
+        {
+            key: 'name',
+            header: 'Ad',
+            render: (value) => (
+                <div
+                    className="font-medium cursor-pointer hover:text-blue-600"
+                >
+                    {value as string}
+                </div>
+            )
+        },
+
+        {
+            key: 'Grup',
+            header: 'Grup',
+            render: (value, record) => (
+                <div
+                    className="font-medium cursor-pointer hover:text-blue-600"
+                >
+                    {(record as QuestionGroupDto).questionGroupType?.name}
+                </div>
+            )
+        },
+
+    ];
+
     const getUnselectedQuestionGroups = () => {
         return availableQuestionGroups.filter(qg =>
             !selectedQuestionGroups.find(selected => selected.id === qg.id)
@@ -282,7 +322,7 @@ const ExamForm: React.FC<ExamFormProps> = ({
                                 onValueChange={(value) => handleChange('brandId', value as string)}
                             >
                                 <SelectTrigger className={errors.brandId ? 'border-red-500' : ''}>
-                                    <SelectValue placeholder="Marka seçiniz" />
+                                    <SelectValue placeholder="Marka seçiniz"/>
                                 </SelectTrigger>
                                 <SelectContent>
                                     {brands.map((brand) => (
@@ -310,7 +350,7 @@ const ExamForm: React.FC<ExamFormProps> = ({
                                 <SelectTrigger className={errors.branchId ? 'border-red-500' : ''}>
                                     <SelectValue placeholder={
                                         formData.brandId ? "Şube seçiniz" : "Önce marka seçiniz"
-                                    } />
+                                    }/>
                                 </SelectTrigger>
                                 <SelectContent>
                                     {availableBranches.map((branch) => (
@@ -335,7 +375,7 @@ const ExamForm: React.FC<ExamFormProps> = ({
                                 onValueChange={(value) => handleChange('examTypeId', value as string)}
                             >
                                 <SelectTrigger className={errors.examTypeId ? 'border-red-500' : ''}>
-                                    <SelectValue placeholder="Sınav tipi seçiniz" />
+                                    <SelectValue placeholder="Sınav tipi seçiniz"/>
                                 </SelectTrigger>
                                 <SelectContent>
                                     {examTypes.map((examType) => (
@@ -383,27 +423,38 @@ const ExamForm: React.FC<ExamFormProps> = ({
 
                             {/* Soru Grubu Ekleme */}
                             {getUnselectedQuestionGroups().length > 0 && (
-                                <div className="flex gap-2">
-                                    <Select value=""  onValueChange={(value) => addQuestionGroup(value as string)}>
-                                        <SelectTrigger className="flex-1">
-                                            <SelectValue placeholder="Soru grubu ekle" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {getUnselectedQuestionGroups().map((qg) => (
-                                                <SelectItem key={qg.id} value={qg.id}>
-                                                    <div className="flex flex-col">
-                                                        <span>{qg.name}</span>
-                                                        {qg.examType && (
-                                                            <span className="text-xs text-gray-500">
+                                <>
+                                    {
+                                        /*
+                                         <div className="flex gap-2">
+                                        <Select value="" onValueChange={(value) => addQuestionGroup(value as string)}>
+                                            <SelectTrigger className="flex-1">
+                                                <SelectValue placeholder="Soru grubu ekle"/>
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {getUnselectedQuestionGroups().map((qg) => (
+                                                    <SelectItem key={qg.id} value={qg.id}>
+                                                        <div className="flex flex-col">
+                                                            <span>{qg.name}</span>
+                                                            {qg.examType && (
+                                                                <span className="text-xs text-gray-500">
                                                                 {qg.examType.name}
                                                             </span>
-                                                        )}
-                                                    </div>
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                                                            )}
+                                                        </div>
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                         */
+                                    }
+
+
+                                    <div className="flex gap-2">
+                                        <DynamicTable columns={columns} data={getUnselectedQuestionGroups()}/>
+                                    </div>
+                                </>
                             )}
 
                             {errors.questionGroupIds && (
@@ -412,6 +463,7 @@ const ExamForm: React.FC<ExamFormProps> = ({
                                 </Alert>
                             )}
                         </div>
+
 
                         {/* Soru Grubu İstatistikleri */}
                         {selectedQuestionGroups.length > 0 && (
