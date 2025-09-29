@@ -3,14 +3,12 @@
 import { useState, useCallback } from 'react';
 import {
     examTakingService,
-    LoginCredentials,
-    TakingExamSession,
-    SectionProgress,
-    ExamAnswer
+
 } from '@/services/api/exam/exam-taking-service';
 import { ExamDto } from '@/types/exam/examEntities';
 import { showNotification } from '@/lib/notification';
 import {ApplicationDto} from "@/types/management/brand";
+import {ExamAnswer, LoginCredentials, SectionProgress, TakingExamSession} from "@/types/exam/exam-taking";
 
 interface UseExamTakingReturn {
     application: ApplicationDto | null;

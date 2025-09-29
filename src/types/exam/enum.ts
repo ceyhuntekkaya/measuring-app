@@ -53,19 +53,26 @@ export type EInfoStatus =
     | 'APPROVED'
     | 'REJECTED';
 
-export type EApprovalStatus =
-    | 'PENDING'
-    | 'APPROVED'
-    | 'REJECTED'
-    | 'CANCELLED'
-    | 'EXPIRED';
 
-export type EExamType =
-    | 'CERTIFICATE'
-    | 'COURSE_EXAM'
-    | 'LEVEL_DETERMINATION'
-    | 'PRACTICE'
-    | 'DEGREE';
+export enum EApprovalStatus {
+    PENDING = 'PENDING',
+    APPROVED = 'APPROVED',
+    REJECTED = 'REJECTED',
+    CANCELLED =  'CANCELLED',
+    EXPIRED =  'EXPIRED'
+}
+
+
+
+
+export enum EExamType {
+    CERTIFICATE = 'CERTIFICATE',
+    COURSE_EXAM = 'COURSE_EXAM',
+    LEVEL_DETERMINATION = 'LEVEL_DETERMINATION',
+    PRACTICE =  'PRACTICE',
+    DEGREE =  'DEGREE'
+}
+
 
 export type ELogType =
     | 'INFO'
@@ -93,25 +100,16 @@ export enum EMediaType {
     OTHER = "OTHER"
 }
 
-export type EQuestionGroupType =
-    | 'LISTENING'
-    | 'READING'
-    | 'SPEAKING'
-    | 'WRITING'
-    | 'GRAMMAR'
-    | 'VOCABULARY'
-    | 'GENERAL';
-/*
-export type EStatus =
-    | 'ACTIVE'
-    | 'PASSIVE'
-    | 'DELETED'
-    | 'REJECTED'
-    | 'CANCELLED'
-    | 'PENDING'
-    | 'SUSPENDED';
 
- */
+export enum EQuestionGroupType {
+    LISTENING = "LISTENING",
+    READING = "READING",
+    SPEAKING = "SPEAKING",
+    WRITING = "WRITING",
+    GRAMMAR = "GRAMMAR",
+    VOCABULARY = "VOCABULARY",
+    GENERAL = "GENERAL"
+}
 
 
 export enum EStatus {
@@ -126,9 +124,13 @@ export enum EStatus {
     SUSPENDED = "SUSPENDED"
 }
 
-export type EQuestionGroupTemplateLevel =
-    | 'GROUP'
-    | 'QUESTION';
+
+
+export enum EQuestionGroupTemplateLevel {
+    GROUP = "GROUP",
+    QUESTION = "QUESTION",
+}
+
 
 export type Permission =
     | 'APPROVAL'

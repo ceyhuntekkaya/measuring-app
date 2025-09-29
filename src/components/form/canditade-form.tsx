@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Alert, AlertDescription} from "@/components/ui/alert";
 import {Button} from "@/components/ui/button";
@@ -12,6 +12,9 @@ import {CandidateFormData, CandidateDto} from "@/types/management/brand";
 import {EStatus} from "@/types/exam/enum";
 import {ExamSessionDto} from "@/types/exam/examEntities";
 import {ExamTypeDto} from "@/types/exam/examTemplates";
+import {countries, languages} from "@/types/country";
+
+
 
 
 interface CandidateFormErrors {
@@ -63,7 +66,6 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
         birthPlace: '',
         birthDate: '',
         photoUrl: '',
-
         id: '',
         createdAt: new Date(),
         deletedAt: null,
@@ -75,6 +77,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
     });
     const [errors, setErrors] = useState<CandidateFormErrors>({});
     const [showPassword, setShowPassword] = useState(false);
+    const fileInputRef = useRef(null);
 
     function toISODateString(dateStr: string | null): string {
         if (!dateStr) return '';
@@ -84,24 +87,15 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
         return isNaN(d.getTime()) ? '' : d.toISOString().split('T')[0];
     }
 
-
     useEffect(() => {
-
-
-
         if (candidate && mode === 'update') {
-
-            console.log(candidate)
             setFormData({
-
                 id: candidate.id || '',
                 createdAt: candidate.createdAt || new Date(),
                 deletedAt: candidate.deletedAt || null,
                 status: candidate.status,
                 createdById: candidate.createdById || null,
                 deletedById: candidate.deletedById || null,
-
-
                 username: candidate.username || '',
                 password: '', // Never populate password fields
                 confirmPassword: '',
@@ -119,7 +113,6 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
                 birthPlace: candidate.birthPlace || '',
                 birthDate: toISODateString(candidate.birthDate || ''),
                 photoUrl: candidate.photoUrl || '',
-
                 examTypeId: candidate.examSession?.examType.id,
                 examSessionId: candidate.examSessionId || ''
             });
@@ -234,14 +227,12 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
         console.log(formData.birthDate)
         if (validateForm()) {
             const submitData: CandidateFormData = {
-
                 id: formData.id || '',
                 createdAt: formData.createdAt || new Date(),
                 deletedAt: formData.deletedAt || null,
                 status: formData.status,
                 createdById: formData.createdById || null,
                 deletedById: formData.deletedById || null,
-
                 password: formData.password,
                 identityNumber: formData.identityNumber,
                 username: formData.username.trim(),
@@ -273,14 +264,10 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
         }
     };
 
-    const countries = ['Türkiye', 'Almanya', 'Fransa', 'İngiltere', 'Amerika', 'Diğer'];
-    const languages = ['Türkçe', 'İngilizce', 'Almanca', 'Fransızca', 'Arapça', 'Diğer'];
+
 
     return (
-
         <>
-
-
             <Card>
                 <CardHeader>
                     <CardTitle>
@@ -304,7 +291,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
                                             <SelectGroup>
                                                 {examTypes.map(examType => (
                                                     <SelectItem key={examType.id} value={examType.id || ''}>
-                                                        {examType.name} - {examType.examLevel}
+                                                        {examType.name}
                                                     </SelectItem>
                                                 ))}
                                             </SelectGroup>
@@ -351,8 +338,6 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
                     </div>
                 </CardContent>
             </Card>
-
-
             <Card>
                 <CardHeader>
                     <CardTitle>
@@ -400,7 +385,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
 
                                 {/* TC Kimlik No */}
                                 <div className="space-y-2">
-                                    <Label htmlFor="identityNumber">TC Kimlik No *</Label>
+                                    <Label htmlFor="identityNumber">Kimlik No *</Label>
                                     <Input
                                         id="identityNumber"
                                         value={formData.identityNumber}
@@ -602,8 +587,8 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
                                         <SelectContent>
                                             <SelectGroup>
                                                 {countries.map((country) => (
-                                                    <SelectItem key={country} value={country}>
-                                                        {country}
+                                                    <SelectItem key={country.code} value={country.name}>
+                                                        {country.name}
                                                     </SelectItem>
                                                 ))}
                                             </SelectGroup>
@@ -635,8 +620,8 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
                                         <SelectContent>
                                             <SelectGroup>
                                                 {languages.map((language) => (
-                                                    <SelectItem key={language} value={language}>
-                                                        {language}
+                                                    <SelectItem key={language.code} value={language.name}>
+                                                        {language.name}
                                                     </SelectItem>
                                                 ))}
                                             </SelectGroup>
@@ -646,12 +631,42 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
 
                                 {/* Fotoğraf URL */}
                                 <div className="space-y-2">
-                                    <Label htmlFor="photoUrl">Fotoğraf URL</Label>
-                                    <Input
-                                        id="photoUrl"
-                                        value={formData.photoUrl}
+                                    <Label htmlFor="photoUrl">Fotoğraf</Label>
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        multiple={false}
+
                                         onChange={(e) => handleChange('photoUrl', e.target.value)}
-                                        placeholder="Fotoğraf bağlantısını giriniz"
+                                        onClick={(event) => {
+                                            (event.target as HTMLInputElement).value = "";
+                                        }}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="photoUrl">Kimlik</Label>
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        multiple={false}
+
+                                        onChange={(e) => handleChange('photoUrl', e.target.value)}
+                                        onClick={(event) => {
+                                            (event.target as HTMLInputElement).value = "";
+                                        }}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="photoUrl">Ses Kaydı</Label>
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        multiple={false}
+
+                                        onChange={(e) => handleChange('photoUrl', e.target.value)}
+                                        onClick={(event) => {
+                                            (event.target as HTMLInputElement).value = "";
+                                        }}
                                     />
                                 </div>
                             </div>
@@ -679,7 +694,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
                                         </h3>
                                         <div className="mt-2 text-sm text-blue-700">
                                             <ul className="list-disc list-inside space-y-1">
-                                                <li>TC Kimlik No oluşturulduktan sonra değiştirilemez</li>
+                                                <li>Kimlik No oluşturulduktan sonra değiştirilemez</li>
                                                 <li>Kullanıcı adı ad ve soyada göre otomatik oluşturulur</li>
                                                 <li>Güvenli bir şifre oluşturun (en az 6 karakter)</li>
                                                 <li>E-posta adresi sistem bildirimleri için kullanılır</li>

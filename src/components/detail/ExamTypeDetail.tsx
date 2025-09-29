@@ -1,12 +1,15 @@
 import React from 'react';
 import { ExamTypeDto } from '@/types/exam/examTemplates';
 import { EExamType } from '@/types/exam/enum';
+import {Button} from "@/components/ui/button";
 
 interface ExamTypeDetailProps {
     selectedExamType: ExamTypeDto | null;
+    onEdit: () => void;
+    onDelete: () => void;
 }
 
-const ExamTypeDetail: React.FC<ExamTypeDetailProps> = ({ selectedExamType }) => {
+const ExamTypeDetail: React.FC<ExamTypeDetailProps> = ({ selectedExamType, onEdit, onDelete }) => {
     if (!selectedExamType) {
         return (
             <div className="flex items-center justify-center h-64">
@@ -42,6 +45,27 @@ const ExamTypeDetail: React.FC<ExamTypeDetailProps> = ({ selectedExamType }) => 
 
     return (
         <div className="mx-auto p-6 space-y-6">
+
+            <div className="flex items-center justify-between">
+                <div>
+
+                </div>
+                <div className="flex space-x-3">
+                    {onEdit && (
+                        <Button variant="outline" onClick={onEdit}>
+                            Düzenle
+                        </Button>
+                    )}
+
+                    {onDelete && (
+                        <Button variant="outline" onClick={onDelete}>
+                            Sil
+                        </Button>
+                    )}
+                </div>
+            </div>
+
+
             {/* Header */}
             <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
                 <div className="flex items-start justify-between mb-4">

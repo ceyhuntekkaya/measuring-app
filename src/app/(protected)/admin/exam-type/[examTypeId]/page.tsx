@@ -1,6 +1,6 @@
 'use client';
 
-import {useParams} from "next/navigation";
+import {useParams, useRouter} from "next/navigation";
 import React, {useEffect} from "react";
 import {useExamType} from "@/hooks/exam/use-exam-type";
 import ExamTypeDetail from "@/components/detail/ExamTypeDetail";
@@ -10,16 +10,26 @@ import LoadingComp from "@/components/ui/loading-comp";
 export default function ExamTypeDetailPage() {
     const params = useParams();
     const examTypeId = params.examTypeId as string;
-
+    const router = useRouter();
     const {
         selectedExamType,
         getExamTypeById,
-        loading
+        loading,
+        deleteExamType
     } = useExamType();
 
     useEffect(() => {
         getExamTypeById(examTypeId);
     }, []);
+
+
+    const handleEdit = () => {
+        router.push(`/admin/exam-type/${selectedExamType?.id}/edit`);
+    };
+    const handleDelete = () => {
+        if (selectedExamType)
+            deleteExamType(selectedExamType.id);
+    };
 
     if (loading) {
         return (
@@ -31,12 +41,11 @@ export default function ExamTypeDetailPage() {
         <div className="space-y-6">
             <PageHeader/>
             <div className="p-1">
-                <ExamTypeDetail selectedExamType={selectedExamType}/>
+                <ExamTypeDetail selectedExamType={selectedExamType} onEdit={handleEdit} onDelete={handleDelete}/>
 
             </div>
         </div>
     );
-
 
 
 }

@@ -4,11 +4,15 @@ import PageHeader from "@/components/layout/page-header";
 import React, {useEffect} from "react";
 import {useExamType} from "@/hooks/exam/use-exam-type";
 import {useExamSection} from "@/hooks/exam/use-exam-section";
+import {useParams} from "next/navigation";
 
 export default function ExamSectionAdd() {
-
+    const params = useParams();
+    const sectionId = params.sectionId as string;
     const {
         createExamSection,
+        getExamSectionById,
+        selectedExamSection
     } = useExamSection();
 
 
@@ -19,6 +23,7 @@ export default function ExamSectionAdd() {
 
     useEffect(() => {
         getAllExamTypes();
+        getExamSectionById(sectionId);
     }, []);
 
 
@@ -29,8 +34,8 @@ export default function ExamSectionAdd() {
             <PageHeader/>
             <div className="p-1">
                 {
-                    examTypes &&
-                    <ExamSectionForm onSubmit={createExamSection} examTypes={examTypes.examTypes}/>
+                    examTypes && selectedExamSection &&
+                    <ExamSectionForm onSubmit={createExamSection} examTypes={examTypes.examTypes} examSection={selectedExamSection}/>
                 }
 
 

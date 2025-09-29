@@ -54,7 +54,7 @@ export default function QuestionGroupTypePage() {
     ];
 
     const handleAdd = () => {
-        router.push('/admin/exam-type/add');
+        router.push('/admin/exam-type/${examTypeId}/section/${examSectionId}/group/add');
     };
 
     if (loading) {

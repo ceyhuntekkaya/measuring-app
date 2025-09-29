@@ -65,7 +65,7 @@ export default function ExamSectionPage() {
     ];
 
     const handleAdd = () => {
-        router.push('/admin/exam-type/add');
+        router.push('/admin/exam-type/${examTypeId}/section/add');
     };
 
     if (loading) {

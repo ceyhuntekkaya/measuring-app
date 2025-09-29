@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 
 import {
-    UpdateExamTypeRequest,
     ExamTypeListResponse,
     ExamTypeValidationResult,
     ExamTypeStatistics,
@@ -9,7 +8,7 @@ import {
 } from '@/types/exam/examResponses';
 import { showNotification } from '@/lib/notification';
 import {ExamTypeDto} from "@/types/exam/examTemplates";
-import {CreateExamTypeRequest, ExamTypeSearchRequest} from "@/types/exam/examEntities";
+import {ExamTypeSearchRequest} from "@/types/exam/examEntities";
 import { examTypeService } from "@/services/api/exam/exam-type-service";
 
 interface UseExamTypeReturn {
@@ -22,8 +21,8 @@ interface UseExamTypeReturn {
     examTypesSummary: ExamTypeSummary | null;
     loading: boolean;
     error: Error | null;
-    createExamType: (createRequest: CreateExamTypeRequest) => Promise<void>;
-    updateExamType: (id: string, updateRequest: UpdateExamTypeRequest) => Promise<void>;
+    createExamType: (createRequest: ExamTypeDto) => Promise<void>;
+    updateExamType: (updateRequest: ExamTypeDto) => Promise<void>;
     getExamTypeById: (id: string) => Promise<void>;
     getAllExamTypes: (searchRequest?: ExamTypeSearchRequest) => Promise<void>;
     deleteExamType: (id: string) => Promise<void>;
@@ -49,7 +48,7 @@ export const useExamType = (): UseExamTypeReturn => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
 
-    const createExamType = useCallback(async (createRequest: CreateExamTypeRequest) => {
+    const createExamType = useCallback(async (createRequest: ExamTypeDto) => {
         try {
             setLoading(true);
             setError(null);
@@ -68,11 +67,11 @@ export const useExamType = (): UseExamTypeReturn => {
         }
     }, []);
 
-    const updateExamType = useCallback(async (id: string, updateRequest: UpdateExamTypeRequest) => {
+    const updateExamType = useCallback(async (updateRequest: ExamTypeDto) => {
         try {
             setLoading(true);
             setError(null);
-            const response = await examTypeService.updateExamType(id, updateRequest);
+            const response = await examTypeService.updateExamType(updateRequest.id, updateRequest);
             if (response.data && response.success) {
                 setSelectedExamType(response.data);
                 showNotification.success('Sınav tipi başarıyla güncellendi!');

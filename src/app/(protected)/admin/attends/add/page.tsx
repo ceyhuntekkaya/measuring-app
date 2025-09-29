@@ -11,7 +11,7 @@ export default function ExamTypeAdd() {
         <div className="space-y-6">
             <PageHeader/>
             <div className="p-1">
-
+eklenecek
 
             </div>
         </div>

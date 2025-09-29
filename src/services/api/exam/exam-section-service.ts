@@ -3,18 +3,18 @@ import api from "@/services/api/base-api";
 import {CreateExamSectionRequest} from "@/types/exam/examEntities";
 import { ApiResponse } from "@/types/exam/examValidationAndAnalytics";
 import {ExamSectionDto} from "@/types/exam/examTemplates";
-import {ExamSectionsSummary, ExamSectionStatistics, UpdateExamSectionRequest} from "@/types/exam/examResponses";
+import {ExamSectionsSummary, ExamSectionStatistics} from "@/types/exam/examResponses";
 
 
 class ExamSectionService {
     private readonly baseUrl = '/exam-sections';
 
-    async createExamSection(createRequest: CreateExamSectionRequest): Promise<ApiResponse<ExamSectionDto>> {
+    async createExamSection(createRequest: ExamSectionDto): Promise<ApiResponse<ExamSectionDto>> {
         const response = await api.post<ApiResponse<ExamSectionDto>>(`${this.baseUrl}`, createRequest);
         return response.data;
     }
 
-    async updateExamSection(id: string, updateRequest: UpdateExamSectionRequest): Promise<ApiResponse<ExamSectionDto>> {
+    async updateExamSection(id: string, updateRequest: ExamSectionDto): Promise<ApiResponse<ExamSectionDto>> {
         const response = await api.put<ApiResponse<ExamSectionDto>>(`${this.baseUrl}/${id}`, updateRequest);
         return response.data;
     }

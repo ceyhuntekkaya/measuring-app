@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 
 import {
-    UpdateExamSectionRequest,
     ExamSectionStatistics,
     ExamSectionsSummary,
 } from '@/types/exam/examResponses';
@@ -19,8 +18,8 @@ interface UseExamSectionReturn {
     sectionsSummary: ExamSectionsSummary | null;
     loading: boolean;
     error: Error | null;
-    createExamSection: (createRequest: CreateExamSectionRequest) => Promise<void>;
-    updateExamSection: (id: string, updateRequest: UpdateExamSectionRequest) => Promise<void>;
+    createExamSection: (createRequest: ExamSectionDto) => Promise<void>;
+    updateExamSection: (updateRequest: ExamSectionDto) => Promise<void>;
     getExamSectionById: (id: string) => Promise<void>;
     getExamSectionsByExamType: (examTypeId: string) => Promise<void>;
     deleteExamSection: (id: string) => Promise<void>;
@@ -44,7 +43,7 @@ export const useExamSection = (): UseExamSectionReturn => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
 
-    const createExamSection = useCallback(async (createRequest: CreateExamSectionRequest) => {
+    const createExamSection = useCallback(async (createRequest: ExamSectionDto) => {
         try {
             setLoading(true);
             setError(null);
@@ -63,11 +62,11 @@ export const useExamSection = (): UseExamSectionReturn => {
         }
     }, []);
 
-    const updateExamSection = useCallback(async (id: string, updateRequest: UpdateExamSectionRequest) => {
+    const updateExamSection = useCallback(async (updateRequest: ExamSectionDto) => {
         try {
             setLoading(true);
             setError(null);
-            const response = await examSectionService.updateExamSection(id, updateRequest);
+            const response = await examSectionService.updateExamSection(updateRequest.id, updateRequest);
             if (response.data && response.success) {
                 setSelectedExamSection(response.data);
                 showNotification.success('Sınav bölümü başarıyla güncellendi!');

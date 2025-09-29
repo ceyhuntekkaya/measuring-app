@@ -1,25 +1,24 @@
 
 import api from "@/services/api/base-api";
-import {CreateExamTypeRequest, ExamTypeSearchRequest} from "@/types/exam/examEntities";
+import {ExamTypeSearchRequest} from "@/types/exam/examEntities";
 import { ApiResponse } from "@/types/exam/examValidationAndAnalytics";
 import {ExamTypeDto} from "@/types/exam/examTemplates";
 import {
     ExamTypeListResponse,
     ExamTypeStatistics, ExamTypeSummary,
     ExamTypeValidationResult,
-    UpdateExamTypeRequest
 } from "@/types/exam/examResponses";
 
 
 class ExamTypeService {
     private readonly baseUrl = '/exam-types';
 
-    async createExamType(createRequest: CreateExamTypeRequest): Promise<ApiResponse<ExamTypeDto>> {
+    async createExamType(createRequest: ExamTypeDto): Promise<ApiResponse<ExamTypeDto>> {
         const response = await api.post<ApiResponse<ExamTypeDto>>(`${this.baseUrl}`, createRequest);
         return response.data;
     }
 
-    async updateExamType(id: string, updateRequest: UpdateExamTypeRequest): Promise<ApiResponse<ExamTypeDto>> {
+    async updateExamType(id: string, updateRequest: ExamTypeDto): Promise<ApiResponse<ExamTypeDto>> {
         const response = await api.put<ApiResponse<ExamTypeDto>>(`${this.baseUrl}/${id}`, updateRequest);
         return response.data;
     }

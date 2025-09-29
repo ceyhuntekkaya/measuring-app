@@ -14,6 +14,8 @@ import {useExam} from "@/hooks/exam/use-exam";
 import {ExamSessionDto, ExamDto} from "@/types/exam/examEntities";
 import {useExamSession} from "@/hooks/exam/use-exam-session";
 import {EStatus} from "@/types/exam/enum";
+import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {Label} from "@/components/ui/label";
 
 export default function CandidatePage() {
     const router = useRouter();
@@ -271,23 +273,25 @@ export default function CandidatePage() {
             }/>
 
             <div className="p-6 pt-1">
-                {/* ExamSession Seçimi */}
                 <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Sınav Oturumu Seçin:
-                    </label>
-                    <select
+                    <Label htmlFor="examType">Sınav Oturumu Seçin:</Label>
+                    <Select
+                        onValueChange={(value) => handleExamSessionChange(value as string)}
                         value={selectedExamSession?.id || ''}
-                        onChange={(e) => handleExamSessionChange(e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     >
-                        <option value="">Oturum Seçiniz</option>
-                        {upcomingExamSessions && upcomingExamSessions.map((session) => (
-                            <option key={session.id} value={session.id}>
-                                {session.name} - Kota: {session.quota}
-                            </option>
-                        ))}
-                    </select>
+                        <SelectTrigger className={'border-red-500'}>
+                            <SelectValue placeholder="Sınav tipi seçin"/>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                {upcomingExamSessions && upcomingExamSessions.map((session) => (
+                                    <SelectItem key={session.id} value={session.id || ''}>
+                                        {session.name} - {session.quota}
+                                    </SelectItem>
+                                ))}
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
                 </div>
 
                 {/* Application Atama Butonları */}

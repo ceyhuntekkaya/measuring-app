@@ -4,6 +4,18 @@ import {
     FileText,
     Home,
     UserCog,
+    PenLine,
+    Computer,
+    SignatureIcon,
+    Hotel,
+    HousePlugIcon,
+    Type,
+    Users,
+    GaugeCircle,
+    BookOpenCheck,
+    FileUser,
+    BookCheck,
+    FileQuestionIcon,
     Mail,
     HelpCircle, LucideIcon
 } from 'lucide-react';
@@ -32,87 +44,106 @@ export const adminRoutes: RouteConfig = {
             icon: LayoutDashboard,
             requiredRoles: ['ADMIN'],
         },
-
-
         {
             title: 'Başvurular',
             path: '/admin/attends',
-            icon: Settings,
+            icon: FileUser,
             requiredRoles: ['ADMIN'],
+            children:[
+
+            ]
         },
         {
             title: 'Uygulamalar',
-            path: '/admin/applications',
-            icon: Settings,
+            path: '/',
+            icon: BookOpenCheck,
             requiredRoles: ['ADMIN'],
-        }
+            children:[
+                {
+                    title: 'Katılımcılar',
+                    path: '/admin/candidates',
+                    icon: Users,
+                    requiredRoles: ['ADMIN'],
+                },
+                {
+                    title: 'Uygulamalar',
+                    path: '/admin/applications',
+                    icon: PenLine,
+                    requiredRoles: ['ADMIN'],
+                },
+                {
+                    title: 'Oturumlar',
+                    path: '/admin/sessions',
+                    icon: Computer,
+                    requiredRoles: ['ADMIN'],
+                }
 
-        ,
-        {
-            title: 'Oturumlar',
-            path: '/admin/sessions',
-            icon: Settings,
-            requiredRoles: ['ADMIN'],
-        }
-
-        ,
-        {
-            title: 'Onay Ayarları',
-            path: '/admin/settings/approval',
-            icon: Settings,
-            requiredRoles: ['ADMIN'],
-        }
-        ,
-        {
-            title: 'Sınav Tipleri',
-            path: '/admin/exam-type',
-            icon: Settings,
-            requiredRoles: ['ADMIN'],
-        }
-
-        ,
-        {
-            title: 'Soru Grupları',
-            path: '/admin/question-group',
-            icon: Settings,
-            requiredRoles: ['ADMIN'],
+            ]
         },
         {
-            title: 'Onaylar',
-            path: '/admin/approvals',
-            icon: Settings,
+            title: 'Sınav Hazırlık',
+            path: '/admin/pre',
+            icon: GaugeCircle,
             requiredRoles: ['ADMIN'],
+            children:[
+                {
+                    title: 'Sınav Tipleri',
+                    path: '/admin/exam-type',
+                    icon: Type,
+                    requiredRoles: ['ADMIN'],
+                },
+                {
+                    title: 'Soru Grupları',
+                    path: '/admin/question-group',
+                    icon: FileQuestionIcon,
+                    requiredRoles: ['ADMIN'],
+                },
+                {
+                    title: 'Sınavlar',
+                    path: '/admin/exams',
+                    icon: BookCheck,
+                    requiredRoles: ['ADMIN'],
+                },
+                {
+                    title: 'Onaylar',
+                    path: '/admin/approvals',
+                    icon: SignatureIcon,
+                    requiredRoles: ['ADMIN'],
+                },
+            ]
         },
         {
-            title: 'Markalar',
-            path: '/admin/brands',
+            title: 'Ayarlar',
+            path: '/admin/setting',
             icon: Settings,
             requiredRoles: ['ADMIN'],
+            children:[
+                {
+                    title: 'Onay Ayarları',
+                    path: '/admin/settings/approval',
+                    icon: SignatureIcon,
+                    requiredRoles: ['ADMIN'],
+                },
+                {
+                    title: 'Markalar',
+                    path: '/admin/brands',
+                    icon: Hotel,
+                    requiredRoles: ['ADMIN'],
+                },
+                {
+                    title: 'Şubeler',
+                    path: '/admin/branches',
+                    icon: HousePlugIcon,
+                    requiredRoles: ['ADMIN'],
+                },
+                {
+                    title: 'Kullanıcılar',
+                    path: '/admin/users',
+                    icon: Users,
+                    requiredRoles: ['ADMIN'],
+                }
+            ]
         },
-        {
-            title: 'Şubeler',
-            path: '/admin/branches',
-            icon: Settings,
-            requiredRoles: ['ADMIN'],
-        },
-        {
-            title: 'Katılımcılar',
-            path: '/admin/candidates',
-            icon: Settings,
-            requiredRoles: ['ADMIN'],
-        },
-        {
-            title: 'Kullanıcılar',
-            path: '/admin/users',
-            icon: Settings,
-            requiredRoles: ['ADMIN'],
-        },
-        {
-            title: 'Exams',
-            path: '/admin/exams',
-            icon: Settings,
-            requiredRoles: ['ADMIN'],
-        }
     ]
 };
 

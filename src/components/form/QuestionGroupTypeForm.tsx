@@ -6,21 +6,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { NumberInput } from "@/components/ui/number-input";
-import { CreateQuestionGroupTypeRequest, UpdateQuestionGroupTypeRequest } from "@/types/exam/examResponses";
 import { QuestionGroupTypeDto, ExamSectionDto } from "@/types/exam/examTemplates";
-import {EQuestionGroupTemplateLevel, EQuestionGroupType} from "@/types/exam/enum";
+import {EApprovalStatus, EQuestionGroupTemplateLevel, EQuestionGroupType, EStatus} from "@/types/exam/enum";
 
-interface QuestionGroupTypeFormData {
-    name: string;
-    examSectionId: string;
-    orderNumber: number;
-    level: EQuestionGroupTemplateLevel | '';
-    groupType: EQuestionGroupType | '';
-    description?: string;
-}
+
 
 interface QuestionGroupTypeFormErrors {
     name?: string;
@@ -32,7 +23,7 @@ interface QuestionGroupTypeFormErrors {
 }
 
 interface QuestionGroupTypeFormProps {
-    onSubmit: (data: CreateQuestionGroupTypeRequest | UpdateQuestionGroupTypeRequest) => void;
+    onSubmit: (data: QuestionGroupTypeDto) => void;
     questionGroupType?: QuestionGroupTypeDto | null;
     examSections: ExamSectionDto[];
     loading?: boolean;
@@ -44,13 +35,28 @@ const QuestionGroupTypeForm: React.FC<QuestionGroupTypeFormProps> = ({
                                                                          examSections = [],
                                                                          loading = false
                                                                      }) => {
-    const [formData, setFormData] = useState<QuestionGroupTypeFormData>({
+
+
+
+
+    const [formData, setFormData] = useState<QuestionGroupTypeDto>({
+        examSection: null,
+        approvalStatus: EApprovalStatus.APPROVED,
+        currentApprovalCount: 0,
+        requiredApprovalCount: 0,
+        approvalCompletedDate: '',
+
         name: '',
-        examSectionId: '',
         orderNumber: 1,
-        level: '',
-        groupType: '',
-        description: ''
+        level: EQuestionGroupTemplateLevel.GROUP,
+        groupType: EQuestionGroupType.GENERAL,
+
+        id: '',
+        createdAt: new Date(),
+        deletedAt:  null,
+        status: EStatus.ACTIVE,
+        createdById:  null,
+        deletedById:  null
     });
 
     const [errors, setErrors] = useState<QuestionGroupTypeFormErrors>({});
@@ -58,19 +64,30 @@ const QuestionGroupTypeForm: React.FC<QuestionGroupTypeFormProps> = ({
     useEffect(() => {
         if (questionGroupType) {
             setFormData({
-                name: questionGroupType.name || '',
-                examSectionId: questionGroupType.examSection?.id || '',
-                orderNumber: questionGroupType.orderNumber || 1,
-                level: questionGroupType.level || '',
-                groupType: questionGroupType.groupType || '',
-                description: ''
+                examSection: questionGroupType.examSection,
+                approvalStatus: questionGroupType.approvalStatus,
+                currentApprovalCount: questionGroupType.currentApprovalCount,
+                requiredApprovalCount: questionGroupType.requiredApprovalCount,
+                approvalCompletedDate: questionGroupType.approvalCompletedDate,
+
+                name: questionGroupType.name,
+                orderNumber: questionGroupType.orderNumber,
+                level: questionGroupType.level,
+                groupType: questionGroupType.groupType,
+
+                id: questionGroupType.id,
+                createdAt: questionGroupType.createdAt,
+                deletedAt:  questionGroupType.deletedAt,
+                status: questionGroupType.status,
+                createdById:  questionGroupType.createdById,
+                deletedById:  questionGroupType.deletedById
             });
         }
     }, [questionGroupType]);
 
-    const handleChange = <T extends keyof QuestionGroupTypeFormData>(
+    const handleChange = <T extends keyof QuestionGroupTypeDto>(
         name: T,
-        value: QuestionGroupTypeFormData[T]
+        value: QuestionGroupTypeDto[T]
     ) => {
         setFormData(prev => ({
             ...prev,
@@ -105,9 +122,7 @@ const QuestionGroupTypeForm: React.FC<QuestionGroupTypeFormProps> = ({
             newErrors.orderNumber = 'Sıra numarası 100\'den büyük olamaz';
         }
 
-        if (formData.description && formData.description.trim().length > 0 && formData.description.trim().length < 10) {
-            newErrors.description = 'Açıklama en az 10 karakter olmalıdır';
-        }
+
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -115,16 +130,7 @@ const QuestionGroupTypeForm: React.FC<QuestionGroupTypeFormProps> = ({
 
     const handleSubmit = () => {
         if (validateForm()) {
-            const submitData = {
-                name: formData.name.trim(),
-                examSectionId: formData.examSectionId,
-                orderNumber: formData.orderNumber,
-                level: formData.level as EQuestionGroupTemplateLevel,
-                groupType: formData.groupType as EQuestionGroupType,
-                ...(formData.description && formData.description.trim() && { description: formData.description.trim() })
-            };
-
-            onSubmit(submitData);
+            onSubmit(formData);
         }
     };
 
@@ -255,7 +261,7 @@ const QuestionGroupTypeForm: React.FC<QuestionGroupTypeFormProps> = ({
                         <Label htmlFor="examSection">Sınav Bölümü *</Label>
                         <Select
                             onValueChange={(value) => handleChange('examSectionId', value as string)}
-                            value={formData.examSectionId}
+                            value={formData.examSectionId as string}
                         >
                             <SelectTrigger className={errors.examSectionId ? 'border-red-500' : ''}>
                                 <SelectValue placeholder="Sınav bölümü seçin" />
@@ -273,23 +279,6 @@ const QuestionGroupTypeForm: React.FC<QuestionGroupTypeFormProps> = ({
                         {errors.examSectionId && (
                             <Alert variant="destructive">
                                 <AlertDescription>{errors.examSectionId}</AlertDescription>
-                            </Alert>
-                        )}
-                    </div>
-
-                    {/* Açıklama */}
-                    <div className="space-y-2">
-                        <Label htmlFor="description">Açıklama</Label>
-                        <Textarea
-                            id="description"
-                            value={formData.description}
-                            onChange={(e) => handleChange('description', e.target.value)}
-                            className={`min-h-[100px] ${errors.description ? 'border-red-500' : ''}`}
-                            placeholder="Soru grubu tipi hakkında açıklama giriniz (opsiyonel)"
-                        />
-                        {errors.description && (
-                            <Alert variant="destructive">
-                                <AlertDescription>{errors.description}</AlertDescription>
                             </Alert>
                         )}
                     </div>

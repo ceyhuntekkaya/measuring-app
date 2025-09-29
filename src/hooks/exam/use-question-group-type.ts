@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 
 import {
-    UpdateQuestionGroupTypeRequest,
     QuestionGroupTypeSearchRequest,
     QuestionGroupTypeStatistics,
     QuestionGroupTypeTemplate,
@@ -28,8 +27,8 @@ interface UseQuestionGroupTypeReturn {
     availableGroupTypes: GroupTypeInfo[];
     loading: boolean;
     error: Error | null;
-    createQuestionGroupType: (createRequest: CreateQuestionGroupTypeRequest) => Promise<void>;
-    updateQuestionGroupType: (id: string, updateRequest: UpdateQuestionGroupTypeRequest) => Promise<void>;
+    createQuestionGroupType: (createRequest: QuestionGroupTypeDto) => Promise<void>;
+    updateQuestionGroupType: (updateRequest: QuestionGroupTypeDto) => Promise<void>;
     getQuestionGroupTypeById: (id: string) => Promise<void>;
     getQuestionGroupTypesByExamSection: (examSectionId: string) => Promise<void>;
     getQuestionGroupTypesByLevel: (level: EQuestionGroupTemplateLevel) => Promise<void>;
@@ -60,7 +59,7 @@ export const useQuestionGroupType = (): UseQuestionGroupTypeReturn => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
 
-    const createQuestionGroupType = useCallback(async (createRequest: CreateQuestionGroupTypeRequest) => {
+    const createQuestionGroupType = useCallback(async (createRequest: QuestionGroupTypeDto) => {
         try {
             setLoading(true);
             setError(null);
@@ -79,11 +78,11 @@ export const useQuestionGroupType = (): UseQuestionGroupTypeReturn => {
         }
     }, []);
 
-    const updateQuestionGroupType = useCallback(async (id: string, updateRequest: UpdateQuestionGroupTypeRequest) => {
+    const updateQuestionGroupType = useCallback(async (updateRequest: QuestionGroupTypeDto) => {
         try {
             setLoading(true);
             setError(null);
-            const response = await questionGroupTypeService.updateQuestionGroupType(id, updateRequest);
+            const response = await questionGroupTypeService.updateQuestionGroupType(updateRequest.id, updateRequest);
             if (response.data && response.success) {
                 setSelectedType(response.data);
                 showNotification.success('Soru grubu tipi başarıyla güncellendi!');

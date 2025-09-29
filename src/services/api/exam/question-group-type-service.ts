@@ -8,19 +8,19 @@ import {
     GroupTypeInfo,
     LevelInfo,
     QuestionGroupTypeSearchRequest, QuestionGroupTypeStatistics,
-    QuestionGroupTypeTemplate, UpdateQuestionGroupTypeRequest
+    QuestionGroupTypeTemplate
 } from "@/types/exam/examResponses";
 
 
 class QuestionGroupTypeService {
     private readonly baseUrl = '/question-group-types';
 
-    async createQuestionGroupType(createRequest: UpdateQuestionGroupTypeRequest): Promise<ApiResponse<QuestionGroupTypeDto>> {
+    async createQuestionGroupType(createRequest: QuestionGroupTypeDto): Promise<ApiResponse<QuestionGroupTypeDto>> {
         const response = await api.post<ApiResponse<QuestionGroupTypeDto>>(`${this.baseUrl}`, createRequest);
         return response.data;
     }
 
-    async updateQuestionGroupType(id: string, updateRequest: UpdateQuestionGroupTypeRequest): Promise<ApiResponse<QuestionGroupTypeDto>> {
+    async updateQuestionGroupType(id: string, updateRequest: QuestionGroupTypeDto): Promise<ApiResponse<QuestionGroupTypeDto>> {
         const response = await api.put<ApiResponse<QuestionGroupTypeDto>>(`${this.baseUrl}/${id}`, updateRequest);
         return response.data;
     }

@@ -10,25 +10,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { NumberInput } from "@/components/ui/number-input";
-import { CreateExamTypeRequest } from "@/types/exam/examEntities";
-import { ExamTypeDto } from "@/types/exam/examTemplates";
-import {UpdateExamTypeRequest} from "@/types/exam/examResponses";
-import {EExamType} from "@/types/exam/enum";
+import {ExamTypeDto} from "@/types/exam/examTemplates";
+import {EExamType, EStatus} from "@/types/exam/enum";
 import Checkbox from "@/components/ui/checkbox";
 
-interface ExamTypeFormData {
-    name: string;
-    examLevel: string;
-    examType: EExamType | '';
-    infoScreen: string;
-    description: string;
-    isOrder: boolean;
-    isShowEvaluation: boolean;
-    isGraded: boolean;
-    screenRecordTime: number;
-    maximumScore: number;
-    durationInSeconds: number;
-}
+
 
 interface ExamTypeFormErrors {
     name?: string;
@@ -42,7 +28,7 @@ interface ExamTypeFormErrors {
 }
 
 interface ExamTypeFormProps {
-    onSubmit: (data: CreateExamTypeRequest | UpdateExamTypeRequest) => void;
+    onSubmit: (data: ExamTypeDto) => void;
     examType?: ExamTypeDto | null;
     loading?: boolean;
 }
@@ -52,19 +38,31 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
                                                        examType,
                                                        loading = false
                                                    }) => {
-    const [formData, setFormData] = useState<ExamTypeFormData>({
+    const [formData, setFormData] = useState<ExamTypeDto>({
         name: '',
         examLevel: '',
-        examType: '',
+        examType: EExamType.CERTIFICATE,
         infoScreen: '',
         description: '',
         isOrder: false,
         isShowEvaluation: false,
+        isFinalized: false,
         isGraded: false,
         screenRecordTime: 0,
         maximumScore: 100,
-        durationInSeconds: 3600
+        durationInSeconds: 3600,
+        questionGroupTypes:[],
+
+        id: '',
+        createdAt: new Date(),
+        deletedAt: null,
+        status: EStatus.ACTIVE,
+        createdById: '',
+        deletedById: ''
     });
+
+
+
 
     const [errors, setErrors] = useState<ExamTypeFormErrors>({});
 
@@ -73,22 +71,30 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
             setFormData({
                 name: examType.name || '',
                 examLevel: examType.examLevel || '',
-                examType: examType.examType || '',
+                examType: examType.examType || EExamType.CERTIFICATE,
                 infoScreen: examType.infoScreen || '',
                 description: examType.description || '',
                 isOrder: examType.isOrder || false,
                 isShowEvaluation: examType.isShowEvaluation || false,
+                isFinalized: examType.isFinalized || false,
                 isGraded: examType.isGraded || false,
                 screenRecordTime: examType.screenRecordTime || 0,
                 maximumScore: examType.maximumScore || 100,
-                durationInSeconds: examType.durationInSeconds || 3600
+                durationInSeconds: examType.durationInSeconds || 3600,
+                questionGroupTypes: examType.questionGroupTypes || [],
+                id: examType.id,
+                createdAt: examType.createdAt,
+                deletedAt: examType.deletedAt || null,
+                status: examType.status,
+                createdById: examType.createdById,
+                deletedById: examType.deletedById
             });
         }
     }, [examType]);
 
-    const handleChange = <T extends keyof ExamTypeFormData>(
+    const handleChange = <T extends keyof ExamTypeDto>(
         name: T,
-        value: ExamTypeFormData[T]
+        value: ExamTypeDto[T]
     ) => {
         setFormData(prev => ({
             ...prev,
@@ -139,6 +145,8 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
             newErrors.durationInSeconds = 'Süre 24 saatten uzun olamaz';
         }
 
+
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -146,21 +154,7 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (validateForm()) {
-            const submitData = {
-                name: formData.name.trim(),
-                examLevel: formData.examLevel.trim(),
-                examType: formData.examType as EExamType,
-                infoScreen: formData.infoScreen.trim(),
-                description: formData.description.trim(),
-                isOrder: formData.isOrder,
-                isShowEvaluation: formData.isShowEvaluation,
-                isGraded: formData.isGraded,
-                screenRecordTime: formData.screenRecordTime,
-                maximumScore: formData.maximumScore,
-                durationInSeconds: formData.durationInSeconds
-            };
-
-            onSubmit(submitData);
+            onSubmit(formData);
         }
     };
 

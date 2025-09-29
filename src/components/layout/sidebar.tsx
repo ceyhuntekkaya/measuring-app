@@ -209,7 +209,7 @@ function SidebarMenuItem({item, level = 0}: MenuItemProps) {
                     overflow-hidden transition-all duration-300
                     ${isOpen ? 'overflow-y-auto' : 'max-h-0'}
                 `}>
-                    <div className="space-y-1">
+                    <div className="space-y-1 ml-6">
                         {item.children?.map((child) => (
                             <SidebarMenuItem
                                 key={child.path}
