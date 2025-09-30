@@ -223,8 +223,6 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-
-        console.log(formData.birthDate)
         if (validateForm()) {
             const submitData: CandidateFormData = {
                 id: formData.id || '',

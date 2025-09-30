@@ -67,9 +67,6 @@ const ExamForm: React.FC<ExamFormProps> = ({
     const [selectedQuestionGroups, setSelectedQuestionGroups] = useState<QuestionGroupDto[]>([]);
     const [availableQuestionGroups, setAvailableQuestionGroups] = useState<QuestionGroupDto[]>([]);
 
-
-    console.log(questionGroups)
-
     // Filter question groups based on selected exam type
     useEffect(() => {
         if (formData.examTypeId) {

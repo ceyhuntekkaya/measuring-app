@@ -106,7 +106,6 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
     }, [examSession]);
 
 
-    console.log(formData)
 
     const handleChange = <T extends keyof ExamSessionFormData>(
         name: T,
@@ -234,7 +233,6 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
 
 
     const formatDateTimeLocal = (date: Date | null): string => {
-        console.log(date)
         if (date == null) return '';
         const d = (date instanceof Date) ? date : new Date(date);
 

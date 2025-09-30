@@ -17,7 +17,6 @@ const PassportPhotoCamera: React.FC<PassportPhotoCameraProps> = ({setStep}) => {
 
     const startCamera = useCallback(async () => {
         try {
-            console.log('Kamera başlatılıyor...');
             const mediaStream = await navigator.mediaDevices.getUserMedia({
                 video: {
                     facingMode: 'user',
@@ -25,15 +24,10 @@ const PassportPhotoCamera: React.FC<PassportPhotoCameraProps> = ({setStep}) => {
                     height: {ideal: 800}
                 }
             });
-            console.log('MediaStream alındı:', mediaStream);
-            console.log('Video tracks:', mediaStream.getVideoTracks());
-
             setStream(mediaStream);
             setIsCameraActive(true);
             setCapturedPhoto(null);
-            console.log('State güncellendi - isCameraActive: true');
         } catch (error) {
-            console.error('Kamera erişim hatası:', error);
             alert('Kameraya erişim izni gerekli. Lütfen izin verin.');
         }
     }, []);
@@ -41,12 +35,8 @@ const PassportPhotoCamera: React.FC<PassportPhotoCameraProps> = ({setStep}) => {
     // Stream değiştiğinde video elementine bağla
     useEffect(() => {
         if (stream && videoRef.current && isCameraActive) {
-            console.log('Video ref mevcut, srcObject ayarlanıyor...');
             videoRef.current.srcObject = stream;
-
             videoRef.current.onloadedmetadata = () => {
-                console.log('Video metadata yüklendi');
-                console.log('Video dimensions:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight);
                 videoRef.current?.play().then(() => {
                     console.log('Video play() başarılı');
                 }).catch(err => {

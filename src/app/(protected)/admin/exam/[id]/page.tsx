@@ -37,8 +37,6 @@ export default function ExamTypePage() {
 
     useEffect(() => {
         if(selectedExam){
-            console.log(examId);
-            console.log(selectedExam);
             setExam(selectedExam)
         }
     }, [selectedExam]);
@@ -57,10 +55,6 @@ const changeStep = (step: 'login' | 'welcome' | 'camera' | 'audio' | 'section-se
             <LoadingComp/>
         );
     }
-    console.log(state.exam?.name);
-    console.log(state.currentStep);
-
-
     function getUniqueSortedExamSections(): ExamSectionDto[] {
         if (!selectedExam || !selectedExam.questionGroups || selectedExam.questionGroups.length === 0) {
             return [];

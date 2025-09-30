@@ -131,9 +131,6 @@ export default function ExamApplicationScreen({
         }
     };
 
-
-    console.log(selectedQuestionGroup)
-
     return (
         <div className="h-screen w-screen flex flex-col bg-gray-50"
              style={{height: "calc(100vh - 100px)"}}>

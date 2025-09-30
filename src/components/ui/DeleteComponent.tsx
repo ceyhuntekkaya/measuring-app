@@ -23,10 +23,6 @@ export default function DeleteComponent({ itemName, onDelete }: DeleteComponentP
         }
     };
 
-
-    console.log("showModal", showModal)
-    console.log("isDeleting", isDeleting)
-
     return (
         <>
             {/* Silme Butonu */}
