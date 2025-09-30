@@ -12,6 +12,7 @@ import {
 import {ExamSessionDto} from '@/types/exam/examEntities';
 import {formatDate} from '@/utils/date-formater';
 import LoadingComp from "@/components/ui/loading-comp";
+import ExamParticipants from "@/components/proctor/ExamParticipants";
 
 interface ExamSessionDetailProps {
     examSession: ExamSessionDto;
@@ -84,7 +85,7 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
 
     const sessionStatus = getSessionStatus();
 
-    return (
+    return (<>
         <div className="container mx-auto space-y-6">
             <div className="flex items-center justify-between">
                 <div>
@@ -562,6 +563,9 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                             </CardContent>
                         </Card>
 
+
+
+
                         <Card>
                             <CardHeader>
                                 <CardTitle>Hızlı İşlemler</CardTitle>
@@ -599,7 +603,8 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                 )}
             </div>
         </div>
-    );
+        <ExamParticipants/>
+</> );
 };
 
 export default ExamSessionDetail;

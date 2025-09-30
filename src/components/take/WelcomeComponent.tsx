@@ -8,7 +8,7 @@ const WelcomeComponent: React.FC<WelcomeComponentProps> = ({ setStep }) => {
     return (
         <div className="h-full w-full bg-gradient-to-br from-blue-50 to-indigo-100 overflow-y-auto">
             <div className="min-h-full flex items-center justify-center p-4">
-                <div className="max-w-4xl w-full bg-white rounded-2xl shadow-xl overflow-hidden my-8">
+                <div className="m-6 w-full bg-white rounded-2xl shadow-xl overflow-hidden">
                     {/* Header */}
                     <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-8 text-center">
                         <h1 className="text-4xl font-bold mb-2">e-YADİS TÜRKÇE</h1>

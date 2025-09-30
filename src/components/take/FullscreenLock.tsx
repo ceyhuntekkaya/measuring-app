@@ -150,7 +150,7 @@ const FullscreenLock: React.FC<{ children: React.ReactNode }> = ({ children }) =
             {/* Uyarı overlay */}
             {(!isFullscreen || showWarning) && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
-                    <div className="bg-white rounded-lg p-8 max-w-md mx-4 text-center shadow-2xl">
+                    <div className="bg-white rounded-lg p-8  mx-4 text-center shadow-2xl">
                         <div className="mb-4">
                             <svg
                                 className="w-16 h-16 mx-auto text-red-500"

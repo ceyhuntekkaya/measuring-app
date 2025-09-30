@@ -12,6 +12,7 @@ import LoadingComp from "@/components/ui/loading-comp";
 import WelcomeComponent from "@/components/take/WelcomeComponent";
 import ExamSectionsList from "@/components/take/SectionList";
 import {ExamSectionDto} from "@/types/exam/examTemplates";
+import ExamApplicationScreen from "@/components/take/ExamApplicationScreen";
 
 export default function ExamTypePage() {
     const params = useParams();
@@ -48,7 +49,7 @@ const changeStep = (step: 'login' | 'welcome' | 'camera' | 'audio' | 'section-se
 }
 
     const onSectionSelect = (section: ExamSectionDto) => {
-        console.log(section);
+        setStep('exam-taking');
     }
 
     if (loading) {
@@ -100,6 +101,8 @@ const changeStep = (step: 'login' | 'welcome' | 'camera' | 'audio' | 'section-se
                 return <AudioRecorder setStep={changeStep}/>;
             case 'section-selection' :
                 return <ExamSectionsList sections={getUniqueSortedExamSections()} onSectionSelect={onSectionSelect}/>;
+            case 'exam-taking' :
+                return <ExamApplicationScreen questionGroups={selectedExam?.questionGroups || []} onExitExam={()=>{}} />;
             default:
                 return <p>Bilinmeyen durum</p>;
         }
