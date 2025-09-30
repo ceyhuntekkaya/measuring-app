@@ -35,16 +35,8 @@ export interface MenuItem {
 export interface RouteConfig {
     menuItems: MenuItem[];
 }
-
-export const adminRoutes: RouteConfig = {
-    menuItems: [
-        {
-            title: 'Ana Sayfa',
-            path: '/admin',
-            icon: LayoutDashboard,
-            requiredRoles: ['ADMIN'],
-        },
-        {
+/*
+ {
             title: 'Başvurular',
             path: '/admin/attends',
             icon: FileUser,
@@ -53,6 +45,16 @@ export const adminRoutes: RouteConfig = {
 
             ]
         },
+ */
+export const adminRoutes: RouteConfig = {
+    menuItems: [
+        {
+            title: 'Ana Sayfa',
+            path: '/admin',
+            icon: LayoutDashboard,
+            requiredRoles: ['ADMIN'],
+        },
+
         {
             title: 'Uygulamalar',
             path: '/',

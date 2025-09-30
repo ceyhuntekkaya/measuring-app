@@ -19,15 +19,6 @@ export default function Footer (){
                         className="list-inline list-group-flush list-group-borderless text-md-end mb-0"
                     >
                         <li className="list-inline-item px-0 px-sm-2">
-                            <a href="/about">About</a>
-                        </li>
-                        <li className="list-inline-item px-0 px-sm-2">
-                            <a href="/about">About</a>
-                        </li>
-                        <li className="list-inline-item px-0 px-sm-2">
-                            <a href="/about">Blog</a>
-                        </li>
-                        <li className="list-inline-item px-0 px-sm-2">
                             <a href="/about">Contact</a>
                         </li>
                     </ul>
