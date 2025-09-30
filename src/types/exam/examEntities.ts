@@ -56,9 +56,9 @@ export type QuestionDto = DatabaseObjectDto & {
 
 export type QuestionGroupDto = DatabaseObjectDto & {
     name?: string;
-    examType?: ExamTypeDto;
-    examSection?: ExamSectionDto;
-    questionGroupType?: QuestionGroupTypeDto;
+    examType?: ExamTypeDto | null;
+    examSection?: ExamSectionDto | null;
+    questionGroupType?: QuestionGroupTypeDto | null;
     maximumScore?: number;
     durationInSeconds?: number;
     approvalStatus?: EApprovalStatus; // Example enum values

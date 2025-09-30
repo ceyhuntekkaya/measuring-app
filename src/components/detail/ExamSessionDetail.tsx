@@ -176,6 +176,19 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                     >
                         Katılımcılar & Sonuçlar
                     </button>
+
+                    <button
+                        onClick={() => setActiveTab("evaluation")}
+                        className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                            activeTab === "evaluation"
+                                ? "border-blue-500 text-blue-600"
+                                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                        }`}
+                    >
+                        Sınav Sonucu Değerlendirme
+                    </button>
+
+
                 </nav>
             </div>
 
@@ -562,10 +575,6 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                                 </div>
                             </CardContent>
                         </Card>
-
-
-
-
                         <Card>
                             <CardHeader>
                                 <CardTitle>Hızlı İşlemler</CardTitle>
@@ -599,6 +608,26 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                                 </div>
                             </CardContent>
                         </Card>
+                    </div>
+                )}
+
+                {/* Değerlendirme Sekmesi */}
+                {activeTab === "evaluation" && (
+                    <div className="grid grid-cols-1 gap-6">
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Değerlendirme</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="flex items-center justify-center p-6 bg-gray-100">
+                                    <div className="border border-gray-300 rounded-2xl p-6 shadow-lg bg-white text-center">
+                                        Sınav uygulaması tamamlanmadan değerlendirme açılmamatadır.
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
                     </div>
                 )}
             </div>

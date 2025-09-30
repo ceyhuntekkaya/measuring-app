@@ -42,6 +42,8 @@ interface QuestionGroupFormProps {
     examSections: ExamSectionDto[];
     questionGroupTypes: QuestionGroupTypeDto[];
     loading?: boolean;
+    onExamTypeChange: (data: string) => void;
+    onExamSectionChange: (data: string) => void;
 }
 
 const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
@@ -50,7 +52,9 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                                                                  examTypes = [],
                                                                  examSections = [],
                                                                  questionGroupTypes = [],
-                                                                 loading = false
+                                                                 loading = false,
+                                                                 onExamTypeChange,
+                                                                 onExamSectionChange
                                                              }) => {
     const [formData, setFormData] = useState<QuestionGroupFormData>({
         name: '',
@@ -239,7 +243,10 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                         <div className="space-y-2">
                             <Label htmlFor="examType">Sınav Tipi *</Label>
                             <Select
-                                onValueChange={(value) => handleChange('examTypeId', value as string)}
+                                onValueChange={(value) => {
+                                    handleChange('examTypeId', value as string)
+                                    onExamTypeChange(value as string);
+                                }}
                                 value={formData.examTypeId}
                             >
                                 <SelectTrigger className={errors.examTypeId ? 'border-red-500' : ''}>
@@ -266,7 +273,10 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                         <div className="space-y-2">
                             <Label htmlFor="examSection">Sınav Bölümü *</Label>
                             <Select
-                                onValueChange={(value) => handleChange('examSectionId', value as string)}
+                                onValueChange={(value) => {
+                                    handleChange('examSectionId', value as string)
+                                    onExamSectionChange(value as string);
+                                }}
                                 value={formData.examSectionId}
                                 disabled={!formData.examTypeId}
                             >
