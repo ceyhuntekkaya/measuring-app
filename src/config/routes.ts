@@ -13,7 +13,6 @@ import {
     Users,
     GaugeCircle,
     BookOpenCheck,
-    FileUser,
     BookCheck,
     FileQuestionIcon,
     Mail,

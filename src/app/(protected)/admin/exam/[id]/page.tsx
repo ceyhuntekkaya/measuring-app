@@ -47,6 +47,7 @@ const changeStep = (step: 'login' | 'welcome' | 'camera' | 'audio' | 'section-se
 }
 
     const onSectionSelect = (section: ExamSectionDto) => {
+    console.log(section)
         setStep('exam-taking');
     }
 

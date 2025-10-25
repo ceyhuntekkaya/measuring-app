@@ -27,7 +27,7 @@ export default function ExamApplicationScreen({
     const [completedGroups, setCompletedGroups] = useState<Set<number>>(new Set());
     const [showExitModal, setShowExitModal] = useState(false);
 
-
+console.log(setCompletedGroups)
 
     const totalGroups = questionGroups.length;
     const progressPercentage = (completedGroups.size / totalGroups) * 100;

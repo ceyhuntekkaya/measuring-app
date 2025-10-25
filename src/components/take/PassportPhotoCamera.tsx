@@ -28,6 +28,7 @@ const PassportPhotoCamera: React.FC<PassportPhotoCameraProps> = ({setStep}) => {
             setIsCameraActive(true);
             setCapturedPhoto(null);
         } catch (error) {
+            console.log(error)
             alert('Kameraya erişim izni gerekli. Lütfen izin verin.');
         }
     }, []);
