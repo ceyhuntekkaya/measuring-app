@@ -84,16 +84,6 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
                                                                                                                 loading = false
                                                                                                             }, ref) => {
 
-
-    const params = useParams();
-    const questionId = params.questionId as string;
-
-    console.log("questionId")
-    console.log(questionId)
-    console.log("questionId")
-
-
-
     const [formData, setFormData] = useState<BaseQuestionTemplateFormData>(value);
     const [errors, setErrors] = useState<BaseQuestionTemplateFormErrors>({});
     const [tagInput, setTagInput] = useState('');
@@ -153,19 +143,19 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
             }));
         }
     };
-/*
-    // Template-specific data değişikliklerini handle et
-    const handleTemplateDataChange = (templateData: MultipleChoiceTemplateDto | TrueFalseTemplateDto |
-        FillInTheBlanksTemplateDto | ShortAnswerTemplateDto |
-        MatchingTemplateDto | EssayTemplateDto | OrderingTemplateDto | MultipleResponseTemplateDto |
-        HotSpotTemplateDto | DragAndDropTemplateDto | AudioResponseTemplateDto | VideoResponseTemplateDto | ImageResponseTemplateDto) => {
-        setFormData(prev => ({
-            ...prev,
-            templateData: templateData
-        }));
-    };
+    /*
+        // Template-specific data değişikliklerini handle et
+        const handleTemplateDataChange = (templateData: MultipleChoiceTemplateDto | TrueFalseTemplateDto |
+            FillInTheBlanksTemplateDto | ShortAnswerTemplateDto |
+            MatchingTemplateDto | EssayTemplateDto | OrderingTemplateDto | MultipleResponseTemplateDto |
+            HotSpotTemplateDto | DragAndDropTemplateDto | AudioResponseTemplateDto | VideoResponseTemplateDto | ImageResponseTemplateDto) => {
+            setFormData(prev => ({
+                ...prev,
+                templateData: templateData
+            }));
+        };
 
- */
+     */
 
 
     const handleTemplateDataChange = useCallback((templateData: MultipleChoiceTemplateDto | TrueFalseTemplateDto |
@@ -177,7 +167,6 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
             templateData: templateData
         }));
     }, []);
-
 
 
     // Tag yönetimi

@@ -6,13 +6,6 @@ import PageHeader from "@/components/layout/page-header";
 
 
 export default function ApplicationGraderDetailPage() {
-    const params = useParams();
-    const id = params.id as string;
-
-
-    useEffect(() => {
-        console.log(id);
-    }, []);
 
 
 

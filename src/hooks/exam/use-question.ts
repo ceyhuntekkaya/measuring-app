@@ -22,7 +22,7 @@ interface UseQuestionReturn {
     loading: boolean;
     error: Error | null;
     createQuestion: (createRequest: CreateQuestionRequest) => Promise<void>;
-    updateQuestion: (id: string, updateRequest: CreateQuestionRequest) => Promise<void>;
+    updateQuestion: (updateRequest: CreateQuestionRequest) => Promise<void>;
     getQuestionById: (id: string) => Promise<void>;
     getQuestionsByGroup: (questionGroupId: string) => Promise<void>;
     deleteQuestion: (id: string) => Promise<void>;
@@ -69,11 +69,11 @@ export const useQuestion = (): UseQuestionReturn => {
         }
     }, []);
 
-    const updateQuestion = useCallback(async (id: string, updateRequest: CreateQuestionRequest) => {
+    const updateQuestion = useCallback(async (updateRequest: CreateQuestionRequest) => {
         try {
             setLoading(true);
             setError(null);
-            const response = await questionService.updateQuestion(id, updateRequest);
+            const response = await questionService.updateQuestion(updateRequest.id || '', updateRequest);
             if (response.data && response.success) {
                 setSelectedQuestion(response.data);
                 showNotification.success('Soru başarıyla güncellendi!');

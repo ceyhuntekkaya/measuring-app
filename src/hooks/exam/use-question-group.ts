@@ -116,7 +116,6 @@ export const useQuestionGroup = (): UseQuestionGroupReturn => {
             setLoading(true);
             setError(null);
             const response = await questionGroupService.getQuestionGroupById(id);
-            console.log(response)
             if (response.data && response.success) {
                 setSelectedQuestionGroup(response.data);
             } else {

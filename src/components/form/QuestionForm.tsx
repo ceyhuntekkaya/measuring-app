@@ -366,11 +366,9 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 
         // 3. Tüm validationlar başarılı - data transform ve submit
         const finalData = transformToCreateQuestionRequest();
-
-
-
-        console.log(finalData)
-        console.log(JSON.stringify(finalData, null, 2));
+        if(question){
+            finalData.id = question.id;
+        }
         onSubmit(finalData);
     };
 
