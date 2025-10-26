@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useEffect, useState, useRef, forwardRef, useImperativeHandle} from 'react';
+import React, {useEffect, useState, useRef, forwardRef, useImperativeHandle, useCallback} from 'react';
 import {Card, CardContent} from "@/components/ui/card";
 import {Alert, AlertDescription} from "@/components/ui/alert";
 import {Button} from "@/components/ui/button";
@@ -36,7 +36,9 @@ import EssayTemplateForm, {EssayTemplateFormHandle} from './EssayTemplateForm';
 import MatchingTemplateForm, {MatchingTemplateFormHandle} from './MatchingTemplateForm';
 import {EDifficulty, EQuestionType} from "@/types/exam/enum";
 import OrderingTemplateForm, {OrderingTemplateFormHandle} from "@/components/form/template/OrderingTemplateForm";
-import MultipleResponseTemplateForm, { MultipleResponseTemplateFormHandle } from "@/components/form/template/MultipleResponseTemplateForm";
+import MultipleResponseTemplateForm, {
+    MultipleResponseTemplateFormHandle
+} from "@/components/form/template/MultipleResponseTemplateForm";
 import HotSpotTemplateForm, {HotSpotTemplateFormHandle} from "@/components/form/template/HotSpotTemplateForm";
 import DragAndDropTemplateForm, {
     DragAndDropTemplateFormHandle
@@ -51,6 +53,7 @@ import VideoResponseTemplateForm, {
     VideoResponseTemplateFormHandle
 } from "@/components/form/template/VideoResponseTemplateForm";
 import {BaseQuestionTemplateFormData} from "@/types/exam/examEntities";
+import {useParams} from "next/navigation";
 
 interface BaseQuestionTemplateFormErrors {
     title?: string;
@@ -75,13 +78,23 @@ interface BaseQuestionTemplateFormProps {
 }
 
 
-
 const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, BaseQuestionTemplateFormProps>(({
                                                                                                                 value,
                                                                                                                 onChange,
                                                                                                                 questionType,
                                                                                                                 loading = false
                                                                                                             }, ref) => {
+
+
+    const params = useParams();
+    const questionId = params.questionId as string;
+
+    console.log("questionId")
+    console.log(questionId)
+    console.log("questionId")
+
+
+
     const [formData, setFormData] = useState<BaseQuestionTemplateFormData>(value);
     const [errors, setErrors] = useState<BaseQuestionTemplateFormErrors>({});
     const [tagInput, setTagInput] = useState('');
@@ -114,9 +127,14 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
         }
     }, [questionType]);
 
+
+    const lastSentRef = useRef<BaseQuestionTemplateFormData>(value);
     // Form data değiştiğinde parent'a bildir
     useEffect(() => {
-        onChange(formData);
+        if (JSON.stringify(formData) !== JSON.stringify(lastSentRef.current)) {
+            lastSentRef.current = formData;
+            onChange(formData);
+        }
     }, [formData]);
 
     const handleChange = <T extends keyof BaseQuestionTemplateFormData>(
@@ -136,7 +154,7 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
             }));
         }
     };
-
+/*
     // Template-specific data değişikliklerini handle et
     const handleTemplateDataChange = (templateData: MultipleChoiceTemplateDto | TrueFalseTemplateDto |
         FillInTheBlanksTemplateDto | ShortAnswerTemplateDto |
@@ -147,6 +165,21 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
             templateData: templateData
         }));
     };
+
+ */
+
+
+    const handleTemplateDataChange = useCallback((templateData: MultipleChoiceTemplateDto | TrueFalseTemplateDto |
+        FillInTheBlanksTemplateDto | ShortAnswerTemplateDto |
+        MatchingTemplateDto | EssayTemplateDto | OrderingTemplateDto | MultipleResponseTemplateDto |
+        HotSpotTemplateDto | DragAndDropTemplateDto | AudioResponseTemplateDto | VideoResponseTemplateDto | ImageResponseTemplateDto) => {
+        setFormData(prev => ({
+            ...prev,
+            templateData: templateData
+        }));
+    }, []);
+
+
 
     // Tag yönetimi
     const addTag = () => {
@@ -366,270 +399,268 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
     };
 
     return (
-        <Card>
-            <CardContent className="pt-6">
-                <div className="space-y-6">
-                    {/* Başlık */}
+        <div>
+            <div className="space-y-6">
+                {/* Başlık */}
+                <div className="space-y-2">
+                    <Label htmlFor="title">Soru Başlığı *</Label>
+                    <Input
+                        id="title"
+                        value={formData.title}
+                        onChange={(e) => handleChange('title', e.target.value)}
+                        className={errors.title ? 'border-red-500' : ''}
+                        placeholder="Soru başlığını giriniz"
+                    />
+                    {errors.title && (
+                        <Alert variant="destructive">
+                            <AlertDescription>{errors.title}</AlertDescription>
+                        </Alert>
+                    )}
+                </div>
+
+                {/* Grid Layout: Konu, Zorluk, Soru Tipi */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Konu */}
                     <div className="space-y-2">
-                        <Label htmlFor="title">Soru Başlığı *</Label>
+                        <Label htmlFor="subject">Konu *</Label>
                         <Input
-                            id="title"
-                            value={formData.title}
-                            onChange={(e) => handleChange('title', e.target.value)}
-                            className={errors.title ? 'border-red-500' : ''}
-                            placeholder="Soru başlığını giriniz"
+                            id="subject"
+                            value={formData.subject}
+                            onChange={(e) => handleChange('subject', e.target.value)}
+                            className={errors.subject ? 'border-red-500' : ''}
+                            placeholder="Örn: Matematik, Fizik"
                         />
-                        {errors.title && (
+                        {errors.subject && (
                             <Alert variant="destructive">
-                                <AlertDescription>{errors.title}</AlertDescription>
+                                <AlertDescription>{errors.subject}</AlertDescription>
                             </Alert>
                         )}
                     </div>
 
-                    {/* Grid Layout: Konu, Zorluk, Soru Tipi */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* Konu */}
-                        <div className="space-y-2">
-                            <Label htmlFor="subject">Konu *</Label>
-                            <Input
-                                id="subject"
-                                value={formData.subject}
-                                onChange={(e) => handleChange('subject', e.target.value)}
-                                className={errors.subject ? 'border-red-500' : ''}
-                                placeholder="Örn: Matematik, Fizik"
-                            />
-                            {errors.subject && (
-                                <Alert variant="destructive">
-                                    <AlertDescription>{errors.subject}</AlertDescription>
-                                </Alert>
-                            )}
-                        </div>
-
-                        {/* Zorluk Seviyesi */}
-                        <div className="space-y-2">
-                            <Label htmlFor="difficulty">Zorluk Seviyesi *</Label>
-                            <Select
-                                value={formData.difficulty}
-                                onValueChange={(val) => handleChange('difficulty', val as EDifficulty)}
-                            >
-                                <SelectTrigger className={errors.difficulty ? 'border-red-500' : ''}>
-                                    <SelectValue placeholder="Zorluk seçiniz"/>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectGroup>
-                                        <SelectItem value="EASY">Kolay</SelectItem>
-                                        <SelectItem value="MEDIUM">Orta</SelectItem>
-                                        <SelectItem value="HARD">Zor</SelectItem>
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
-                            {errors.difficulty && (
-                                <Alert variant="destructive">
-                                    <AlertDescription>{errors.difficulty}</AlertDescription>
-                                </Alert>
-                            )}
-                        </div>
-
-                        {/* Soru Tipi - QuestionForm'dan geldiği için disabled */}
-                        <div className="space-y-2">
-                            <Label htmlFor="questionType">Soru Tipi *</Label>
-                            <Select
-                                value={formData.questionType}
-                                onValueChange={(val) => handleChange('questionType', val as EQuestionType)}
-                                disabled={true} // QuestionForm'dan kontrol ediliyor
-                            >
-                                <SelectTrigger className={errors.questionType ? 'border-red-500' : ''}>
-                                    <SelectValue placeholder="Soru tipi seçiniz"/>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectGroup>
-                                        <SelectItem value="MULTIPLE_CHOICE">
-                                            {getQuestionTypeDisplayName('MULTIPLE_CHOICE')}
-                                        </SelectItem>
-                                        <SelectItem value="TRUE_FALSE">
-                                            {getQuestionTypeDisplayName('TRUE_FALSE')}
-                                        </SelectItem>
-                                        <SelectItem value="FILL_IN_THE_BLANKS">
-                                            {getQuestionTypeDisplayName('FILL_IN_THE_BLANKS')}
-                                        </SelectItem>
-                                        <SelectItem value="SHORT_ANSWER">
-                                            {getQuestionTypeDisplayName('SHORT_ANSWER')}
-                                        </SelectItem>
-                                        <SelectItem value="ESSAY">
-                                            {getQuestionTypeDisplayName('ESSAY')}
-                                        </SelectItem>
-                                        <SelectItem value="MATCHING">
-                                            {getQuestionTypeDisplayName('MATCHING')}
-                                        </SelectItem>
-                                        <SelectItem value="ORDERING">
-                                            {getQuestionTypeDisplayName('ORDERING')}
-                                        </SelectItem>
-                                        <SelectItem value="MULTIPLE_RESPONSE">
-                                            {getQuestionTypeDisplayName('MULTIPLE_RESPONSE')}
-                                        </SelectItem>
-                                        <SelectItem value="HOT_SPOT">
-                                            {getQuestionTypeDisplayName('HOT_SPOT')}
-                                        </SelectItem>
-                                        <SelectItem value="DRAG_AND_DROP">
-                                            {getQuestionTypeDisplayName('DRAG_AND_DROP')}
-                                        </SelectItem>
-                                        <SelectItem value="AUDIO_RESPONSE">
-                                            {getQuestionTypeDisplayName('AUDIO_RESPONSE')}
-                                        </SelectItem>
-                                        <SelectItem value="VIDEO_RESPONSE">
-                                            {getQuestionTypeDisplayName('VIDEO_RESPONSE')}
-                                        </SelectItem>
-                                        <SelectItem value="IMAGE_RESPONSE">
-                                            {getQuestionTypeDisplayName('IMAGE_RESPONSE')}
-                                        </SelectItem>
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
-                            {errors.questionType && (
-                                <Alert variant="destructive">
-                                    <AlertDescription>{errors.questionType}</AlertDescription>
-                                </Alert>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Grid Layout: Puan, Süre, Aktif Durumu */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* Puan */}
-                        <div className="space-y-2">
-                            <Label htmlFor="points">Puan *</Label>
-                            <NumberInput
-                                id="points"
-                                inputType={"number"}
-                                value={formData.points}
-                                onChange={(val) => handleChange('points', val)}
-                                minValue={1}
-                                maxValue={1000}
-                                decimalPlaces={0}
-                                className={errors.points ? 'border-red-500' : ''}
-                            />
-                            {errors.points && (
-                                <Alert variant="destructive">
-                                    <AlertDescription>{errors.points}</AlertDescription>
-                                </Alert>
-                            )}
-                        </div>
-
-                        {/* Süre Sınırı */}
-                        <div className="space-y-2">
-                            <Label htmlFor="timeLimit">Süre Sınırı (saniye) *</Label>
-                            <NumberInput
-                                id="timeLimit"
-                                inputType={"number"}
-                                value={formData.timeLimit}
-                                onChange={(val) => handleChange('timeLimit', val)}
-                                minValue={1}
-                                maxValue={7200}
-                                decimalPlaces={0}
-                                unit="saniye"
-                                className={errors.timeLimit ? 'border-red-500' : ''}
-                            />
-                            {errors.timeLimit && (
-                                <Alert variant="destructive">
-                                    <AlertDescription>{errors.timeLimit}</AlertDescription>
-                                </Alert>
-                            )}
-                        </div>
-
-                        {/* Aktif Durumu */}
-                        <div className="space-y-2">
-                            <div className="flex items-center space-x-2 mt-6">
-                                <Checkbox
-                                    id="isActive"
-                                    checked={formData.isActive}
-                                    onChange={(checked) => handleChange('isActive', !!checked)}
-                                />
-                                <Label htmlFor="isActive">Soru Aktif</Label>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Açıklama */}
+                    {/* Zorluk Seviyesi */}
                     <div className="space-y-2">
-                        <Label htmlFor="description">Açıklama</Label>
-                        <Textarea
-                            id="description"
-                            value={formData.description}
-                            onChange={(e) => handleChange('description', e.target.value)}
-                            className="min-h-[100px]"
-                            placeholder="Soru hakkında açıklama giriniz (opsiyonel)"
-                        />
-                    </div>
-
-                    {/* Talimatlar */}
-                    <div className="space-y-2">
-                        <Label htmlFor="instructions">Talimatlar</Label>
-                        <Textarea
-                            id="instructions"
-                            value={formData.instructions}
-                            onChange={(e) => handleChange('instructions', e.target.value)}
-                            className="min-h-[100px]"
-                            placeholder="Soru çözüm talimatlarını giriniz (opsiyonel)"
-                        />
-                    </div>
-
-                    {/* Etiketler */}
-                    <div className="space-y-4">
-                        <Label>Etiketler</Label>
-
-                        {/* Etiket Ekleme */}
-                        <div className="flex gap-2">
-                            <Input
-                                value={tagInput}
-                                onChange={(e) => setTagInput(e.target.value)}
-                                onKeyPress={handleTagInputKeyPress}
-                                placeholder="Etiket eklemek için yazın ve Enter'a basın"
-                                className="flex-1"
-                            />
-                            <Button
-                                type="button"
-                                onClick={addTag}
-                                className="bg-green-600 hover:bg-green-700 text-white"
-                                size="sm"
-                            >
-                                <Plus className="w-4 h-4 mr-2"/>
-                                Ekle
-                            </Button>
-                        </div>
-
-                        {/* Mevcut Etiketler */}
-                        {formData.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                                {formData.tags.map((tag, index) => (
-                                    <div
-                                        key={index}
-                                        className="flex items-center gap-1 bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-sm"
-                                    >
-                                        <span>{tag}</span>
-                                        <Button
-                                            type="button"
-                                            onClick={() => removeTag(index)}
-                                            variant="ghost"
-                                            size="sm"
-                                            className="h-4 w-4 p-0 hover:bg-blue-200"
-                                        >
-                                            <Trash2 className="w-3 h-3"/>
-                                        </Button>
-                                    </div>
-                                ))}
-                            </div>
+                        <Label htmlFor="difficulty">Zorluk Seviyesi *</Label>
+                        <Select
+                            value={formData.difficulty}
+                            onValueChange={(val) => handleChange('difficulty', val as EDifficulty)}
+                        >
+                            <SelectTrigger className={errors.difficulty ? 'border-red-500' : ''}>
+                                <SelectValue placeholder="Zorluk seçiniz"/>
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                    <SelectItem value="EASY">Kolay</SelectItem>
+                                    <SelectItem value="MEDIUM">Orta</SelectItem>
+                                    <SelectItem value="HARD">Zor</SelectItem>
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
+                        {errors.difficulty && (
+                            <Alert variant="destructive">
+                                <AlertDescription>{errors.difficulty}</AlertDescription>
+                            </Alert>
                         )}
                     </div>
 
-                    {/* Template-Specific Form */}
-                    <div className="mt-6">
-                        {renderTemplateSpecificForm()}
+                    {/* Soru Tipi - QuestionForm'dan geldiği için disabled */}
+                    <div className="space-y-2">
+                        <Label htmlFor="questionType">Soru Tipi *</Label>
+                        <Select
+                            value={formData.questionType}
+                            onValueChange={(val) => handleChange('questionType', val as EQuestionType)}
+                            disabled={true} // QuestionForm'dan kontrol ediliyor
+                        >
+                            <SelectTrigger className={errors.questionType ? 'border-red-500' : ''}>
+                                <SelectValue placeholder="Soru tipi seçiniz"/>
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                    <SelectItem value="MULTIPLE_CHOICE">
+                                        {getQuestionTypeDisplayName('MULTIPLE_CHOICE')}
+                                    </SelectItem>
+                                    <SelectItem value="TRUE_FALSE">
+                                        {getQuestionTypeDisplayName('TRUE_FALSE')}
+                                    </SelectItem>
+                                    <SelectItem value="FILL_IN_THE_BLANKS">
+                                        {getQuestionTypeDisplayName('FILL_IN_THE_BLANKS')}
+                                    </SelectItem>
+                                    <SelectItem value="SHORT_ANSWER">
+                                        {getQuestionTypeDisplayName('SHORT_ANSWER')}
+                                    </SelectItem>
+                                    <SelectItem value="ESSAY">
+                                        {getQuestionTypeDisplayName('ESSAY')}
+                                    </SelectItem>
+                                    <SelectItem value="MATCHING">
+                                        {getQuestionTypeDisplayName('MATCHING')}
+                                    </SelectItem>
+                                    <SelectItem value="ORDERING">
+                                        {getQuestionTypeDisplayName('ORDERING')}
+                                    </SelectItem>
+                                    <SelectItem value="MULTIPLE_RESPONSE">
+                                        {getQuestionTypeDisplayName('MULTIPLE_RESPONSE')}
+                                    </SelectItem>
+                                    <SelectItem value="HOT_SPOT">
+                                        {getQuestionTypeDisplayName('HOT_SPOT')}
+                                    </SelectItem>
+                                    <SelectItem value="DRAG_AND_DROP">
+                                        {getQuestionTypeDisplayName('DRAG_AND_DROP')}
+                                    </SelectItem>
+                                    <SelectItem value="AUDIO_RESPONSE">
+                                        {getQuestionTypeDisplayName('AUDIO_RESPONSE')}
+                                    </SelectItem>
+                                    <SelectItem value="VIDEO_RESPONSE">
+                                        {getQuestionTypeDisplayName('VIDEO_RESPONSE')}
+                                    </SelectItem>
+                                    <SelectItem value="IMAGE_RESPONSE">
+                                        {getQuestionTypeDisplayName('IMAGE_RESPONSE')}
+                                    </SelectItem>
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
+                        {errors.questionType && (
+                            <Alert variant="destructive">
+                                <AlertDescription>{errors.questionType}</AlertDescription>
+                            </Alert>
+                        )}
+                    </div>
+                </div>
+
+                {/* Grid Layout: Puan, Süre, Aktif Durumu */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Puan */}
+                    <div className="space-y-2">
+                        <Label htmlFor="points">Puan *</Label>
+                        <NumberInput
+                            id="points"
+                            inputType={"number"}
+                            value={formData.points}
+                            onChange={(val) => handleChange('points', val)}
+                            minValue={1}
+                            maxValue={1000}
+                            decimalPlaces={0}
+                            className={errors.points ? 'border-red-500' : ''}
+                        />
+                        {errors.points && (
+                            <Alert variant="destructive">
+                                <AlertDescription>{errors.points}</AlertDescription>
+                            </Alert>
+                        )}
                     </div>
 
-                    {/* KAYDET BUTONU KALDIRILDI - QuestionForm'da olacak */}
+                    {/* Süre Sınırı */}
+                    <div className="space-y-2">
+                        <Label htmlFor="timeLimit">Süre Sınırı (saniye) *</Label>
+                        <NumberInput
+                            id="timeLimit"
+                            inputType={"number"}
+                            value={formData.timeLimit}
+                            onChange={(val) => handleChange('timeLimit', val)}
+                            minValue={1}
+                            maxValue={7200}
+                            decimalPlaces={0}
+                            unit="saniye"
+                            className={errors.timeLimit ? 'border-red-500' : ''}
+                        />
+                        {errors.timeLimit && (
+                            <Alert variant="destructive">
+                                <AlertDescription>{errors.timeLimit}</AlertDescription>
+                            </Alert>
+                        )}
+                    </div>
+
+                    {/* Aktif Durumu */}
+                    <div className="space-y-2">
+                        <div className="flex items-center space-x-2 mt-6">
+                            <Checkbox
+                                id="isActive"
+                                checked={formData.isActive}
+                                onChange={(checked) => handleChange('isActive', !!checked)}
+                            />
+                            <Label htmlFor="isActive">Soru Aktif</Label>
+                        </div>
+                    </div>
                 </div>
-            </CardContent>
-        </Card>
+
+                {/* Açıklama */}
+                <div className="space-y-2">
+                    <Label htmlFor="description">Açıklama</Label>
+                    <Textarea
+                        id="description"
+                        value={formData.description}
+                        onChange={(e) => handleChange('description', e.target.value)}
+                        className="min-h-[100px]"
+                        placeholder="Soru hakkında açıklama giriniz (opsiyonel)"
+                    />
+                </div>
+
+                {/* Talimatlar */}
+                <div className="space-y-2">
+                    <Label htmlFor="instructions">Talimatlar</Label>
+                    <Textarea
+                        id="instructions"
+                        value={formData.instructions}
+                        onChange={(e) => handleChange('instructions', e.target.value)}
+                        className="min-h-[100px]"
+                        placeholder="Soru çözüm talimatlarını giriniz (opsiyonel)"
+                    />
+                </div>
+
+                {/* Etiketler */}
+                <div className="space-y-4">
+                    <Label>Etiketler</Label>
+
+                    {/* Etiket Ekleme */}
+                    <div className="flex gap-2">
+                        <Input
+                            value={tagInput}
+                            onChange={(e) => setTagInput(e.target.value)}
+                            onKeyPress={handleTagInputKeyPress}
+                            placeholder="Etiket eklemek için yazın ve Enter'a basın"
+                            className="flex-1"
+                        />
+                        <Button
+                            type="button"
+                            onClick={addTag}
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                            size="sm"
+                        >
+                            <Plus className="w-4 h-4 mr-2"/>
+                            Ekle
+                        </Button>
+                    </div>
+
+                    {/* Mevcut Etiketler */}
+                    {formData.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                            {formData.tags.map((tag, index) => (
+                                <div
+                                    key={index}
+                                    className="flex items-center gap-1 bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-sm"
+                                >
+                                    <span>{tag}</span>
+                                    <Button
+                                        type="button"
+                                        onClick={() => removeTag(index)}
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-4 w-4 p-0 hover:bg-blue-200"
+                                    >
+                                        <Trash2 className="w-3 h-3"/>
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Template-Specific Form */}
+                <div className="mt-6">
+                    {renderTemplateSpecificForm()}
+                </div>
+
+                {/* KAYDET BUTONU KALDIRILDI - QuestionForm'da olacak */}
+            </div>
+        </div>
     );
 });
 

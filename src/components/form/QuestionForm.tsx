@@ -65,7 +65,6 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
     const questionGroupId = params.groupId as string;
 
 
-
     const [formData, setFormData] = useState<QuestionFormData>({
         name: '',
         questionGroupId: questionGroupId,
@@ -92,6 +91,21 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
         questionType: '',
         templateData: null
     });
+
+
+    const handleBaseFormUpdate = <T extends keyof BaseQuestionTemplateFormData>(
+        name: T,
+        newValue: BaseQuestionTemplateFormData[T]
+    ) => {
+        setBaseFormData(prev => ({
+            ...prev,
+            [name]: newValue
+        }));
+
+
+
+
+    };
 
     const [errors, setErrors] = useState<QuestionFormErrors>({});
 
@@ -152,6 +166,16 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
             ...prev,
             [name]: value
         }));
+
+        if(name === "name"){
+            handleBaseFormUpdate("title", value as string)
+        }
+        if(name === "maximumScore"){
+            handleBaseFormUpdate("points", value as number)
+        }
+        if(name === "durationInSeconds"){
+            handleBaseFormUpdate("timeLimit", value as number)
+        }
 
         // Hata varsa temizle
         if (errors[name as keyof QuestionFormErrors]) {
@@ -325,6 +349,13 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
         // BaseQuestionTemplateForm kendi içinde template validation'ını da çağırıyor
         const isBaseTemplateFormValid = baseTemplateValidateRef.current?.validate() ?? false;
 
+        const isBaseTemplateFormValidData = baseTemplateValidateRef.current?.getErrors() ;
+
+
+        console.log(isBaseTemplateFormValid)
+        console.log(isBaseTemplateFormValidData)
+
+
         if (!isBaseTemplateFormValid) {
             setErrors(prev => ({
                 ...prev,
@@ -335,8 +366,213 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 
         // 3. Tüm validationlar başarılı - data transform ve submit
         const finalData = transformToCreateQuestionRequest();
+
+
+
+        console.log(finalData)
+        console.log(JSON.stringify(finalData, null, 2));
         onSubmit(finalData);
     };
+
+
+    const QuestionPartForm = () => {
+
+        return (
+
+            <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                    <Label>Soru Parçaları</Label>
+                    <Button
+                        type="button"
+                        onClick={addPart}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        size="sm"
+                    >
+                        <Plus className="w-4 h-4 mr-2"/>
+                        Parça Ekle
+                    </Button>
+                </div>
+
+                {formData.parts.map((part, index) => (
+                    <div key={index} className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg">
+                        <div className="col-span-1">
+                            <Label>Sıra</Label>
+                            <NumberInput
+                                inputType={"number"}
+                                value={part.orderNumber}
+                                onChange={(value) => updatePart(index, 'orderNumber', value)}
+                                minValue={1}
+                                decimalPlaces={0}
+                            />
+                        </div>
+
+                        <div className="col-span-2">
+                            <Label>Medya Tipi</Label>
+                            <Select
+                                onValueChange={(value) => updatePart(index, 'mediaType', value as EMediaType)}
+                                value={part.mediaType || "TEXT"}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue/>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        {Object.entries(EMediaType).map(([key, value]) => (
+                                            <SelectItem key={key} value={key}>
+                                                {value}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="col-span-2">
+                            <Label>Etiket</Label>
+                            <Input
+                                value={part.label || ''}
+                                onChange={(e) => updatePart(index, 'label', e.target.value)}
+                                placeholder="Etiket"
+                            />
+                        </div>
+
+                        <div className="col-span-5">
+                            <Label>İçerik</Label>
+                            <Textarea
+                                value={part.content || ''}
+                                onChange={(e) => updatePart(index, 'content', e.target.value)}
+                                placeholder="Parça içeriğini giriniz"
+                                className="min-h-[60px]"
+                            />
+                        </div>
+
+                        <div className="col-span-1">
+                            <Button
+                                type="button"
+                                onClick={() => removePart(index)}
+                                variant="primary"
+                                size="sm"
+                            >
+                                <Trash2 className="w-4 h-4"/>
+                            </Button>
+                        </div>
+                    </div>
+                ))}
+
+                {errors.parts && (
+                    <Alert variant="destructive">
+                        <AlertDescription>{errors.parts}</AlertDescription>
+                    </Alert>
+                )}
+            </div>
+
+        )
+    }
+
+    const QuestionOptionForm = () => {
+
+        return (
+
+            <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                    <Label>Soru Seçenekleri</Label>
+                    <Button
+                        type="button"
+                        onClick={addOption}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        size="sm"
+                    >
+                        <Plus className="w-4 h-4 mr-2"/>
+                        Seçenek Ekle
+                    </Button>
+                </div>
+
+                {formData.options.map((option, index) => (
+                    <div key={index} className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg">
+                        <div className="col-span-1">
+                            <Label>Sıra</Label>
+                            <NumberInput
+                                inputType={"number"}
+                                value={option.orderNumber}
+                                onChange={(value) => updateOption(index, 'orderNumber', value)}
+                                minValue={1}
+                                decimalPlaces={0}
+                            />
+                        </div>
+
+                        <div className="col-span-2">
+                            <Label>Medya Tipi</Label>
+                            <Select
+                                onValueChange={(value) => updateOption(index, 'mediaType', value as EMediaType)}
+                                value={option.mediaType || "TEXT"}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue/>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        {Object.entries(EMediaType).map(([key, value]) => (
+                                            <SelectItem key={key} value={key}>
+                                                {value}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="col-span-3">
+                            <Label>İçerik</Label>
+                            <Textarea
+                                value={option.content}
+                                onChange={(e) => updateOption(index, 'content', e.target.value)}
+                                placeholder="Seçenek içeriğini giriniz"
+                                className="min-h-[60px]"
+                            />
+                        </div>
+
+                        <div className="col-span-3">
+                            <Label>Temel İçerik</Label>
+                            <Textarea
+                                value={option.baseContent || ''}
+                                onChange={(e) => updateOption(index, 'baseContent', e.target.value)}
+                                placeholder="Temel içerik"
+                                className="min-h-[60px]"
+                            />
+                        </div>
+
+                        <div className="col-span-1">
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    checked={option.isTrueOption}
+                                    onChange={(checked) => updateOption(index, 'isTrueOption', !!checked)}
+                                />
+                                <Label>Doğru</Label>
+                            </div>
+                        </div>
+
+                        <div className="col-span-1">
+                            <Button
+                                type="button"
+                                onClick={() => removeOption(index)}
+                                variant="primary"
+                                size="sm"
+                            >
+                                <Trash2 className="w-4 h-4"/>
+                            </Button>
+                        </div>
+                    </div>
+                ))}
+
+                {errors.options && (
+                    <Alert variant="destructive">
+                        <AlertDescription>{errors.options}</AlertDescription>
+                    </Alert>
+                )}
+            </div>
+
+        )
+    }
 
     return (
         <Card className="w-full">
@@ -349,26 +585,24 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                     <div className="space-y-4">
                         <h3 className="text-lg font-semibold">Temel Bilgiler</h3>
 
-                        {/* Soru Adı */}
-                        <div className="space-y-2">
-                            <Label htmlFor="name">Soru Adı *</Label>
-                            <Input
-                                id="name"
-                                value={formData.name}
-                                onChange={(e) => handleChange('name', e.target.value)}
-                                placeholder="Soru adını giriniz"
-                                className={errors.name ? 'border-red-500' : ''}
-                            />
-                            {errors.name && (
-                                <Alert variant="destructive">
-                                    <AlertDescription>{errors.name}</AlertDescription>
-                                </Alert>
-                            )}
-                        </div>
 
-                        {/* Grid: Question Group, Question Type */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Soru Tipi */}
+                        <div className="grid grid-cols-1 md:grid-cols-6 gap-2">
+
+                            <div className="col-span-2 space-y-2">
+                                <Label htmlFor="name">Soru Adı *</Label>
+                                <Input
+                                    id="name"
+                                    value={formData.name}
+                                    onChange={(e) => handleChange('name', e.target.value)}
+                                    placeholder="Soru adını giriniz"
+                                    className={errors.name ? 'border-red-500' : ''}
+                                />
+                                {errors.name && (
+                                    <Alert variant="destructive">
+                                        <AlertDescription>{errors.name}</AlertDescription>
+                                    </Alert>
+                                )}
+                            </div>
                             <div className="space-y-2">
                                 <Label htmlFor="questionType">Soru Tipi *</Label>
                                 <Select
@@ -394,11 +628,6 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                                     </Alert>
                                 )}
                             </div>
-                        </div>
-
-                        {/* Grid: Order, Score, Duration, Auto-Evaluated */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            {/* Sıra No */}
                             <div className="space-y-2">
                                 <Label htmlFor="orderNumber">Sıra No</Label>
                                 <NumberInput
@@ -417,8 +646,6 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                                     </Alert>
                                 )}
                             </div>
-
-                            {/* Maksimum Puan */}
                             <div className="space-y-2">
                                 <Label htmlFor="maximumScore">Maksimum Puan</Label>
                                 <NumberInput
@@ -437,8 +664,6 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                                     </Alert>
                                 )}
                             </div>
-
-                            {/* Süre */}
                             <div className="space-y-2">
                                 <Label htmlFor="durationInSeconds">Süre (saniye)</Label>
                                 <NumberInput
@@ -458,9 +683,9 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                                     </Alert>
                                 )}
                             </div>
-
-                            {/* Otomatik Değerlendirme */}
-                            <div className="space-y-2">
+                            {
+                                /*
+                                 <div className="space-y-2">
                                 <div className="flex items-center space-x-2 mt-6">
                                     <Checkbox
                                         id="isAutomaticallyEvaluated"
@@ -470,200 +695,18 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                                     <Label htmlFor="isAutomaticallyEvaluated">Otomatik Değerlendir</Label>
                                 </div>
                             </div>
+                                 */
+                            }
+
                         </div>
                     </div>
 
-                    {/* Question Parts Section */}
-                    <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                            <Label>Soru Parçaları</Label>
-                            <Button
-                                type="button"
-                                onClick={addPart}
-                                className="bg-green-600 hover:bg-green-700 text-white"
-                                size="sm"
-                            >
-                                <Plus className="w-4 h-4 mr-2"/>
-                                Parça Ekle
-                            </Button>
-                        </div>
-
-                        {formData.parts.map((part, index) => (
-                            <div key={index} className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg">
-                                <div className="col-span-1">
-                                    <Label>Sıra</Label>
-                                    <NumberInput
-                                        inputType={"number"}
-                                        value={part.orderNumber}
-                                        onChange={(value) => updatePart(index, 'orderNumber', value)}
-                                        minValue={1}
-                                        decimalPlaces={0}
-                                    />
-                                </div>
-
-                                <div className="col-span-2">
-                                    <Label>Medya Tipi</Label>
-                                    <Select
-                                        onValueChange={(value) => updatePart(index, 'mediaType', value as EMediaType)}
-                                        value={part.mediaType || "TEXT"}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue/>
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectGroup>
-                                                {Object.entries(EMediaType).map(([key, value]) => (
-                                                    <SelectItem key={key} value={key}>
-                                                        {value}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectGroup>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="col-span-2">
-                                    <Label>Etiket</Label>
-                                    <Input
-                                        value={part.label || ''}
-                                        onChange={(e) => updatePart(index, 'label', e.target.value)}
-                                        placeholder="Etiket"
-                                    />
-                                </div>
-
-                                <div className="col-span-5">
-                                    <Label>İçerik</Label>
-                                    <Textarea
-                                        value={part.content || ''}
-                                        onChange={(e) => updatePart(index, 'content', e.target.value)}
-                                        placeholder="Parça içeriğini giriniz"
-                                        className="min-h-[60px]"
-                                    />
-                                </div>
-
-                                <div className="col-span-1">
-                                    <Button
-                                        type="button"
-                                        onClick={() => removePart(index)}
-                                        variant="primary"
-                                        size="sm"
-                                    >
-                                        <Trash2 className="w-4 h-4"/>
-                                    </Button>
-                                </div>
-                            </div>
-                        ))}
-
-                        {errors.parts && (
-                            <Alert variant="destructive">
-                                <AlertDescription>{errors.parts}</AlertDescription>
-                            </Alert>
-                        )}
-                    </div>
-
-                    {/* Question Options Section */}
-                    <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                            <Label>Soru Seçenekleri</Label>
-                            <Button
-                                type="button"
-                                onClick={addOption}
-                                className="bg-green-600 hover:bg-green-700 text-white"
-                                size="sm"
-                            >
-                                <Plus className="w-4 h-4 mr-2"/>
-                                Seçenek Ekle
-                            </Button>
-                        </div>
-
-                        {formData.options.map((option, index) => (
-                            <div key={index} className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg">
-                                <div className="col-span-1">
-                                    <Label>Sıra</Label>
-                                    <NumberInput
-                                        inputType={"number"}
-                                        value={option.orderNumber}
-                                        onChange={(value) => updateOption(index, 'orderNumber', value)}
-                                        minValue={1}
-                                        decimalPlaces={0}
-                                    />
-                                </div>
-
-                                <div className="col-span-2">
-                                    <Label>Medya Tipi</Label>
-                                    <Select
-                                        onValueChange={(value) => updateOption(index, 'mediaType', value as EMediaType)}
-                                        value={option.mediaType || "TEXT"}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue/>
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectGroup>
-                                                {Object.entries(EMediaType).map(([key, value]) => (
-                                                    <SelectItem key={key} value={key}>
-                                                        {value}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectGroup>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="col-span-3">
-                                    <Label>İçerik</Label>
-                                    <Textarea
-                                        value={option.content}
-                                        onChange={(e) => updateOption(index, 'content', e.target.value)}
-                                        placeholder="Seçenek içeriğini giriniz"
-                                        className="min-h-[60px]"
-                                    />
-                                </div>
-
-                                <div className="col-span-3">
-                                    <Label>Temel İçerik</Label>
-                                    <Textarea
-                                        value={option.baseContent || ''}
-                                        onChange={(e) => updateOption(index, 'baseContent', e.target.value)}
-                                        placeholder="Temel içerik"
-                                        className="min-h-[60px]"
-                                    />
-                                </div>
-
-                                <div className="col-span-1">
-                                    <div className="flex items-center space-x-2">
-                                        <Checkbox
-                                            checked={option.isTrueOption}
-                                            onChange={(checked) => updateOption(index, 'isTrueOption', !!checked)}
-                                        />
-                                        <Label>Doğru</Label>
-                                    </div>
-                                </div>
-
-                                <div className="col-span-1">
-                                    <Button
-                                        type="button"
-                                        onClick={() => removeOption(index)}
-                                        variant="primary"
-                                        size="sm"
-                                    >
-                                        <Trash2 className="w-4 h-4"/>
-                                    </Button>
-                                </div>
-                            </div>
-                        ))}
-
-                        {errors.options && (
-                            <Alert variant="destructive">
-                                <AlertDescription>{errors.options}</AlertDescription>
-                            </Alert>
-                        )}
-                    </div>
+                    <QuestionPartForm/>
+                    <QuestionOptionForm/>
 
                     {/* Base Question Template Form - Alt componentler burada */}
                     {formData.questionType && (
                         <div className="space-y-4">
-                            <h3 className="text-lg font-semibold">Soru Şablonu Detayları</h3>
                             <BaseQuestionTemplateForm
                                 ref={baseTemplateValidateRef}
                                 value={baseFormData}

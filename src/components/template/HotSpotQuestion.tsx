@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, {useState, useEffect, useRef, useMemo} from 'react';
 import { HotSpotTemplateDto, HotSpotArea } from '@/types/exam/questionTemplates';
 
 interface HotSpotQuestionProps {
@@ -41,9 +41,11 @@ const HotSpotQuestion: React.FC<HotSpotQuestionProps> = ({
 
 
     console.log(imageDimensions)
+    const stableInitialAnswer = useMemo(() => initialAnswer, [JSON.stringify(initialAnswer)]);
+
     useEffect(() => {
-        setSelectedSpots(initialAnswer);
-    }, [initialAnswer]);
+        setSelectedSpots(stableInitialAnswer);
+    }, [stableInitialAnswer]);
 
     useEffect(() => {
         if (isSubmitted && showCorrectAnswer) {

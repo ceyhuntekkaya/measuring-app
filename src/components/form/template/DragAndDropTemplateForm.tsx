@@ -36,7 +36,7 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
                                                                                                          }, ref) => {
     const [formData, setFormData] = useState<DragAndDropTemplateDto>({
         instructions: '',
-        options: '',
+        options: null,
         allowMultipleItemsPerZone: false,
         shuffleDraggableItems: true,
         explanation: ''
@@ -51,7 +51,7 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
         if (value) {
             setFormData({
                 instructions: value.instructions || '',
-                options: value.options || '',
+                options: value.options || null,
                 allowMultipleItemsPerZone: value.allowMultipleItemsPerZone || false,
                 shuffleDraggableItems: value.shuffleDraggableItems ?? true,
                 explanation: value.explanation || ''
@@ -89,7 +89,7 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
             const templateData: DragAndDropTemplateDto = {
                 ...value,
                 instructions: formData.instructions,
-                options: JSON.stringify(dragAndDropOptions),
+                options: dragAndDropOptions,
                 allowMultipleItemsPerZone: formData.allowMultipleItemsPerZone,
                 shuffleDraggableItems: formData.shuffleDraggableItems,
                 explanation: formData.explanation

@@ -66,7 +66,7 @@ export default function QuestionPage() {
             render: (value, record) => (
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
-                    onClick={() => router.push(`/admin/question-group/${record.id}`)}
+                    onClick={() => router.push(`/admin/question-group/${groupId}/question/${record.id}`)}
                 >
                     {value as string}
                 </div>
@@ -141,7 +141,7 @@ export default function QuestionPage() {
     ];
 
     const handleAdd = () => {
-        router.push('/admin/question-group/${value}/question/add');
+        router.push(`/admin/question-group/${groupId}/question/add`);
     };
 
 

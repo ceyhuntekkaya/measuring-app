@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect, useMemo} from 'react';
 import { MatchingTemplateDto } from '@/types/exam/questionTemplates';
 
 interface MatchingQuestionProps {
@@ -46,9 +46,11 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
     const [dragOverLeftId, setDragOverLeftId] = useState<string | null>(null);
     const [matchingResults, setMatchingResults] = useState<MatchingResult[]>([]);
 
+    const stableInitialAnswer = useMemo(() => initialAnswer, [JSON.stringify(initialAnswer)]);
+
     useEffect(() => {
-        setMatches(initialAnswer);
-    }, [initialAnswer]);
+        setMatches(stableInitialAnswer);
+    }, [stableInitialAnswer]);
 
     useEffect(() => {
         initializeRightItems();

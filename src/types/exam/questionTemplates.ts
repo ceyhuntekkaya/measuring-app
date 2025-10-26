@@ -115,7 +115,7 @@ export interface BaseQuestionTemplateDto {
 
 export interface DragAndDropTemplateDto extends BaseQuestionTemplateDto  {
     instructions?: string;
-    options?: string;
+    options?: DragAndDropOptions | null;
     allowMultipleItemsPerZone?: boolean;
     shuffleDraggableItems?: boolean;
     explanation?: string;

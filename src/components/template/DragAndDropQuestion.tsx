@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect, useMemo} from 'react';
 import { DragAndDropTemplateDto } from '@/types/exam/questionTemplates';
 
 interface DragAndDropQuestionProps {
@@ -57,11 +57,13 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
     const [availableItems, setAvailableItems] = useState<DraggableItem[]>([]);
     const [itemResults, setItemResults] = useState<ItemResult[]>([]);
 
-    const options: DragDropOptions | null = template.options ? parseOptions(template.options) : null;
+    const options: DragDropOptions | null = template.options ? parseOptions(JSON.stringify(template.options)) : null;
+
+    const stableInitialAnswer = useMemo(() => initialAnswer, [JSON.stringify(initialAnswer)]);
 
     useEffect(() => {
-        setPlacements(initialAnswer);
-    }, [initialAnswer]);
+        setPlacements(stableInitialAnswer);
+    }, [stableInitialAnswer]);
 
     useEffect(() => {
         initializeAvailableItems();

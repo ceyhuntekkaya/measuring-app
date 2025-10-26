@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect, useMemo} from 'react';
 import {MultipleResponseTemplateDto, ResponseOption} from '@/types/exam/questionTemplates';
 
 interface MultipleResponseQuestionProps {
@@ -31,9 +31,15 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
     const [shuffledOptions, setShuffledOptions] = useState<ResponseOption[]>([]);
     const [optionResults, setOptionResults] = useState<OptionResult[]>([]);
 
+
+
+
+
+    const stableInitialAnswer = useMemo(() => initialAnswer, [JSON.stringify(initialAnswer)]);
+
     useEffect(() => {
-        setSelectedOptions(initialAnswer);
-    }, [initialAnswer]);
+        setSelectedOptions(stableInitialAnswer);
+    }, [stableInitialAnswer]);
 
     useEffect(() => {
         initializeOptions();
