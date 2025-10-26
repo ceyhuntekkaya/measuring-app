@@ -10,11 +10,17 @@ import {Textarea} from "@/components/ui/textarea";
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {NumberInput} from "@/components/ui/number-input";
 import {CreateQuestionOptionRequest, CreateQuestionPartRequest, CreateQuestionRequest} from "@/types/exam/examRequests";
-import {QuestionDto, QuestionGroupDto, QuestionTemplateType} from "@/types/exam/examEntities";
+import {
+    BaseQuestionTemplateFormData,
+    QuestionDto,
+    QuestionGroupDto,
+    QuestionTemplateType
+} from "@/types/exam/examEntities";
 import {Plus, Trash2} from "lucide-react";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
 import Checkbox from "@/components/ui/checkbox";
 import BaseQuestionTemplateForm from "@/components/form/template/BaseQuestionTemplateForm";
+import {BaseQuestionTemplateDto} from "@/types/exam/questionTemplates";
 
 
 interface QuestionFormData {
@@ -68,6 +74,28 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
         options: []
     });
 
+    const [baseFormData, setBaseFormData] = useState<BaseQuestionTemplateFormData>({
+        title: '',
+        description: '',
+        subject: '',
+        difficulty: '',
+        points: 10,
+        timeLimit: 300,
+        instructions: '',
+        tags: [],
+        isActive: true,
+        questionType:  '',
+        templateData: null
+    });
+
+
+    const [baseQuestionData, setBaseQuestionData] = useState<BaseQuestionTemplateDto | null>(null);
+
+
+
+
+
+
     const [errors, setErrors] = useState<QuestionFormErrors>({});
 
     useEffect(() => {
@@ -86,6 +114,19 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
             });
         }
     }, [question]);
+
+
+    const handleBaseFormChange = <T extends keyof BaseQuestionTemplateFormData>(
+        name: T,
+        value: BaseQuestionTemplateFormData[T]
+    ) => {
+        setBaseFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+
 
     const handleChange = <T extends keyof QuestionFormData>(
         name: T,
@@ -249,12 +290,15 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
         if (invalidOptions) {
             newErrors.options = 'Tüm seçenek içerikleri doldurulmalıdır';
         }
-
+console.log(newErrors)
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
     const handleSubmit = () => {
+
+        console.log(formData)
+        console.log(baseQuestionData)
         if (validateForm()) {
             const submitData: CreateQuestionRequest = {
                 name: formData.name.trim(),
@@ -268,8 +312,9 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                 ...(formData.parts.length > 0 && {parts: formData.parts}),
                 ...(formData.options.length > 0 && {options: formData.options})
             };
-
+            console.log("onSubmit")
             onSubmit(submitData);
+            console.log(submitData)
         }
     };
 
@@ -290,7 +335,10 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                             <Input
                                 id="name"
                                 value={formData.name}
-                                onChange={(e) => handleChange('name', e.target.value)}
+                                onChange={(e) => {
+                                    handleChange('name', e.target.value)
+                                    handleBaseFormChange('title', e.target.value)
+                                }}
                                 className={errors.name ? 'border-red-500' : ''}
                                 placeholder="Soru adını giriniz"
                             />
@@ -403,7 +451,10 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                                 id="maximumScore"
                                 inputType={"number"}
                                 value={formData.maximumScore || 0}
-                                onChange={(value) => handleChange('maximumScore', value || undefined)}
+                                onChange={(value) => {
+                                    handleChange('maximumScore', value || undefined)
+                                    handleBaseFormChange('points', value || 0)
+                                }}
                                 minValue={0}
                                 decimalPlaces={0}
                                 className={errors.maximumScore ? 'border-red-500' : ''}
@@ -423,7 +474,10 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                                 id="durationInSeconds"
                                 inputType={"number"}
                                 value={formData.durationInSeconds || 0}
-                                onChange={(value) => handleChange('durationInSeconds', value || undefined)}
+                                onChange={(value) => {
+                                    handleChange('durationInSeconds', value || undefined)
+                                    handleBaseFormChange('timeLimit', value || 0)
+                                }}
                                 minValue={0}
                                 decimalPlaces={0}
                                 unit="saniye"
@@ -650,8 +704,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                 </div>
 
 
-                <BaseQuestionTemplateForm onSubmit={() => {
-                }} questionType={formData.questionType || EQuestionType.MULTIPLE_CHOICE}/>
+                <BaseQuestionTemplateForm baseFormData={baseFormData} onSubmit={setBaseQuestionData} questionType={formData.questionType || EQuestionType.MULTIPLE_CHOICE}/>
             </CardContent>
         </Card>
     );

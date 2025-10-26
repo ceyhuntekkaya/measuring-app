@@ -9,6 +9,8 @@ import LoadingComp from "@/components/ui/loading-comp";
 import Link from "next/link";
 import {useQuestionGroup} from "@/hooks/exam/use-question-group";
 import {QuestionGroupDto} from "@/types/exam/examEntities";
+import {statusConverter} from "@/utils/enum-converter";
+import {EStatus} from "@/types/exam/enum";
 
 export default function QuestionGroupPage() {
     const router = useRouter();
@@ -46,7 +48,7 @@ export default function QuestionGroupPage() {
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => router.push(`/admin/question-group/${record.id}`)}
                 >
-                    {value as string}
+                    {statusConverter(value as EStatus)}
                 </div>
             )
         }
@@ -77,8 +79,7 @@ export default function QuestionGroupPage() {
                     {(record as QuestionGroupDto).examSection?.name}
                 </div>
             )
-        }
-        ,
+        },
         {
             key: 'Grup',
             header: 'Grup',
@@ -91,6 +92,31 @@ export default function QuestionGroupPage() {
                 </div>
             )
         },
+
+
+
+
+
+
+
+
+
+
+        {
+            key: 'approvalCompletedDate',
+            header: 'ONAY DURUMU',
+            render: (value, record) => (
+                <div
+                    className="font-medium cursor-pointer hover:text-blue-600"
+                    onClick={() => router.push(`/admin/question-group/${record.id}`)}
+                >
+                    {(record as QuestionGroupDto).questionGroupType?.name}
+                </div>
+            )
+        },
+
+
+
         {
             key: 'id',
             header: ' ',
@@ -98,7 +124,7 @@ export default function QuestionGroupPage() {
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
                 >
-                    <Link href={`/admin/question-group/${value}/question`}>Sorular</Link>
+                    <Link className={"btn btn-success"} href={`/admin/question-group/${value}/question`}>Sorular</Link>
                 </div>
             )
         }

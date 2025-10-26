@@ -21,6 +21,24 @@ import {
 } from "@/types/exam/questionTemplates";
 
 
+export interface BaseQuestionTemplateFormData {
+    title: string;
+    description?: string;
+    subject: string;
+    difficulty: 'EASY' | 'MEDIUM' | 'HARD' | '';
+    points: number;
+    timeLimit: number;
+    instructions?: string;
+    tags: string[];
+    isActive: boolean;
+    questionType: EQuestionType | '';
+    // Template specific data
+    templateData?: MultipleChoiceTemplateDto | TrueFalseTemplateDto |
+        FillInTheBlanksTemplateDto | ShortAnswerTemplateDto |
+        MatchingTemplateDto | EssayTemplateDto | OrderingTemplateDto | MultipleResponseTemplateDto |
+        HotSpotTemplateDto | DragAndDropTemplateDto | AudioResponseTemplateDto | VideoResponseTemplateDto | ImageResponseTemplateDto | null;
+}
+
 
 export type QuestionTemplateType =
     | MultipleChoiceTemplateDto

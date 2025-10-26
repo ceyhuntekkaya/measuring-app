@@ -1,16 +1,12 @@
 {
+
   "apiServer": {
-    "invokeUrl": "https://api.studyscore.ai/api",
-    "baseUrl": "https://api.studyscore.ai",
-    "aiUrl": "https://chat.studyscore.ai/ollama",
-    "aiUrl2": "http://185.72.9.3:11434i"
-  },
-  "api": {
     "invokeUrl": "https://demo.designexium.co.uk/measuring-api",
     "baseUrl": "http://localhost:3000",
     "aiUrl2": "http://185.72.9.3:11434i",
     "aiUrl": "https://chat.studyscore.ai/ollama"
-  },  "apiLo": {
+  },
+  "api": {
     "invokeUrl": "http://localhost:8080/api",
     "baseUrl": "http://localhost:3000",
     "aiUrl2": "http://185.72.9.3:11434i",

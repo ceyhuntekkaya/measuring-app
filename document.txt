@@ -1,26 +1,4 @@
-Aktivasyon Bilgileri
-------------------------------------
-IP	185.34.101.167
-Username	root
-Password	ced1a49c9fa1!diyo@
 
-
-ssh root@185.34.101.167
-ssh -o ServerAliveInterval=60 root@185.34.101.167
-
-
-------------------------------------
-IP Adresi	185.72.9.3
-Kullanıcı Adı	root
-Parola	kmk7eau6UFT!gvd9tjc
-
-
-ssh root@185.72.9.3
-
-
-
-ssh -o ServerAliveInterval=60 root@185.72.9.3
-
-
-
-sudo systemctl restart nginx
+ssh root@46.62.141.0
+ssh -o ServerAliveInterval=60 root@46.62.141.0
+4 ile baslayan

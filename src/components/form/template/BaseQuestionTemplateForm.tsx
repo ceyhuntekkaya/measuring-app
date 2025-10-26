@@ -38,25 +38,10 @@ import DragAndDropTemplateForm from "@/components/form/template/DragAndDropTempl
 import AudioResponseTemplateForm from "@/components/form/template/AudioResponseTemplateForm";
 import ImageResponseTemplateForm from "@/components/form/template/ImageResponseTemplateForm";
 import VideoResponseTemplateForm from "@/components/form/template/VideoResponseTemplateForm";
+import {BaseQuestionTemplateFormData} from "@/types/exam/examEntities";
 
 
-interface BaseQuestionTemplateFormData {
-    title: string;
-    description?: string;
-    subject: string;
-    difficulty: 'EASY' | 'MEDIUM' | 'HARD' | '';
-    points: number;
-    timeLimit: number;
-    instructions?: string;
-    tags: string[];
-    isActive: boolean;
-    questionType: EQuestionType | '';
-    // Template specific data
-    templateData?: MultipleChoiceTemplateDto | TrueFalseTemplateDto |
-        FillInTheBlanksTemplateDto | ShortAnswerTemplateDto |
-        MatchingTemplateDto | EssayTemplateDto | OrderingTemplateDto | MultipleResponseTemplateDto |
-        HotSpotTemplateDto | DragAndDropTemplateDto | AudioResponseTemplateDto | VideoResponseTemplateDto | ImageResponseTemplateDto | null;
-}
+
 
 
 interface BaseQuestionTemplateFormErrors {
@@ -73,13 +58,15 @@ interface BaseQuestionTemplateFormProps {
     template?: BaseQuestionTemplateDto | null;
     loading?: boolean;
     questionType?: EQuestionType;
+    baseFormData?:BaseQuestionTemplateFormData | null;
 }
 
 const BaseQuestionTemplateForm: React.FC<BaseQuestionTemplateFormProps> = ({
                                                                                onSubmit,
                                                                                template,
                                                                                questionType,
-                                                                               loading = false
+                                                                               loading = false,
+                                                                               baseFormData
                                                                            }) => {
     const [formData, setFormData] = useState<BaseQuestionTemplateFormData>({
         title: '',
@@ -95,8 +82,31 @@ const BaseQuestionTemplateForm: React.FC<BaseQuestionTemplateFormProps> = ({
         templateData: null
     });
 
+
+
     const [errors, setErrors] = useState<BaseQuestionTemplateFormErrors>({});
     const [tagInput, setTagInput] = useState('');
+
+    useEffect(() => {
+
+        if (baseFormData) {
+            setFormData({
+                title: baseFormData.title || formData.title,
+                description: baseFormData.description || formData.description,
+                subject: baseFormData.subject || formData.subject ,
+                difficulty: baseFormData.difficulty || formData.difficulty,
+                points: baseFormData.points || formData.points ,
+                timeLimit: baseFormData.timeLimit || formData.timeLimit,
+                instructions: baseFormData.instructions || formData.instructions,
+                tags: baseFormData.tags || formData.tags,
+                isActive: baseFormData.isActive || formData.isActive,
+                questionType: baseFormData.questionType || formData.questionType,
+                templateData: formData.templateData
+            });
+        }
+    }, [baseFormData]);
+
+
 
     useEffect(() => {
         if (template) {
@@ -178,6 +188,8 @@ const BaseQuestionTemplateForm: React.FC<BaseQuestionTemplateFormProps> = ({
                 templateData: null
             }));
         }
+
+
     };
 
     // Template-specific data değişikliklerini handle et

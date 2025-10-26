@@ -12,13 +12,28 @@ import {QuestionDto, QuestionTemplateType} from "@/types/exam/examEntities";
 import {useQuestion} from "@/hooks/exam/use-question";
 import {EQuestionType} from "@/types/exam/enum";
 import {
-    FillInTheBlanksTemplateDto,
-    MultipleChoiceTemplateDto,
-    TrueFalseTemplateDto
+    AudioResponseTemplateDto,
+    DragAndDropTemplateDto,
+    EssayTemplateDto,
+    FillInTheBlanksTemplateDto, HotSpotTemplateDto, ImageResponseTemplateDto, MatchingTemplateDto,
+    MultipleChoiceTemplateDto, MultipleResponseTemplateDto, OrderingTemplateDto, ShortAnswerTemplateDto,
+    TrueFalseTemplateDto, VideoResponseTemplateDto
 } from "@/types/exam/questionTemplates";
 import MultipleChoiceQuestion from "@/components/template/MultipleChoiceQuestion";
 import TrueFalseQuestion from "@/components/template/TrueFalseQuestion";
 import FillInTheBlanksQuestion from "@/components/template/FillInTheBlanksQuestion";
+import ShortAnswerQuestion from "@/components/template/ShortAnswerQuestion";
+import EssayQuestion from "@/components/template/EssayQuestion";
+import MatchingQuestion from "@/components/template/MatchingQuestion";
+import ImageResponseQuestion from "@/components/template/ImageResponseQuestion";
+import VideoResponseQuestion from "@/components/template/VideoResponseQuestion";
+import AudioResponseQuestion from "@/components/template/AudioResponseQuestion";
+import DragAndDropQuestion from "@/components/template/DragAndDropQuestion";
+import HotSpotQuestion from "@/components/template/HotSpotQuestion";
+import MultipleResponseQuestion from "@/components/template/MultipleResponseQuestion";
+import OrderingQuestion from "@/components/template/OrderingQuestion";
+
+
 
 export default function QuestionPage() {
     const router = useRouter();
@@ -141,39 +156,29 @@ export default function QuestionPage() {
                 return <TrueFalseQuestion template={template as TrueFalseTemplateDto}/>;
             case 'FILL_IN_THE_BLANKS':
                 return <FillInTheBlanksQuestion template={template as FillInTheBlanksTemplateDto}/>;
-            /*  case 'SHORT_ANSWER':
-                    return <ShortAnswerTemplateForm onChange={commonProps.onChange}
-                                                    value={commonProps.value as ShortAnswerTemplateDto}/>;
+              case 'SHORT_ANSWER':
+                    return <ShortAnswerQuestion template={template as ShortAnswerTemplateDto}/>;
                 case 'ESSAY':
-                    return <EssayTemplateForm onChange={commonProps.onChange}
-                                              value={commonProps.value as EssayTemplateDto}/>;
+                    return <EssayQuestion template={template as EssayTemplateDto}/>;
                 case 'MATCHING':
-                    return <MatchingTemplateForm onChange={commonProps.onChange}
-                                                 value={commonProps.value as MatchingTemplateDto}/>;
+                    return <MatchingQuestion template={template as MatchingTemplateDto}/>;
                 case 'ORDERING':
-                    return <OrderingTemplateForm onChange={commonProps.onChange}
-                                                 value={commonProps.value as OrderingTemplateDto}/>;
+                    return <OrderingQuestion template={template as OrderingTemplateDto}/>;
                 case 'MULTIPLE_RESPONSE':
-                    return <MultipleResponseTemplateForm onChange={commonProps.onChange}
-                                                         value={commonProps.value as MultipleResponseTemplateDto}/>;
+                    return <MultipleResponseQuestion template={template as MultipleResponseTemplateDto}/>;
                 case 'HOT_SPOT':
-                    return <HotSpotTemplateForm onChange={commonProps.onChange}
-                                                value={commonProps.value as HotSpotTemplateDto}/>;
+                    return <HotSpotQuestion template={template as HotSpotTemplateDto}/>;
                 case 'DRAG_AND_DROP':
-                    return <DragAndDropTemplateForm onChange={commonProps.onChange}
-                                                    value={commonProps.value as DragAndDropTemplateDto}/>;
+                    return <DragAndDropQuestion template={template as DragAndDropTemplateDto}/>;
                 case 'AUDIO_RESPONSE':
-                    return <AudioResponseTemplateForm onChange={commonProps.onChange}
-                                                      value={commonProps.value as AudioResponseTemplateDto}/>;
+                    return <AudioResponseQuestion template={template as AudioResponseTemplateDto}/>;
                 case 'VIDEO_RESPONSE':
-                    return <VideoResponseTemplateForm onChange={commonProps.onChange}
-                                                      value={commonProps.value as VideoResponseTemplateDto}/>;
+                    return <VideoResponseQuestion template={template as VideoResponseTemplateDto}/>;
                 case 'IMAGE_RESPONSE':
-                    return <ImageResponseTemplateForm onChange={commonProps.onChange}
-                                                      value={commonProps.value as ImageResponseTemplateDto}/>;
+                    return <ImageResponseQuestion template={template as ImageResponseTemplateDto}/>;
 
 
-                     */
+
 
             default:
                 return (
