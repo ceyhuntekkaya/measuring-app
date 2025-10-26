@@ -78,7 +78,7 @@ const VideoResponseTemplateForm = forwardRef<VideoResponseTemplateFormHandle, Vi
                 allowScreenRecording: value.allowScreenRecording ?? false
             });
         }
-    }, [value]);
+    }, []);
 
     const handleChange = <T extends keyof VideoResponseTemplateFormData>(
         name: T,

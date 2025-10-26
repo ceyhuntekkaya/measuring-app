@@ -62,7 +62,7 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
                 explanation: value.explanation || ''
             });
         }
-    }, [value]);
+    }, []);
 
     // Form data değiştiğinde parent'a bildir (Anlık güncelleme)
     useEffect(() => {

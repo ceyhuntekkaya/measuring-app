@@ -67,7 +67,7 @@ const OrderingTemplateForm = forwardRef<OrderingTemplateFormHandle, OrderingTemp
                 explanation: value.explanation || ''
             });
         }
-    }, [value]);
+    }, []);
 
     const handleChange = <T extends keyof OrderingTemplateFormData>(
         name: T,

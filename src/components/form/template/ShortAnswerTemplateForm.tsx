@@ -73,7 +73,7 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
                 requiresManualGrading: value.requiresManualGrading || false
             });
         }
-    }, [value]);
+    }, []);
 
     const handleChange = <T extends keyof ShortAnswerTemplateFormData>(
         field: T,

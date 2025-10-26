@@ -75,7 +75,7 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
                 }
             }
         }
-    }, [value]);
+    }, []);
 
     // Form data veya items değiştiğinde parent'a bildir (Anlık güncelleme)
     useEffect(() => {

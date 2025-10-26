@@ -71,7 +71,7 @@ const EssayTemplateForm = forwardRef<EssayTemplateFormHandle, EssayTemplateFormP
                 requiresManualGrading: value.requiresManualGrading ?? true
             });
         }
-    }, [value]);
+    }, []);
 
     // Form data değiştiğinde parent'a bildir (Anlık güncelleme)
     useEffect(() => {

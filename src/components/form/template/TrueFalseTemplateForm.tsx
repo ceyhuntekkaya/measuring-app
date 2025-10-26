@@ -65,7 +65,7 @@ const TrueFalseTemplateForm = forwardRef<TrueFalseTemplateFormHandle, TrueFalseT
                 explanation: value.explanation || ''
             });
         }
-    }, [value]);
+    }, []);
 
     const handleChange = <T extends keyof TrueFalseTemplateFormData>(
         field: T,

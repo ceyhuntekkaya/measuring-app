@@ -16,6 +16,7 @@ export default function AdminPage() {
 
     console.log("questionId")
     console.log(questionId)
+    console.log(groupId)
     console.log("questionId")
 
     const {

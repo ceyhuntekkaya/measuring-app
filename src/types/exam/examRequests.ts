@@ -14,6 +14,7 @@ export type CreateQuestionGroupRequest = {
 }
 
 export type CreateQuestionRequest = {
+    id?: string;
     name: string;
     questionGroupId: string;
     questionType: EQuestionType; // Example enum values

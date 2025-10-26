@@ -59,7 +59,7 @@ const MatchingTemplateForm = forwardRef<MatchingTemplateFormHandle, MatchingTemp
                 explanation: value.explanation || ''
             });
         }
-    }, [value]);
+    }, []);
 
     // Form data değiştiğinde parent'a bildir (Anlık güncelleme)
     useEffect(() => {

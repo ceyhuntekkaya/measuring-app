@@ -62,7 +62,7 @@ const AudioResponseTemplateForm = forwardRef<AudioResponseTemplateFormHandle, Au
                 allowedFormats: value.allowedFormats || 'mp3,wav,m4a'
             });
         }
-    }, [value]);
+    }, []);
 
     // Form data değiştiğinde parent'a bildir (Anlık güncelleme)
     useEffect(() => {

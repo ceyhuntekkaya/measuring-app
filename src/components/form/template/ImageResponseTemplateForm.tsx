@@ -76,7 +76,7 @@ const ImageResponseTemplateForm = forwardRef<ImageResponseTemplateFormHandle, Im
                 allowsUpload: value.allowsUpload ?? true
             });
         }
-    }, [value]);
+    }, []);
 
     // Form data değiştiğinde parent'a bildir (Anlık güncelleme)
     useEffect(() => {

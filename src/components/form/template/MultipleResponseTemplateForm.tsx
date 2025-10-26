@@ -76,7 +76,7 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
                 explanation: value.explanation || ''
             });
         }
-    }, [value]);
+    }, []);
 
     // Form data değiştiğinde parent'a bildir (Anlık güncelleme)
     useEffect(() => {

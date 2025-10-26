@@ -63,7 +63,7 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
                 shuffleOptions: value.shuffleOptions || false
             });
         }
-    }, [value]);
+    }, []);
 
     const handleChange = <T extends keyof MultipleChoiceTemplateFormData>(
         field: T,
