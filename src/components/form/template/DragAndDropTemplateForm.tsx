@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -17,11 +18,22 @@ interface DragAndDropTemplateFormProps {
     loading?: boolean;
 }
 
-const DragAndDropTemplateForm: React.FC<DragAndDropTemplateFormProps> = ({
-                                                                             value,
-                                                                             onChange,
-                                                                             loading = false
-                                                                         }) => {
+interface DragAndDropTemplateFormErrors {
+    instructions?: string;
+    draggableItems?: string;
+    dropZones?: string;
+}
+
+// Validation handle için ref interface
+export interface DragAndDropTemplateFormHandle {
+    validate: () => boolean;
+    getErrors: () => DragAndDropTemplateFormErrors;
+}
+
+const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAndDropTemplateFormProps>(({
+                                                                                                             value,
+                                                                                                             onChange,
+                                                                                                         }, ref) => {
     const [formData, setFormData] = useState<DragAndDropTemplateDto>({
         instructions: '',
         options: '',
@@ -32,7 +44,9 @@ const DragAndDropTemplateForm: React.FC<DragAndDropTemplateFormProps> = ({
 
     const [draggableItems, setDraggableItems] = useState<DraggableItem[]>([]);
     const [dropZones, setDropZones] = useState<DropZone[]>([]);
+    const [errors, setErrors] = useState<DragAndDropTemplateFormErrors>({});
 
+    // Value değiştiğinde form data'yı güncelle (Update modu için)
     useEffect(() => {
         if (value) {
             setFormData({
@@ -63,14 +77,44 @@ const DragAndDropTemplateForm: React.FC<DragAndDropTemplateFormProps> = ({
         }
     }, [value]);
 
+    // Form data veya items değiştiğinde parent'a bildir (Anlık güncelleme)
+    useEffect(() => {
+        // İlk render'da boş form için onChange tetikleme
+        if (formData.instructions || draggableItems.length > 0 || dropZones.length > 0) {
+            const dragAndDropOptions: DragAndDropOptions = {
+                draggableItems,
+                dropZones
+            };
+
+            const templateData: DragAndDropTemplateDto = {
+                ...value,
+                instructions: formData.instructions,
+                options: JSON.stringify(dragAndDropOptions),
+                allowMultipleItemsPerZone: formData.allowMultipleItemsPerZone,
+                shuffleDraggableItems: formData.shuffleDraggableItems,
+                explanation: formData.explanation
+            };
+
+            onChange(templateData);
+        }
+    }, [formData, draggableItems, dropZones]); // onChange ve value bağımlılığı yok
+
     const handleChange = <T extends keyof DragAndDropTemplateDto>(
         name: T,
-        value: DragAndDropTemplateDto[T]
+        newValue: DragAndDropTemplateDto[T]
     ) => {
         setFormData(prev => ({
             ...prev,
-            [name]: value
+            [name]: newValue
         }));
+
+        // Hata varsa temizle
+        if (errors[name as keyof DragAndDropTemplateFormErrors]) {
+            setErrors(prev => ({
+                ...prev,
+                [name]: undefined
+            }));
+        }
     };
 
     // Draggable Items Management
@@ -92,10 +136,10 @@ const DragAndDropTemplateForm: React.FC<DragAndDropTemplateFormProps> = ({
     const updateDraggableItem = <K extends keyof DraggableItem>(
         index: number,
         field: K,
-        value: DraggableItem[K]
+        newValue: DraggableItem[K]
     ) => {
         setDraggableItems(prev => prev.map((item, i) =>
-            i === index ? { ...item, [field]: value } : item
+            i === index ? { ...item, [field]: newValue } : item
         ));
     };
 
@@ -132,26 +176,48 @@ const DragAndDropTemplateForm: React.FC<DragAndDropTemplateFormProps> = ({
     const updateDropZone = <K extends keyof DropZone>(
         index: number,
         field: K,
-        value: DropZone[K]
+        newValue: DropZone[K]
     ) => {
         setDropZones(prev => prev.map((zone, i) =>
-            i === index ? { ...zone, [field]: value } : zone
+            i === index ? { ...zone, [field]: newValue } : zone
         ));
     };
 
-    const handleSubmit = () => {
-        const dragAndDropOptions: DragAndDropOptions = {
-            draggableItems,
-            dropZones
-        };
+    // Validation fonksiyonu - parent tarafından çağrılacak
+    const validateForm = (): boolean => {
+        const newErrors: DragAndDropTemplateFormErrors = {};
 
-        const submitData: DragAndDropTemplateDto = {
-            ...formData,
-            options: JSON.stringify(dragAndDropOptions)
-        };
+        if (!formData.instructions?.trim()) {
+            newErrors.instructions = 'Talimatlar zorunludur';
+        }
 
-        onChange(submitData);
+        if (draggableItems.length === 0) {
+            newErrors.draggableItems = 'En az bir sürüklenebilir öğe eklemelisiniz';
+        } else {
+            const hasEmptyItems = draggableItems.some(item => !item.text?.trim());
+            if (hasEmptyItems) {
+                newErrors.draggableItems = 'Tüm sürüklenebilir öğelerin metni doldurulmalıdır';
+            }
+        }
+
+        if (dropZones.length === 0) {
+            newErrors.dropZones = 'En az bir bırakma bölgesi eklemelisiniz';
+        } else {
+            const hasEmptyZones = dropZones.some(zone => !zone.label?.trim());
+            if (hasEmptyZones) {
+                newErrors.dropZones = 'Tüm bırakma bölgelerinin etiketi doldurulmalıdır';
+            }
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
+
+    // Parent component'in validate fonksiyonunu çağırabilmesi için
+    useImperativeHandle(ref, () => ({
+        validate: validateForm,
+        getErrors: () => errors
+    }));
 
     return (
         <Card>
@@ -162,14 +228,19 @@ const DragAndDropTemplateForm: React.FC<DragAndDropTemplateFormProps> = ({
                 <div className="space-y-6">
                     {/* Talimatlar */}
                     <div className="space-y-2">
-                        <Label htmlFor="instructions">Talimatlar</Label>
+                        <Label htmlFor="instructions">Talimatlar *</Label>
                         <Textarea
                             id="instructions"
                             value={formData.instructions}
                             onChange={(e) => handleChange('instructions', e.target.value)}
-                            className="min-h-[100px]"
+                            className={`min-h-[100px] ${errors.instructions ? 'border-red-500' : ''}`}
                             placeholder="Sürükle ve bırak talimatlarını giriniz"
                         />
+                        {errors.instructions && (
+                            <Alert variant="destructive">
+                                <AlertDescription>{errors.instructions}</AlertDescription>
+                            </Alert>
+                        )}
                     </div>
 
                     {/* Ayarlar */}
@@ -180,9 +251,8 @@ const DragAndDropTemplateForm: React.FC<DragAndDropTemplateFormProps> = ({
                                 checked={formData.allowMultipleItemsPerZone}
                                 onChange={(checked) => handleChange('allowMultipleItemsPerZone', !!checked)}
                             />
-                            <Label htmlFor="allowMultipleItemsPerZone">Bölge Başına Birden Fazla Öğeye İzin Ver</Label>
+                            <Label htmlFor="allowMultipleItemsPerZone">Her Bölgeye Çoklu Öğe İzni</Label>
                         </div>
-
                         <div className="flex items-center space-x-2">
                             <Checkbox
                                 id="shuffleDraggableItems"
@@ -196,7 +266,7 @@ const DragAndDropTemplateForm: React.FC<DragAndDropTemplateFormProps> = ({
                     {/* Sürüklenebilir Öğeler */}
                     <div className="space-y-4">
                         <div className="flex justify-between items-center">
-                            <Label>Sürüklenebilir Öğeler</Label>
+                            <Label>Sürüklenebilir Öğeler *</Label>
                             <Button
                                 type="button"
                                 onClick={addDraggableItem}
@@ -209,9 +279,9 @@ const DragAndDropTemplateForm: React.FC<DragAndDropTemplateFormProps> = ({
                         </div>
 
                         {draggableItems.map((item, index) => (
-                            <div key={index} className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg">
+                            <div key={item.id} className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg">
                                 <div className="col-span-3">
-                                    <Label>Metin</Label>
+                                    <Label>Metin *</Label>
                                     <Input
                                         value={item.text || ''}
                                         onChange={(e) => updateDraggableItem(index, 'text', e.target.value)}
@@ -240,15 +310,19 @@ const DragAndDropTemplateForm: React.FC<DragAndDropTemplateFormProps> = ({
                                 <div className="col-span-3">
                                     <Label>Doğru Bölgeler</Label>
                                     <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
-                                        {dropZones.map((zone) => (
-                                            <div key={zone.id} className="flex items-center space-x-1">
-                                                <Checkbox
-                                                    checked={item.correctZones?.includes(zone.id || '') || false}
-                                                    onChange={(checked) => updateCorrectZones(index, zone.id || '', !!checked)}
-                                                />
-                                                <span className="text-xs">{zone.label || zone.id}</span>
-                                            </div>
-                                        ))}
+                                        {dropZones.length > 0 ? (
+                                            dropZones.map((zone) => (
+                                                <div key={zone.id} className="flex items-center space-x-1">
+                                                    <Checkbox
+                                                        checked={item.correctZones?.includes(zone.id || '') || false}
+                                                        onChange={(checked) => updateCorrectZones(index, zone.id || '', !!checked)}
+                                                    />
+                                                    <span className="text-xs">{zone.label || zone.id}</span>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <span className="text-xs text-gray-500">Önce bölge ekleyin</span>
+                                        )}
                                     </div>
                                 </div>
 
@@ -264,12 +338,18 @@ const DragAndDropTemplateForm: React.FC<DragAndDropTemplateFormProps> = ({
                                 </div>
                             </div>
                         ))}
+
+                        {errors.draggableItems && (
+                            <Alert variant="destructive">
+                                <AlertDescription>{errors.draggableItems}</AlertDescription>
+                            </Alert>
+                        )}
                     </div>
 
                     {/* Bırakma Bölgeleri */}
                     <div className="space-y-4">
                         <div className="flex justify-between items-center">
-                            <Label>Bırakma Bölgeleri</Label>
+                            <Label>Bırakma Bölgeleri *</Label>
                             <Button
                                 type="button"
                                 onClick={addDropZone}
@@ -282,9 +362,9 @@ const DragAndDropTemplateForm: React.FC<DragAndDropTemplateFormProps> = ({
                         </div>
 
                         {dropZones.map((zone, index) => (
-                            <div key={index} className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg">
+                            <div key={zone.id} className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg">
                                 <div className="col-span-3">
-                                    <Label>Etiket</Label>
+                                    <Label>Etiket *</Label>
                                     <Input
                                         value={zone.label || ''}
                                         onChange={(e) => updateDropZone(index, 'label', e.target.value)}
@@ -297,7 +377,7 @@ const DragAndDropTemplateForm: React.FC<DragAndDropTemplateFormProps> = ({
                                     <NumberInput
                                         inputType={"number"}
                                         value={zone.maxItems || 1}
-                                        onChange={(value) => updateDropZone(index, 'maxItems', value)}
+                                        onChange={(val) => updateDropZone(index, 'maxItems', val)}
                                         minValue={1}
                                         decimalPlaces={0}
                                     />
@@ -334,6 +414,12 @@ const DragAndDropTemplateForm: React.FC<DragAndDropTemplateFormProps> = ({
                                 </div>
                             </div>
                         ))}
+
+                        {errors.dropZones && (
+                            <Alert variant="destructive">
+                                <AlertDescription>{errors.dropZones}</AlertDescription>
+                            </Alert>
+                        )}
                     </div>
 
                     {/* Açıklama */}
@@ -348,20 +434,13 @@ const DragAndDropTemplateForm: React.FC<DragAndDropTemplateFormProps> = ({
                         />
                     </div>
 
-                    {/* Submit Button */}
-                    <div className="flex justify-end">
-                        <Button
-                            onClick={handleSubmit}
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
-                            disabled={loading}
-                        >
-                            {loading ? "Kaydediliyor..." : "Kaydet"}
-                        </Button>
-                    </div>
+                    {/* KAYDET BUTONU KALDIRILDI - Parent component'te olacak */}
                 </div>
             </CardContent>
         </Card>
     );
-};
+});
+
+DragAndDropTemplateForm.displayName = 'DragAndDropTemplateForm';
 
 export default DragAndDropTemplateForm;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { OrderingTemplateDto } from '@/types/exam/questionTemplates';
+import {OrderingItem, OrderingTemplateDto} from '@/types/exam/questionTemplates';
 
 interface OrderingQuestionProps {
     template: OrderingTemplateDto;
@@ -155,7 +155,7 @@ const OrderingQuestion: React.FC<OrderingQuestionProps> = ({
         return isCorrect ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700";
     };
 
-    const renderMedia = (item: any) => {
+    const renderMedia = (item: OrderingItem) => {
         if (!item.mediaUrl) return null;
 
         if (item.mediaType === 'image') {

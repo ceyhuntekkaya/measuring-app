@@ -1,4 +1,4 @@
-import {EApprovalStatus, EExamType, EStatus} from "@/types/exam/enum";
+import {EExamType, EStatus} from "@/types/exam/enum";
 
 export const examTypeConverter = (examType: EExamType) => {
 
@@ -45,12 +45,6 @@ export const statusConverter = (status: EStatus) => {
     }
 }
 
-
-export const approvalStatusConverter = (approvalStatus: EApprovalStatus, currentApprovalCount: number, requiredApprovalCount: number, approvalCompletedDate: Date) => {
-
-
-    return ''
-}
 
 
 

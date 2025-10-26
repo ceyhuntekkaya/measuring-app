@@ -1,7 +1,7 @@
 // questionTemplates.ts
 
 
-import {EMediaType, EQuestionType, EStatus} from "@/types/exam/enum";
+import {EDifficulty, EMediaType, EQuestionType, EStatus} from "@/types/exam/enum";
 
 export interface OrderingTemplateDto extends BaseQuestionTemplateDto  {
     instructions?: string;
@@ -99,7 +99,7 @@ export interface BaseQuestionTemplateDto {
     title?: string;
     description?: string;
     subject?: string;
-    difficulty?: string;
+    difficulty?: EDifficulty;
     points?: number;
     timeLimit?: number;
     instructions?: string;

@@ -125,6 +125,15 @@ export enum EStatus {
 }
 
 
+export enum EDifficulty {
+    EASY = "EASY",
+    MEDIUM = "MEDIUM",
+    HARD = "HARD"
+}
+
+
+
+
 
 export enum EQuestionGroupTemplateLevel {
     GROUP = "GROUP",

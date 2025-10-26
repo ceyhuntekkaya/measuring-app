@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useImperativeHandle, forwardRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -31,16 +31,21 @@ interface ImageResponseTemplateFormErrors {
 }
 
 interface ImageResponseTemplateFormProps {
-    onChange: (data: ImageResponseTemplateFormData) => void;
+    onChange: (data: ImageResponseTemplateDto) => void;
     value?: ImageResponseTemplateDto | null;
     loading?: boolean;
 }
 
-const ImageResponseTemplateForm: React.FC<ImageResponseTemplateFormProps> = ({
-                                                                                 onChange,
-                                                                                 value,
-                                                                                 loading = false
-                                                                             }) => {
+// Validation handle için ref interface
+export interface ImageResponseTemplateFormHandle {
+    validate: () => boolean;
+    getErrors: () => ImageResponseTemplateFormErrors;
+}
+
+const ImageResponseTemplateForm = forwardRef<ImageResponseTemplateFormHandle, ImageResponseTemplateFormProps>(({
+                                                                                                                   onChange,
+                                                                                                                   value,
+                                                                                                               }, ref) => {
     const [formData, setFormData] = useState<ImageResponseTemplateFormData>({
         prompt: '',
         referenceImageUrl: '',
@@ -56,6 +61,7 @@ const ImageResponseTemplateForm: React.FC<ImageResponseTemplateFormProps> = ({
     const [errors, setErrors] = useState<ImageResponseTemplateFormErrors>({});
     const [criteriaInput, setCriteriaInput] = useState('');
 
+    // Value değiştiğinde form data'yı güncelle (Update modu için)
     useEffect(() => {
         if (value) {
             setFormData({
@@ -72,14 +78,42 @@ const ImageResponseTemplateForm: React.FC<ImageResponseTemplateFormProps> = ({
         }
     }, [value]);
 
+    // Form data değiştiğinde parent'a bildir (Anlık güncelleme)
+    useEffect(() => {
+        // İlk render'da boş form için onChange tetikleme
+        if (formData.prompt || formData.gradingCriteria.length > 0) {
+            const templateData: ImageResponseTemplateDto = {
+                ...value,
+                prompt: formData.prompt,
+                referenceImageUrl: formData.referenceImageUrl,
+                maxFileSize: formData.maxFileSize,
+                gradingCriteria: formData.gradingCriteria,
+                rubric: formData.rubric,
+                requiresManualGrading: formData.requiresManualGrading,
+                allowedFormats: formData.allowedFormats,
+                requiresDrawing: formData.requiresDrawing,
+                allowsUpload: formData.allowsUpload
+            };
+            onChange(templateData);
+        }
+    }, [formData]); // onChange ve value bağımlılığı yok - sonsuz döngü önlendi
+
     const handleChange = <T extends keyof ImageResponseTemplateFormData>(
         name: T,
-        value: ImageResponseTemplateFormData[T]
+        newValue: ImageResponseTemplateFormData[T]
     ) => {
         setFormData(prev => ({
             ...prev,
-            [name]: value
+            [name]: newValue
         }));
+
+        // Hata varsa temizle
+        if (errors[name as keyof ImageResponseTemplateFormErrors]) {
+            setErrors(prev => ({
+                ...prev,
+                [name]: undefined
+            }));
+        }
     };
 
     const addCriteria = () => {
@@ -106,6 +140,7 @@ const ImageResponseTemplateForm: React.FC<ImageResponseTemplateFormProps> = ({
         }
     };
 
+    // Validation fonksiyonu - parent tarafından çağrılacak
     const validateForm = (): boolean => {
         const newErrors: ImageResponseTemplateFormErrors = {};
 
@@ -129,16 +164,16 @@ const ImageResponseTemplateForm: React.FC<ImageResponseTemplateFormProps> = ({
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = () => {
-        if (validateForm()) {
-            onChange(formData);
-        }
-    };
+    // Parent component'in validate fonksiyonunu çağırabilmesi için
+    useImperativeHandle(ref, () => ({
+        validate: validateForm,
+        getErrors: () => errors
+    }));
 
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Resim Yanıt Şablonu Özellikleri</CardTitle>
+                <CardTitle>Resim Yanıt Şablon Detayları</CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="space-y-6">
@@ -178,7 +213,7 @@ const ImageResponseTemplateForm: React.FC<ImageResponseTemplateFormProps> = ({
                                 id="maxFileSize"
                                 inputType={"number"}
                                 value={formData.maxFileSize || 0}
-                                onChange={(value) => handleChange('maxFileSize', value || undefined)}
+                                onChange={(val) => handleChange('maxFileSize', val || undefined)}
                                 minValue={0.1}
                                 maxValue={50}
                                 decimalPlaces={1}
@@ -305,20 +340,13 @@ const ImageResponseTemplateForm: React.FC<ImageResponseTemplateFormProps> = ({
                         />
                     </div>
 
-                    {/* Submit Button */}
-                    <div className="flex justify-end space-x-4">
-                        <Button
-                            onClick={handleSubmit}
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
-                            disabled={loading}
-                        >
-                            {loading ? "İşleniyor..." : "Resim Yanıt Şablonu Kaydet"}
-                        </Button>
-                    </div>
+                    {/* KAYDET BUTONU KALDIRILDI - Parent component'te olacak */}
                 </div>
             </CardContent>
         </Card>
     );
-};
+});
+
+ImageResponseTemplateForm.displayName = 'ImageResponseTemplateForm';
 
 export default ImageResponseTemplateForm;

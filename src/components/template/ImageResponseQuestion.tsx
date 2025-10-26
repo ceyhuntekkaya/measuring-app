@@ -44,6 +44,8 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
     const fileInputRef = useRef<HTMLInputElement>(null);
     const lastPositionRef = useRef<Point | null>(null);
 
+    console.log(showCorrectAnswer)
+
     useEffect(() => {
         setImageAnswer(initialAnswer);
 
@@ -294,12 +296,12 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                 </div>
             )}
 
-            {/* Question Statement */}
+            {/* Question Statement
             {template.statement && (
                 <div className="mb-6">
                     <p className="text-gray-800 text-base leading-relaxed">{template.statement}</p>
                 </div>
-            )}
+            )}*/}
 
             {/* Prompt */}
             {template.prompt && (

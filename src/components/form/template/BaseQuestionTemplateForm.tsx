@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef, forwardRef, useImperativeHandle} from 'react';
 import {Card, CardContent} from "@/components/ui/card";
 import {Alert, AlertDescription} from "@/components/ui/alert";
 import {Button} from "@/components/ui/button";
@@ -11,38 +11,46 @@ import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVal
 import Checkbox from "@/components/ui/checkbox";
 import {NumberInput} from "@/components/ui/number-input";
 import {
-    BaseQuestionTemplateDto,
     MultipleChoiceTemplateDto,
     TrueFalseTemplateDto,
     FillInTheBlanksTemplateDto,
     ShortAnswerTemplateDto,
     EssayTemplateDto,
     MatchingTemplateDto,
-    OrderingTemplateDto, MultipleResponseTemplateDto, HotSpotTemplateDto, DragAndDropTemplateDto,
-    AudioResponseTemplateDto, VideoResponseTemplateDto, ImageResponseTemplateDto
+    OrderingTemplateDto,
+    MultipleResponseTemplateDto,
+    HotSpotTemplateDto,
+    DragAndDropTemplateDto,
+    AudioResponseTemplateDto,
+    VideoResponseTemplateDto,
+    ImageResponseTemplateDto
 } from "@/types/exam/questionTemplates";
 import {Trash2, Plus} from "lucide-react";
 
 // Import template form components
-import MultipleChoiceTemplateForm from './MultipleChoiceTemplateForm';
-import TrueFalseTemplateForm from './TrueFalseTemplateForm';
-import FillInTheBlanksTemplateForm from './FillInTheBlanksTemplateForm';
-import ShortAnswerTemplateForm from './ShortAnswerTemplateForm';
-import EssayTemplateForm from './EssayTemplateForm';
-import MatchingTemplateForm from './MatchingTemplateForm';
-import {EQuestionType} from "@/types/exam/enum";
-import OrderingTemplateForm from "@/components/form/template/OrderingTemplateForm";
-import MultipleResponseTemplateForm from "@/components/form/template/MultipleResponseTemplateForm";
-import HotSpotTemplateForm from "@/components/form/template/HotSpotTemplateForm";
-import DragAndDropTemplateForm from "@/components/form/template/DragAndDropTemplate Form";
-import AudioResponseTemplateForm from "@/components/form/template/AudioResponseTemplateForm";
-import ImageResponseTemplateForm from "@/components/form/template/ImageResponseTemplateForm";
-import VideoResponseTemplateForm from "@/components/form/template/VideoResponseTemplateForm";
+import MultipleChoiceTemplateForm, {MultipleChoiceTemplateFormHandle} from './MultipleChoiceTemplateForm';
+import TrueFalseTemplateForm, {TrueFalseTemplateFormHandle} from './TrueFalseTemplateForm';
+import FillInTheBlanksTemplateForm, {FillInTheBlanksTemplateFormHandle} from './FillInTheBlanksTemplateForm';
+import ShortAnswerTemplateForm, {ShortAnswerTemplateFormHandle} from './ShortAnswerTemplateForm';
+import EssayTemplateForm, {EssayTemplateFormHandle} from './EssayTemplateForm';
+import MatchingTemplateForm, {MatchingTemplateFormHandle} from './MatchingTemplateForm';
+import {EDifficulty, EQuestionType} from "@/types/exam/enum";
+import OrderingTemplateForm, {OrderingTemplateFormHandle} from "@/components/form/template/OrderingTemplateForm";
+import MultipleResponseTemplateForm, { MultipleResponseTemplateFormHandle } from "@/components/form/template/MultipleResponseTemplateForm";
+import HotSpotTemplateForm, {HotSpotTemplateFormHandle} from "@/components/form/template/HotSpotTemplateForm";
+import DragAndDropTemplateForm, {
+    DragAndDropTemplateFormHandle
+} from "@/components/form/template/DragAndDropTemplateForm";
+import AudioResponseTemplateForm, {
+    AudioResponseTemplateFormHandle
+} from "@/components/form/template/AudioResponseTemplateForm";
+import ImageResponseTemplateForm, {
+    ImageResponseTemplateFormHandle
+} from "@/components/form/template/ImageResponseTemplateForm";
+import VideoResponseTemplateForm, {
+    VideoResponseTemplateFormHandle
+} from "@/components/form/template/VideoResponseTemplateForm";
 import {BaseQuestionTemplateFormData} from "@/types/exam/examEntities";
-
-
-
-
 
 interface BaseQuestionTemplateFormErrors {
     title?: string;
@@ -53,377 +61,333 @@ interface BaseQuestionTemplateFormErrors {
     questionType?: string;
 }
 
-interface BaseQuestionTemplateFormProps {
-    onSubmit: (data: BaseQuestionTemplateDto) => void;
-    template?: BaseQuestionTemplateDto | null;
-    loading?: boolean;
-    questionType?: EQuestionType;
-    baseFormData?:BaseQuestionTemplateFormData | null;
+// Validation handle interface for parent
+export interface BaseQuestionTemplateFormHandle {
+    validate: () => boolean;
+    getErrors: () => BaseQuestionTemplateFormErrors;
 }
 
-const BaseQuestionTemplateForm: React.FC<BaseQuestionTemplateFormProps> = ({
-                                                                               onSubmit,
-                                                                               template,
-                                                                               questionType,
-                                                                               loading = false,
-                                                                               baseFormData
-                                                                           }) => {
-    const [formData, setFormData] = useState<BaseQuestionTemplateFormData>({
-        title: '',
-        description: '',
-        subject: '',
-        difficulty: '',
-        points: 10,
-        timeLimit: 300,
-        instructions: '',
-        tags: [],
-        isActive: true,
-        questionType: questionType? questionType : '',
-        templateData: null
-    });
+interface BaseQuestionTemplateFormProps {
+    value: BaseQuestionTemplateFormData;
+    onChange: (data: BaseQuestionTemplateFormData) => void;
+    questionType: EQuestionType;
+    loading?: boolean;
+}
 
 
 
+const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, BaseQuestionTemplateFormProps>(({
+                                                                                                                value,
+                                                                                                                onChange,
+                                                                                                                questionType,
+                                                                                                                loading = false
+                                                                                                            }, ref) => {
+    const [formData, setFormData] = useState<BaseQuestionTemplateFormData>(value);
     const [errors, setErrors] = useState<BaseQuestionTemplateFormErrors>({});
     const [tagInput, setTagInput] = useState('');
 
+    // Template validation ref - her template'in validate fonksiyonunu tutar
+    // Union type: Tüm template handle'ları
+    type TemplateFormHandle = MultipleResponseTemplateFormHandle |
+        MatchingTemplateFormHandle |
+        HotSpotTemplateFormHandle |
+        FillInTheBlanksTemplateFormHandle |
+        AudioResponseTemplateFormHandle |
+        DragAndDropTemplateFormHandle |
+        EssayTemplateFormHandle |
+        ImageResponseTemplateFormHandle; // Diğerleri eklenecek
+    const templateValidateRef = useRef<TemplateFormHandle>(null);
+
+    // Value prop'u değiştiğinde form data'yı güncelle
     useEffect(() => {
+        setFormData(value);
+    }, [value]);
 
-        if (baseFormData) {
-            setFormData({
-                title: baseFormData.title || formData.title,
-                description: baseFormData.description || formData.description,
-                subject: baseFormData.subject || formData.subject ,
-                difficulty: baseFormData.difficulty || formData.difficulty,
-                points: baseFormData.points || formData.points ,
-                timeLimit: baseFormData.timeLimit || formData.timeLimit,
-                instructions: baseFormData.instructions || formData.instructions,
-                tags: baseFormData.tags || formData.tags,
-                isActive: baseFormData.isActive || formData.isActive,
-                questionType: baseFormData.questionType || formData.questionType,
-                templateData: formData.templateData
-            });
-        }
-    }, [baseFormData]);
-
-
-
+    // QuestionType değiştiğinde template data'yı sıfırla
     useEffect(() => {
-        if (template) {
-            setFormData({
-                title: template.title || '',
-                description: template.description || '',
-                subject: template.subject || '',
-                difficulty: (template.difficulty as 'EASY' | 'MEDIUM' | 'HARD') || '',
-                points: template.points || 10,
-                timeLimit: template.timeLimit || 300,
-                instructions: template.instructions || '',
-                tags: template.tags || [],
-                isActive: template.isActive ?? true,
-                questionType: template.questionType || '',
-                templateData: getTemplateSpecificData(template)
-            });
-        }
-    }, [template]);
-
-
-
-    useEffect(() => {
-        if (questionType) {
-            setFormData({
-                ...formData,
+        if (questionType !== formData.questionType) {
+            setFormData(prev => ({
+                ...prev,
                 questionType: questionType,
-            });
+                templateData: null // Yeni template tipi seçildiğinde eski data'yı temizle
+            }));
         }
     }, [questionType]);
 
-    // Template tipine göre özel veriyi çıkar
-    const getTemplateSpecificData = (template: BaseQuestionTemplateDto) => {
-        switch (template.questionType) {
-            case 'MULTIPLE_CHOICE':
-                return template as MultipleChoiceTemplateDto;
-            case 'TRUE_FALSE':
-                return template as TrueFalseTemplateDto;
-            case 'FILL_IN_THE_BLANKS':
-                return template as FillInTheBlanksTemplateDto;
-            case 'SHORT_ANSWER':
-                return template as ShortAnswerTemplateDto;
-            case 'MATCHING':
-                return template as MatchingTemplateDto;
-            case 'ESSAY':
-                return template as EssayTemplateDto;
-            case 'ORDERING':
-                return template as OrderingTemplateDto;
-            case 'MULTIPLE_RESPONSE':
-                return template as MultipleResponseTemplateDto;
-            case 'HOT_SPOT':
-                return template as HotSpotTemplateDto;
-            case 'DRAG_AND_DROP':
-                return template as DragAndDropTemplateDto;
-            case 'AUDIO_RESPONSE':
-                return template as AudioResponseTemplateDto;
-            case 'VIDEO_RESPONSE':
-                return template as VideoResponseTemplateDto;
-            case 'IMAGE_RESPONSE':
-                return template as ImageResponseTemplateDto;
-
-            default:
-                return null;
-        }
-    };
+    // Form data değiştiğinde parent'a bildir
+    useEffect(() => {
+        onChange(formData);
+    }, [formData]);
 
     const handleChange = <T extends keyof BaseQuestionTemplateFormData>(
         name: T,
-        value: BaseQuestionTemplateFormData[T]
+        newValue: BaseQuestionTemplateFormData[T]
     ) => {
         setFormData(prev => ({
             ...prev,
-            [name]: value
+            [name]: newValue
         }));
 
-        // Eğer question type değişirse template data'yı sıfırla
-        if (name === 'questionType') {
-            setFormData(prev => ({
+        // Hata varsa temizle
+        if (errors[name as keyof BaseQuestionTemplateFormErrors]) {
+            setErrors(prev => ({
                 ...prev,
-                templateData: null
+                [name]: undefined
             }));
         }
-
-
     };
 
     // Template-specific data değişikliklerini handle et
-    const handleTemplateDataChange = (data: MultipleChoiceTemplateDto | TrueFalseTemplateDto |
+    const handleTemplateDataChange = (templateData: MultipleChoiceTemplateDto | TrueFalseTemplateDto |
         FillInTheBlanksTemplateDto | ShortAnswerTemplateDto |
         MatchingTemplateDto | EssayTemplateDto | OrderingTemplateDto | MultipleResponseTemplateDto |
         HotSpotTemplateDto | DragAndDropTemplateDto | AudioResponseTemplateDto | VideoResponseTemplateDto | ImageResponseTemplateDto) => {
         setFormData(prev => ({
             ...prev,
-            templateData: {...prev.templateData, ...data}
+            templateData: templateData
         }));
     };
 
+    // Tag yönetimi
     const addTag = () => {
         if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
-            setFormData(prev => ({
-                ...prev,
-                tags: [...prev.tags, tagInput.trim()]
-            }));
+            handleChange('tags', [...formData.tags, tagInput.trim()]);
             setTagInput('');
         }
     };
 
     const removeTag = (index: number) => {
-        setFormData(prev => ({
-            ...prev,
-            tags: prev.tags.filter((_, i) => i !== index)
-        }));
+        handleChange('tags', formData.tags.filter((_, i) => i !== index));
     };
 
-    const handleTagInputKeyPress = (e: React.KeyboardEvent) => {
+    const handleTagInputKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
             e.preventDefault();
             addTag();
         }
     };
 
-    const getQuestionTypeDisplayName = (questionType: string): string => {
-        switch (questionType) {
-            case 'MULTIPLE_CHOICE':
-                return 'Çoktan Seçmeli';
-            case 'TRUE_FALSE':
-                return 'Doğru-Yanlış';
-            case 'FILL_IN_THE_BLANKS':
-                return 'Boşluk Doldurma';
-            case 'SHORT_ANSWER':
-                return 'Kısa Cevap';
-            case 'MATCHING':
-                return 'Eşleştirme';
-            case 'ESSAY':
-                return 'Kompozisyon';
-            case 'ORDERING':
-                return 'Sıralama';
-            case 'MULTIPLE_RESPONSE':
-                return 'Çoklu Yanıt';
-            case 'HOT_SPOT':
-                return 'Sıcak Nokta';
-            case 'DRAG_AND_DROP':
-                return 'Sürükle-Bırak';
-            case 'AUDIO_RESPONSE':
-                return 'Ses Yanıtı';
-            case 'VIDEO_RESPONSE':
-                return 'Video Yanıtı';
-            case 'IMAGE_RESPONSE':
-                return 'Resim Yanıtı';
-            default:
-                return questionType;
-        }
-    };
-
-    const getDifficultyDisplayName = (difficulty: string): string => {
-        switch (difficulty) {
-            case 'EASY':
-                return 'Kolay';
-            case 'MEDIUM':
-                return 'Orta';
-            case 'HARD':
-                return 'Zor';
-            default:
-                return difficulty;
-        }
-    };
-
-    const validateForm = (): boolean => {
+    // Base form validation
+    const validateBaseForm = (): boolean => {
         const newErrors: BaseQuestionTemplateFormErrors = {};
 
         if (!formData.title.trim()) {
-            newErrors.title = 'Soru başlığı zorunludur';
-        } else if (formData.title.trim().length < 3) {
-            newErrors.title = 'Soru başlığı en az 3 karakter olmalıdır';
+            newErrors.title = 'Başlık zorunludur';
         }
 
         if (!formData.subject.trim()) {
-            newErrors.subject = 'Konu alanı zorunludur';
+            newErrors.subject = 'Konu zorunludur';
         }
 
         if (!formData.difficulty) {
-            newErrors.difficulty = 'Zorluk seviyesi seçimi zorunludur';
+            newErrors.difficulty = 'Zorluk seviyesi seçilmelidir';
+        }
+
+        if (!formData.points || formData.points < 1) {
+            newErrors.points = 'Geçerli bir puan giriniz';
+        }
+
+        if (!formData.timeLimit || formData.timeLimit < 1) {
+            newErrors.timeLimit = 'Geçerli bir süre sınırı giriniz';
         }
 
         if (!formData.questionType) {
-            newErrors.questionType = 'Soru tipi seçimi zorunludur';
-        }
-
-        if (formData.points <= 0) {
-            newErrors.points = 'Puan 0\'dan büyük olmalıdır';
-        } else if (formData.points > 1000) {
-            newErrors.points = 'Puan 1000\'den büyük olamaz';
-        }
-
-        if (formData.timeLimit <= 0) {
-            newErrors.timeLimit = 'Süre sınırı 0\'dan büyük olmalıdır';
-        } else if (formData.timeLimit > 7200) { // 2 saat
-            newErrors.timeLimit = 'Süre sınırı 2 saatten uzun olamaz';
+            newErrors.questionType = 'Soru tipi seçilmelidir';
         }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = () => {
-        if (validateForm()) {
-            const baseData: BaseQuestionTemplateDto = {
-                id: template?.id,
-                title: formData.title.trim(),
-                subject: formData.subject.trim(),
-                difficulty: formData.difficulty as string,
-                points: formData.points,
-                timeLimit: formData.timeLimit,
-                isActive: formData.isActive,
-                questionType: formData.questionType as EQuestionType,
-                tags: formData.tags,
-                ...(formData.description && formData.description.trim() && {description: formData.description.trim()}),
-                ...(formData.instructions && formData.instructions.trim() && {instructions: formData.instructions.trim()}),
-                createdAt: template?.createdAt,
-                deletedAt: template?.deletedAt,
-                status: template?.status,
-                createdById: template?.createdById,
-                deletedById: template?.deletedById
-            };
+    // Tüm form validation (base + template)
+    const validateAll = (): boolean => {
+        const baseValid = validateBaseForm();
+        const templateValid = templateValidateRef.current?.validate() ?? true;
 
-            // Template-specific data'yı merge et
-            const submitData = formData.templateData
-                ? {...baseData, ...formData.templateData}
-                : baseData;
+        const isValid = baseValid && templateValid;
 
-            onSubmit(submitData);
-        }
+        return isValid;
     };
 
-    // Template tipine göre özel form render et
-    const renderTemplateSpecificForm = () => {
-        if (!formData.questionType) return null;
+    // Parent component bu fonksiyonu çağırabilir
+    useImperativeHandle(ref, () => ({
+        validate: validateAll,
+        getErrors: () => errors
+    }));
 
-        const commonProps = {
-            value: formData.templateData,
-            onChange: handleTemplateDataChange
+    const getQuestionTypeDisplayName = (type: string): string => {
+        const displayNames: Record<string, string> = {
+            'MULTIPLE_CHOICE': 'Çoktan Seçmeli',
+            'TRUE_FALSE': 'Doğru/Yanlış',
+            'FILL_IN_THE_BLANKS': 'Boşluk Doldurma',
+            'SHORT_ANSWER': 'Kısa Cevap',
+            'ESSAY': 'Kompozisyon',
+            'MATCHING': 'Eşleştirme',
+            'ORDERING': 'Sıralama',
+            'MULTIPLE_RESPONSE': 'Çoklu Yanıt',
+            'HOT_SPOT': 'Sıcak Nokta',
+            'DRAG_AND_DROP': 'Sürükle Bırak',
+            'AUDIO_RESPONSE': 'Sesli Yanıt',
+            'VIDEO_RESPONSE': 'Video Yanıt',
+            'IMAGE_RESPONSE': 'Resim Yanıtı'
         };
+        return displayNames[type] || type;
+    };
 
+    // Template-specific form render
+    const renderTemplateSpecificForm = () => {
         switch (formData.questionType) {
             case 'MULTIPLE_CHOICE':
-                return <MultipleChoiceTemplateForm onChange={commonProps.onChange}
-                                                   value={commonProps.value as MultipleChoiceTemplateDto}/>;
+                return (
+                    <MultipleChoiceTemplateForm
+                        ref={templateValidateRef as React.Ref<MultipleChoiceTemplateFormHandle>}
+                        value={formData.templateData as MultipleChoiceTemplateDto}
+                        onChange={handleTemplateDataChange}
+                        loading={loading}
+                    />
+                );
             case 'TRUE_FALSE':
-                return <TrueFalseTemplateForm onChange={commonProps.onChange}
-                                              value={commonProps.value as TrueFalseTemplateDto}/>;
+                return (
+                    <TrueFalseTemplateForm
+                        ref={templateValidateRef as React.Ref<TrueFalseTemplateFormHandle>}
+                        value={formData.templateData as TrueFalseTemplateDto}
+                        onChange={handleTemplateDataChange}
+                        loading={loading}
+                    />
+                );
             case 'FILL_IN_THE_BLANKS':
-                return <FillInTheBlanksTemplateForm onChange={commonProps.onChange}
-                                                    value={commonProps.value as FillInTheBlanksTemplateDto}/>;
+                return (
+                    <FillInTheBlanksTemplateForm
+                        ref={templateValidateRef as React.Ref<FillInTheBlanksTemplateFormHandle>}
+                        value={formData.templateData as FillInTheBlanksTemplateDto}
+                        onChange={handleTemplateDataChange}
+                        loading={loading}
+                    />
+                );
             case 'SHORT_ANSWER':
-                return <ShortAnswerTemplateForm onChange={commonProps.onChange}
-                                                value={commonProps.value as ShortAnswerTemplateDto}/>;
+                return (
+                    <ShortAnswerTemplateForm
+                        ref={templateValidateRef as React.Ref<ShortAnswerTemplateFormHandle>}
+                        value={formData.templateData as ShortAnswerTemplateDto}
+                        onChange={handleTemplateDataChange}
+                        loading={loading}
+                    />
+                );
             case 'ESSAY':
-                return <EssayTemplateForm onChange={commonProps.onChange}
-                                          value={commonProps.value as EssayTemplateDto}/>;
+                return (
+                    <EssayTemplateForm
+                        ref={templateValidateRef as React.Ref<EssayTemplateFormHandle>}
+                        value={formData.templateData as EssayTemplateDto}
+                        onChange={handleTemplateDataChange}
+                        loading={loading}
+                    />
+                );
             case 'MATCHING':
-                return <MatchingTemplateForm onChange={commonProps.onChange}
-                                             value={commonProps.value as MatchingTemplateDto}/>;
+                return (
+                    <MatchingTemplateForm
+                        ref={templateValidateRef as React.Ref<MatchingTemplateFormHandle>}
+                        value={formData.templateData as MatchingTemplateDto}
+                        onChange={handleTemplateDataChange}
+                        loading={loading}
+                    />
+                );
             case 'ORDERING':
-                return <OrderingTemplateForm onChange={commonProps.onChange}
-                                             value={commonProps.value as OrderingTemplateDto}/>;
+                return (
+                    <OrderingTemplateForm
+                        ref={templateValidateRef as React.Ref<OrderingTemplateFormHandle>}
+                        value={formData.templateData as OrderingTemplateDto}
+                        onChange={handleTemplateDataChange}
+                        loading={loading}
+                    />
+                );
             case 'MULTIPLE_RESPONSE':
-                return <MultipleResponseTemplateForm onChange={commonProps.onChange}
-                                                     value={commonProps.value as MultipleResponseTemplateDto}/>;
+                return (
+                    <MultipleResponseTemplateForm
+                        ref={templateValidateRef as React.Ref<MultipleResponseTemplateFormHandle>}
+                        value={formData.templateData as MultipleResponseTemplateDto}
+                        onChange={handleTemplateDataChange}
+                        loading={loading}
+                    />
+                );
             case 'HOT_SPOT':
-                return <HotSpotTemplateForm onChange={commonProps.onChange}
-                                            value={commonProps.value as HotSpotTemplateDto}/>;
+                return (
+                    <HotSpotTemplateForm
+                        ref={templateValidateRef as React.Ref<HotSpotTemplateFormHandle>}
+                        value={formData.templateData as HotSpotTemplateDto}
+                        onChange={handleTemplateDataChange}
+                        loading={loading}
+                    />
+                );
             case 'DRAG_AND_DROP':
-                return <DragAndDropTemplateForm onChange={commonProps.onChange}
-                                                value={commonProps.value as DragAndDropTemplateDto}/>;
+                return (
+                    <DragAndDropTemplateForm
+                        ref={templateValidateRef as React.Ref<DragAndDropTemplateFormHandle>}
+                        value={formData.templateData as DragAndDropTemplateDto}
+                        onChange={handleTemplateDataChange}
+                        loading={loading}
+                    />
+                );
             case 'AUDIO_RESPONSE':
-                return <AudioResponseTemplateForm onChange={commonProps.onChange}
-                                                  value={commonProps.value as AudioResponseTemplateDto}/>;
+                return (
+                    <AudioResponseTemplateForm
+                        ref={templateValidateRef as React.Ref<AudioResponseTemplateFormHandle>}
+                        value={formData.templateData as AudioResponseTemplateDto}
+                        onChange={handleTemplateDataChange}
+                        loading={loading}
+                    />
+                );
             case 'VIDEO_RESPONSE':
-                return <VideoResponseTemplateForm onChange={commonProps.onChange}
-                                                  value={commonProps.value as VideoResponseTemplateDto}/>;
+                return (
+                    <VideoResponseTemplateForm
+                        ref={templateValidateRef as React.Ref<VideoResponseTemplateFormHandle>}
+                        value={formData.templateData as VideoResponseTemplateDto}
+                        onChange={handleTemplateDataChange}
+                        loading={loading}
+                    />
+                );
             case 'IMAGE_RESPONSE':
-                return <ImageResponseTemplateForm onChange={commonProps.onChange}
-                                                  value={commonProps.value as ImageResponseTemplateDto}/>;
-
-
+                return (
+                    <ImageResponseTemplateForm
+                        ref={templateValidateRef as React.Ref<ImageResponseTemplateFormHandle>}
+                        value={formData.templateData as ImageResponseTemplateDto}
+                        onChange={handleTemplateDataChange}
+                        loading={loading}
+                    />
+                );
             default:
                 return (
-                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-                        <p className="text-yellow-800">
-                            Bu soru tipi için henüz özel form komponenti hazırlanmamıştır.
-                        </p>
-                    </div>
+                    <Alert>
+                        <AlertDescription>
+                            Lütfen bir soru tipi seçiniz
+                        </AlertDescription>
+                    </Alert>
                 );
         }
     };
 
     return (
         <Card>
+            <CardContent className="pt-6">
+                <div className="space-y-6">
+                    {/* Başlık */}
+                    <div className="space-y-2">
+                        <Label htmlFor="title">Soru Başlığı *</Label>
+                        <Input
+                            id="title"
+                            value={formData.title}
+                            onChange={(e) => handleChange('title', e.target.value)}
+                            className={errors.title ? 'border-red-500' : ''}
+                            placeholder="Soru başlığını giriniz"
+                        />
+                        {errors.title && (
+                            <Alert variant="destructive">
+                                <AlertDescription>{errors.title}</AlertDescription>
+                            </Alert>
+                        )}
+                    </div>
 
-            <CardContent>
-                <div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="title">Soru Başlığı *</Label>
-                            <Input
-                                id="title"
-                                value={formData.title}
-                                onChange={(e) => handleChange('title', e.target.value)}
-                                className={errors.title ? 'border-red-500' : ''}
-                                placeholder="Soru başlığını giriniz"
-                            />
-                            {errors.title && (
-                                <Alert variant="destructive">
-                                    <AlertDescription>{errors.title}</AlertDescription>
-                                </Alert>
-                            )}
-                        </div>
-
+                    {/* Grid Layout: Konu, Zorluk, Soru Tipi */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {/* Konu */}
                         <div className="space-y-2">
                             <Label htmlFor="subject">Konu *</Label>
@@ -432,7 +396,7 @@ const BaseQuestionTemplateForm: React.FC<BaseQuestionTemplateFormProps> = ({
                                 value={formData.subject}
                                 onChange={(e) => handleChange('subject', e.target.value)}
                                 className={errors.subject ? 'border-red-500' : ''}
-                                placeholder="Konu alanını giriniz"
+                                placeholder="Örn: Matematik, Fizik"
                             />
                             {errors.subject && (
                                 <Alert variant="destructive">
@@ -445,17 +409,17 @@ const BaseQuestionTemplateForm: React.FC<BaseQuestionTemplateFormProps> = ({
                         <div className="space-y-2">
                             <Label htmlFor="difficulty">Zorluk Seviyesi *</Label>
                             <Select
-                                onValueChange={(value) => handleChange('difficulty', value as 'EASY' | 'MEDIUM' | 'HARD')}
                                 value={formData.difficulty}
+                                onValueChange={(val) => handleChange('difficulty', val as EDifficulty)}
                             >
                                 <SelectTrigger className={errors.difficulty ? 'border-red-500' : ''}>
-                                    <SelectValue placeholder="Zorluk seviyesi seçin"/>
+                                    <SelectValue placeholder="Zorluk seçiniz"/>
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectGroup>
-                                        <SelectItem value="EASY">{getDifficultyDisplayName('EASY')}</SelectItem>
-                                        <SelectItem value="MEDIUM">{getDifficultyDisplayName('MEDIUM')}</SelectItem>
-                                        <SelectItem value="HARD">{getDifficultyDisplayName('HARD')}</SelectItem>
+                                        <SelectItem value="EASY">Kolay</SelectItem>
+                                        <SelectItem value="MEDIUM">Orta</SelectItem>
+                                        <SelectItem value="HARD">Zor</SelectItem>
                                     </SelectGroup>
                                 </SelectContent>
                             </Select>
@@ -466,60 +430,71 @@ const BaseQuestionTemplateForm: React.FC<BaseQuestionTemplateFormProps> = ({
                             )}
                         </div>
 
-                        {/* Soru Tipi */}
+                        {/* Soru Tipi - QuestionForm'dan geldiği için disabled */}
+                        <div className="space-y-2">
+                            <Label htmlFor="questionType">Soru Tipi *</Label>
+                            <Select
+                                value={formData.questionType}
+                                onValueChange={(val) => handleChange('questionType', val as EQuestionType)}
+                                disabled={true} // QuestionForm'dan kontrol ediliyor
+                            >
+                                <SelectTrigger className={errors.questionType ? 'border-red-500' : ''}>
+                                    <SelectValue placeholder="Soru tipi seçiniz"/>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectItem value="MULTIPLE_CHOICE">
+                                            {getQuestionTypeDisplayName('MULTIPLE_CHOICE')}
+                                        </SelectItem>
+                                        <SelectItem value="TRUE_FALSE">
+                                            {getQuestionTypeDisplayName('TRUE_FALSE')}
+                                        </SelectItem>
+                                        <SelectItem value="FILL_IN_THE_BLANKS">
+                                            {getQuestionTypeDisplayName('FILL_IN_THE_BLANKS')}
+                                        </SelectItem>
+                                        <SelectItem value="SHORT_ANSWER">
+                                            {getQuestionTypeDisplayName('SHORT_ANSWER')}
+                                        </SelectItem>
+                                        <SelectItem value="ESSAY">
+                                            {getQuestionTypeDisplayName('ESSAY')}
+                                        </SelectItem>
+                                        <SelectItem value="MATCHING">
+                                            {getQuestionTypeDisplayName('MATCHING')}
+                                        </SelectItem>
+                                        <SelectItem value="ORDERING">
+                                            {getQuestionTypeDisplayName('ORDERING')}
+                                        </SelectItem>
+                                        <SelectItem value="MULTIPLE_RESPONSE">
+                                            {getQuestionTypeDisplayName('MULTIPLE_RESPONSE')}
+                                        </SelectItem>
+                                        <SelectItem value="HOT_SPOT">
+                                            {getQuestionTypeDisplayName('HOT_SPOT')}
+                                        </SelectItem>
+                                        <SelectItem value="DRAG_AND_DROP">
+                                            {getQuestionTypeDisplayName('DRAG_AND_DROP')}
+                                        </SelectItem>
+                                        <SelectItem value="AUDIO_RESPONSE">
+                                            {getQuestionTypeDisplayName('AUDIO_RESPONSE')}
+                                        </SelectItem>
+                                        <SelectItem value="VIDEO_RESPONSE">
+                                            {getQuestionTypeDisplayName('VIDEO_RESPONSE')}
+                                        </SelectItem>
+                                        <SelectItem value="IMAGE_RESPONSE">
+                                            {getQuestionTypeDisplayName('IMAGE_RESPONSE')}
+                                        </SelectItem>
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                            {errors.questionType && (
+                                <Alert variant="destructive">
+                                    <AlertDescription>{errors.questionType}</AlertDescription>
+                                </Alert>
+                            )}
+                        </div>
+                    </div>
 
-
-                        {
-                            !questionType &&
-                            <div className="space-y-2">
-                                <Label htmlFor="questionType">Soru Tipi *</Label>
-                                <Select
-                                    onValueChange={(value) => handleChange('questionType', value as EQuestionType)}
-                                    value={formData.questionType}
-                                >
-                                    <SelectTrigger className={errors.questionType ? 'border-red-500' : ''}>
-                                        <SelectValue placeholder="Soru tipi seçin"/>
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectGroup>
-                                            <SelectItem
-                                                value="MULTIPLE_CHOICE">{getQuestionTypeDisplayName('MULTIPLE_CHOICE')}</SelectItem>
-                                            <SelectItem
-                                                value="TRUE_FALSE">{getQuestionTypeDisplayName('TRUE_FALSE')}</SelectItem>
-                                            <SelectItem
-                                                value="FILL_IN_THE_BLANKS">{getQuestionTypeDisplayName('FILL_IN_THE_BLANKS')}</SelectItem>
-                                            <SelectItem
-                                                value="SHORT_ANSWER">{getQuestionTypeDisplayName('SHORT_ANSWER')}</SelectItem>
-                                            <SelectItem
-                                                value="MATCHING">{getQuestionTypeDisplayName('MATCHING')}</SelectItem>
-                                            <SelectItem value="ESSAY">{getQuestionTypeDisplayName('ESSAY')}</SelectItem>
-                                            <SelectItem
-                                                value="ORDERING">{getQuestionTypeDisplayName('ORDERING')}</SelectItem>
-                                            <SelectItem
-                                                value="MULTIPLE_RESPONSE">{getQuestionTypeDisplayName('MULTIPLE_RESPONSE')}</SelectItem>
-                                            <SelectItem
-                                                value="HOT_SPOT">{getQuestionTypeDisplayName('HOT_SPOT')}</SelectItem>
-                                            <SelectItem
-                                                value="DRAG_AND_DROP">{getQuestionTypeDisplayName('DRAG_AND_DROP')}</SelectItem>
-                                            <SelectItem
-                                                value="AUDIO_RESPONSE">{getQuestionTypeDisplayName('AUDIO_RESPONSE')}</SelectItem>
-                                            <SelectItem
-                                                value="VIDEO_RESPONSE">{getQuestionTypeDisplayName('VIDEO_RESPONSE')}</SelectItem>
-                                            <SelectItem
-                                                value="IMAGE_RESPONSE">{getQuestionTypeDisplayName('IMAGE_RESPONSE')}</SelectItem>
-                                        </SelectGroup>
-                                    </SelectContent>
-                                </Select>
-                                {errors.questionType && (
-                                    <Alert variant="destructive">
-                                        <AlertDescription>{errors.questionType}</AlertDescription>
-                                    </Alert>
-                                )}
-                            </div>
-                        }
-
-
-
+                    {/* Grid Layout: Puan, Süre, Aktif Durumu */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {/* Puan */}
                         <div className="space-y-2">
                             <Label htmlFor="points">Puan *</Label>
@@ -527,7 +502,7 @@ const BaseQuestionTemplateForm: React.FC<BaseQuestionTemplateFormProps> = ({
                                 id="points"
                                 inputType={"number"}
                                 value={formData.points}
-                                onChange={(value) => handleChange('points', value)}
+                                onChange={(val) => handleChange('points', val)}
                                 minValue={1}
                                 maxValue={1000}
                                 decimalPlaces={0}
@@ -547,7 +522,7 @@ const BaseQuestionTemplateForm: React.FC<BaseQuestionTemplateFormProps> = ({
                                 id="timeLimit"
                                 inputType={"number"}
                                 value={formData.timeLimit}
-                                onChange={(value) => handleChange('timeLimit', value)}
+                                onChange={(val) => handleChange('timeLimit', val)}
                                 minValue={1}
                                 maxValue={7200}
                                 decimalPlaces={0}
@@ -563,7 +538,7 @@ const BaseQuestionTemplateForm: React.FC<BaseQuestionTemplateFormProps> = ({
 
                         {/* Aktif Durumu */}
                         <div className="space-y-2">
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-2 mt-6">
                                 <Checkbox
                                     id="isActive"
                                     checked={formData.isActive}
@@ -645,24 +620,19 @@ const BaseQuestionTemplateForm: React.FC<BaseQuestionTemplateFormProps> = ({
                             </div>
                         )}
                     </div>
-<div className="mt-3">
+
                     {/* Template-Specific Form */}
-                    { renderTemplateSpecificForm()}
-                </div>
-                    {/* Submit Button */}
-                    <div className="flex justify-end space-x-4">
-                        <Button
-                            onClick={handleSubmit}
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
-                            disabled={loading}
-                        >
-                            {loading ? "İşleniyor..." : template ? "Soru Güncelle" : "Soru Oluştur"}
-                        </Button>
+                    <div className="mt-6">
+                        {renderTemplateSpecificForm()}
                     </div>
+
+                    {/* KAYDET BUTONU KALDIRILDI - QuestionForm'da olacak */}
                 </div>
             </CardContent>
         </Card>
     );
-};
+});
+
+BaseQuestionTemplateForm.displayName = 'BaseQuestionTemplateForm';
 
 export default BaseQuestionTemplateForm;

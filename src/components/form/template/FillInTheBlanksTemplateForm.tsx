@@ -1,6 +1,7 @@
 'use client';
 
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useImperativeHandle, forwardRef} from 'react';
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Alert, AlertDescription} from "@/components/ui/alert";
 import {Button} from "@/components/ui/button";
 import {Label} from "@/components/ui/label";
@@ -25,14 +26,21 @@ interface FillInTheBlanksTemplateFormErrors {
 }
 
 interface FillInTheBlanksTemplateFormProps {
-    value?: FillInTheBlanksTemplateDto;
-    onChange: (data: Partial<FillInTheBlanksTemplateDto>) => void;
+    value?: FillInTheBlanksTemplateDto | null;
+    onChange: (data: FillInTheBlanksTemplateDto) => void;
+    loading?: boolean;
 }
 
-const FillInTheBlanksTemplateForm: React.FC<FillInTheBlanksTemplateFormProps> = ({
-                                                                                     value,
-                                                                                     onChange
-                                                                                 }) => {
+// Validation handle için ref interface
+export interface FillInTheBlanksTemplateFormHandle {
+    validate: () => boolean;
+    getErrors: () => FillInTheBlanksTemplateFormErrors;
+}
+
+const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle, FillInTheBlanksTemplateFormProps>(({
+                                                                                                                         value,
+                                                                                                                         onChange,
+                                                                                                                     }, ref) => {
     const [formData, setFormData] = useState<FillInTheBlanksTemplateFormData>({
         textWithBlanks: '',
         options: {blanks: []},
@@ -43,6 +51,7 @@ const FillInTheBlanksTemplateForm: React.FC<FillInTheBlanksTemplateFormProps> = 
 
     const [errors, setErrors] = useState<FillInTheBlanksTemplateFormErrors>({});
 
+    // Value değiştiğinde form data'yı güncelle (Update modu için)
     useEffect(() => {
         if (value) {
             setFormData({
@@ -55,22 +64,37 @@ const FillInTheBlanksTemplateForm: React.FC<FillInTheBlanksTemplateFormProps> = 
         }
     }, [value]);
 
+    // Form data değiştiğinde parent'a bildir (Anlık güncelleme)
+    useEffect(() => {
+        // İlk render'da boş form için onChange tetikleme
+        if (formData.textWithBlanks || (formData.options.blanks ?? []).length > 0) {
+            const templateData: FillInTheBlanksTemplateDto = {
+                ...value,
+                textWithBlanks: formData.textWithBlanks,
+                options: formData.options,
+                caseSensitive: formData.caseSensitive,
+                exactMatch: formData.exactMatch,
+                explanation: formData.explanation
+            };
+            onChange(templateData);
+        }
+    }, [formData]); // onChange ve value bağımlılığı yok - sonsuz döngü önlendi
+
     const handleChange = <T extends keyof FillInTheBlanksTemplateFormData>(
         field: T,
         newValue: FillInTheBlanksTemplateFormData[T]
     ) => {
-        const updatedData = {...formData, [field]: newValue};
-        setFormData(updatedData);
+        setFormData(prev => ({
+            ...prev,
+            [field]: newValue
+        }));
 
-        // Parent component'e değişiklikleri bildir
-        if (validateForm()) {
-            onChange({
-                textWithBlanks: updatedData.textWithBlanks,
-                options: updatedData.options,
-                caseSensitive: updatedData.caseSensitive,
-                exactMatch: updatedData.exactMatch,
-                explanation: updatedData.explanation
-            });
+        // Hata varsa temizle
+        if (errors[field as keyof FillInTheBlanksTemplateFormErrors]) {
+            setErrors(prev => ({
+                ...prev,
+                [field]: undefined
+            }));
         }
     };
 
@@ -96,10 +120,10 @@ const FillInTheBlanksTemplateForm: React.FC<FillInTheBlanksTemplateFormProps> = 
     const updateBlank = <K extends keyof BlankAnswer>(
         index: number,
         field: K,
-        value: BlankAnswer[K]
+        newValue: BlankAnswer[K]
     ) => {
         const updatedBlanks = formData.options.blanks?.map((blank, i) =>
-            i === index ? {...blank, [field]: value} : blank
+            i === index ? {...blank, [field]: newValue} : blank
         ) || [];
 
         handleChange('options', {...formData.options, blanks: updatedBlanks});
@@ -128,13 +152,13 @@ const FillInTheBlanksTemplateForm: React.FC<FillInTheBlanksTemplateFormProps> = 
         handleChange('options', {...formData.options, blanks: updatedBlanks});
     };
 
-    const updateAcceptableAnswer = (blankIndex: number, answerIndex: number, value: string) => {
+    const updateAcceptableAnswer = (blankIndex: number, answerIndex: number, newValue: string) => {
         const updatedBlanks = formData.options.blanks?.map((blank, i) =>
             i === blankIndex
                 ? {
                     ...blank,
                     acceptableAnswers: blank.acceptableAnswers?.map((answer, j) =>
-                        j === answerIndex ? value : answer
+                        j === answerIndex ? newValue : answer
                     ) || []
                 }
                 : blank
@@ -143,6 +167,7 @@ const FillInTheBlanksTemplateForm: React.FC<FillInTheBlanksTemplateFormProps> = 
         handleChange('options', {...formData.options, blanks: updatedBlanks});
     };
 
+    // Validation fonksiyonu - parent tarafından çağrılacak
     const validateForm = (): boolean => {
         const newErrors: FillInTheBlanksTemplateFormErrors = {};
 
@@ -166,187 +191,202 @@ const FillInTheBlanksTemplateForm: React.FC<FillInTheBlanksTemplateFormProps> = 
         return Object.keys(newErrors).length === 0;
     };
 
+    // Parent component'in validate fonksiyonunu çağırabilmesi için
+    useImperativeHandle(ref, () => ({
+        validate: validateForm,
+        getErrors: () => errors
+    }));
+
     return (
-        <div className="space-y-6">
-            <h3 className="text-lg font-semibold">Boşluk Doldurma Soru Ayarları</h3>
+        <Card>
+            <CardHeader>
+                <CardTitle>Boşluk Doldurma Şablon Detayları</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-6">
+                    {/* Boşluklu Metin */}
+                    <div className="space-y-2">
+                        <Label htmlFor="textWithBlanks">Boşluklu Metin *</Label>
+                        <Textarea
+                            id="textWithBlanks"
+                            value={formData.textWithBlanks}
+                            onChange={(e) => handleChange('textWithBlanks', e.target.value)}
+                            className={`min-h-[120px] ${errors.textWithBlanks ? 'border-red-500' : ''}`}
+                            placeholder="Metni giriniz. Boşlukları [blank_1], [blank_2] şeklinde işaretleyiniz."
+                        />
+                        <p className="text-sm text-gray-500">
+                            İpucu: Boşlukları [blank_1], [blank_2], [blank_3] şeklinde numaralandırarak işaretleyin.
+                        </p>
+                        {errors.textWithBlanks && (
+                            <Alert variant="destructive">
+                                <AlertDescription>{errors.textWithBlanks}</AlertDescription>
+                            </Alert>
+                        )}
+                    </div>
 
-            {/* Boşluklu Metin */}
-            <div className="space-y-2">
-                <Label htmlFor="textWithBlanks">Boşluklu Metin *</Label>
-                <Textarea
-                    id="textWithBlanks"
-                    value={formData.textWithBlanks}
-                    onChange={(e) => handleChange('textWithBlanks', e.target.value)}
-                    className={`min-h-[120px] ${errors.textWithBlanks ? 'border-red-500' : ''}`}
-                    placeholder="Metni giriniz. Boşlukları [blank_1], [blank_2] şeklinde işaretleyiniz."
-                />
-                <p className="text-sm text-gray-500">
-                    İpucu: Boşlukları [blank_1], [blank_2], [blank_3] şeklinde numaralandırarak işaretleyin.
-                </p>
-                {errors.textWithBlanks && (
-                    <Alert variant="destructive">
-                        <AlertDescription>{errors.textWithBlanks}</AlertDescription>
-                    </Alert>
-                )}
-            </div>
-
-            {/* Genel Ayarlar */}
-            <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center space-x-2">
-                    <Checkbox
-                        id="caseSensitive"
-                        checked={formData.caseSensitive}
-                        onChange={(checked) => handleChange('caseSensitive', !!checked)}
-                    />
-                    <Label htmlFor="caseSensitive">Büyük/Küçük Harf Duyarlı</Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                    <Checkbox
-                        id="exactMatch"
-                        checked={formData.exactMatch}
-                        onChange={(checked) => handleChange('exactMatch', !!checked)}
-                    />
-                    <Label htmlFor="exactMatch">Tam Eşleşme Gerekli</Label>
-                </div>
-            </div>
-
-            {/* Boşluk Tanımları */}
-            <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                    <Label>Boşluk Tanımları</Label>
-                    <Button
-                        type="button"
-                        onClick={addBlank}
-                        className="bg-green-600 hover:bg-green-700 text-white"
-                        size="sm"
-                    >
-                        <Plus className="w-4 h-4 mr-2"/>
-                        Boşluk Ekle
-                    </Button>
-                </div>
-
-                {formData.options.blanks?.map((blank, blankIndex) => (
-                    <div key={blank.blankId || blankIndex} className="p-4 border rounded-lg space-y-4">
-                        <div className="grid grid-cols-12 gap-2 items-center">
-                            <div className="col-span-2">
-                                <Label>Boşluk ID</Label>
-                                <Input
-                                    value={blank.blankId || ''}
-                                    onChange={(e) => updateBlank(blankIndex, 'blankId', e.target.value)}
-                                    placeholder="blank_1"
-                                />
-                            </div>
-
-                            <div className="col-span-2">
-                                <Label>Puan</Label>
-                                <NumberInput
-                                    inputType={"number"}
-                                    value={blank.score || 1}
-                                    onChange={(value) => updateBlank(blankIndex, 'score', value)}
-                                    minValue={0}
-                                    decimalPlaces={0}
-                                />
-                            </div>
-
-                            <div className="col-span-2">
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                        checked={blank.caseSensitive || false}
-                                        onChange={(checked) => updateBlank(blankIndex, 'caseSensitive', !!checked)}
-                                    />
-                                    <Label className="text-xs">Harf Duyarlı</Label>
-                                </div>
-                            </div>
-
-                            <div className="col-span-2">
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                        checked={blank.exactMatch || false}
-                                        onChange={(checked) => updateBlank(blankIndex, 'exactMatch', !!checked)}
-                                    />
-                                    <Label className="text-xs">Tam Eşleşme</Label>
-                                </div>
-                            </div>
-
-                            <div className="col-span-3">
-                                <Label>Geri Bildirim</Label>
-                                <Input
-                                    value={blank.feedback || ''}
-                                    onChange={(e) => updateBlank(blankIndex, 'feedback', e.target.value)}
-                                    placeholder="Geri bildirim (opsiyonel)"
-                                />
-                            </div>
-
-                            <div className="col-span-1">
-                                <Button
-                                    type="button"
-                                    onClick={() => removeBlank(blankIndex)}
-                                    variant="primary"
-                                    size="sm"
-                                >
-                                    <Trash2 className="w-4 h-4"/>
-                                </Button>
-                            </div>
+                    {/* Genel Ayarlar */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="flex items-center space-x-2">
+                            <Checkbox
+                                id="caseSensitive"
+                                checked={formData.caseSensitive}
+                                onChange={(checked) => handleChange('caseSensitive', !!checked)}
+                            />
+                            <Label htmlFor="caseSensitive">Büyük/Küçük Harf Duyarlı</Label>
                         </div>
 
-                        {/* Kabul Edilebilir Cevaplar */}
-                        <div className="space-y-2">
-                            <div className="flex justify-between items-center">
-                                <Label>Kabul Edilebilir Cevaplar</Label>
-                                <Button
-                                    type="button"
-                                    onClick={() => addAcceptableAnswer(blankIndex)}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                                    size="sm"
-                                >
-                                    <Plus className="w-4 h-4 mr-2"/>
-                                    Cevap Ekle
-                                </Button>
-                            </div>
-
-                            {blank.acceptableAnswers?.map((answer, answerIndex) => (
-                                <div key={answerIndex} className="flex gap-2">
-                                    <Input
-                                        value={answer}
-                                        onChange={(e) => updateAcceptableAnswer(blankIndex, answerIndex, e.target.value)}
-                                        placeholder={`Kabul edilebilir cevap ${answerIndex + 1}`}
-                                        className="flex-1"
-                                    />
-                                    <Button
-                                        type="button"
-                                        onClick={() => removeAcceptableAnswer(blankIndex, answerIndex)}
-                                        variant="outline"
-                                        size="sm"
-                                    >
-                                        <Trash2 className="w-4 h-4"/>
-                                    </Button>
-                                </div>
-                            ))}
+                        <div className="flex items-center space-x-2">
+                            <Checkbox
+                                id="exactMatch"
+                                checked={formData.exactMatch}
+                                onChange={(checked) => handleChange('exactMatch', !!checked)}
+                            />
+                            <Label htmlFor="exactMatch">Tam Eşleşme Gerekli</Label>
                         </div>
                     </div>
-                ))}
 
-                {errors.options && (
-                    <Alert variant="destructive">
-                        <AlertDescription>{errors.options}</AlertDescription>
-                    </Alert>
-                )}
-            </div>
+                    {/* Boşluk Tanımları */}
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            <Label>Boşluk Tanımları *</Label>
+                            <Button
+                                type="button"
+                                onClick={addBlank}
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                                size="sm"
+                            >
+                                <Plus className="w-4 h-4 mr-2"/>
+                                Boşluk Ekle
+                            </Button>
+                        </div>
 
-            {/* Açıklama */}
-            <div className="space-y-2">
-                <Label htmlFor="explanation">Açıklama</Label>
-                <Textarea
-                    id="explanation"
-                    value={formData.explanation}
-                    onChange={(e) => handleChange('explanation', e.target.value)}
-                    className="min-h-[100px]"
-                    placeholder="Soru açıklaması (opsiyonel)"
-                />
-            </div>
-        </div>
+                        {formData.options.blanks?.map((blank, blankIndex) => (
+                            <div key={blank.blankId || blankIndex} className="p-4 border rounded-lg space-y-4">
+                                <div className="grid grid-cols-12 gap-2 items-center">
+                                    <div className="col-span-2">
+                                        <Label>Boşluk ID</Label>
+                                        <Input
+                                            value={blank.blankId || ''}
+                                            onChange={(e) => updateBlank(blankIndex, 'blankId', e.target.value)}
+                                            placeholder="blank_1"
+                                        />
+                                    </div>
+
+                                    <div className="col-span-2">
+                                        <Label>Puan</Label>
+                                        <NumberInput
+                                            inputType={"number"}
+                                            value={blank.score || 1}
+                                            onChange={(val) => updateBlank(blankIndex, 'score', val)}
+                                            minValue={0}
+                                            decimalPlaces={0}
+                                        />
+                                    </div>
+
+                                    <div className="col-span-2">
+                                        <div className="flex items-center space-x-2">
+                                            <Checkbox
+                                                checked={blank.caseSensitive || false}
+                                                onChange={(checked) => updateBlank(blankIndex, 'caseSensitive', !!checked)}
+                                            />
+                                            <Label className="text-xs">Harf Duyarlı</Label>
+                                        </div>
+                                    </div>
+
+                                    <div className="col-span-2">
+                                        <div className="flex items-center space-x-2">
+                                            <Checkbox
+                                                checked={blank.exactMatch || false}
+                                                onChange={(checked) => updateBlank(blankIndex, 'exactMatch', !!checked)}
+                                            />
+                                            <Label className="text-xs">Tam Eşleşme</Label>
+                                        </div>
+                                    </div>
+
+                                    <div className="col-span-3">
+                                        <Label>Geri Bildirim</Label>
+                                        <Input
+                                            value={blank.feedback || ''}
+                                            onChange={(e) => updateBlank(blankIndex, 'feedback', e.target.value)}
+                                            placeholder="Geri bildirim (opsiyonel)"
+                                        />
+                                    </div>
+
+                                    <div className="col-span-1">
+                                        <Button
+                                            type="button"
+                                            onClick={() => removeBlank(blankIndex)}
+                                            variant="primary"
+                                            size="sm"
+                                        >
+                                            <Trash2 className="w-4 h-4"/>
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                {/* Kabul Edilebilir Cevaplar */}
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-center">
+                                        <Label>Kabul Edilebilir Cevaplar *</Label>
+                                        <Button
+                                            type="button"
+                                            onClick={() => addAcceptableAnswer(blankIndex)}
+                                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                                            size="sm"
+                                        >
+                                            <Plus className="w-4 h-4 mr-2"/>
+                                            Cevap Ekle
+                                        </Button>
+                                    </div>
+
+                                    {blank.acceptableAnswers?.map((answer, answerIndex) => (
+                                        <div key={answerIndex} className="flex gap-2">
+                                            <Input
+                                                value={answer}
+                                                onChange={(e) => updateAcceptableAnswer(blankIndex, answerIndex, e.target.value)}
+                                                placeholder={`Kabul edilebilir cevap ${answerIndex + 1}`}
+                                                className="flex-1"
+                                            />
+                                            <Button
+                                                type="button"
+                                                onClick={() => removeAcceptableAnswer(blankIndex, answerIndex)}
+                                                variant="outline"
+                                                size="sm"
+                                            >
+                                                <Trash2 className="w-4 h-4"/>
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+
+                        {errors.options && (
+                            <Alert variant="destructive">
+                                <AlertDescription>{errors.options}</AlertDescription>
+                            </Alert>
+                        )}
+                    </div>
+
+                    {/* Açıklama */}
+                    <div className="space-y-2">
+                        <Label htmlFor="explanation">Açıklama</Label>
+                        <Textarea
+                            id="explanation"
+                            value={formData.explanation}
+                            onChange={(e) => handleChange('explanation', e.target.value)}
+                            className="min-h-[100px]"
+                            placeholder="Soru açıklaması (opsiyonel)"
+                        />
+                    </div>
+
+                    {/* KAYDET BUTONU KALDIRILDI - Parent component'te olacak */}
+                </div>
+            </CardContent>
+        </Card>
     );
-};
+});
+
+FillInTheBlanksTemplateForm.displayName = 'FillInTheBlanksTemplateForm';
 
 export default FillInTheBlanksTemplateForm;

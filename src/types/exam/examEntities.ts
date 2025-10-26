@@ -3,7 +3,7 @@
 import {ExamSectionDto, ExamTypeDto, QuestionGroupTypeDto} from "@/types/exam/examTemplates";
 import {
     EApprovalStatus,
-    ECurriculumLevel,
+    ECurriculumLevel, EDifficulty,
     EExamCategory,
     EExamType,
     EMediaType,
@@ -25,7 +25,7 @@ export interface BaseQuestionTemplateFormData {
     title: string;
     description?: string;
     subject: string;
-    difficulty: 'EASY' | 'MEDIUM' | 'HARD' | '';
+    difficulty: EDifficulty;
     points: number;
     timeLimit: number;
     instructions?: string;
