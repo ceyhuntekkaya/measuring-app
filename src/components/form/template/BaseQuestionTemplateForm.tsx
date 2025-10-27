@@ -52,7 +52,6 @@ import VideoResponseTemplateForm, {
     VideoResponseTemplateFormHandle
 } from "@/components/form/template/VideoResponseTemplateForm";
 import {BaseQuestionTemplateFormData} from "@/types/exam/examEntities";
-import {useParams} from "next/navigation";
 
 interface BaseQuestionTemplateFormErrors {
     title?: string;

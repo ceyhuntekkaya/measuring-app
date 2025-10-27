@@ -16,6 +16,7 @@ class QuestionService {
     }
 
     async updateQuestion(id: string, updateRequest: CreateQuestionRequest): Promise<ApiResponse<QuestionDto>> {
+        console.log(updateRequest)
         const response = await api.put<ApiResponse<QuestionDto>>(`${this.baseUrl}/${id}`, updateRequest);
         return response.data;
     }

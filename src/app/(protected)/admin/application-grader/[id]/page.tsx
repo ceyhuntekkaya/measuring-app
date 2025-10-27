@@ -1,7 +1,6 @@
 'use client';
 
-import {useParams} from "next/navigation";
-import React, {useEffect} from "react";
+import React from "react";
 import PageHeader from "@/components/layout/page-header";
 
 

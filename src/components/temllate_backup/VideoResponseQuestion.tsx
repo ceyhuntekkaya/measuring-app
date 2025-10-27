@@ -1,24 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { AudioResponseTemplateDto } from '@/types/exam/questionTemplates';
+import { VideoResponseTemplateDto } from '@/types/exam/questionTemplates';
 
-interface AudioResponseQuestionProps {
-    template: AudioResponseTemplateDto;
+interface VideoResponseQuestionProps {
+    template: VideoResponseTemplateDto;
     isPreview?: boolean;
-    onAnswerChange?: (audioData: AudioAnswerData | null) => void;
-    initialAnswer?: AudioAnswerData | null;
+    onAnswerChange?: (videoData: VideoAnswerData | null) => void;
+    initialAnswer?: VideoAnswerData | null;
     isSubmitted?: boolean;
     showCorrectAnswer?: boolean;
 }
 
-interface AudioAnswerData {
-    audioUrl?: string;
-    audioBlob?: Blob;
+interface VideoAnswerData {
+    videoUrl?: string;
+    videoBlob?: Blob;
     duration?: number;
     recordedAt?: string;
     fileName?: string;
 }
 
-const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
+const BackupVideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                                                                          template,
                                                                          isPreview = false,
                                                                          onAnswerChange,
@@ -26,26 +26,21 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                                                                          isSubmitted = false,
                                                                          showCorrectAnswer = false
                                                                      }) => {
-    const [audioAnswer, setAudioAnswer] = useState<AudioAnswerData | null>(initialAnswer);
+    const [videoAnswer, setVideoAnswer] = useState<VideoAnswerData | null>(initialAnswer);
     const [isRecording, setIsRecording] = useState<boolean>(false);
-    const [isPaused, setIsPaused] = useState<boolean>(false);
     const [recordingTime, setRecordingTime] = useState<number>(0);
     const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
     const [error, setError] = useState<string>('');
-    const [audioLevel, setAudioLevel] = useState<number>(0);
 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-    const audioContextRef = useRef<AudioContext | null>(null);
-    const analyserRef = useRef<AnalyserNode | null>(null);
+    const videoPreviewRef = useRef<HTMLVideoElement>(null);
     const recordedChunksRef = useRef<Blob[]>([]);
     const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
-    const animationFrameRef = useRef<number | null>(null);
-
-    useEffect(() => {
-        setAudioAnswer(initialAnswer);
-    }, [initialAnswer]);
 
     console.log(showCorrectAnswer)
+    useEffect(() => {
+        setVideoAnswer(initialAnswer);
+    }, [initialAnswer]);
 
     useEffect(() => {
         // Cleanup on unmount
@@ -57,64 +52,42 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
             if (timerIntervalRef.current) {
                 clearInterval(timerIntervalRef.current);
             }
-            if (animationFrameRef.current) {
-                cancelAnimationFrame(animationFrameRef.current);
-            }
-            if (audioContextRef.current) {
-                audioContextRef.current.close();
-            }
         };
     }, [mediaStream]);
-
-    const setupAudioAnalyser = (stream: MediaStream): void => {
-        try {
-            const audioContext = new AudioContext();
-            const analyser = audioContext.createAnalyser();
-            const source = audioContext.createMediaStreamSource(stream);
-
-            analyser.fftSize = 256;
-            source.connect(analyser);
-
-            audioContextRef.current = audioContext;
-            analyserRef.current = analyser;
-
-            updateAudioLevel();
-        } catch (err) {
-            console.error('Error setting up audio analyser:', err);
-        }
-    };
-
-    const updateAudioLevel = (): void => {
-        if (!analyserRef.current) return;
-
-        const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
-        analyserRef.current.getByteFrequencyData(dataArray);
-
-        const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
-        const normalizedLevel = Math.min(average / 128, 1);
-
-        setAudioLevel(normalizedLevel);
-
-        animationFrameRef.current = requestAnimationFrame(updateAudioLevel);
-    };
 
     const startRecording = async (): Promise<void> => {
         if (isSubmitted && !isPreview) return;
 
         try {
             setError('');
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            setMediaStream(stream);
-
-            setupAudioAnalyser(stream);
-
-            const options: MediaRecorderOptions = {
-                mimeType: 'audio/webm;codecs=opus',
+            const constraints: MediaStreamConstraints = {
+                video: true,
+                audio: true
             };
 
-            // Fallback to generic webm if opus is not supported
+            if (template.allowScreenRecording) {
+                // For screen recording, we would use getDisplayMedia
+                // This is a simplified version
+                constraints.video = {
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 }
+                };
+            }
+
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            setMediaStream(stream);
+
+            if (videoPreviewRef.current) {
+                videoPreviewRef.current.srcObject = stream;
+            }
+
+            const options: MediaRecorderOptions = {
+                mimeType: 'video/webm;codecs=vp9',
+            };
+
+            // Fallback to vp8 if vp9 is not supported
             if (!MediaRecorder.isTypeSupported(options.mimeType || '')) {
-                options.mimeType = 'audio/webm';
+                options.mimeType = 'video/webm;codecs=vp8';
             }
 
             const mediaRecorder = new MediaRecorder(stream, options);
@@ -128,21 +101,21 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
             };
 
             mediaRecorder.onstop = () => {
-                const blob = new Blob(recordedChunksRef.current, { type: 'audio/webm' });
+                const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
                 const url = URL.createObjectURL(blob);
 
-                const newAudioData: AudioAnswerData = {
-                    audioUrl: url,
-                    audioBlob: blob,
+                const newVideoData: VideoAnswerData = {
+                    videoUrl: url,
+                    videoBlob: blob,
                     duration: recordingTime,
                     recordedAt: new Date().toISOString(),
-                    fileName: `audio-response-${Date.now()}.webm`
+                    fileName: `video-response-${Date.now()}.webm`
                 };
 
-                setAudioAnswer(newAudioData);
+                setVideoAnswer(newVideoData);
 
                 if (onAnswerChange) {
-                    onAnswerChange(newAudioData);
+                    onAnswerChange(newVideoData);
                 }
 
                 // Stop all tracks
@@ -150,19 +123,10 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                     mediaStream.getTracks().forEach(track => track.stop());
                 }
                 setMediaStream(null);
-                setAudioLevel(0);
-
-                if (animationFrameRef.current) {
-                    cancelAnimationFrame(animationFrameRef.current);
-                }
-                if (audioContextRef.current) {
-                    audioContextRef.current.close();
-                }
             };
 
             mediaRecorder.start();
             setIsRecording(true);
-            setIsPaused(false);
             setRecordingTime(0);
 
             // Start timer
@@ -180,40 +144,9 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
             }, 1000);
 
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Mikrofon erişimi sağlanamadı';
+            const errorMessage = err instanceof Error ? err.message : 'Kamera erişimi sağlanamadı';
             setError(errorMessage);
-            console.error('Error accessing microphone:', err);
-        }
-    };
-
-    const pauseRecording = (): void => {
-        if (mediaRecorderRef.current && isRecording && !isPaused) {
-            mediaRecorderRef.current.pause();
-            setIsPaused(true);
-
-            if (timerIntervalRef.current) {
-                clearInterval(timerIntervalRef.current);
-            }
-        }
-    };
-
-    const resumeRecording = (): void => {
-        if (mediaRecorderRef.current && isRecording && isPaused) {
-            mediaRecorderRef.current.resume();
-            setIsPaused(false);
-
-            // Resume timer
-            timerIntervalRef.current = setInterval(() => {
-                setRecordingTime(prev => {
-                    const newTime = prev + 1;
-
-                    if (template.maxRecordingDuration && newTime >= template.maxRecordingDuration) {
-                        stopRecording();
-                    }
-
-                    return newTime;
-                });
-            }, 1000);
+            console.error('Error accessing media devices:', err);
         }
     };
 
@@ -221,7 +154,6 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
         if (mediaRecorderRef.current && isRecording) {
             mediaRecorderRef.current.stop();
             setIsRecording(false);
-            setIsPaused(false);
 
             if (timerIntervalRef.current) {
                 clearInterval(timerIntervalRef.current);
@@ -233,7 +165,7 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
     const deleteRecording = (): void => {
         if (isSubmitted && !isPreview) return;
 
-        setAudioAnswer(null);
+        setVideoAnswer(null);
         setRecordingTime(0);
 
         if (onAnswerChange) {
@@ -262,9 +194,9 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
     };
 
     const isValidDuration = (): boolean => {
-        if (!audioAnswer?.duration) return false;
+        if (!videoAnswer?.duration) return false;
 
-        const duration = audioAnswer.duration;
+        const duration = videoAnswer.duration;
 
         if (template.minRecordingDuration && duration < template.minRecordingDuration) {
             return false;
@@ -282,30 +214,11 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
             return "bg-gray-400 cursor-not-allowed";
         }
 
-        if (isRecording && !isPaused) {
+        if (isRecording) {
             return "bg-red-500 hover:bg-red-600 animate-pulse";
         }
 
         return "bg-blue-500 hover:bg-blue-600";
-    };
-
-    const renderAudioLevelMeter = (): React.ReactNode => {
-        if (!isRecording || isPaused) return null;
-
-        return (
-            <div className="flex items-center space-x-2">
-                <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
-                </svg>
-                <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                        className="h-full bg-gradient-to-r from-green-500 via-yellow-500 to-red-500 transition-all duration-100"
-                        style={{ width: `${audioLevel * 100}%` }}
-                    />
-                </div>
-                <span className="text-xs text-gray-600 w-8">{Math.round(audioLevel * 100)}%</span>
-            </div>
-        );
     };
 
     return (
@@ -330,20 +243,22 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
             {/* Prompt */}
             {template.prompt && (
                 <div className="mb-4 p-4 bg-purple-50 border-l-4 border-purple-400 rounded">
+                    <h4 className="font-semibold text-purple-800 mb-2">Soru İstemi:</h4>
                     <p className="text-purple-700">{template.prompt}</p>
                 </div>
             )}
 
-            {/* Audio Prompt */}
-            {template.audioPromptUrl && (
+            {/* Video Prompt */}
+            {template.videoPromptUrl && (
                 <div className="mb-6">
-                    <audio
-                        src={template.audioPromptUrl}
+                    <h4 className="font-semibold text-gray-700 mb-2">Video İstem:</h4>
+                    <video
+                        src={template.videoPromptUrl}
                         controls
-                        className="w-full"
+                        className="w-full max-w-2xl rounded-lg border border-gray-300"
                     >
-                        Tarayıcınız ses oynatmayı desteklemiyor.
-                    </audio>
+                        Tarayıcınız video oynatmayı desteklemiyor.
+                    </video>
                 </div>
             )}
 
@@ -361,7 +276,7 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                 </div>
             )}
 
-            {/* Grading Criteria
+            {/* Grading Criteria */}
             {template.gradingCriteria && template.gradingCriteria.length > 0 && (
                 <div className="mb-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
                     <h4 className="font-semibold text-yellow-800 mb-2">Değerlendirme Kriterleri:</h4>
@@ -372,16 +287,16 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                     </ul>
                 </div>
             )}
-            */}
-            {/* Rubric
+
+            {/* Rubric */}
             {template.rubric && (
                 <div className="mb-4 p-4 bg-green-50 border-l-4 border-green-400 rounded">
                     <h4 className="font-semibold text-green-800 mb-2">Değerlendirme Rubriği:</h4>
                     <p className="text-green-700 text-sm whitespace-pre-wrap">{template.rubric}</p>
                 </div>
             )}
-            */}
-            {/* Manual Grading Notice
+
+            {/* Manual Grading Notice */}
             {template.requiresManualGrading && (
                 <div className="mb-4 p-3 bg-orange-50 border-l-4 border-orange-400 rounded">
                     <div className="flex items-start space-x-2">
@@ -394,7 +309,7 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                     </div>
                 </div>
             )}
-            */}
+
             {/* Error Message */}
             {error && (
                 <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-400 rounded">
@@ -407,77 +322,57 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                 </div>
             )}
 
-            {/* Audio Recording Section */}
+            {/* Video Recording Section */}
             <div className="border-2 border-gray-300 rounded-lg p-6 bg-gray-50">
-                {/* Recording Visualizer */}
-                {isRecording && (
-                    <div className="mb-6">
-                        <div className="bg-white p-4 rounded-lg border-2 border-blue-500">
-                            <div className="flex items-center justify-between mb-3">
-                                <span className="text-sm font-medium text-gray-700">Kayıt Durumu:</span>
-                                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                    isPaused
-                                        ? 'bg-yellow-100 text-yellow-800'
-                                        : 'bg-red-100 text-red-800'
-                                }`}>
-                                    {isPaused ? '⏸ Duraklatıldı' : '● Kaydediliyor'}
-                                </span>
-                            </div>
-
-                            {/* Audio Level Meter */}
-                            {renderAudioLevelMeter()}
-                        </div>
+                {/* Live Preview / Recorded Video */}
+                {(isRecording || mediaStream) && (
+                    <div className="mb-4">
+                        <video
+                            ref={videoPreviewRef}
+                            autoPlay
+                            muted
+                            className="w-full max-w-2xl mx-auto rounded-lg border-2 border-blue-500"
+                        />
                     </div>
                 )}
 
-                {/* Recorded Audio Playback */}
-                {audioAnswer?.audioUrl && !isRecording && (
-                    <div className="mb-6">
-                        <div className="bg-white p-4 rounded-lg border-2 border-green-500">
-                            <div className="flex items-center justify-between mb-3">
-                                <h4 className="font-semibold text-gray-700">Kaydedilen Ses:</h4>
-                                <div className="text-sm text-gray-600">
-                                    <span className="font-medium">Süre:</span> {formatTime(audioAnswer.duration || 0)}
-                                    {!isValidDuration() && (
-                                        <span className="ml-2 text-red-600 font-semibold">
-                                            ⚠️ Süre gereksinimlerini karşılamıyor
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                            <audio
-                                src={audioAnswer.audioUrl}
-                                controls
-                                className="w-full"
-                            >
-                                Tarayıcınız ses oynatmayı desteklemiyor.
-                            </audio>
+                {/* Recorded Video Playback */}
+                {videoAnswer?.videoUrl && !isRecording && !mediaStream && (
+                    <div className="mb-4">
+                        <video
+                            src={videoAnswer.videoUrl}
+                            controls
+                            className="w-full max-w-2xl mx-auto rounded-lg border-2 border-green-500"
+                        />
+                        <div className="mt-2 text-center text-sm text-gray-600">
+                            <span className="font-medium">Kayıt Süresi:</span> {formatTime(videoAnswer.duration || 0)}
+                            {!isValidDuration() && (
+                                <span className="ml-2 text-red-600 font-semibold">
+                                    ⚠️ Süre gereksinimlerini karşılamıyor
+                                </span>
+                            )}
                         </div>
                     </div>
                 )}
 
                 {/* Recording Timer */}
                 {isRecording && (
-                    <div className="mb-6 text-center">
-                        <div className="inline-flex items-center space-x-3 bg-white px-6 py-3 rounded-full border-2 border-gray-300">
-                            <div className={`w-4 h-4 rounded-full ${
-                                isPaused ? 'bg-yellow-500' : 'bg-red-500 animate-pulse'
-                            }`}></div>
-                            <span className="font-mono text-2xl font-bold text-gray-800">
-                                {formatTime(recordingTime)}
-                            </span>
+                    <div className="mb-4 text-center">
+                        <div className="inline-flex items-center space-x-2 bg-red-100 text-red-700 px-4 py-2 rounded-full font-mono text-xl font-bold">
+                            <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
+                            <span>{formatTime(recordingTime)}</span>
                         </div>
                         {template.maxRecordingDuration && (
                             <p className="text-sm text-gray-600 mt-2">
-                                Kalan süre: {formatTime(template.maxRecordingDuration - recordingTime)}
+                                Maksimum süre: {formatTime(template.maxRecordingDuration)}
                             </p>
                         )}
                     </div>
                 )}
 
                 {/* Control Buttons */}
-                <div className="flex items-center justify-center space-x-3">
-                    {!audioAnswer && !isRecording && (
+                <div className="flex items-center justify-center space-x-4">
+                    {!videoAnswer && !isRecording && (
                         <button
                             onClick={startRecording}
                             disabled={isSubmitted && !isPreview}
@@ -486,59 +381,25 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                             }`}
                         >
                             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
                             </svg>
                             <span>Kaydı Başlat</span>
                         </button>
                     )}
 
-                    {isRecording && !isPaused && (
-                        <>
-                            <button
-                                onClick={pauseRecording}
-                                className="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-semibold transition-all duration-200 flex items-center space-x-2"
-                            >
-                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                                </svg>
-                                <span>Duraklat</span>
-                            </button>
-                            <button
-                                onClick={stopRecording}
-                                className="px-6 py-3 bg-gray-700 hover:bg-gray-800 text-white rounded-lg font-semibold transition-all duration-200 flex items-center space-x-2"
-                            >
-                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clipRule="evenodd" />
-                                </svg>
-                                <span>Durdur</span>
-                            </button>
-                        </>
+                    {isRecording && (
+                        <button
+                            onClick={stopRecording}
+                            className="px-6 py-3 bg-gray-700 hover:bg-gray-800 text-white rounded-lg font-semibold transition-all duration-200 flex items-center space-x-2"
+                        >
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clipRule="evenodd" />
+                            </svg>
+                            <span>Kaydı Durdur</span>
+                        </button>
                     )}
 
-                    {isRecording && isPaused && (
-                        <>
-                            <button
-                                onClick={resumeRecording}
-                                className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold transition-all duration-200 flex items-center space-x-2"
-                            >
-                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                                </svg>
-                                <span>Devam Et</span>
-                            </button>
-                            <button
-                                onClick={stopRecording}
-                                className="px-6 py-3 bg-gray-700 hover:bg-gray-800 text-white rounded-lg font-semibold transition-all duration-200 flex items-center space-x-2"
-                            >
-                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clipRule="evenodd" />
-                                </svg>
-                                <span>Durdur</span>
-                            </button>
-                        </>
-                    )}
-
-                    {audioAnswer && !isRecording && (
+                    {videoAnswer && !isRecording && (
                         <>
                             <button
                                 onClick={deleteRecording}
@@ -565,7 +426,7 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                                 }`}
                             >
                                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                                    <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" />
                                 </svg>
                                 <span>Yeniden Kaydet</span>
                             </button>
@@ -574,25 +435,36 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                 </div>
 
                 {/* Info Text */}
-                {!audioAnswer && !isRecording && (
+                {!videoAnswer && !isRecording && (
                     <div className="mt-4 text-center">
                         <p className="text-sm text-gray-600">
-                            Mikrofon ile sesli yanıt kaydedebilirsiniz
+                            {template.allowScreenRecording
+                                ? 'Kamera veya ekran kaydı yapabilirsiniz'
+                                : 'Kamera ile video kaydı yapın'
+                            }
                         </p>
                     </div>
                 )}
             </div>
 
+            {/* Allowed Formats Info */}
+            {template.allowedFormats && (
+                <div className="mt-4 p-3 bg-gray-100 border border-gray-300 rounded">
+                    <p className="text-gray-700 text-sm">
+                        <strong>Desteklenen Formatlar:</strong> {template.allowedFormats}
+                    </p>
+                </div>
+            )}
 
             {/* Submission Status */}
-            {isSubmitted && audioAnswer && (
+            {isSubmitted && videoAnswer && (
                 <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded">
                     <div className="flex items-center space-x-2">
                         <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
                         <p className="text-green-800 font-semibold">
-                            Sesli yanıtınız başarıyla gönderildi
+                            Video yanıtınız başarıyla gönderildi
                         </p>
                     </div>
                     {template.requiresManualGrading && (
@@ -638,6 +510,9 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                         {template.requiresManualGrading !== undefined && (
                             <div><strong>Manuel Değerlendirme:</strong> {template.requiresManualGrading ? 'Evet' : 'Hayır'}</div>
                         )}
+                        {template.allowScreenRecording !== undefined && (
+                            <div><strong>Ekran Kaydı:</strong> {template.allowScreenRecording ? 'İzinli' : 'İzinsiz'}</div>
+                        )}
                         {template.tags && template.tags.length > 0 && (
                             <div className="col-span-2">
                                 <strong>Etiketler:</strong> {template.tags.join(', ')}
@@ -651,27 +526,27 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
             {/*
         TODO: Real exam implementation
         - Integrate with exam session management
-        - Implement audio upload to backend/cloud storage
-        - Add audio compression options for large files
+        - Implement video upload to backend/cloud storage
+        - Add compression options for large video files
         - Handle upload progress indication
         - Add retry mechanism for failed uploads
-        - Implement audio quality settings
-        - Support for multiple audio formats
-        - Add audio waveform visualization
+        - Implement video quality settings
+        - Support for multiple video formats
+        - Add video thumbnail generation
         - Implement auto-save functionality
         - Handle network issues and offline scenarios
-        - Add audio playback speed controls
-        - Implement audio editing features (trim, etc.)
-        - Add noise reduction/cancellation
-        - Support for speech-to-text transcription
-        - Add AI-based audio analysis (optional)
-        - Implement plagiarism detection for audio
+        - Add screen recording permission handling
+        - Implement video playback controls
+        - Add accessibility features (captions, transcripts)
+        - Support for multiple languages/localization
+        - Add AI-based video analysis (optional)
+        - Implement plagiarism detection for videos
+        - Add video editing features (trim, crop)
         - Handle browser compatibility issues
         - Add mobile device support
-        - Implement accessibility features
       */}
         </div>
     );
 };
 
-export default AudioResponseQuestion;
+export default BackupVideoResponseQuestion;

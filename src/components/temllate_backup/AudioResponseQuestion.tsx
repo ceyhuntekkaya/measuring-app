@@ -18,7 +18,7 @@ interface AudioAnswerData {
     fileName?: string;
 }
 
-const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
+const BackupAudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                                                                          template,
                                                                          isPreview = false,
                                                                          onAnswerChange,
@@ -330,6 +330,7 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
             {/* Prompt */}
             {template.prompt && (
                 <div className="mb-4 p-4 bg-purple-50 border-l-4 border-purple-400 rounded">
+                    <h4 className="font-semibold text-purple-800 mb-2">Soru İstemi:</h4>
                     <p className="text-purple-700">{template.prompt}</p>
                 </div>
             )}
@@ -337,6 +338,7 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
             {/* Audio Prompt */}
             {template.audioPromptUrl && (
                 <div className="mb-6">
+                    <h4 className="font-semibold text-gray-700 mb-2">Sesli İstem:</h4>
                     <audio
                         src={template.audioPromptUrl}
                         controls
@@ -583,6 +585,14 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                 )}
             </div>
 
+            {/* Allowed Formats Info */}
+            {template.allowedFormats && (
+                <div className="mt-4 p-3 bg-gray-100 border border-gray-300 rounded">
+                    <p className="text-gray-700 text-sm">
+                        <strong>Desteklenen Formatlar:</strong> {template.allowedFormats}
+                    </p>
+                </div>
+            )}
 
             {/* Submission Status */}
             {isSubmitted && audioAnswer && (
@@ -674,4 +684,4 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
     );
 };
 
-export default AudioResponseQuestion;
+export default BackupAudioResponseQuestion;
