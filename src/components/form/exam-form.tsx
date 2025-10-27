@@ -231,7 +231,7 @@ const ExamForm: React.FC<ExamFormProps> = ({
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
                 >
-                    <button onClick={() => addQuestionGroup(record.id as string)}>EKLE</button>
+                    <button type="button"  onClick={() => addQuestionGroup(record.id as string)}>EKLE</button>
                 </div>
             )
         },
@@ -275,7 +275,7 @@ const ExamForm: React.FC<ExamFormProps> = ({
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form className="space-y-6">
                     <div className="grid grid-cols-2 gap-4">
                         {/* Sınav Adı */}
                         <div className="space-y-2">
@@ -503,7 +503,7 @@ const ExamForm: React.FC<ExamFormProps> = ({
                     {/* Submit Button */}
                     <div className="flex justify-end space-x-4">
                         <Button
-                            type="submit"
+                            onClick={handleSubmit}
                             className="bg-blue-600 hover:bg-blue-700 text-white"
                             disabled={loading}
                         >

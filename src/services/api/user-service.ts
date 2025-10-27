@@ -18,6 +18,7 @@ class UserService {
 
     // CRUD Operations
     async createUser(createRequest: UserFormData): Promise<ApiResponse<UserDto>> {
+        console.log(createRequest);
         const response = await api.post<ApiResponse<UserDto>>(`${this.baseUrl}`, createRequest);
         return response.data;
     }

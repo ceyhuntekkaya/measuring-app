@@ -123,7 +123,7 @@ export interface UserFormData {
     lastName: string;
     authoritySet: Permission[];
     departmentSet: Department[];
-    brandSet: Brand[];
+    brandSet: BrandDto[];
     roleSet: Role[];
     enabled: boolean;
     credentialsNonExpired: boolean;
