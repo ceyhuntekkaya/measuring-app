@@ -12,8 +12,9 @@ import { CreateQuestionGroupRequest, CreateQuestionGroupHeaderRequest } from "@/
 import { ExamTypeDto, ExamSectionDto, QuestionGroupTypeDto } from "@/types/exam/examTemplates";
 import { Textarea } from "@/components/ui/textarea";
 import { Trash2, Plus } from "lucide-react";
-import {EMediaType} from "@/types/exam/enum";
-import {QuestionGroupDto} from "@/types/exam/examEntities";
+import { EMediaType } from "@/types/exam/enum";
+import { QuestionGroupDto } from "@/types/exam/examEntities";
+import { FileUpload } from "@/components/ui/file-upload";
 
 interface QuestionGroupFormData {
     name: string;
@@ -45,6 +46,44 @@ interface QuestionGroupFormProps {
     onExamTypeChange: (data: string) => void;
     onExamSectionChange: (data: string) => void;
 }
+
+// MediaType'a göre FileType belirleme
+const getFileTypeFromMediaType = (mediaType: EMediaType): 'image' | 'video' | 'audio' | 'pdf' | 'file' => {
+    switch (mediaType) {
+        case EMediaType.IMAGE:
+            return 'image';
+        case EMediaType.VIDEO:
+            return 'video';
+        case EMediaType.AUDIO:
+            return 'audio';
+        case EMediaType.PDF:
+            return 'pdf';
+        case EMediaType.DOCUMENT:
+        case EMediaType.OTHER:
+            return 'file';
+        default:
+            return 'file';
+    }
+};
+
+// MediaType'a göre max file size (MB)
+const getMaxFileSizeFromMediaType = (mediaType: EMediaType): number => {
+    switch (mediaType) {
+        case EMediaType.IMAGE:
+            return 5;
+        case EMediaType.VIDEO:
+            return 100;
+        case EMediaType.AUDIO:
+            return 20;
+        case EMediaType.PDF:
+        case EMediaType.DOCUMENT:
+            return 10;
+        case EMediaType.OTHER:
+            return 50;
+        default:
+            return 10;
+    }
+};
 
 const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                                                                  onSubmit,
@@ -79,7 +118,11 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                 questionGroupTypeId: questionGroup.questionGroupType?.id || '',
                 maximumScore: questionGroup.maximumScore,
                 durationInSeconds: questionGroup.durationInSeconds,
-                headers: []
+                headers: questionGroup.headers?.map(h => ({
+                    orderNumber: h.orderNumber || 1,
+                    mediaType: h.mediaType || EMediaType.TEXT,
+                    content: h.content || ''
+                })) || []
             });
         }
     }, [questionGroup]);
@@ -98,7 +141,7 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
             setFilteredSections([]);
             setFormData(prev => ({ ...prev, examSectionId: '' }));
         }
-    }, [formData.examTypeId, examSections]);
+    }, [formData.examTypeId, examSections, formData.examSectionId]);
 
     // Exam Section değiştiğinde group types'ı filtrele
     useEffect(() => {
@@ -114,7 +157,7 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
             setFilteredGroupTypes([]);
             setFormData(prev => ({ ...prev, questionGroupTypeId: '' }));
         }
-    }, [formData.examSectionId, questionGroupTypes]);
+    }, [formData.examSectionId, questionGroupTypes, formData.questionGroupTypeId]);
 
     const handleChange = <T extends keyof QuestionGroupFormData>(
         name: T,
@@ -146,16 +189,25 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
         }));
     };
 
-    const updateHeader = (index: number, field: keyof CreateQuestionGroupHeaderRequest, value: CreateQuestionGroupHeaderRequest[keyof CreateQuestionGroupHeaderRequest]) => {
+    const updateHeader = <K extends keyof CreateQuestionGroupHeaderRequest>(
+        index: number,
+        field: K,
+        value: CreateQuestionGroupHeaderRequest[K]
+    ) => {
         setFormData(prev => ({
             ...prev,
-            headers: prev.headers.map((header, i) =>
-                i === index ? { ...header, [field]: value } : header
-            )
+            headers: prev.headers.map((header, i) => {
+                if (i === index) {
+                    // MediaType değiştiğinde content'i temizle
+                    if (field === 'mediaType' && header.mediaType !== value) {
+                        return { ...header, [field]: value, content: '' };
+                    }
+                    return { ...header, [field]: value };
+                }
+                return header;
+            })
         }));
     };
-
-
 
     const validateForm = (): boolean => {
         const newErrors: QuestionGroupFormErrors = {};
@@ -178,18 +230,12 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
             newErrors.questionGroupTypeId = 'Soru grubu tipi seçimi zorunludur';
         }
 
-        if (formData.maximumScore !== undefined && formData.maximumScore <= 0) {
-            newErrors.maximumScore = 'Maksimum puan 0\'dan büyük olmalıdır';
+        if (formData.maximumScore !== undefined && formData.maximumScore < 0) {
+            newErrors.maximumScore = 'Maksimum puan 0\'dan küçük olamaz';
         }
 
-        if (formData.durationInSeconds !== undefined && formData.durationInSeconds <= 0) {
-            newErrors.durationInSeconds = 'Süre 0\'dan büyük olmalıdır';
-        }
-
-        // Header validasyonu
-        const invalidHeaders = formData.headers.some(header => !header.content.trim());
-        if (invalidHeaders) {
-            newErrors.headers = 'Tüm başlık içerikleri doldurulmalıdır';
+        if (formData.durationInSeconds !== undefined && formData.durationInSeconds < 0) {
+            newErrors.durationInSeconds = 'Süre 0\'dan küçük olamaz';
         }
 
         setErrors(newErrors);
@@ -197,40 +243,43 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
     };
 
     const handleSubmit = () => {
-        if (validateForm()) {
-            const submitData: CreateQuestionGroupRequest = {
-                name: formData.name.trim(),
-                examTypeId: formData.examTypeId,
-                examSectionId: formData.examSectionId,
-                questionGroupTypeId: formData.questionGroupTypeId,
-                ...(formData.maximumScore !== undefined && { maximumScore: formData.maximumScore }),
-                ...(formData.durationInSeconds !== undefined && { durationInSeconds: formData.durationInSeconds }),
-                ...(formData.headers.length > 0 && { headers: formData.headers })
-            };
-
-            onSubmit(submitData);
+        if (!validateForm()) {
+            return;
         }
+
+        const requestData: CreateQuestionGroupRequest = {
+            name: formData.name.trim(),
+            examTypeId: formData.examTypeId,
+            examSectionId: formData.examSectionId,
+            questionGroupTypeId: formData.questionGroupTypeId,
+            maximumScore: formData.maximumScore,
+            durationInSeconds: formData.durationInSeconds,
+            headers: formData.headers
+        };
+
+        onSubmit(requestData);
     };
 
     return (
         <Card>
             <CardHeader>
                 <CardTitle>
-                    {questionGroup ? "Soru Grubu Güncelle" : "Yeni Soru Grubu Oluştur"}
+                    {questionGroup ? 'Soru Grubu Düzenle' : 'Yeni Soru Grubu Oluştur'}
                 </CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
                         {/* Soru Grubu Adı */}
-                        <div className="space-y-2">
+                        <div className="space-y-2 md:col-span-5">
                             <Label htmlFor="name">Soru Grubu Adı *</Label>
                             <Input
                                 id="name"
                                 value={formData.name}
                                 onChange={(e) => handleChange('name', e.target.value)}
-                                className={errors.name ? 'border-red-500' : ''}
                                 placeholder="Soru grubu adını giriniz"
+                                className={errors.name ? 'border-red-500' : ''}
+                                disabled={loading}
                             />
                             {errors.name && (
                                 <Alert variant="destructive">
@@ -244,10 +293,11 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                             <Label htmlFor="examType">Sınav Tipi *</Label>
                             <Select
                                 onValueChange={(value) => {
-                                    handleChange('examTypeId', value as string)
+                                    handleChange('examTypeId', value as string);
                                     onExamTypeChange(value as string);
                                 }}
                                 value={formData.examTypeId}
+                                disabled={loading}
                             >
                                 <SelectTrigger className={errors.examTypeId ? 'border-red-500' : ''}>
                                     <SelectValue placeholder="Sınav tipi seçin" />
@@ -256,7 +306,7 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                                     <SelectGroup>
                                         {examTypes.map(examType => (
                                             <SelectItem key={examType.id} value={examType.id || ''}>
-                                                {examType.name} - {examType.examLevel}
+                                                {examType.name}
                                             </SelectItem>
                                         ))}
                                     </SelectGroup>
@@ -274,11 +324,11 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                             <Label htmlFor="examSection">Sınav Bölümü *</Label>
                             <Select
                                 onValueChange={(value) => {
-                                    handleChange('examSectionId', value as string)
+                                    handleChange('examSectionId', value as string);
                                     onExamSectionChange(value as string);
                                 }}
                                 value={formData.examSectionId}
-                                disabled={!formData.examTypeId}
+                                disabled={!formData.examTypeId || loading}
                             >
                                 <SelectTrigger className={errors.examSectionId ? 'border-red-500' : ''}>
                                     <SelectValue placeholder="Sınav bölümü seçin" />
@@ -306,7 +356,7 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                             <Select
                                 onValueChange={(value) => handleChange('questionGroupTypeId', value as string)}
                                 value={formData.questionGroupTypeId}
-                                disabled={!formData.examSectionId}
+                                disabled={!formData.examSectionId || loading}
                             >
                                 <SelectTrigger className={errors.questionGroupTypeId ? 'border-red-500' : ''}>
                                     <SelectValue placeholder="Soru grubu tipi seçin" />
@@ -340,6 +390,7 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                                 decimalPlaces={0}
                                 className={errors.maximumScore ? 'border-red-500' : ''}
                                 placeholder="0"
+                                disabled={loading}
                             />
                             {errors.maximumScore && (
                                 <Alert variant="destructive">
@@ -361,6 +412,7 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                                 unit="saniye"
                                 className={errors.durationInSeconds ? 'border-red-500' : ''}
                                 placeholder="0"
+                                disabled={loading}
                             />
                             {errors.durationInSeconds && (
                                 <Alert variant="destructive">
@@ -373,12 +425,13 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                     {/* Headers Section */}
                     <div className="space-y-4">
                         <div className="flex justify-between items-center">
-                            <Label>Başlıklar</Label>
+                            <Label>Soru Gövdesi</Label>
                             <Button
                                 type="button"
                                 onClick={addHeader}
                                 className="bg-green-600 hover:bg-green-700 text-white"
                                 size="sm"
+                                disabled={loading}
                             >
                                 <Plus className="w-4 h-4 mr-2" />
                                 Başlık Ekle
@@ -395,6 +448,7 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                                         onChange={(value) => updateHeader(index, 'orderNumber', value)}
                                         minValue={1}
                                         decimalPlaces={0}
+                                        disabled={loading}
                                     />
                                 </div>
 
@@ -402,14 +456,16 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                                     <Label>Medya Tipi</Label>
                                     <Select
                                         onValueChange={(value) => updateHeader(index, 'mediaType', value as EMediaType)}
-                                        value={header.mediaType || "TEXT"}
+                                        value={header.mediaType || EMediaType.TEXT}
+                                        disabled={loading}
+                                        searchable={false}
+                                        sortable={false}
                                     >
                                         <SelectTrigger>
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectGroup>
-
                                                 {Object.entries(EMediaType).map(([key, value]) => (
                                                     <SelectItem key={key} value={key}>
                                                         {value}
@@ -422,20 +478,45 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
 
                                 <div className="col-span-8">
                                     <Label>İçerik</Label>
-                                    <Textarea
-                                        value={header.content}
-                                        onChange={(e) => updateHeader(index, 'content', e.target.value)}
-                                        placeholder="Başlık içeriğini giriniz"
-                                        className="min-h-[60px]"
-                                    />
+                                    {header.mediaType === EMediaType.TEXT ? (
+                                        <Textarea
+                                            value={header.content}
+                                            onChange={(e) => updateHeader(index, 'content', e.target.value)}
+                                            placeholder="Başlık içeriğini giriniz"
+                                            className="min-h-[60px]"
+                                            disabled={loading}
+                                        />
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <FileUpload
+                                                acceptedFileTypes={[getFileTypeFromMediaType(header.mediaType || EMediaType.TEXT)]}
+                                                maxFileSize={getMaxFileSizeFromMediaType(header.mediaType || EMediaType.TEXT)}
+                                                entityId={questionGroup?.id || 'qg_new'}
+                                                uploadType={`qg_header_${header.mediaType}`}
+                                                multiple={false}
+                                                labelText={`${header.mediaType} Dosyası Yükle`}
+                                                onUploadComplete={(files) => {
+                                                    if (files && files.length > 0) {
+                                                        updateHeader(index, 'content', files[0].path || '');
+                                                    }
+                                                }}
+                                            />
+                                            {header.content && (
+                                                <p className="text-xs text-gray-600 break-all">
+                                                    Yüklü dosya: {header.content}
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="col-span-1">
                                     <Button
                                         type="button"
                                         onClick={() => removeHeader(index)}
-                                        variant="primary"
+                                        variant="destructive"
                                         size="sm"
+                                        disabled={loading}
                                     >
                                         <Trash2 className="w-4 h-4" />
                                     </Button>

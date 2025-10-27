@@ -408,7 +408,7 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
     return (
         <div className="space-y-6">
             {/* Question Title */}
-            {template.title && (
+            {template.title && template.title === "NOT_SET" && (
                 <div className="mb-4">
                     <h3 className="text-lg font-semibold text-gray-800">{template.title}</h3>
                     {template.description && (

@@ -287,7 +287,7 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
     return (
         <div className="space-y-6">
             {/* Question Title */}
-            {template.title && (
+            {template.title && template.title === "NOT_SET" && (
                 <div className="mb-4">
                     <h3 className="text-lg font-semibold text-gray-800">{template.title}</h3>
                     {template.description && (
@@ -306,7 +306,8 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
             {/* Prompt */}
             {template.prompt && (
                 <div className="mb-4 p-4 bg-purple-50 border-l-4 border-purple-400 rounded">
-                    <h4 className="font-semibold text-purple-800 mb-2">Soru İstemi:</h4>
+                    {//<h4 className="font-semibold text-purple-800 mb-2">Soru İstemi:</h4>
+                    }
                     <p className="text-purple-700">{template.prompt}</p>
                 </div>
             )}
@@ -314,7 +315,8 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
             {/* Reference Image */}
             {template.referenceImageUrl && (
                 <div className="mb-6">
-                    <h4 className="font-semibold text-gray-700 mb-2">Referans Görsel:</h4>
+                    {//<h4 className="font-semibold text-gray-700 mb-2">Referans Görsel:</h4>
+                    }
                     <img
                         src={template.referenceImageUrl}
                         alt="Referans görsel"
@@ -324,7 +326,7 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                 </div>
             )}
 
-            {/* Grading Criteria */}
+            {/* Grading Criteria
             {template.gradingCriteria && template.gradingCriteria.length > 0 && (
                 <div className="mb-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
                     <h4 className="font-semibold text-yellow-800 mb-2">Değerlendirme Kriterleri:</h4>
@@ -335,16 +337,16 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                     </ul>
                 </div>
             )}
-
-            {/* Rubric */}
+            */}
+            {/* Rubric
             {template.rubric && (
                 <div className="mb-4 p-4 bg-green-50 border-l-4 border-green-400 rounded">
                     <h4 className="font-semibold text-green-800 mb-2">Değerlendirme Rubriği:</h4>
                     <p className="text-green-700 text-sm whitespace-pre-wrap">{template.rubric}</p>
                 </div>
             )}
-
-            {/* Manual Grading Notice */}
+            */}
+            {/* Manual Grading Notice
             {template.requiresManualGrading && (
                 <div className="mb-4 p-3 bg-orange-50 border-l-4 border-orange-400 rounded">
                     <div className="flex items-start space-x-2">
@@ -357,7 +359,7 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                     </div>
                 </div>
             )}
-
+            */}
             {/* File Requirements */}
             <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
                 <div className="space-y-1 text-sm text-blue-800">

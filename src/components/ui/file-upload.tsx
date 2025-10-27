@@ -5,40 +5,26 @@ import {Label} from "@/components/ui/label";
 import {Alert, AlertDescription} from "@/components/ui/alert";
 import siteConfig from '@/config/config.json';
 import {Progress} from "@/components/ui/progress";
+import {UploadedFileDto} from "@/types/exam/miscDtos";
 
 const API_URL = siteConfig.api.invokeUrl;
 
-type FileType = 'image' | 'video' | 'pdf' | 'file';
 
-interface UploadedFile {
-    fileName:string;
-    originalFileName:string;
-    fileUrl:string;
-    thumbnailUrl:string;
-    fileSizeBytes:number;
-    mimeType:number;
-    mediaType:string;
-    width:number;
-    height:number;
-    durationSeconds:number;
-    uploadId:string;
-    isProcessed:boolean;
-    processingError:string;
-    id:number;
-}
+type FileType = 'image' | 'video' | 'audio' | 'pdf' | 'file';
+
 
 export interface FileUploadProps {
     acceptedFileTypes?: FileType[];
     maxFileSize?: number; // MB cinsinden
     maxFiles?: number;
     multiple?: boolean;
-    onUploadComplete?: (files: UploadedFile[]) => void;
+    onUploadComplete?: (files: UploadedFileDto[]) => void;
     labelText?: string;
     error?: boolean;
     errorText?: string;
     className?: string;
     id?: string;
-    schoolId: string;
+    entityId: string;
     uploadType: string
 }
 
@@ -49,7 +35,7 @@ interface FileWithPreview {
 }
 
 const FileUpload: React.FC<FileUploadProps> = ({
-                                                   acceptedFileTypes = ['image', 'video', 'pdf'],
+                                                   acceptedFileTypes = ['image', 'video', 'audio', 'pdf'],
                                                    maxFileSize = 10, // default 10MB
                                                    maxFiles = 10,
                                                    multiple = true,
@@ -59,7 +45,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                                                    errorText,
                                                    className = "",
                                                    id = "file-upload",
-                                                   schoolId,
+                                                   entityId,
                                                    uploadType
                                                }) => {
     const [selectedFiles, setSelectedFiles] = React.useState<FileWithPreview[]>([]);
@@ -74,6 +60,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
         const acceptMap: Record<FileType, string> = {
             image: 'image/*',
             video: 'video/*',
+            audio: 'audio/*',
             pdf: 'application/pdf',
             file: '*/*'
         };
@@ -96,6 +83,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
         for (const type of acceptedFileTypes) {
             if (type === 'image' && fileType.startsWith('image/')) return true;
             if (type === 'video' && fileType.startsWith('video/')) return true;
+            if (type === 'audio' && fileType.startsWith('audio/')) return true;
             if (type === 'pdf' && fileType === 'application/pdf') return true;
         }
 
@@ -107,6 +95,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
         if (file.type.startsWith('image/')) {
             return URL.createObjectURL(file);
         } else if (file.type.startsWith('video/')) {
+            return URL.createObjectURL(file);
+        } else if (file.type.startsWith('audio/')) {
             return URL.createObjectURL(file);
         } else if (file.type === 'application/pdf') {
             return '/pdf-icon.svg'; // PDF ikonu göster
@@ -191,7 +181,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
             const updated = prev.filter(f => f.id !== fileId);
             // Preview URL'i temizle
             const fileToRemove = prev.find(f => f.id === fileId);
-            if (fileToRemove && fileToRemove.file.type.startsWith('image/')) {
+            if (fileToRemove && (fileToRemove.file.type.startsWith('image/') ||
+                fileToRemove.file.type.startsWith('video/') ||
+                fileToRemove.file.type.startsWith('audio/'))) {
                 URL.revokeObjectURL(fileToRemove.preview);
             }
             return updated;
@@ -204,6 +196,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
             setLocalError("Lütfen en az bir dosya seçin.");
             return;
         }
+
         setIsUploading(true);
         setUploadProgress(0);
         setLocalError("");
@@ -214,37 +207,32 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 formData.append('files', file);
             });
 
-            // XMLHttpRequest ile progress tracking
             const xhr = new XMLHttpRequest();
 
             xhr.upload.addEventListener('progress', (e) => {
                 if (e.lengthComputable) {
-                    const progress = Math.round((e.loaded / e.total) * 100);
-                    setUploadProgress(progress);
+                    const percentComplete = Math.round((e.loaded / e.total) * 100);
+                    setUploadProgress(percentComplete);
                 }
             });
 
             xhr.addEventListener('load', () => {
                 if (xhr.status === 200) {
                     try {
-                        const response: UploadedFile[] = JSON.parse(xhr.responseText);
-
-                        // Preview URL'lerini temizle
-                        selectedFiles.forEach(({preview, file}) => {
-                            if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
-                                URL.revokeObjectURL(preview);
-                            }
-                        });
-
+                        const response = JSON.parse(xhr.responseText);
+                        if (onUploadComplete) {
+                            onUploadComplete(response);
+                        }
                         setSelectedFiles([]);
-                        setUploadProgress(0);
-                        onUploadComplete?.(response);
-                    } catch (parseError) {
-                        console.error(parseError);
-                        setLocalError("Sunucu yanıtı işlenirken hata oluştu.");
+                        setUploadProgress(100);
+                        if (fileInputRef.current) {
+                            fileInputRef.current.value = '';
+                        }
+                    } catch (e) {
+                        setLocalError("Sunucu yanıtı işlenirken hata oluştu." + e);
                     }
                 } else {
-                    setLocalError(`Yükleme başarısız: ${xhr.statusText}`);
+                    setLocalError(`Yükleme hatası: ${xhr.status}`);
                 }
                 setIsUploading(false);
             });
@@ -253,7 +241,14 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 setLocalError("Yükleme sırasında bir hata oluştu.");
                 setIsUploading(false);
             });
-            xhr.open('POST', `${API_URL}/upload/` + schoolId + "/" + uploadType);
+            xhr.open('POST', `${API_URL}/upload/` + entityId + "/" + uploadType);
+
+            const token = localStorage.getItem('accessToken');
+            if (token) {
+                xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+            }
+
+
             xhr.send(formData);
 
         } catch (err) {
@@ -267,7 +262,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
     React.useEffect(() => {
         return () => {
             selectedFiles.forEach(({preview, file}) => {
-                if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
+                if (file.type.startsWith('image/') ||
+                    file.type.startsWith('video/') ||
+                    file.type.startsWith('audio/')) {
                     URL.revokeObjectURL(preview);
                 }
             });
@@ -361,7 +358,29 @@ const FileUpload: React.FC<FileUploadProps> = ({
                                         <video
                                             src={preview}
                                             className="w-full h-full object-cover"
+                                            controls
                                         />
+                                    ) : file.type.startsWith('audio/') ? (
+                                        <div className="w-full h-full flex flex-col items-center justify-center p-4">
+                                            <svg
+                                                className="h-16 w-16 text-blue-500 mb-3"
+                                                fill="currentColor"
+                                                viewBox="0 0 20 20"
+                                            >
+                                                <path
+                                                    d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z"
+                                                />
+                                            </svg>
+                                            <audio
+                                                controls
+                                                src={preview}
+                                                className="w-full"
+                                                preload="metadata"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                Tarayıcınız audio elementini desteklemiyor.
+                                            </audio>
+                                        </div>
                                     ) : (
                                         <div className="text-center p-2">
                                             <svg

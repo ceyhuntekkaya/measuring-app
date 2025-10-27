@@ -253,7 +253,7 @@ const OrderingQuestion: React.FC<OrderingQuestionProps> = ({
     return (
         <div className="space-y-6">
             {/* Question Title */}
-            {template.title && (
+            {template.title && template.title === "NOT_SET" && (
                 <div className="mb-4">
                     <h3 className="text-lg font-semibold text-gray-800">{template.title}</h3>
                     {template.description && (
@@ -276,7 +276,7 @@ const OrderingQuestion: React.FC<OrderingQuestionProps> = ({
                 </div>
             )}
 
-            {/* Ordering Type Info */}
+            {/* Ordering Type Info
             {template.options?.orderingType && (
                 <div className="mb-4 p-3 bg-purple-50 border-l-4 border-purple-400 rounded">
                     <p className="text-purple-800 text-sm">
@@ -284,7 +284,7 @@ const OrderingQuestion: React.FC<OrderingQuestionProps> = ({
                     </p>
                 </div>
             )}
-
+            */}
             {/* Drag & Drop Hint */}
             {!isSubmitted && (
                 <div className="mb-4 p-3 bg-gray-50 border border-gray-300 rounded flex items-center space-x-2">

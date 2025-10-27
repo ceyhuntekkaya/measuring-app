@@ -11,6 +11,8 @@ import { NumberInput } from "@/components/ui/number-input";
 import { AudioResponseTemplateDto } from "@/types/exam/questionTemplates";
 import { Trash2, Plus } from "lucide-react";
 import Checkbox from "@/components/ui/checkbox";
+import {FileUpload} from "@/components/ui/file-upload";
+import FilePreview from "@/components/ui/file-preview";
 
 interface AudioResponseTemplateFormProps {
     value?: AudioResponseTemplateDto | null;
@@ -189,6 +191,27 @@ const AudioResponseTemplateForm = forwardRef<AudioResponseTemplateFormHandle, Au
                             onChange={(e) => handleChange('audioPromptUrl', e.target.value)}
                             placeholder="Dinletilecek ses dosyasının URL'sini giriniz (opsiyonel)"
                         />
+
+
+                        <FileUpload
+                            acceptedFileTypes={['audio']}
+                            maxFileSize={20} // 2MB
+                            entityId={"qg_audio"}
+                            uploadType="audioPromptUrl"
+                            multiple={false}
+
+                            labelText="Sesli Açıklama Ekle"
+                            onUploadComplete={(files) => {
+                                handleChange('audioPromptUrl', files[0].path)
+                            }}
+                        />
+
+                        {
+                            formData.audioPromptUrl && formData.audioPromptUrl !== '' &&
+                            <FilePreview fileUrl={formData.audioPromptUrl} alt="Logo" />
+                        }
+
+
                     </div>
 
                     {/* Kayıt Süreleri */}

@@ -6,9 +6,6 @@ import {Button} from "@/components/ui/button";
 import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
 import {Textarea} from "@/components/ui/textarea";
-import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
-import Checkbox from "@/components/ui/checkbox";
-import {NumberInput} from "@/components/ui/number-input";
 import {
     MultipleChoiceTemplateDto,
     TrueFalseTemplateDto,
@@ -33,7 +30,7 @@ import FillInTheBlanksTemplateForm, {FillInTheBlanksTemplateFormHandle} from './
 import ShortAnswerTemplateForm, {ShortAnswerTemplateFormHandle} from './ShortAnswerTemplateForm';
 import EssayTemplateForm, {EssayTemplateFormHandle} from './EssayTemplateForm';
 import MatchingTemplateForm, {MatchingTemplateFormHandle} from './MatchingTemplateForm';
-import {EDifficulty, EQuestionType} from "@/types/exam/enum";
+import {EQuestionType} from "@/types/exam/enum";
 import OrderingTemplateForm, {OrderingTemplateFormHandle} from "@/components/form/template/OrderingTemplateForm";
 import MultipleResponseTemplateForm, {
     MultipleResponseTemplateFormHandle
@@ -234,7 +231,7 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
         validate: validateAll,
         getErrors: () => errors
     }));
-
+/*
     const getQuestionTypeDisplayName = (type: string): string => {
         const displayNames: Record<string, string> = {
             'MULTIPLE_CHOICE': 'Çoktan Seçmeli',
@@ -253,6 +250,8 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
         };
         return displayNames[type] || type;
     };
+
+ */
 
     // Template-specific form render
     const renderTemplateSpecificForm = () => {
@@ -387,8 +386,8 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
 
     return (
         <div>
-            <div className="space-y-6">
-                {/* Başlık */}
+            <div className="space-y-0">
+                {/* Başlık
                 <div className="space-y-2">
                     <Label htmlFor="title">Soru Başlığı *</Label>
                     <Input
@@ -404,10 +403,10 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
                         </Alert>
                     )}
                 </div>
-
+ */}
                 {/* Grid Layout: Konu, Zorluk, Soru Tipi */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Konu */}
+                    {/* Konu
                     <div className="space-y-2">
                         <Label htmlFor="subject">Konu *</Label>
                         <Input
@@ -423,8 +422,8 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
                             </Alert>
                         )}
                     </div>
-
-                    {/* Zorluk Seviyesi */}
+                    */}
+                    {/* Zorluk Seviyesi
                     <div className="space-y-2">
                         <Label htmlFor="difficulty">Zorluk Seviyesi *</Label>
                         <Select
@@ -448,8 +447,8 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
                             </Alert>
                         )}
                     </div>
-
-                    {/* Soru Tipi - QuestionForm'dan geldiği için disabled */}
+                    */}
+                    {/* Soru Tipi - QuestionForm'dan geldiği için disabled
                     <div className="space-y-2">
                         <Label htmlFor="questionType">Soru Tipi *</Label>
                         <Select
@@ -510,11 +509,13 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
                             </Alert>
                         )}
                     </div>
+
+                    */}
                 </div>
 
                 {/* Grid Layout: Puan, Süre, Aktif Durumu */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Puan */}
+                    {/* Puan
                     <div className="space-y-2">
                         <Label htmlFor="points">Puan *</Label>
                         <NumberInput
@@ -533,8 +534,8 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
                             </Alert>
                         )}
                     </div>
-
-                    {/* Süre Sınırı */}
+                    */}
+                    {/* Süre Sınırı
                     <div className="space-y-2">
                         <Label htmlFor="timeLimit">Süre Sınırı (saniye) *</Label>
                         <NumberInput
@@ -553,9 +554,9 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
                                 <AlertDescription>{errors.timeLimit}</AlertDescription>
                             </Alert>
                         )}
-                    </div>
+                    </div>*/}
 
-                    {/* Aktif Durumu */}
+                    {/* Aktif Durumu
                     <div className="space-y-2">
                         <div className="flex items-center space-x-2 mt-6">
                             <Checkbox
@@ -565,7 +566,7 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
                             />
                             <Label htmlFor="isActive">Soru Aktif</Label>
                         </div>
-                    </div>
+                    </div>*/}
                 </div>
 
                 {/* Açıklama */}

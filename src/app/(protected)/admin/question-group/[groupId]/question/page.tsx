@@ -10,7 +10,7 @@ import Link from "next/link";
 import {useQuestionGroup} from "@/hooks/exam/use-question-group";
 import {QuestionDto, QuestionTemplateType} from "@/types/exam/examEntities";
 import {useQuestion} from "@/hooks/exam/use-question";
-import {EQuestionType} from "@/types/exam/enum";
+import {EMediaType, EQuestionType} from "@/types/exam/enum";
 import {
     AudioResponseTemplateDto,
     DragAndDropTemplateDto,
@@ -33,6 +33,7 @@ import HotSpotQuestion from "@/components/template/HotSpotQuestion";
 import MultipleResponseQuestion from "@/components/template/MultipleResponseQuestion";
 import OrderingQuestion from "@/components/template/OrderingQuestion";
 import Checkbox from "@/components/ui/checkbox";
+import FilePreview from "@/components/ui/file-preview";
 
 export default function QuestionPage() {
     const router = useRouter();
@@ -215,13 +216,25 @@ export default function QuestionPage() {
                 }
 
                 <div className="pt-4">
-                    <h3>SORU:</h3>
+
                     <hr/>
                     {
                         selectedQuestionGroup?.headers?.map((header, key) => (
-                            <div key={key}>{header.content}</div>
+
+                            header.mediaType === EMediaType.TEXT ?
+                                <div key={key}>{header.content}</div> :
+
+
+                                <div  key={key} className="flex justify-center">
+                                    <FilePreview size={"medium"} fileUrl={header.content || ''} alt="Logo" />
+                                </div>
+
+
+
                         ))
                     }
+
+
 
 
                     {

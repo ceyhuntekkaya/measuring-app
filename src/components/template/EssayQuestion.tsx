@@ -178,7 +178,7 @@ const EssayQuestion: React.FC<EssayQuestionProps> = ({
     return (
         <div className="space-y-6">
             {/* Question Title */}
-            {template.title && (
+            {template.title && template.title === "NOT_SET" && (
                 <div className="mb-4">
                     <h3 className="text-lg font-semibold text-gray-800">{template.title}</h3>
                     {template.description && (
@@ -197,7 +197,8 @@ const EssayQuestion: React.FC<EssayQuestionProps> = ({
             {/* Prompt */}
             {template.prompt && (
                 <div className="mb-4 p-4 bg-purple-50 border-l-4 border-purple-400 rounded">
-                    <h4 className="font-semibold text-purple-800 mb-2">Kompozisyon İstemi:</h4>
+                    {//<h4 className="font-semibold text-purple-800 mb-2">Kompozisyon İstemi:</h4>
+                         }
                     <p className="text-purple-700 whitespace-pre-wrap">{template.prompt}</p>
                 </div>
             )}
@@ -227,7 +228,7 @@ const EssayQuestion: React.FC<EssayQuestionProps> = ({
                 </div>
             )}
 
-            {/* Required Topics */}
+            {/* Required Topics
             {template.requiredTopics && template.requiredTopics.length > 0 && (
                 <div className="mb-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
                     <h4 className="font-semibold text-yellow-800 mb-2">İşlenmesi Gereken Konular:</h4>
@@ -238,8 +239,8 @@ const EssayQuestion: React.FC<EssayQuestionProps> = ({
                     </ul>
                 </div>
             )}
-
-            {/* Grading Criteria */}
+            */}
+            {/* Grading Criteria
             {template.gradingCriteria && template.gradingCriteria.length > 0 && (
                 <div className="mb-4 p-4 bg-green-50 border-l-4 border-green-400 rounded">
                     <h4 className="font-semibold text-green-800 mb-2">Değerlendirme Kriterleri:</h4>
@@ -250,16 +251,16 @@ const EssayQuestion: React.FC<EssayQuestionProps> = ({
                     </ul>
                 </div>
             )}
-
-            {/* Rubric */}
+            */}
+            {/* Rubric
             {template.rubric && (
                 <div className="mb-4 p-4 bg-indigo-50 border-l-4 border-indigo-400 rounded">
                     <h4 className="font-semibold text-indigo-800 mb-2">Değerlendirme Rubriği:</h4>
                     <p className="text-indigo-700 text-sm whitespace-pre-wrap">{template.rubric}</p>
                 </div>
             )}
-
-            {/* Manual Grading Notice */}
+            */}
+            {/* Manual Grading Notice
             {template.requiresManualGrading && (
                 <div className="mb-4 p-3 bg-orange-50 border-l-4 border-orange-400 rounded">
                     <div className="flex items-start space-x-2">
@@ -272,7 +273,7 @@ const EssayQuestion: React.FC<EssayQuestionProps> = ({
                     </div>
                 </div>
             )}
-
+            */}
             {/* Essay Text Area */}
             <div className={`border-2 rounded-lg transition-all duration-200 ${
                 isFocused

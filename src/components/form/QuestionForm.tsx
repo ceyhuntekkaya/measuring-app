@@ -81,7 +81,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
     const [baseFormData, setBaseFormData] = useState<BaseQuestionTemplateFormData>({
         title: '',
         description: '',
-        subject: '',
+        subject: 'NOT_SET',
         difficulty: EDifficulty.EASY,
         points: 10,
         timeLimit: 300,
@@ -133,7 +133,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                 setBaseFormData({
                     title: question.questionTemplate.title || '',
                     description: question.questionTemplate.description || '',
-                    subject: question.questionTemplate.subject || '',
+                    subject: question.questionTemplate.subject || 'NOT_SET',
                     difficulty: question.questionTemplate.difficulty || EDifficulty.EASY,
                     points: question.questionTemplate.points || 10,
                     timeLimit: question.questionTemplate.timeLimit || 300,
@@ -374,6 +374,200 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 
 
 
+    const QuestionPartAndOptions =()=>{
+        return(
+            <>
+                <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                        <Label>Soru Parçaları</Label>
+                        <Button
+                            type="button"
+                            onClick={addPart}
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                            size="sm"
+                        >
+                            <Plus className="w-4 h-4 mr-2"/>
+                            Parça Ekle
+                        </Button>
+                    </div>
+
+                    {formData.parts.map((part, index) => (
+                        <div key={index} className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg">
+                            <div className="col-span-1">
+                                <Label>Sıra</Label>
+                                <NumberInput
+                                    inputType={"number"}
+                                    value={part.orderNumber}
+                                    onChange={(value) => updatePart(index, 'orderNumber', value)}
+                                    minValue={1}
+                                    decimalPlaces={0}
+                                />
+                            </div>
+
+                            <div className="col-span-2">
+                                <Label>Medya Tipi</Label>
+                                <Select
+                                    onValueChange={(value) => updatePart(index, 'mediaType', value as EMediaType)}
+                                    value={part.mediaType || "TEXT"}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue/>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            {Object.entries(EMediaType).map(([key, value]) => (
+                                                <SelectItem key={key} value={key}>
+                                                    {value}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="col-span-2">
+                                <Label>Etiket</Label>
+                                <Input
+                                    value={part.label || ''}
+                                    onChange={(e) => updatePart(index, 'label', e.target.value)}
+                                    placeholder="Etiket"
+                                />
+                            </div>
+
+                            <div className="col-span-5">
+                                <Label>İçerik</Label>
+                                <Textarea
+                                    value={part.content || ''}
+                                    onChange={(e) => updatePart(index, 'content', e.target.value)}
+                                    placeholder="Parça içeriğini giriniz"
+                                    className="min-h-[60px]"
+                                />
+                            </div>
+
+                            <div className="col-span-1">
+                                <Button
+                                    type="button"
+                                    onClick={() => removePart(index)}
+                                    variant="primary"
+                                    size="sm"
+                                >
+                                    <Trash2 className="w-4 h-4"/>
+                                </Button>
+                            </div>
+                        </div>
+                    ))}
+
+                    {errors.parts && (
+                        <Alert variant="destructive">
+                            <AlertDescription>{errors.parts}</AlertDescription>
+                        </Alert>
+                    )}
+                </div>
+
+                <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                        <Label>Soru Seçenekleri</Label>
+                        <Button
+                            type="button"
+                            onClick={addOption}
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                            size="sm"
+                        >
+                            <Plus className="w-4 h-4 mr-2"/>
+                            Seçenek Ekle
+                        </Button>
+                    </div>
+
+                    {formData.options.map((option, index) => (
+                        <div key={index} className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg">
+                            <div className="col-span-1">
+                                <Label>Sıra</Label>
+                                <NumberInput
+                                    inputType={"number"}
+                                    value={option.orderNumber}
+                                    onChange={(value) => updateOption(index, 'orderNumber', value)}
+                                    minValue={1}
+                                    decimalPlaces={0}
+                                />
+                            </div>
+
+                            <div className="col-span-2">
+                                <Label>Medya Tipi</Label>
+                                <Select
+                                    onValueChange={(value) => updateOption(index, 'mediaType', value as EMediaType)}
+                                    value={option.mediaType || "TEXT"}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue/>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            {Object.entries(EMediaType).map(([key, value]) => (
+                                                <SelectItem key={key} value={key}>
+                                                    {value}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="col-span-3">
+                                <Label>İçerik</Label>
+                                <Textarea
+                                    value={option.content}
+                                    onChange={(e) => updateOption(index, 'content', e.target.value)}
+                                    placeholder="Seçenek içeriğini giriniz"
+                                    className="min-h-[60px]"
+                                />
+                            </div>
+
+                            <div className="col-span-3">
+                                <Label>Temel İçerik</Label>
+                                <Textarea
+                                    value={option.baseContent || ''}
+                                    onChange={(e) => updateOption(index, 'baseContent', e.target.value)}
+                                    placeholder="Temel içerik"
+                                    className="min-h-[60px]"
+                                />
+                            </div>
+
+                            <div className="col-span-1">
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        checked={option.isTrueOption}
+                                        onChange={(checked) => updateOption(index, 'isTrueOption', !!checked)}
+                                    />
+                                    <Label>Doğru</Label>
+                                </div>
+                            </div>
+
+                            <div className="col-span-1">
+                                <Button
+                                    type="button"
+                                    onClick={() => removeOption(index)}
+                                    variant="primary"
+                                    size="sm"
+                                >
+                                    <Trash2 className="w-4 h-4"/>
+                                </Button>
+                            </div>
+                        </div>
+                    ))}
+
+                    {errors.options && (
+                        <Alert variant="destructive">
+                            <AlertDescription>{errors.options}</AlertDescription>
+                        </Alert>
+                    )}
+                </div>
+
+            </>
+        )
+    }
+
+
+
 
     return (
         <Card className="w-full">
@@ -502,204 +696,10 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                         </div>
                     </div>
 
-                    {// SORU PART BÖLÜMÜ//
-                         }
-                    <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                            <Label>Soru Parçaları</Label>
-                            <Button
-                                type="button"
-                                onClick={addPart}
-                                className="bg-green-600 hover:bg-green-700 text-white"
-                                size="sm"
-                            >
-                                <Plus className="w-4 h-4 mr-2"/>
-                                Parça Ekle
-                            </Button>
-                        </div>
-
-                        {formData.parts.map((part, index) => (
-                            <div key={index} className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg">
-                                <div className="col-span-1">
-                                    <Label>Sıra</Label>
-                                    <NumberInput
-                                        inputType={"number"}
-                                        value={part.orderNumber}
-                                        onChange={(value) => updatePart(index, 'orderNumber', value)}
-                                        minValue={1}
-                                        decimalPlaces={0}
-                                    />
-                                </div>
-
-                                <div className="col-span-2">
-                                    <Label>Medya Tipi</Label>
-                                    <Select
-                                        onValueChange={(value) => updatePart(index, 'mediaType', value as EMediaType)}
-                                        value={part.mediaType || "TEXT"}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue/>
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectGroup>
-                                                {Object.entries(EMediaType).map(([key, value]) => (
-                                                    <SelectItem key={key} value={key}>
-                                                        {value}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectGroup>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="col-span-2">
-                                    <Label>Etiket</Label>
-                                    <Input
-                                        value={part.label || ''}
-                                        onChange={(e) => updatePart(index, 'label', e.target.value)}
-                                        placeholder="Etiket"
-                                    />
-                                </div>
-
-                                <div className="col-span-5">
-                                    <Label>İçerik</Label>
-                                    <Textarea
-                                        value={part.content || ''}
-                                        onChange={(e) => updatePart(index, 'content', e.target.value)}
-                                        placeholder="Parça içeriğini giriniz"
-                                        className="min-h-[60px]"
-                                    />
-                                </div>
-
-                                <div className="col-span-1">
-                                    <Button
-                                        type="button"
-                                        onClick={() => removePart(index)}
-                                        variant="primary"
-                                        size="sm"
-                                    >
-                                        <Trash2 className="w-4 h-4"/>
-                                    </Button>
-                                </div>
-                            </div>
-                        ))}
-
-                        {errors.parts && (
-                            <Alert variant="destructive">
-                                <AlertDescription>{errors.parts}</AlertDescription>
-                            </Alert>
-                        )}
-                    </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-                    <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                            <Label>Soru Seçenekleri</Label>
-                            <Button
-                                type="button"
-                                onClick={addOption}
-                                className="bg-green-600 hover:bg-green-700 text-white"
-                                size="sm"
-                            >
-                                <Plus className="w-4 h-4 mr-2"/>
-                                Seçenek Ekle
-                            </Button>
-                        </div>
-
-                        {formData.options.map((option, index) => (
-                            <div key={index} className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg">
-                                <div className="col-span-1">
-                                    <Label>Sıra</Label>
-                                    <NumberInput
-                                        inputType={"number"}
-                                        value={option.orderNumber}
-                                        onChange={(value) => updateOption(index, 'orderNumber', value)}
-                                        minValue={1}
-                                        decimalPlaces={0}
-                                    />
-                                </div>
-
-                                <div className="col-span-2">
-                                    <Label>Medya Tipi</Label>
-                                    <Select
-                                        onValueChange={(value) => updateOption(index, 'mediaType', value as EMediaType)}
-                                        value={option.mediaType || "TEXT"}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue/>
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectGroup>
-                                                {Object.entries(EMediaType).map(([key, value]) => (
-                                                    <SelectItem key={key} value={key}>
-                                                        {value}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectGroup>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="col-span-3">
-                                    <Label>İçerik</Label>
-                                    <Textarea
-                                        value={option.content}
-                                        onChange={(e) => updateOption(index, 'content', e.target.value)}
-                                        placeholder="Seçenek içeriğini giriniz"
-                                        className="min-h-[60px]"
-                                    />
-                                </div>
-
-                                <div className="col-span-3">
-                                    <Label>Temel İçerik</Label>
-                                    <Textarea
-                                        value={option.baseContent || ''}
-                                        onChange={(e) => updateOption(index, 'baseContent', e.target.value)}
-                                        placeholder="Temel içerik"
-                                        className="min-h-[60px]"
-                                    />
-                                </div>
-
-                                <div className="col-span-1">
-                                    <div className="flex items-center space-x-2">
-                                        <Checkbox
-                                            checked={option.isTrueOption}
-                                            onChange={(checked) => updateOption(index, 'isTrueOption', !!checked)}
-                                        />
-                                        <Label>Doğru</Label>
-                                    </div>
-                                </div>
-
-                                <div className="col-span-1">
-                                    <Button
-                                        type="button"
-                                        onClick={() => removeOption(index)}
-                                        variant="primary"
-                                        size="sm"
-                                    >
-                                        <Trash2 className="w-4 h-4"/>
-                                    </Button>
-                                </div>
-                            </div>
-                        ))}
-
-                        {errors.options && (
-                            <Alert variant="destructive">
-                                <AlertDescription>{errors.options}</AlertDescription>
-                            </Alert>
-                        )}
-                    </div>
+                    {
+                        formData.questionGroupId && formData.questionGroupId === "yedek_alani" &&
+                        <QuestionPartAndOptions/>
+                    }
 
                     {/* Base Question Template Form - Alt componentler burada */}
                     {formData.questionType && (
