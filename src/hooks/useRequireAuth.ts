@@ -16,7 +16,7 @@ export function useRequireAuth(requiredRoles: Role[] = []) {
             router.replace(`/login?redirectTo=${window.location.pathname}`);
             return;
         }
-
+        console.log("ceyhun 17")
         if (
             requiredRoles.length > 0 &&
             !requiredRoles.some(role => user?.roleSet.includes(role))

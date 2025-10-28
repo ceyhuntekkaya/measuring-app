@@ -137,6 +137,11 @@ export type ApplicationDto = DatabaseObjectDto & {
     password?: string;
 }
 
+
+
+
+
+
 export interface ApplicationFormData extends DatabaseObjectDto {
     name: string;
     code: string;

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { User, AuthResponse } from '@/types/auth';
+import {AuthResponse, AuthLearnerResponse, RefreshTokenResponse} from '@/types/auth';
 import siteConfig from '@/config/config.json';
 const API_URL =  siteConfig.api.invokeUrl;
 
@@ -37,6 +37,44 @@ class AuthService {
         }
     }
 
+
+
+    async examLogin(examCode: string): Promise<AuthLearnerResponse> {
+        try {
+            const config = {
+                headers: {
+                    "Content-Type": "application/json"
+                },
+            };
+
+            const response = await axios.post(
+                `${API_URL}/auth/session/login`,
+                { examCandidateAndSessionCode: examCode},
+                config
+            );
+            const data = response.data;
+
+            if (data.accessToken) {
+                localStorage.setItem('accessToken', data.accessToken);
+                document.cookie = `accessToken=${data.accessToken}; path=/; secure; samesite=strict`;
+
+
+                // RefreshToken varsa onu da kaydet
+                if (data.refreshToken) {
+                    localStorage.setItem('refreshToken', data.refreshToken);
+                }
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Login request failed:', error);
+            throw error;
+        }
+    }
+
+
+
+
     async logout(): Promise<void> {
         try {
             const token = this.getToken();
@@ -57,7 +95,10 @@ class AuthService {
         }
     }
 
-    async getCurrentUser(): Promise<User> {
+
+
+
+    async getCurrentUser(): Promise<RefreshTokenResponse> {
         try {
             const token = this.getToken();
             const config = {
@@ -68,6 +109,8 @@ class AuthService {
             };
 
             const response = await axios.get(`${API_URL}/auth/me`, config);
+
+            console.log(response.data);
             return response.data;
         } catch (error) {
             console.error('Get current user failed:', error);

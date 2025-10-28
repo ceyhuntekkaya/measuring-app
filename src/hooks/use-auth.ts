@@ -9,7 +9,11 @@ export function useAuth() {
         throw new Error('useAuth must be used within an AuthProvider');
     }
 
-    const {user, loading, login, logout, error} = context;
+    const {user, loading, login, logout, error,  candidate,
+        examSession,
+        exam,
+        application,
+        evaluations } = context;
 
 
     const hasAnyDepartment = useCallback(
@@ -49,6 +53,7 @@ export function useAuth() {
     const hasRole = useCallback(
         (role: Role) => {
             if (!user) return false;
+            console.log("ceyhun 1")
             return user.roleSet.includes(role);
         },
         [user]
@@ -60,6 +65,7 @@ export function useAuth() {
 
     const isAdmin = useCallback(() => {
         if (!user) return false;
+        console.log("ceyhun 2")
         return user.roleSet.includes('ADMIN');
     }, [user]);
 
@@ -81,6 +87,11 @@ export function useAuth() {
         isLoading,
         error,
         hasAnyDepartment,
+        candidate,
+        examSession,
+        exam,
+        application,
+        evaluations
     };
 }
 

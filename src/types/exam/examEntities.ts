@@ -10,7 +10,7 @@ import {
     EQuestionType
 } from "@/types/exam/enum";
 import {BranchDto, BrandDto} from "@/types/management/brand";
-import {UserDto} from "@/types/auth";
+import {EEvaluationStatus, UserDto} from "@/types/auth";
 import {DatabaseObjectDto} from "@/types/exam/miscDtos";
 import {
     AudioResponseTemplateDto,
@@ -472,4 +472,39 @@ export interface ExamImportError {
     field: string;
     value: string;
     error: string;
+}
+
+
+
+
+
+export type EvaluationDto = DatabaseObjectDto & {
+
+    id: string;
+    createdAt: string;
+    deletedAt?: string;
+    status: string;
+    createdById?: string;
+    deletedById?: string;
+
+
+    questionId: string;
+    applicationId: string;
+    graderId?: string;
+    answer?: string;
+    isEmptyAnswer?: string;
+    correctAnswer?: string;
+    answerDescription?: string;
+    score?: number;
+    description?: string;
+    evaluationStatus?: EEvaluationStatus;
+    mediaType?: EMediaType;
+    evaluationAt: string;
+    repeatNumber?: number;
+    isOpen?: boolean;
+    isEvaluatedAutomatically?: boolean;
+
+
+
+
 }
