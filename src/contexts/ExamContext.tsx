@@ -190,7 +190,7 @@ const STORAGE_KEY = 'exam-state';
 export function ExamProvider({ children }: { children: React.ReactNode }) {
     const [state, dispatch] = useReducer(examReducer, initialState);
 
-    // localStorage'dan state restore et
+
     useEffect(() => {
         const savedState = localStorage.getItem(STORAGE_KEY);
         if (savedState) {
@@ -204,7 +204,7 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
         }
     }, []);
 
-    // State değişikliklerini localStorage'a kaydet
+
     useEffect(() => {
         if (state.isAuthenticated) {
             const stateToSave = {

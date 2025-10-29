@@ -1,12 +1,20 @@
 import React, {useRef, useState, useCallback, useEffect} from 'react';
+import siteConfig from "@/config/config.json";
+import {showNotification} from "@/lib/notification";
+import {EApplicationUpdateState} from "@/types/exam/enum";
+import {useExamApplicationContext} from "@/contexts/ExamApplicationContext";
 
+const API_URL = siteConfig.api.invokeUrl;
 
 interface PassportPhotoCameraProps {
-    setStep: (step: 'login' | 'welcome' | 'camera' | 'audio' | 'section-selection' | 'exam-taking' | 'completed') => void;
+    applicationId: string;
+    title: string;
+    uploadState: string;
+    updateState: EApplicationUpdateState;
 }
 
 
-const PassportPhotoCamera: React.FC<PassportPhotoCameraProps> = ({setStep}) => {
+const PassportPhotoCamera: React.FC<PassportPhotoCameraProps> = ({applicationId, title, uploadState, updateState}) => {
 
     const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -14,6 +22,9 @@ const PassportPhotoCamera: React.FC<PassportPhotoCameraProps> = ({setStep}) => {
     const [stream, setStream] = useState<MediaStream | null>(null);
     const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
     const [isCameraActive, setIsCameraActive] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+
+    const {updateApplicationStateStatus} = useExamApplicationContext();
 
     const startCamera = useCallback(async () => {
         try {
@@ -78,14 +89,75 @@ const PassportPhotoCamera: React.FC<PassportPhotoCameraProps> = ({setStep}) => {
         startCamera();
     }, [startCamera]);
 
+    const uploadPhoto = async () => {
+        if (!capturedPhoto) {
+            alert("Yüklenecek fotoğraf bulunamadı.");
+            return;
+        }
+
+        setIsUploading(true);
+
+        try {
+            // Base64'ü Blob'a çevir
+            const response = await fetch(capturedPhoto);
+            const blob = await response.blob();
+
+            const formData = new FormData();
+            // Blob'u File objesine çevirip ekliyoruz
+            const photoFile = new File([blob], 'passport-photo.png', {
+                type: 'image/png'
+            });
+            formData.append('files', photoFile);
+
+            const xhr = new XMLHttpRequest();
+
+            xhr.addEventListener('load', () => {
+                if (xhr.status === 200) {
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        console.log(response);
+                        showNotification.success('Fotğraf kaydı başarıyla yüklendi!');
+                        updateApplicationStateStatus(updateState)
+                        // Örneğin: onUploadComplete(response);
+                    } catch (e) {
+                        console.error(e);
+                        showNotification.error('Fotoğraf kaydedilemedi...');
+                    }
+                } else {
+                    alert(`Yükleme hatası: ${xhr.status}`);
+                }
+                setIsUploading(false);
+            });
+
+            xhr.addEventListener('error', () => {
+                alert("Yükleme sırasında bir hata oluştu.");
+                setIsUploading(false);
+            });
+
+            xhr.open('POST', `${API_URL}/upload/${applicationId}/${uploadState}`);
+
+            const token = localStorage.getItem('accessToken');
+            if (token) {
+                xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+            }
+
+            xhr.send(formData);
+
+        } catch (err) {
+            console.log(err);
+            alert("Yükleme sırasında bir hata oluştu.");
+            setIsUploading(false);
+        }
+    };
+
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
-            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-                <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">
-                    Vesikalık Fotoğraf
+        <div className="flex flex-col items-center justify-center  w-full  bg-gray-100 p-4">
+            <div className="bg-white rounded-lg shadow-lg p-6   items-center justify-center">
+                <h1 className="text-2xl font-bold text-center mb-13text-gray-800">
+                    {title}
                 </h1>
 
-                <div className="relative bg-gray-200 rounded-lg overflow-hidden mb-4 w-full"
+                <div className="relative bg-gray-200 rounded-lg overflow-hidden mb-4 w-full  items-center justify-center  max-w-md"
                      style={{aspectRatio: '3/4', minHeight: '400px'}}>
                     {!isCameraActive && !capturedPhoto && (
                         <div className="absolute inset-0 flex items-center justify-center">
@@ -159,18 +231,24 @@ const PassportPhotoCamera: React.FC<PassportPhotoCameraProps> = ({setStep}) => {
                             >
                                 Tekrar Çek
                             </button>
-                            <a
+                            {
+                                /*
+                                 <a
                                 href={capturedPhoto}
                                 download="vesikalik-fotograf.png"
                                 className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 text-center"
                             >
                                 Fotoğrafı İndir
                             </a>
+                                 */
+                            }
+
                             <button
-                                onClick={()=>setStep('audio')}
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200"
+                                onClick={uploadPhoto}
+                                disabled={isUploading}
+                                className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
-                                Sonraki
+                                {isUploading ? 'YÜKLENIYOR...' : 'FOTOĞRAFI ONAYLA VE GÖNDER'}
                             </button>
                         </>
                     )}

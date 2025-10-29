@@ -1,5 +1,6 @@
 'use client';
 import {useAuth} from '@/hooks/use-auth';
+import {ExamApplicationProvider} from "@/contexts/ExamApplicationContext";
 
 
 export default function AdminLayout({
@@ -17,10 +18,11 @@ export default function AdminLayout({
     }
 
     return (
-
+        <ExamApplicationProvider>
             <div className='min-h-screen bg-gray-100'>
                 {children}
             </div>
+        </ExamApplicationProvider>
 
     );
 }

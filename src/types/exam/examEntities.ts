@@ -2,12 +2,13 @@
 
 import {ExamSectionDto, ExamTypeDto, QuestionGroupTypeDto} from "@/types/exam/examTemplates";
 import {
+    EApplicationUpdateState,
     EApprovalStatus,
     ECurriculumLevel, EDifficulty,
     EExamCategory,
     EExamType,
     EMediaType,
-    EQuestionType
+    EQuestionType, ESessionState
 } from "@/types/exam/enum";
 import {BranchDto, BrandDto} from "@/types/management/brand";
 import {EEvaluationStatus, UserDto} from "@/types/auth";
@@ -54,7 +55,6 @@ export type QuestionTemplateType =
     | AudioResponseTemplateDto
     | VideoResponseTemplateDto
     | ImageResponseTemplateDto;
-
 
 
 export type QuestionDto = DatabaseObjectDto & {
@@ -194,7 +194,6 @@ export interface ExamTypeSearchRequest {
 }
 
 
-
 export interface ExamDto extends DatabaseObjectDto {
     name: string;
     code: string;
@@ -203,7 +202,6 @@ export interface ExamDto extends DatabaseObjectDto {
     branch: BranchDto;
     brand: BrandDto;
 }
-
 
 
 export interface ExamSessionDto extends DatabaseObjectDto {
@@ -216,6 +214,9 @@ export interface ExamSessionDto extends DatabaseObjectDto {
     brand: BrandDto;
     examType: ExamTypeDto;
     supervisors: UserDto[];
+    beginAt: string
+    endAt: string
+    sessionState: ESessionState;
 }
 
 export interface CreateExamSectionRequest {
@@ -223,6 +224,14 @@ export interface CreateExamSectionRequest {
     examTypeId: string;
     orderNumber: number;
 }
+
+
+export interface UpdateApplicationState {
+    state: EApplicationUpdateState;
+    description?: string;
+    userId?: string;
+}
+
 
 // ExamReadinessValidation ve nested types
 export interface ReadinessIssue {
@@ -275,6 +284,7 @@ export interface AuditLog {
     errorMessage: string;
     sessionId: string;
 }
+
 export interface PageResponse<T> {
     content: T[];
     totalElements: number;
@@ -285,9 +295,6 @@ export interface PageResponse<T> {
     last: boolean;
     empty: boolean;
 }
-
-
-
 
 
 export interface CreateExamRequest {
@@ -308,7 +315,7 @@ export interface UpdateExamRequest {
     brandId: string;
 }
 
-export interface ExamFormData extends DatabaseObjectDto{
+export interface ExamFormData extends DatabaseObjectDto {
     name: string;
     code: string;
     examTypeId: string;
@@ -475,9 +482,6 @@ export interface ExamImportError {
 }
 
 
-
-
-
 export type EvaluationDto = DatabaseObjectDto & {
 
     id: string;
@@ -503,8 +507,6 @@ export type EvaluationDto = DatabaseObjectDto & {
     repeatNumber?: number;
     isOpen?: boolean;
     isEvaluatedAutomatically?: boolean;
-
-
 
 
 }

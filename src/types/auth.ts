@@ -144,7 +144,7 @@ export interface AuthResponse {
 }
 
 
-export type EEvaluationStatus = 'NOT_STARTED' | 'EVALUATED' | 'PENDING' | 'CANCELLED' ;
+export type EEvaluationStatus = 'NOT_STARTED' | 'EVALUATED' | 'PENDING' | 'CANCELLED' | 'FINISHED' ;
 
 
 

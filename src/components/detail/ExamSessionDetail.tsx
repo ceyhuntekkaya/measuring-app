@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import {ExamSessionDto} from '@/types/exam/examEntities';
 import {formatDate} from '@/utils/date-formater';
 import LoadingComp from "@/components/ui/loading-comp";
 import ExamParticipants from "@/components/proctor/ExamParticipants";
+import {useApplication} from "@/hooks/exam/use-application";
 
 interface ExamSessionDetailProps {
     examSession: ExamSessionDto;
@@ -51,6 +52,19 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                                                                  onViewStatistics,
                                                              }) => {
     const [activeTab, setActiveTab] = useState("general");
+
+    const {
+        getApplicationsByExamSession,
+        examSessionApplications,
+
+    } = useApplication();
+
+
+    useEffect(() => {
+        getApplicationsByExamSession(examSession.id)
+    }, []);
+
+
 
     if (isLoading) {
         return <LoadingComp/>;
@@ -390,63 +404,6 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                     <div className="grid grid-cols-1 gap-6">
 
 
-
-                            {
-                                /*
-                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center space-x-2">
-                                        <Building2 className="h-5 w-5"/>
-                                        <span>Marka Bilgisi</span>
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    {examSession.brand && (
-                                        <div className="flex items-center space-x-4">
-                                            <div className="bg-blue-100 p-3 rounded-full">
-                                                <Building2 className="h-6 w-6 text-blue-600"/>
-                                            </div>
-                                            <div>
-                                                <p className="font-medium">{examSession.brand.name}</p>
-                                                <p className="text-sm text-gray-500">Kod: {examSession.brand.code}</p>
-                                                {examSession.brand.email && (
-                                                    <p className="text-xs text-gray-400">{examSession.brand.email}</p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
-
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center space-x-2">
-                                        <Building className="h-5 w-5"/>
-                                        <span>Şube Bilgisi</span>
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    {examSession && examSession.branch && (
-                                        <div className="flex items-center space-x-4">
-                                            <div className="bg-green-100 p-3 rounded-full">
-                                                <Building className="h-6 w-6 text-green-600"/>
-                                            </div>
-                                            <div>
-                                                <p className="font-medium">{examSession.branch.branchName}</p>
-                                                <p className="text-sm text-gray-500">Kod: {examSession.branch.code}</p>
-
-                                            </div>
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
-                             </div>
-                                 */
-                            }
-
-
-
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center space-x-2">
@@ -493,7 +450,7 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
 
 
                             {
-                                /*
+
 
                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <Card>
@@ -542,7 +499,7 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                             </Card>
                         </div>
 
-                                 */
+
                             }
 
 
@@ -632,7 +589,7 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                 )}
             </div>
         </div>
-        <ExamParticipants/>
+        <ExamParticipants candidates ={examSessionApplications ? examSessionApplications : []}/>
 </> );
 };
 

@@ -12,6 +12,7 @@ import {
 } from '@/types/management/brand';
 import { showNotification } from '@/lib/notification';
 import {applicationService} from "@/services/api/management/appication-service";
+import {UpdateApplicationState} from "@/types/exam/examEntities";
 
 interface UseApplicationReturn {
     applications: ApplicationDto[] | null;
@@ -41,6 +42,7 @@ interface UseApplicationReturn {
     quickCreateApplication: (name: string, code: string, examId: string, examSessionId: string, candidateId: string, username?: string) => Promise<void>;
     createApplicationsForCandidates: (examSessionId: string, examId: string, candidateIds: string[], namePrefix?: string, codePrefix?: string) => Promise<void>;
     clearApplicationData: () => void;
+    updateApplicationState: (applicationId: string, updateApplicationState: UpdateApplicationState) => Promise<void>;
 }
 
 export const useApplication = (): UseApplicationReturn => {
@@ -331,6 +333,25 @@ export const useApplication = (): UseApplicationReturn => {
         }
     }, []);
 
+
+
+
+    const updateApplicationState = useCallback(async (applicationId: string, updateApplicationState: UpdateApplicationState) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await applicationService.updateApplicationState(applicationId, updateApplicationState);
+            if (!response.data || !response.success) {
+                throw new Error(response.message);
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err : new Error('An error occurred'));
+            showNotification.error('Bilgi güncellenirken!');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
     const quickCreateApplication = useCallback(async (
         name: string,
         code: string,
@@ -424,6 +445,7 @@ export const useApplication = (): UseApplicationReturn => {
         completeApplicationById,
         quickCreateApplication,
         createApplicationsForCandidates,
-        clearApplicationData
+        clearApplicationData,
+        updateApplicationState
     };
 };

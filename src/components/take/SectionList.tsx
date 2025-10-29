@@ -1,5 +1,6 @@
 import React from 'react';
 import {ExamSectionDto} from "@/types/exam/examTemplates";
+import {SectionQuestionCounts} from "@/app/(protected)/learner/check/start/page";
 
 
 
@@ -8,11 +9,13 @@ import {ExamSectionDto} from "@/types/exam/examTemplates";
 interface ExamSectionsListProps {
     sections: ExamSectionDto[];
     onSectionSelect?: (section: ExamSectionDto) => void;
+    sectionQuestionStatics:SectionQuestionCounts[];
 }
 
 const ExamSectionsList: React.FC<ExamSectionsListProps> = ({
                                                                sections,
-                                                               onSectionSelect
+                                                               onSectionSelect,
+                                                               sectionQuestionStatics
                                                            }) => {
     // orderNumber'a göre sırala
     const sortedSections = [...sections].sort((a, b) => {
@@ -21,8 +24,11 @@ const ExamSectionsList: React.FC<ExamSectionsListProps> = ({
         return orderA - orderB;
     });
 
+
+
+    console.log(sectionQuestionStatics)
     return (
-        <div className="w-full max-w-4xl mx-auto p-6">
+        <div className="w-full mx-auto p-6 pt-4 bg-white">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Sınav Bölümleri</h2>
 
             <div className="space-y-3">
