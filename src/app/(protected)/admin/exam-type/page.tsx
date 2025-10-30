@@ -8,6 +8,8 @@ import {useRouter} from "next/navigation";
 import LoadingComp from "@/components/ui/loading-comp";
 import {useExamType} from "@/hooks/exam/use-exam-type";
 import Link from "next/link";
+import {examTypeConverter, statusConverter} from "@/utils/enum-converter";
+import {EExamType, EStatus} from "@/types/exam/enum";
 
 export default function ExamTypePage() {
     const router = useRouter();
@@ -56,7 +58,7 @@ export default function ExamTypePage() {
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => router.push(`/admin/exam-type/${record.id}`)}
                 >
-                    {value as string}
+                    {examTypeConverter(value as EExamType)}
                 </div>
             )
         }
@@ -69,7 +71,7 @@ export default function ExamTypePage() {
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => router.push(`/admin/exam-type/${record.id}`)}
                 >
-                    {value as string}
+                    {statusConverter(value as EStatus)}
                 </div>
             )
         }
@@ -81,7 +83,7 @@ export default function ExamTypePage() {
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
                 >
-                    <Link href={`/admin/exam-type/${value}/section`}>Bölümler</Link>
+                    <Link className={"btn btn-success"} href={`/admin/exam-type/${value}/section`}>Sınav Bölümleri</Link>
                 </div>
             )
         }

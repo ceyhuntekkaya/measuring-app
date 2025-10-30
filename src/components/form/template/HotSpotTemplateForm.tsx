@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -33,14 +33,18 @@ interface HotSpotTemplateFormErrors {
     imageUrl?: string;
     options?: string;
     maxSelections?: string;
-    explanation?: string;
 }
 
-const HotSpotTemplateForm: React.FC<HotSpotTemplateFormProps> = ({
-                                                                     value,
-                                                                     onChange,
-                                                                     loading = false
-                                                                 }) => {
+// Validation handle için ref interface
+export interface HotSpotTemplateFormHandle {
+    validate: () => boolean;
+    getErrors: () => HotSpotTemplateFormErrors;
+}
+
+const HotSpotTemplateForm = forwardRef<HotSpotTemplateFormHandle, HotSpotTemplateFormProps>(({
+                                                                                                 value,
+                                                                                                 onChange,
+                                                                                             }, ref) => {
     const [formData, setFormData] = useState<HotSpotTemplateFormData>({
         instructions: '',
         imageUrl: '',
@@ -56,6 +60,7 @@ const HotSpotTemplateForm: React.FC<HotSpotTemplateFormProps> = ({
 
     const [errors, setErrors] = useState<HotSpotTemplateFormErrors>({});
 
+    // Value değiştiğinde form data'yı güncelle (Update modu için)
     useEffect(() => {
         if (value) {
             setFormData({
@@ -71,16 +76,48 @@ const HotSpotTemplateForm: React.FC<HotSpotTemplateFormProps> = ({
                 explanation: value.explanation || ''
             });
         }
-    }, [value]);
+    }, []);
+
+    // Form data değiştiğinde parent'a bildir (Anlık güncelleme)
+    useEffect(() => {
+        // İlk render'da boş form için onChange tetikleme
+        if (formData.instructions || formData.imageUrl || (formData.options.hotSpots ?? []).length > 0) {
+            // Background image URL'yi sync et
+            const optionsWithImage: HotSpotOptions = {
+                ...formData.options,
+                backgroundImageUrl: formData.imageUrl
+            };
+
+            const templateData: HotSpotTemplateDto = {
+                ...value,
+                instructions: formData.instructions,
+                imageUrl: formData.imageUrl,
+                options: optionsWithImage,
+                maxSelections: formData.maxSelections,
+                allowMultipleSpots: formData.allowMultipleSpots,
+                explanation: formData.explanation
+            };
+
+            onChange(templateData);
+        }
+    }, [formData]); // onChange ve value bağımlılığı yok - sonsuz döngü önlendi
 
     const handleChange = <T extends keyof HotSpotTemplateFormData>(
         name: T,
-        value: HotSpotTemplateFormData[T]
+        newValue: HotSpotTemplateFormData[T]
     ) => {
         setFormData(prev => ({
             ...prev,
-            [name]: value
+            [name]: newValue
         }));
+
+        // Hata varsa temizle
+        if (errors[name as keyof HotSpotTemplateFormErrors]) {
+            setErrors(prev => ({
+                ...prev,
+                [name]: undefined
+            }));
+        }
     };
 
     const addHotSpot = () => {
@@ -115,19 +152,20 @@ const HotSpotTemplateForm: React.FC<HotSpotTemplateFormProps> = ({
     const updateHotSpot = <K extends keyof HotSpotArea>(
         index: number,
         field: K,
-        value: HotSpotArea[K]
+        newValue: HotSpotArea[K]
     ) => {
         setFormData(prev => ({
             ...prev,
             options: {
                 ...prev.options,
                 hotSpots: prev.options.hotSpots?.map((hotSpot, i) =>
-                    i === index ? { ...hotSpot, [field]: value } : hotSpot
+                    i === index ? { ...hotSpot, [field]: newValue } : hotSpot
                 ) || []
             }
         }));
     };
 
+    // Validation fonksiyonu - parent tarafından çağrılacak
     const validateForm = (): boolean => {
         const newErrors: HotSpotTemplateFormErrors = {};
 
@@ -163,32 +201,16 @@ const HotSpotTemplateForm: React.FC<HotSpotTemplateFormProps> = ({
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = () => {
-        if (validateForm()) {
-            // Background image URL'yi sync et
-            const optionsWithImage = {
-                ...formData.options,
-                backgroundImageUrl: formData.imageUrl
-            };
-
-            const submitData: HotSpotTemplateDto = {
-                ...value,
-                instructions: formData.instructions.trim(),
-                imageUrl: formData.imageUrl.trim(),
-                options: optionsWithImage,
-                maxSelections: formData.maxSelections,
-                allowMultipleSpots: formData.allowMultipleSpots,
-                explanation: formData.explanation.trim()
-            };
-
-            onChange(submitData);
-        }
-    };
+    // Parent component'in validate fonksiyonunu çağırabilmesi için
+    useImperativeHandle(ref, () => ({
+        validate: validateForm,
+        getErrors: () => errors
+    }));
 
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Sıcak Nokta Şablonu Ayarları</CardTitle>
+                <CardTitle>Sıcak Nokta Şablon Detayları</CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="space-y-6">
@@ -209,22 +231,15 @@ const HotSpotTemplateForm: React.FC<HotSpotTemplateFormProps> = ({
                         )}
                     </div>
 
-                    {/* Arkaplan Resmi URL */}
+                    {/* Arkaplan Resmi */}
                     <div className="space-y-2">
                         <Label htmlFor="imageUrl">Arkaplan Resmi URL *</Label>
                         <Input
                             id="imageUrl"
                             value={formData.imageUrl}
-                            onChange={(e) => {
-                                handleChange('imageUrl', e.target.value);
-                                // Options içindeki backgroundImageUrl'yi de güncelle
-                                handleChange('options', {
-                                    ...formData.options,
-                                    backgroundImageUrl: e.target.value
-                                });
-                            }}
+                            onChange={(e) => handleChange('imageUrl', e.target.value)}
                             className={errors.imageUrl ? 'border-red-500' : ''}
-                            placeholder="https://example.com/image.jpg"
+                            placeholder="Arkaplan resmi URL'sini giriniz"
                         />
                         {errors.imageUrl && (
                             <Alert variant="destructive">
@@ -233,14 +248,15 @@ const HotSpotTemplateForm: React.FC<HotSpotTemplateFormProps> = ({
                         )}
                     </div>
 
+                    {/* Ayarlar Grid */}
                     <div className="grid grid-cols-3 gap-4">
                         {/* Seçim Tipi */}
                         <div className="space-y-2">
                             <Label htmlFor="selectionType">Seçim Tipi</Label>
                             <Select
-                                onValueChange={(value) => handleChange('options', {
+                                onValueChange={(val) => handleChange('options', {
                                     ...formData.options,
-                                    selectionType: value as string
+                                    selectionType: val as string
                                 })}
                                 value={formData.options.selectionType || 'SINGLE'}
                             >
@@ -263,7 +279,7 @@ const HotSpotTemplateForm: React.FC<HotSpotTemplateFormProps> = ({
                                 id="maxSelections"
                                 inputType={"number"}
                                 value={formData.maxSelections || 1}
-                                onChange={(value) => handleChange('maxSelections', value || undefined)}
+                                onChange={(val) => handleChange('maxSelections', val || undefined)}
                                 minValue={1}
                                 decimalPlaces={0}
                                 className={errors.maxSelections ? 'border-red-500' : ''}
@@ -291,7 +307,7 @@ const HotSpotTemplateForm: React.FC<HotSpotTemplateFormProps> = ({
                     {/* Sıcak Noktalar */}
                     <div className="space-y-4">
                         <div className="flex justify-between items-center">
-                            <Label>Sıcak Noktalar</Label>
+                            <Label>Sıcak Noktalar *</Label>
                             <Button
                                 type="button"
                                 onClick={addHotSpot}
@@ -318,7 +334,7 @@ const HotSpotTemplateForm: React.FC<HotSpotTemplateFormProps> = ({
                                 <div className="col-span-2">
                                     <Label>Şekil</Label>
                                     <Select
-                                        onValueChange={(value) => updateHotSpot(index, 'shape', value as string)}
+                                        onValueChange={(val) => updateHotSpot(index, 'shape', val as string)}
                                         value={hotSpot.shape || 'RECTANGLE'}
                                     >
                                         <SelectTrigger>
@@ -403,20 +419,13 @@ const HotSpotTemplateForm: React.FC<HotSpotTemplateFormProps> = ({
                         />
                     </div>
 
-                    {/* Submit Button */}
-                    <div className="flex justify-end space-x-4">
-                        <Button
-                            onClick={handleSubmit}
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
-                            disabled={loading}
-                        >
-                            {loading ? "İşleniyor..." : "Kaydet"}
-                        </Button>
-                    </div>
+                    {/* KAYDET BUTONU KALDIRILDI - Parent component'te olacak */}
                 </div>
             </CardContent>
         </Card>
     );
-};
+});
+
+HotSpotTemplateForm.displayName = 'HotSpotTemplateForm';
 
 export default HotSpotTemplateForm;

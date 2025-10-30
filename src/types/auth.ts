@@ -1,7 +1,8 @@
-import {Brand, BrandDto} from "@/types/management/brand";
+import {ApplicationDto, Brand, BrandDto, CandidateDto} from "@/types/management/brand";
 import {RecordType} from "@/types/ui/table";
 import {EStatus} from "@/types/exam/enum";
 import {DatabaseObjectDto} from "@/types/exam/miscDtos";
+import {EvaluationDto, ExamDto, ExamSessionDto} from "@/types/exam/examEntities";
 
 export type Role = 'ADMIN' | 'USER' | 'LEARNER' | 'INSTRUCTOR' | 'OBSERVER' | 'COMPANY';
 
@@ -123,7 +124,7 @@ export interface UserFormData {
     lastName: string;
     authoritySet: Permission[];
     departmentSet: Department[];
-    brandSet: Brand[];
+    brandSet: BrandDto[];
     roleSet: Role[];
     enabled: boolean;
     credentialsNonExpired: boolean;
@@ -142,11 +143,56 @@ export interface AuthResponse {
     user: User;
 }
 
+
+export type EEvaluationStatus = 'NOT_STARTED' | 'EVALUATED' | 'PENDING' | 'CANCELLED' | 'FINISHED' ;
+
+
+
+export interface AuthLearnerResponse {
+    accessToken: string;
+    refreshToken: string;
+    user: CandidateDto;
+
+
+    examSession: ExamSessionDto;
+    exam: ExamDto;
+    application: ApplicationDto;
+    evaluations: EvaluationDto[];
+
+}
+
+
+
+
+
+
+export interface RefreshTokenResponse {
+
+    accessToken?: string | null;
+    refreshToken?: string | null;
+    user: User | CandidateDto | null;
+
+
+   // private CandidateDto user;
+    examSession?: ExamSessionDto | null;
+    exam?: ExamDto | null;
+    application?: ApplicationDto | null;
+    evaluations?: EvaluationDto[];
+
+}
+
+
+
+
 export interface AuthContextType {
     user: User | null;
     loading: boolean;
     error: string | null;
     login: (username: string, password: string) => Promise<boolean>;
+
+    examLogin: (examCode: string) => Promise<boolean>;
+
+
     logout: () => Promise<void>;
     updateUser: (userData: Partial<User>) => void;
     refreshToken: () => Promise<boolean>;
@@ -156,6 +202,15 @@ export interface AuthContextType {
     isAuthenticated: boolean;
     activeBrand: Brand | null;
     changeActiveBrand: (id: string) => boolean;
+
+
+
+
+    candidate: CandidateDto | null;
+    examSession: ExamSessionDto | null;
+    exam: ExamDto | null;
+    application: ApplicationDto | null;
+    evaluations: EvaluationDto[] | null;
 }
 
 

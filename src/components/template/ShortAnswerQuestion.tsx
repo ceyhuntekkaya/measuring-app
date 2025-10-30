@@ -119,7 +119,7 @@ const ShortAnswerQuestion: React.FC<ShortAnswerQuestionProps> = ({
     return (
         <div className="space-y-6">
             {/* Question Title */}
-            {template.title && (
+            {template.title && template.title === "NOT_SET" && (
                 <div className="mb-4">
                     <h3 className="text-lg font-semibold text-gray-800">{template.title}</h3>
                     {template.description && (
@@ -189,7 +189,7 @@ const ShortAnswerQuestion: React.FC<ShortAnswerQuestionProps> = ({
                 </div>
             </div>
 
-            {/* Manual Grading Note */}
+            {/* Manual Grading Note
             {template.requiresManualGrading && (
                 <div className="p-3 bg-orange-50 border-l-4 border-orange-400 rounded">
                     <p className="text-orange-800 text-sm">
@@ -197,7 +197,7 @@ const ShortAnswerQuestion: React.FC<ShortAnswerQuestionProps> = ({
                     </p>
                 </div>
             )}
-
+            */}
             {/* Answer Evaluation (only if not manual grading) */}
             {isSubmitted && showCorrectAnswer && !template.requiresManualGrading && result && (
                 <div className="space-y-4">

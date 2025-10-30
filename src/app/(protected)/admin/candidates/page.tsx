@@ -319,7 +319,7 @@ export default function CandidatePage() {
                     <DynamicTable columns={columns} data={filteredCandidates}/>
                 ) : selectedExamSession ? (
                     <div className="text-center py-8 text-gray-500">
-                        Bu oturuma ait candidate bulunamadı.
+                        Bu oturuma ait katılımcı bulunamadı.
                     </div>
                 ) : (
                     <div className="text-center py-8 text-gray-500">

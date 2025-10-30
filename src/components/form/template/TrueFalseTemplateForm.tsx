@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, {forwardRef, useEffect, useImperativeHandle, useState} from 'react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -21,13 +21,20 @@ interface TrueFalseTemplateFormErrors {
 
 interface TrueFalseTemplateFormProps {
     value?: TrueFalseTemplateDto;
-    onChange: (data: Partial<TrueFalseTemplateDto>) => void;
+    onChange: (data: TrueFalseTemplateDto) => void;
+    loading?: boolean;
 }
 
-const TrueFalseTemplateForm: React.FC<TrueFalseTemplateFormProps> = ({
-                                                                         value,
-                                                                         onChange
-                                                                     }) => {
+
+export interface TrueFalseTemplateFormHandle {
+    validate: () => boolean;
+    getErrors: () => TrueFalseTemplateFormErrors;
+}
+
+const TrueFalseTemplateForm = forwardRef<TrueFalseTemplateFormHandle, TrueFalseTemplateFormProps>(({
+                                                                                                                                                         value,
+                                                                                                                                                         onChange,
+                                                                                                                                                     }, ref) => {
     const [formData, setFormData] = useState<TrueFalseTemplateFormData>({
         statement: '',
         options: {
@@ -58,7 +65,7 @@ const TrueFalseTemplateForm: React.FC<TrueFalseTemplateFormProps> = ({
                 explanation: value.explanation || ''
             });
         }
-    }, [value]);
+    }, []);
 
     const handleChange = <T extends keyof TrueFalseTemplateFormData>(
         field: T,
@@ -95,6 +102,14 @@ const TrueFalseTemplateForm: React.FC<TrueFalseTemplateFormProps> = ({
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
+
+
+    // Parent component'in validate fonksiyonunu çağırabilmesi için
+    useImperativeHandle(ref, () => ({
+        validate: validateForm,
+        getErrors: () => errors
+    }));
+
 
     return (
         <div className="space-y-6">
@@ -201,6 +216,9 @@ const TrueFalseTemplateForm: React.FC<TrueFalseTemplateFormProps> = ({
             </div>
         </div>
     );
-};
+});
+
+TrueFalseTemplateForm.displayName = 'TrueFalseTemplateForm';
+
 
 export default TrueFalseTemplateForm;

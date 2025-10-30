@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useEffect, useState} from 'react';
+import React, {forwardRef, useEffect, useImperativeHandle, useState} from 'react';
 import {Alert, AlertDescription} from "@/components/ui/alert";
 import {Button} from "@/components/ui/button";
 import {Label} from "@/components/ui/label";
@@ -27,14 +27,22 @@ interface MultipleChoiceTemplateFormErrors {
 }
 
 interface MultipleChoiceTemplateFormProps {
-    value?: MultipleChoiceTemplateDto;
-    onChange: (data: Partial<MultipleChoiceTemplateDto>) => void;
+    value?: MultipleChoiceTemplateDto | null;
+    onChange: (data: MultipleChoiceTemplateDto) => void;
+    loading?: boolean;
 }
 
-const MultipleChoiceTemplateForm: React.FC<MultipleChoiceTemplateFormProps> = ({
-                                                                                   value,
-                                                                                   onChange
-                                                                               }) => {
+
+// Validation handle için ref interface
+export interface MultipleChoiceTemplateFormHandle {
+    validate: () => boolean;
+    getErrors: () => MultipleChoiceTemplateFormErrors;
+}
+
+const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, MultipleChoiceTemplateFormProps>(({
+                                                                                                                                                                 value,
+                                                                                                                                                                 onChange,
+                                                                                                                                                             }, ref) => {
     const [formData, setFormData] = useState<MultipleChoiceTemplateFormData>({
         question: '',
         options: {choices: []},
@@ -55,7 +63,7 @@ const MultipleChoiceTemplateForm: React.FC<MultipleChoiceTemplateFormProps> = ({
                 shuffleOptions: value.shuffleOptions || false
             });
         }
-    }, [value]);
+    }, []);
 
     const handleChange = <T extends keyof MultipleChoiceTemplateFormData>(
         field: T,
@@ -136,6 +144,11 @@ const MultipleChoiceTemplateForm: React.FC<MultipleChoiceTemplateFormProps> = ({
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
+
+    useImperativeHandle(ref, () => ({
+        validate: validateForm,
+        getErrors: () => errors
+    }));
 
     return (
         <div className="space-y-6">
@@ -285,6 +298,8 @@ const MultipleChoiceTemplateForm: React.FC<MultipleChoiceTemplateFormProps> = ({
             </div>
         </div>
     );
-};
+});
 
+
+MultipleChoiceTemplateForm.displayName = 'MultipleChoiceTemplateForm';
 export default MultipleChoiceTemplateForm;

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, {forwardRef, useEffect, useImperativeHandle, useState} from 'react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -29,12 +29,18 @@ interface ShortAnswerTemplateFormErrors {
 interface ShortAnswerTemplateFormProps {
     value?: ShortAnswerTemplateDto;
     onChange: (data: Partial<ShortAnswerTemplateDto>) => void;
+    loading?: boolean;
 }
 
-const ShortAnswerTemplateForm: React.FC<ShortAnswerTemplateFormProps> = ({
-                                                                             value,
-                                                                             onChange
-                                                                         }) => {
+export interface ShortAnswerTemplateFormHandle {
+    validate: () => boolean;
+    getErrors: () => ShortAnswerTemplateFormErrors;
+}
+
+const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortAnswerTemplateFormProps>(({
+                                                                                                 value,
+                                                                                                 onChange,
+                                                                                             }, ref) => {
     const [formData, setFormData] = useState<ShortAnswerTemplateFormData>({
         question: '',
         options: {
@@ -67,7 +73,7 @@ const ShortAnswerTemplateForm: React.FC<ShortAnswerTemplateFormProps> = ({
                 requiresManualGrading: value.requiresManualGrading || false
             });
         }
-    }, [value]);
+    }, []);
 
     const handleChange = <T extends keyof ShortAnswerTemplateFormData>(
         field: T,
@@ -142,6 +148,12 @@ const ShortAnswerTemplateForm: React.FC<ShortAnswerTemplateFormProps> = ({
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
+
+
+    useImperativeHandle(ref, () => ({
+        validate: validateForm,
+        getErrors: () => errors
+    }));
 
     return (
         <div className="space-y-6">
@@ -317,6 +329,8 @@ const ShortAnswerTemplateForm: React.FC<ShortAnswerTemplateFormProps> = ({
             </div>
         </div>
     );
-};
+});
+
+ShortAnswerTemplateForm.displayName = 'ShortAnswerTemplateForm';
 
 export default ShortAnswerTemplateForm;

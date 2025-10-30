@@ -3,6 +3,7 @@
 
 import {DatabaseObjectDto} from "@/types/exam/miscDtos";
 import {ExamSessionDto} from "@/types/exam/examEntities";
+import {EExamType, ESessionState} from "@/types/exam/enum";
 
 
 export type BrandDto = DatabaseObjectDto & {
@@ -23,7 +24,6 @@ export type BrandDto = DatabaseObjectDto & {
     taxNumber?: string;
     taxOffice?: string;
 }
-
 
 
 export interface Brand {
@@ -82,12 +82,12 @@ export type BranchDto = DatabaseObjectDto & {
     code: string;
     brandId: string;
 }
+
 export interface BranchFormData extends DatabaseObjectDto {
     branchName: string;
     code: string;
     brandId: string;
 }
-
 
 
 export interface BranchStatistics {
@@ -113,29 +113,41 @@ export interface MoveBranchRequest {
 // types/application/applicationTypes.ts
 export type ApplicationDto = DatabaseObjectDto & {
 
-    id: string;
-    createdAt: string;
-    deletedAt?: string;
-    status: string;
-    createdById?: string;
-    deletedById?: string;
-    name: string;
-    code: string;
-    examId: string;
+    name?: string;
+    code?: string;
+    examId?: string;
     examName?: string;
-    examSessionId: string;
+    examSessionId?: string;
     examSessionName?: string;
-    candidateId: string;
+    candidateId?: string;
     candidateName?: string;
     candidateLastName?: string;
     candidateIdentityNumber?: string;
-    username: string;
-    startedAt?: string;
-    endedAt?: string;
+    username?: string;
+    startedAt: Date | null;
+    endedAt: Date | null;
     isCompleted: boolean;
     isEvaluated: boolean;
-    password?: string;
+    score: number
+    isSuccessful: boolean;
+    examType: EExamType;
+
+    isCancellation: boolean;
+    reasonForCancellation?: string;
+    cancelingUserId?: string;
+    cancelingAt: Date | null;
+    voiceControl: boolean;
+    cameraControl: boolean;
+    idCartControl: boolean;
+    faceControl: boolean;
+    speechControl: boolean;
+    notificationRead: boolean;
+    observerId?: string;
+    sessionState: ESessionState;
+    candidatePhotoUrl?: string;
+
 }
+
 
 export interface ApplicationFormData extends DatabaseObjectDto {
     name: string;
@@ -145,7 +157,6 @@ export interface ApplicationFormData extends DatabaseObjectDto {
     candidateId: string;
     username?: string;
 }
-
 
 
 export interface StartApplicationRequest {
@@ -276,7 +287,7 @@ export type CandidateDto = DatabaseObjectDto & {
     role: string;
     examSessionId?: string;
     examSession?: ExamSessionDto;
-    application? : ApplicationDto;
+    application?: ApplicationDto;
 }
 
 export interface CandidateFormData extends DatabaseObjectDto {

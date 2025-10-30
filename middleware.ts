@@ -20,6 +20,8 @@ interface DecodedToken {
 const PUBLIC_PATHS = [
     '/',
     '/login',
+    '/exam',
+    '/about',
     '/register',
     '/api/auth/login',  // Auth API endpoint'leri için izin ver
     '/api/auth/refresh'  // Token yenileme için izin ver
@@ -30,7 +32,11 @@ const isPublicPath = (path: string): boolean => {
     return PUBLIC_PATHS.includes(path) ||
         path.startsWith('/_next') ||
         path.startsWith('/static') ||
-        path.startsWith('/api/auth/');
+        path.startsWith('/api/auth/') ||
+        path.startsWith('/public/') ||
+        path.startsWith('/about') ||      // /about ve /about/*
+        path.startsWith('/exam') ||      // /about ve /about/*
+        path.startsWith('/docs/');         // /docs ve /docs/*
 };
 
 export function middleware(request: NextRequest) {

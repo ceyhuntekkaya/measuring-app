@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -35,11 +35,16 @@ interface MultipleResponseTemplateFormErrors {
     explanation?: string;
 }
 
-const MultipleResponseTemplateForm: React.FC<MultipleResponseTemplateFormProps> = ({
-                                                                                       value,
-                                                                                       onChange,
-                                                                                       loading = false
-                                                                                   }) => {
+// Validation handle için ref interface
+export interface MultipleResponseTemplateFormHandle {
+    validate: () => boolean;
+    getErrors: () => MultipleResponseTemplateFormErrors;
+}
+
+const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHandle, MultipleResponseTemplateFormProps>(({
+                                                                                                                            value,
+                                                                                                                            onChange,
+                                                                                                                        }, ref) => {
     const [formData, setFormData] = useState<MultipleResponseTemplateFormData>({
         question: '',
         options: {
@@ -55,6 +60,7 @@ const MultipleResponseTemplateForm: React.FC<MultipleResponseTemplateFormProps> 
 
     const [errors, setErrors] = useState<MultipleResponseTemplateFormErrors>({});
 
+    // Value değiştiğinde form data'yı güncelle (Update modu için)
     useEffect(() => {
         if (value) {
             setFormData({
@@ -70,16 +76,42 @@ const MultipleResponseTemplateForm: React.FC<MultipleResponseTemplateFormProps> 
                 explanation: value.explanation || ''
             });
         }
-    }, [value]);
+    }, []);
+
+    // Form data değiştiğinde parent'a bildir (Anlık güncelleme)
+    useEffect(() => {
+        // İlk render'da onChange'i tetikleme
+        if (formData.question || (formData.options.choices ?? []).length > 0) {
+            const templateData: MultipleResponseTemplateDto = {
+                ...value,
+                question: formData.question.trim(),
+                options: formData.options,
+                correctOptionIndices: formData.correctOptionIndices,
+                minSelections: formData.minSelections,
+                maxSelections: formData.maxSelections,
+                shuffleOptions: formData.shuffleOptions,
+                explanation: formData.explanation.trim()
+            };
+            onChange(templateData);
+        }
+    }, [formData]); // onChange ve value bağımlılığı kaldırıldı - sonsuz döngü önlendi
 
     const handleChange = <T extends keyof MultipleResponseTemplateFormData>(
         name: T,
-        value: MultipleResponseTemplateFormData[T]
+        newValue: MultipleResponseTemplateFormData[T]
     ) => {
         setFormData(prev => ({
             ...prev,
-            [name]: value
+            [name]: newValue
         }));
+
+        // Hata varsa temizle
+        if (errors[name as keyof MultipleResponseTemplateFormErrors]) {
+            setErrors(prev => ({
+                ...prev,
+                [name]: undefined
+            }));
+        }
     };
 
     const addChoice = () => {
@@ -122,14 +154,14 @@ const MultipleResponseTemplateForm: React.FC<MultipleResponseTemplateFormProps> 
     const updateChoice = <K extends keyof ResponseOption>(
         index: number,
         field: K,
-        value: ResponseOption[K]
+        newValue: ResponseOption[K]
     ) => {
         setFormData(prev => ({
             ...prev,
             options: {
                 ...prev.options,
                 choices: prev.options.choices?.map((choice, i) =>
-                    i === index ? { ...choice, [field]: value } : choice
+                    i === index ? { ...choice, [field]: newValue } : choice
                 ) || []
             }
         }));
@@ -159,6 +191,7 @@ const MultipleResponseTemplateForm: React.FC<MultipleResponseTemplateFormProps> 
         });
     };
 
+    // Validation fonksiyonu - parent tarafından çağrılacak
     const validateForm = (): boolean => {
         const newErrors: MultipleResponseTemplateFormErrors = {};
 
@@ -187,22 +220,11 @@ const MultipleResponseTemplateForm: React.FC<MultipleResponseTemplateFormProps> 
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = () => {
-        if (validateForm()) {
-            const submitData: MultipleResponseTemplateDto = {
-                ...value,
-                question: formData.question.trim(),
-                options: formData.options,
-                correctOptionIndices: formData.correctOptionIndices,
-                minSelections: formData.minSelections,
-                maxSelections: formData.maxSelections,
-                shuffleOptions: formData.shuffleOptions,
-                explanation: formData.explanation.trim()
-            };
-
-            onChange(submitData);
-        }
-    };
+    // Parent component'in validate fonksiyonunu çağırabilmesi için
+    useImperativeHandle(ref, () => ({
+        validate: validateForm,
+        getErrors: () => errors
+    }));
 
     return (
         <Card>
@@ -250,7 +272,7 @@ const MultipleResponseTemplateForm: React.FC<MultipleResponseTemplateFormProps> 
                                 inputType={"number"}
                                 id="minSelections"
                                 value={formData.minSelections || 1}
-                                onChange={(value) => handleChange('minSelections', value || undefined)}
+                                onChange={(val) => handleChange('minSelections', val || undefined)}
                                 minValue={1}
                                 decimalPlaces={0}
                             />
@@ -263,7 +285,7 @@ const MultipleResponseTemplateForm: React.FC<MultipleResponseTemplateFormProps> 
                                 id="maxSelections"
                                 inputType={"number"}
                                 value={formData.maxSelections || 0}
-                                onChange={(value) => handleChange('maxSelections', value || undefined)}
+                                onChange={(val) => handleChange('maxSelections', val || undefined)}
                                 minValue={1}
                                 decimalPlaces={0}
                                 placeholder="Sınırsız için boş bırakın"
@@ -376,20 +398,13 @@ const MultipleResponseTemplateForm: React.FC<MultipleResponseTemplateFormProps> 
                         />
                     </div>
 
-                    {/* Submit Button */}
-                    <div className="flex justify-end space-x-4">
-                        <Button
-                            onClick={handleSubmit}
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
-                            disabled={loading}
-                        >
-                            {loading ? "İşleniyor..." : "Kaydet"}
-                        </Button>
-                    </div>
+                    {/* KAYDET BUTONU KALDIRILDI - Parent component'te olacak */}
                 </div>
             </CardContent>
         </Card>
     );
-};
+});
+
+MultipleResponseTemplateForm.displayName = 'MultipleResponseTemplateForm';
 
 export default MultipleResponseTemplateForm;

@@ -117,7 +117,7 @@ export default function AdminPage() {
             <PageHeader actions={
                 <ActionButtons
                     onAdd={handleAdd}
-                    addButtonText="Yeni Sınav Tipi Tanımla"
+                    addButtonText="Yeni Oturum Planla"
                 />
             }/>
             <div className="p-6 pt-1">

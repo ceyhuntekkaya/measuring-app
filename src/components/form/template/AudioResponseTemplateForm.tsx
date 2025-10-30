@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import { NumberInput } from "@/components/ui/number-input";
 import { AudioResponseTemplateDto } from "@/types/exam/questionTemplates";
 import { Trash2, Plus } from "lucide-react";
 import Checkbox from "@/components/ui/checkbox";
+import {FileUpload} from "@/components/ui/file-upload";
+import FilePreview from "@/components/ui/file-preview";
 
 interface AudioResponseTemplateFormProps {
     value?: AudioResponseTemplateDto | null;
@@ -18,11 +20,22 @@ interface AudioResponseTemplateFormProps {
     loading?: boolean;
 }
 
-const AudioResponseTemplateForm: React.FC<AudioResponseTemplateFormProps> = ({
-                                                                                 value,
-                                                                                 onChange,
-                                                                                 loading = false
-                                                                             }) => {
+interface AudioResponseTemplateFormErrors {
+    prompt?: string;
+    minRecordingDuration?: string;
+    maxRecordingDuration?: string;
+}
+
+// Validation handle için ref interface
+export interface AudioResponseTemplateFormHandle {
+    validate: () => boolean;
+    getErrors: () => AudioResponseTemplateFormErrors;
+}
+
+const AudioResponseTemplateForm = forwardRef<AudioResponseTemplateFormHandle, AudioResponseTemplateFormProps>(({
+                                                                                                                   value,
+                                                                                                                   onChange,
+                                                                                                               }, ref) => {
     const [formData, setFormData] = useState<AudioResponseTemplateDto>({
         prompt: '',
         audioPromptUrl: '',
@@ -35,8 +48,9 @@ const AudioResponseTemplateForm: React.FC<AudioResponseTemplateFormProps> = ({
     });
 
     const [criteriaInput, setCriteriaInput] = useState('');
-    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [errors, setErrors] = useState<AudioResponseTemplateFormErrors>({});
 
+    // Value değiştiğinde form data'yı güncelle (Update modu için)
     useEffect(() => {
         if (value) {
             setFormData({
@@ -50,16 +64,43 @@ const AudioResponseTemplateForm: React.FC<AudioResponseTemplateFormProps> = ({
                 allowedFormats: value.allowedFormats || 'mp3,wav,m4a'
             });
         }
-    }, [value]);
+    }, []);
+
+    // Form data değiştiğinde parent'a bildir (Anlık güncelleme)
+    useEffect(() => {
+        // İlk render'da boş form için onChange tetikleme
+        if (formData.prompt || (formData.gradingCriteria ?? []).length > 0) {
+            const templateData: AudioResponseTemplateDto = {
+                ...value,
+                prompt: formData.prompt,
+                audioPromptUrl: formData.audioPromptUrl,
+                maxRecordingDuration: formData.maxRecordingDuration,
+                minRecordingDuration: formData.minRecordingDuration,
+                gradingCriteria: formData.gradingCriteria,
+                rubric: formData.rubric,
+                requiresManualGrading: formData.requiresManualGrading,
+                allowedFormats: formData.allowedFormats
+            };
+            onChange(templateData);
+        }
+    }, [formData]); // onChange ve value bağımlılığı yok - sonsuz döngü önlendi
 
     const handleChange = <T extends keyof AudioResponseTemplateDto>(
         name: T,
-        value: AudioResponseTemplateDto[T]
+        newValue: AudioResponseTemplateDto[T]
     ) => {
         setFormData(prev => ({
             ...prev,
-            [name]: value
+            [name]: newValue
         }));
+
+        // Hata varsa temizle
+        if (errors[name as keyof AudioResponseTemplateFormErrors]) {
+            setErrors(prev => ({
+                ...prev,
+                [name]: undefined
+            }));
+        }
     };
 
     const addCriteria = () => {
@@ -86,8 +127,9 @@ const AudioResponseTemplateForm: React.FC<AudioResponseTemplateFormProps> = ({
         }
     };
 
+    // Validation fonksiyonu - parent tarafından çağrılacak
     const validateForm = (): boolean => {
-        const newErrors: Record<string, string> = {};
+        const newErrors: AudioResponseTemplateFormErrors = {};
 
         if (!formData.prompt?.trim()) {
             newErrors.prompt = 'Soru metni zorunludur';
@@ -110,11 +152,11 @@ const AudioResponseTemplateForm: React.FC<AudioResponseTemplateFormProps> = ({
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = () => {
-        if (validateForm()) {
-            onChange(formData);
-        }
-    };
+    // Parent component'in validate fonksiyonunu çağırabilmesi için
+    useImperativeHandle(ref, () => ({
+        validate: validateForm,
+        getErrors: () => errors
+    }));
 
     return (
         <Card>
@@ -149,6 +191,27 @@ const AudioResponseTemplateForm: React.FC<AudioResponseTemplateFormProps> = ({
                             onChange={(e) => handleChange('audioPromptUrl', e.target.value)}
                             placeholder="Dinletilecek ses dosyasının URL'sini giriniz (opsiyonel)"
                         />
+
+
+                        <FileUpload
+                            acceptedFileTypes={['audio']}
+                            maxFileSize={20} // 2MB
+                            entityId={"qg_audio"}
+                            uploadType="audioPromptUrl"
+                            multiple={false}
+
+                            labelText="Sesli Açıklama Ekle"
+                            onUploadComplete={(files) => {
+                                handleChange('audioPromptUrl', files[0].path)
+                            }}
+                        />
+
+                        {
+                            formData.audioPromptUrl && formData.audioPromptUrl !== '' &&
+                            <FilePreview fileUrl={formData.audioPromptUrl} alt="Logo" />
+                        }
+
+
                     </div>
 
                     {/* Kayıt Süreleri */}
@@ -159,7 +222,7 @@ const AudioResponseTemplateForm: React.FC<AudioResponseTemplateFormProps> = ({
                                 id="minRecordingDuration"
                                 inputType={"number"}
                                 value={formData.minRecordingDuration || 10}
-                                onChange={(value) => handleChange('minRecordingDuration', value)}
+                                onChange={(val) => handleChange('minRecordingDuration', val)}
                                 minValue={1}
                                 maxValue={3600}
                                 decimalPlaces={0}
@@ -179,7 +242,7 @@ const AudioResponseTemplateForm: React.FC<AudioResponseTemplateFormProps> = ({
                                 inputType={"number"}
                                 id="maxRecordingDuration"
                                 value={formData.maxRecordingDuration || 300}
-                                onChange={(value) => handleChange('maxRecordingDuration', value)}
+                                onChange={(val) => handleChange('maxRecordingDuration', val)}
                                 minValue={1}
                                 maxValue={3600}
                                 decimalPlaces={0}
@@ -282,20 +345,13 @@ const AudioResponseTemplateForm: React.FC<AudioResponseTemplateFormProps> = ({
                         </p>
                     </div>
 
-                    {/* Submit Button */}
-                    <div className="flex justify-end">
-                        <Button
-                            onClick={handleSubmit}
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
-                            disabled={loading}
-                        >
-                            {loading ? "Kaydediliyor..." : "Kaydet"}
-                        </Button>
-                    </div>
+                    {/* KAYDET BUTONU KALDIRILDI - Parent component'te olacak */}
                 </div>
             </CardContent>
         </Card>
     );
-};
+});
+
+AudioResponseTemplateForm.displayName = 'AudioResponseTemplateForm';
 
 export default AudioResponseTemplateForm;

@@ -125,6 +125,38 @@ export enum EStatus {
 }
 
 
+export enum ESessionState {
+    NOT_STARTED = "NOT_STARTED",
+    IN_PROGRESS = "IN_PROGRESS",
+    FINISHED = "FINISHED",
+    PAUSED = "PAUSED",
+    CANCELLED = "CANCELLED"
+}
+
+
+export enum EDifficulty {
+    EASY = "EASY",
+    MEDIUM = "MEDIUM",
+    HARD = "HARD"
+}
+
+
+export enum EApplicationUpdateState {
+    LEARNER_LOGIN = "LEARNER_LOGIN",
+    READ_TERM = "READ_TERM",
+    EXAM_START = "EXAM_START",
+    EXAM_END = "EXAM_END",
+    CAMERA = "CAMERA",
+    VOICE = "VOICE",
+    FACE = "FACE",
+    SPEECH = "SPEECH",
+    CANCEL = "CANCEL",
+    OBSERVER = "OBSERVER",
+    ID_CART = "ID_CART"
+}
+
+
+
 
 export enum EQuestionGroupTemplateLevel {
     GROUP = "GROUP",

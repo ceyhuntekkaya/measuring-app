@@ -8,6 +8,8 @@ import {useParams, useRouter} from "next/navigation";
 import LoadingComp from "@/components/ui/loading-comp";
 import Link from "next/link";
 import {useExamSection} from "@/hooks/exam/use-exam-section";
+import {statusConverter} from "@/utils/enum-converter";
+import {EStatus} from "@/types/exam/enum";
 
 export default function ExamSectionPage() {
     const router = useRouter();
@@ -46,7 +48,7 @@ export default function ExamSectionPage() {
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => router.push(`/admin/exam-type/${examTypeId}/section/${record.id}`)}
                 >
-                    {value as string}
+                    {statusConverter(value as EStatus)}
                 </div>
             )
         }
@@ -58,7 +60,7 @@ export default function ExamSectionPage() {
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
                 >
-                    <Link href={`/admin/exam-type/${examTypeId}/section/${value}/group`}>GRUPLAR</Link>
+                    <Link className={"btn btn-success"} href={`/admin/exam-type/${examTypeId}/section/${value}/group`}>GRUPLAR</Link>
                 </div>
             )
         }

@@ -239,7 +239,7 @@ const ApplicationDetailPage: React.FC<ApplicationDetailProps> = ({
                                             <span>Oluşturulma Tarihi</span>
                                         </div>
                                         <p className="text-sm font-medium">
-                                            {formatDate(application.createdAt)}
+                                            {formatDate(application.createdAt || '')}
                                         </p>
                                     </div>
                                 </div>
@@ -473,8 +473,8 @@ const ApplicationDetailPage: React.FC<ApplicationDetailProps> = ({
                                                 <p className="text-sm text-gray-500">Yaşam Süresi</p>
                                                 <p className="font-medium">
                                                     {application.deletedAt
-                                                        ? `${Math.floor((new Date(application.deletedAt).getTime() - new Date(application.createdAt).getTime()) / (1000 * 60 * 60 * 24))} gün`
-                                                        : `${Math.floor((new Date().getTime() - new Date(application.createdAt).getTime()) / (1000 * 60 * 60 * 24))} gün`}
+                                                        ? `${Math.floor((new Date(application.deletedAt).getTime() - new Date(application.createdAt || '').getTime()) / (1000 * 60 * 60 * 24))} gün`
+                                                        : `${Math.floor((new Date().getTime() - new Date(application.createdAt || '').getTime()) / (1000 * 60 * 60 * 24))} gün`}
                                                 </p>
                                             </div>
                                         </div>

@@ -7,6 +7,8 @@ import {ActionButtons} from "@/components/ui/simple-dropdown";
 import {useParams, useRouter} from "next/navigation";
 import LoadingComp from "@/components/ui/loading-comp";
 import {useQuestionGroupType} from "@/hooks/exam/use-question-group-type";
+import {statusConverter} from "@/utils/enum-converter";
+import {EStatus} from "@/types/exam/enum";
 
 export default function QuestionGroupTypePage() {
     const router = useRouter();
@@ -46,7 +48,7 @@ export default function QuestionGroupTypePage() {
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => router.push(`/admin/exam-type/${examTypeId}/section/${examSectionId}/group/${record.id}`)}
                 >
-                    {value as string}
+                    {statusConverter(value as EStatus)}
                 </div>
             )
         }

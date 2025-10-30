@@ -11,13 +11,12 @@ import {
     ApplicationSearchParams
 } from "@/types/management/brand";
 import {EStatus} from "@/types/exam/enum";
+import {UpdateApplicationState} from "@/types/exam/examEntities";
 
 class ApplicationService {
     private readonly baseUrl = '/applications';
 
     async createApplication(createRequest: ApplicationFormData): Promise<ApiResponse<ApplicationDto>> {
-
-        console.log(createRequest);
         const response = await api.post<ApiResponse<ApplicationDto>>(`${this.baseUrl}`, createRequest);
         return response.data;
     }
@@ -145,6 +144,12 @@ class ApplicationService {
             namePrefix,
             codePrefix
         });
+    }
+
+    async updateApplicationState(applicationId: string, updateApplicationState: UpdateApplicationState) {
+        const response = await api.put<ApiResponse<ApplicationDto>>(`${this.baseUrl}/state/${applicationId}`, updateApplicationState);
+        return response.data;
+
     }
 }
 

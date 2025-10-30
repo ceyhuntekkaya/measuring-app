@@ -30,6 +30,7 @@ export default function Sidebar({isOpen = true, onCloseAction}: SidebarProps) {
     const {user} = useAuth();
 
     useEffect(() => {
+        console.log("ceyhun 12")
         if (user?.roleSet.includes('ADMIN')) {
             setRoutes(adminRoutes.menuItems);
         } else if (user?.roleSet.includes('USER')) {
@@ -142,6 +143,7 @@ function SidebarMenuItem({item, level = 0}: MenuItemProps) {
                 item.requiredDepartments.some(dept => hasAnyDepartment(dept as Department)));
 
         // Rol kontrolü
+        console.log("ceyhun 13")
         const hasRequiredRoles = !item.requiredRoles?.length ||
             item.requiredRoles.some(role => user?.roleSet.includes(role));
 

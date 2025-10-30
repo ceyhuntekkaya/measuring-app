@@ -13,6 +13,7 @@ import { NumberInput } from "@/components/ui/number-input";
 import {ExamTypeDto} from "@/types/exam/examTemplates";
 import {EExamType, EStatus} from "@/types/exam/enum";
 import Checkbox from "@/components/ui/checkbox";
+import {examTypeConverter} from "@/utils/enum-converter";
 
 
 
@@ -214,11 +215,11 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectGroup>
-                                        <SelectItem value="CERTIFICATE">Sertifika</SelectItem>
-                                        <SelectItem value="COURSE_EXAM">Kurs Sınavı</SelectItem>
-                                        <SelectItem value="LEVEL_DETERMINATION">Seviye Belirleme</SelectItem>
-                                        <SelectItem value="PRACTICE">Pratik</SelectItem>
-                                        <SelectItem value="DEGREE">Derece</SelectItem>
+                                        {
+                                            Object.values(EExamType).map((item, key) => (
+                                                <SelectItem key={key} value={item}>{examTypeConverter(item)}</SelectItem>
+                                            ))
+                                        }
                                     </SelectGroup>
                                 </SelectContent>
                             </Select>

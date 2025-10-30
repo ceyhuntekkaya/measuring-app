@@ -1,18 +1,10 @@
 'use client';
 
-import {useParams} from "next/navigation";
-import React, {useEffect} from "react";
+import React from "react";
 import PageHeader from "@/components/layout/page-header";
 
 
 export default function ApplicationGraderDetailPage() {
-    const params = useParams();
-    const id = params.id as string;
-
-
-    useEffect(() => {
-        console.log(id);
-    }, []);
 
 
 

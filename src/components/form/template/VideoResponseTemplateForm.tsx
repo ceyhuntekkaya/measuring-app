@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, {forwardRef, useEffect, useImperativeHandle, useState} from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import Checkbox from "@/components/ui/checkbox";
 import { NumberInput } from "@/components/ui/number-input";
-import { VideoResponseTemplateDto } from "@/types/exam/questionTemplates";
+import {VideoResponseTemplateDto} from "@/types/exam/questionTemplates";
 import { Trash2, Plus } from "lucide-react";
 
 interface VideoResponseTemplateFormData {
@@ -37,11 +37,18 @@ interface VideoResponseTemplateFormProps {
     loading?: boolean;
 }
 
-const VideoResponseTemplateForm: React.FC<VideoResponseTemplateFormProps> = ({
-                                                                                 onChange,
-                                                                                 value,
-                                                                                 loading = false
-                                                                             }) => {
+
+export interface VideoResponseTemplateFormHandle {
+    validate: () => boolean;
+    getErrors: () => VideoResponseTemplateFormErrors;
+}
+
+
+const VideoResponseTemplateForm = forwardRef<VideoResponseTemplateFormHandle, VideoResponseTemplateFormProps>(({
+                                                                                                   value,
+                                                                                                   onChange,
+                                                                                               }, ref) => {
+
     const [formData, setFormData] = useState<VideoResponseTemplateFormData>({
         prompt: '',
         videoPromptUrl: '',
@@ -71,7 +78,7 @@ const VideoResponseTemplateForm: React.FC<VideoResponseTemplateFormProps> = ({
                 allowScreenRecording: value.allowScreenRecording ?? false
             });
         }
-    }, [value]);
+    }, []);
 
     const handleChange = <T extends keyof VideoResponseTemplateFormData>(
         name: T,
@@ -139,11 +146,21 @@ const VideoResponseTemplateForm: React.FC<VideoResponseTemplateFormProps> = ({
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = () => {
-        if (validateForm()) {
+
+
+
+    useEffect(() => {
+        // İlk render'da boş form için onChange tetikleme
+        if (formData.prompt) {
             onChange(formData);
         }
-    };
+    }, [formData]); // onChange ve value bağımlılığı yok - sonsuz döngü önlendi
+
+    useImperativeHandle(ref, () => ({
+        validate: validateForm,
+        getErrors: () => errors
+    }));
+
 
     return (
         <Card>
@@ -322,21 +339,12 @@ const VideoResponseTemplateForm: React.FC<VideoResponseTemplateFormProps> = ({
                             placeholder="Detaylı değerlendirme rubriğini yazınız (opsiyonel)"
                         />
                     </div>
-
-                    {/* Submit Button */}
-                    <div className="flex justify-end space-x-4">
-                        <Button
-                            onClick={handleSubmit}
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
-                            disabled={loading}
-                        >
-                            {loading ? "İşleniyor..." : "Video Yanıt Şablonu Kaydet"}
-                        </Button>
-                    </div>
                 </div>
             </CardContent>
         </Card>
     );
-};
+});
+
+VideoResponseTemplateForm.displayName = 'VideoResponseTemplateForm';
 
 export default VideoResponseTemplateForm;

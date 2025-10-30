@@ -2,15 +2,16 @@
 
 import {ExamSectionDto, ExamTypeDto, QuestionGroupTypeDto} from "@/types/exam/examTemplates";
 import {
+    EApplicationUpdateState,
     EApprovalStatus,
-    ECurriculumLevel,
+    ECurriculumLevel, EDifficulty,
     EExamCategory,
     EExamType,
     EMediaType,
-    EQuestionType
+    EQuestionType, ESessionState
 } from "@/types/exam/enum";
 import {BranchDto, BrandDto} from "@/types/management/brand";
-import {UserDto} from "@/types/auth";
+import {EEvaluationStatus, UserDto} from "@/types/auth";
 import {DatabaseObjectDto} from "@/types/exam/miscDtos";
 import {
     AudioResponseTemplateDto,
@@ -20,6 +21,24 @@ import {
     TrueFalseTemplateDto, VideoResponseTemplateDto
 } from "@/types/exam/questionTemplates";
 
+
+export interface BaseQuestionTemplateFormData {
+    title: string;
+    description?: string;
+    subject: string;
+    difficulty: EDifficulty;
+    points: number;
+    timeLimit: number;
+    instructions?: string;
+    tags: string[];
+    isActive: boolean;
+    questionType: EQuestionType | '';
+    // Template specific data
+    templateData?: MultipleChoiceTemplateDto | TrueFalseTemplateDto |
+        FillInTheBlanksTemplateDto | ShortAnswerTemplateDto |
+        MatchingTemplateDto | EssayTemplateDto | OrderingTemplateDto | MultipleResponseTemplateDto |
+        HotSpotTemplateDto | DragAndDropTemplateDto | AudioResponseTemplateDto | VideoResponseTemplateDto | ImageResponseTemplateDto | null;
+}
 
 
 export type QuestionTemplateType =
@@ -36,7 +55,6 @@ export type QuestionTemplateType =
     | AudioResponseTemplateDto
     | VideoResponseTemplateDto
     | ImageResponseTemplateDto;
-
 
 
 export type QuestionDto = DatabaseObjectDto & {
@@ -176,7 +194,6 @@ export interface ExamTypeSearchRequest {
 }
 
 
-
 export interface ExamDto extends DatabaseObjectDto {
     name: string;
     code: string;
@@ -185,7 +202,6 @@ export interface ExamDto extends DatabaseObjectDto {
     branch: BranchDto;
     brand: BrandDto;
 }
-
 
 
 export interface ExamSessionDto extends DatabaseObjectDto {
@@ -198,6 +214,9 @@ export interface ExamSessionDto extends DatabaseObjectDto {
     brand: BrandDto;
     examType: ExamTypeDto;
     supervisors: UserDto[];
+    beginAt: string
+    endAt: string
+    sessionState: ESessionState;
 }
 
 export interface CreateExamSectionRequest {
@@ -205,6 +224,14 @@ export interface CreateExamSectionRequest {
     examTypeId: string;
     orderNumber: number;
 }
+
+
+export interface UpdateApplicationState {
+    state: EApplicationUpdateState;
+    description?: string;
+    userId?: string;
+}
+
 
 // ExamReadinessValidation ve nested types
 export interface ReadinessIssue {
@@ -257,6 +284,7 @@ export interface AuditLog {
     errorMessage: string;
     sessionId: string;
 }
+
 export interface PageResponse<T> {
     content: T[];
     totalElements: number;
@@ -267,9 +295,6 @@ export interface PageResponse<T> {
     last: boolean;
     empty: boolean;
 }
-
-
-
 
 
 export interface CreateExamRequest {
@@ -290,7 +315,7 @@ export interface UpdateExamRequest {
     brandId: string;
 }
 
-export interface ExamFormData extends DatabaseObjectDto{
+export interface ExamFormData extends DatabaseObjectDto {
     name: string;
     code: string;
     examTypeId: string;
@@ -454,4 +479,34 @@ export interface ExamImportError {
     field: string;
     value: string;
     error: string;
+}
+
+
+export type EvaluationDto = DatabaseObjectDto & {
+
+    id: string;
+    createdAt: string;
+    deletedAt?: string;
+    status: string;
+    createdById?: string;
+    deletedById?: string;
+
+
+    questionId: string;
+    applicationId: string;
+    graderId?: string;
+    answer?: string;
+    isEmptyAnswer?: string;
+    correctAnswer?: string;
+    answerDescription?: string;
+    score?: number;
+    description?: string;
+    evaluationStatus?: EEvaluationStatus;
+    mediaType?: EMediaType;
+    evaluationAt: string;
+    repeatNumber?: number;
+    isOpen?: boolean;
+    isEvaluatedAutomatically?: boolean;
+
+
 }

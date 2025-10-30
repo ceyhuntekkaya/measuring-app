@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect, forwardRef, useImperativeHandle} from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Checkbox from "@/components/ui/checkbox";
 import { NumberInput } from "@/components/ui/number-input";
-import { OrderingTemplateDto, OrderingOptions, OrderingItem } from "@/types/exam/questionTemplates";
+import {OrderingTemplateDto, OrderingOptions, OrderingItem} from "@/types/exam/questionTemplates";
 import { Trash2, Plus, ArrowUp, ArrowDown } from "lucide-react";
 
 interface OrderingTemplateFormProps {
@@ -32,11 +32,17 @@ interface OrderingTemplateFormErrors {
     explanation?: string;
 }
 
-const OrderingTemplateForm: React.FC<OrderingTemplateFormProps> = ({
-                                                                       value,
-                                                                       onChange,
-                                                                       loading = false
-                                                                   }) => {
+
+export interface OrderingTemplateFormHandle {
+    validate: () => boolean;
+    getErrors: () => OrderingTemplateFormErrors;
+}
+
+const OrderingTemplateForm = forwardRef<OrderingTemplateFormHandle, OrderingTemplateFormProps>(({
+                                                                                              value,
+                                                                                              onChange,
+                                                                                          }, ref) => {
+
     const [formData, setFormData] = useState<OrderingTemplateFormData>({
         instructions: '',
         options: {
@@ -61,7 +67,7 @@ const OrderingTemplateForm: React.FC<OrderingTemplateFormProps> = ({
                 explanation: value.explanation || ''
             });
         }
-    }, [value]);
+    }, []);
 
     const handleChange = <T extends keyof OrderingTemplateFormData>(
         name: T,
@@ -160,19 +166,26 @@ const OrderingTemplateForm: React.FC<OrderingTemplateFormProps> = ({
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = () => {
-        if (validateForm()) {
-            const submitData: OrderingTemplateDto = {
+    useEffect(() => {
+        // İlk render'da boş form için onChange tetikleme
+        if (formData.instructions || formData.explanation) {
+            const templateData: OrderingTemplateDto = {
                 ...value,
                 instructions: formData.instructions.trim(),
                 options: formData.options,
                 shuffleItems: formData.shuffleItems,
                 explanation: formData.explanation.trim()
             };
-
-            onChange(submitData);
+            onChange(templateData);
         }
-    };
+    }, [formData]); // onChange ve value bağımlılığı yok - sonsuz döngü önlendi
+
+
+    useImperativeHandle(ref, () => ({
+        validate: validateForm,
+        getErrors: () => errors
+    }));
+
 
     return (
         <Card>
@@ -340,21 +353,12 @@ const OrderingTemplateForm: React.FC<OrderingTemplateFormProps> = ({
                             placeholder="Sıralama açıklaması giriniz (opsiyonel)"
                         />
                     </div>
-
-                    {/* Submit Button */}
-                    <div className="flex justify-end space-x-4">
-                        <Button
-                            onClick={handleSubmit}
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
-                            disabled={loading}
-                        >
-                            {loading ? "İşleniyor..." : "Kaydet"}
-                        </Button>
-                    </div>
                 </div>
             </CardContent>
         </Card>
     );
-};
+});
+
+OrderingTemplateForm.displayName = 'OrderingTemplateForm';
 
 export default OrderingTemplateForm;

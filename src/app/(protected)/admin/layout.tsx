@@ -11,6 +11,7 @@ export default function AdminLayout({
     children: React.ReactNode;
 }) {
     const {user} = useAuth();
+    console.log("ceyhun 300000")
     if (!user || !user.roleSet.includes('ADMIN')) {
         return null;
     }
