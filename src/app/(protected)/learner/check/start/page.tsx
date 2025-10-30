@@ -27,6 +27,7 @@ export default function Page() {
     const [selectedSection, setSelectedSection] = useState<ExamSectionDto | null>(null);
 
 
+
     console.log(setSectionQuestionStatics)
     console.log(examState)
 
