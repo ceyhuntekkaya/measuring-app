@@ -6,15 +6,19 @@ import {ApplicationDto, CandidateDto} from "@/types/management/brand";
 import {useAuth} from "@/hooks/use-auth";
 import {EApplicationUpdateState} from "@/types/exam/enum";
 import {useApplication} from "@/hooks/exam/use-application";
+import {ExamSectionDto} from "@/types/exam/examTemplates";
+import {useExam} from "@/hooks/exam/use-exam";
 
 interface ExamApplicationContextType {
     exam: ExamDto | null;
     examSession: ExamSessionDto | null;
     application: ApplicationDto | null;
     evaluations: EvaluationDto[] | null;
+    examSections: ExamSectionDto[];
     candidate: CandidateDto | null;
     addStudentAnswer: (questionId: string, answer: string) => void;
     updateApplicationStateStatus: (state: EApplicationUpdateState) => void;
+    getExamData: (examId: string) => void;
 }
 
 const ExamApplicationContext = createContext<ExamApplicationContextType | undefined>(undefined);
@@ -34,13 +38,14 @@ export function ExamApplicationProvider({children}: { children: ReactNode }) {
         updateApplicationState
     } = useApplication();
 
-
+    const {selectedExam, getExamById,} = useExam();
 
     const [examSession, setExamSession] = useState<ExamSessionDto | null>(null);
     const [application, setApplication] = useState<ApplicationDto | null>(null);
     const [exam, setExam] = useState<ExamDto | null>(null);
     const [candidate, setCandidate] = useState<CandidateDto | null>(null);
     const [evaluations, setEvaluations] = useState<EvaluationDto[] | null>(null);
+    const [examSections, setExamSections] = useState<ExamSectionDto[]>([]);
 
     useEffect(() => {
         if (authExam) setExam(authExam)
@@ -55,6 +60,48 @@ export function ExamApplicationProvider({children}: { children: ReactNode }) {
         console.log(questionId);
         console.log(answer);
     };
+
+
+    const getExamData = (examId: string, ) => {
+        getExamById(examId)
+    };
+
+
+    function getUniqueSortedExamSections(): ExamSectionDto[] {
+        if (!selectedExam || !selectedExam.questionGroups || selectedExam.questionGroups.length === 0) {
+            return [];
+        }
+
+        const allSections = selectedExam.questionGroups
+            .map(qg => qg.examSection)
+            .filter((section): section is ExamSectionDto => section != null);
+
+        const uniqueSectionsMap = new Map<string, ExamSectionDto>();
+
+        allSections.forEach(section => {
+            if (section.id && !uniqueSectionsMap.has(section.id)) {
+                uniqueSectionsMap.set(section.id, section);
+            }
+        });
+
+        const uniqueSections = Array.from(uniqueSectionsMap.values());
+
+        return uniqueSections.sort((a, b) => {
+            const orderA = a.orderNumber ?? Number.MAX_SAFE_INTEGER;
+            const orderB = b.orderNumber ?? Number.MAX_SAFE_INTEGER;
+            return orderA - orderB;
+        });
+    }
+
+
+
+    useEffect(() => {
+        if (selectedExam) {
+            setExam(selectedExam);
+            setExamSections(getUniqueSortedExamSections)
+        }
+    }, [selectedExam]);
+
 
 
     const updateApplicationStateStatus = (state: EApplicationUpdateState) => {
@@ -122,7 +169,9 @@ export function ExamApplicationProvider({children}: { children: ReactNode }) {
         evaluations,
         candidate,
         addStudentAnswer,
-        updateApplicationStateStatus
+        updateApplicationStateStatus,
+        examSections,
+        getExamData
     };
 
     return (

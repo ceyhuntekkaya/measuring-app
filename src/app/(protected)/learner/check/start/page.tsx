@@ -8,18 +8,16 @@ import ExamApplicationScreen from "@/components/take/ExamApplicationScreen";
 import {QuestionGroupDto} from "@/types/exam/examEntities";
 
 
-
-export interface SectionQuestionCounts{
+export interface SectionQuestionCounts {
     sectionId: string;
     questionCount: number;
     completedQuestionCount: number;
-    unDoneQuestionCount:number;
+    unDoneQuestionCount: number;
 }
 
 
-
 export default function Page() {
-    const {exam: examState, evaluations} = useExamApplicationContext();
+    const {exam: examState, examSections, getExamData} = useExamApplicationContext();
 
 
     const [sectionQuestionStatics, setSectionQuestionStatics] = useState<SectionQuestionCounts[]>([]);
@@ -29,27 +27,26 @@ export default function Page() {
     const [selectedSection, setSelectedSection] = useState<ExamSectionDto | null>(null);
 
 
+    console.log(setSectionQuestionStatics)
+    console.log(examState)
 
-
-    const {selectedExam, getExamById,} = useExam();
+    const {selectedExam} = useExam();
 
 
     useEffect(() => {
         const loadInitialData = async () => {
-            if (examState)
-                getExamById(examState.id)
+            if (examState) {
+                console.log(examState)
+                getExamData(examState.id)
+            }
+
         };
-
-        loadInitialData();
-    }, []);
-
-
+        if (examState && examSections.length == 0)
+            loadInitialData();
+    }, [examState]);
 
 
-
-
-
-    function getUQuestionGroupsFromSelectedSection(){
+    function getUQuestionGroupsFromSelectedSection() {
         if (!selectedSection || !selectedExam || !selectedExam.questionGroups) {
             setQuestionGroups([]);
             return;
@@ -64,7 +61,7 @@ export default function Page() {
 
 
     useEffect(() => {
-        if(selectedSection){
+        if (selectedSection) {
             console.log("OKA")
             getUQuestionGroupsFromSelectedSection()
         }
@@ -72,86 +69,60 @@ export default function Page() {
     }, [selectedSection]);
 
 
+    /*
 
 
-
-    function getUniqueSortedExamSections(): ExamSectionDto[] {
-        if (!selectedExam || !selectedExam.questionGroups || selectedExam.questionGroups.length === 0) {
-            return [];
-        }
-
-        const allSections = selectedExam.questionGroups
-            .map(qg => qg.examSection)
-            .filter((section): section is ExamSectionDto => section != null);
-
-        const uniqueSectionsMap = new Map<string, ExamSectionDto>();
-
-        allSections.forEach(section => {
-            if (section.id && !uniqueSectionsMap.has(section.id)) {
-                uniqueSectionsMap.set(section.id, section);
+        useEffect(() => {
+            if (!selectedExam || !selectedExam.questionGroups || selectedExam.questionGroups.length === 0) {
+                setSectionQuestionStatics([]);
+                return;
             }
-        });
 
-        const uniqueSections = Array.from(uniqueSectionsMap.values());
+            const uniqueSections = getUniqueSortedExamSections();
 
-        return uniqueSections.sort((a, b) => {
-            const orderA = a.orderNumber ?? Number.MAX_SAFE_INTEGER;
-            const orderB = b.orderNumber ?? Number.MAX_SAFE_INTEGER;
-            return orderA - orderB;
-        });
-    }
+            const statistics: SectionQuestionCounts[] = uniqueSections.map(section => {
+                const sectionQuestionIds = selectedExam.questionGroups
+                    .filter(qg => qg.examSection?.id === section.id)
+                    .flatMap(qg => qg.questions?.map(q => q.id) || []);
 
+                const totalQuestions = sectionQuestionIds.length;
 
+                const completedCount = sectionQuestionIds.filter(questionId => {
+                    const evaluation = evaluations && evaluations.find(ev => ev.questionId === questionId);
+                    return evaluation && (
+                        (evaluation.answer && evaluation.answer.trim() !== '') ||
+                        evaluation.isEmptyAnswer === 'true'
+                    );
+                }).length;
 
-    useEffect(() => {
-        if (!selectedExam || !selectedExam.questionGroups || selectedExam.questionGroups.length === 0) {
-            setSectionQuestionStatics([]);
-            return;
-        }
+                return {
+                    id: section.id!,
+                    sectionId: section.id!,
+                    questionCount: totalQuestions,
+                    completedQuestionCount: completedCount,
+                    unDoneQuestionCount: totalQuestions - completedCount,
+                    createdAt: new Date().toISOString(),
+                    status: 'ACTIVE'
+                };
+            });
 
-        const uniqueSections = getUniqueSortedExamSections();
-
-        const statistics: SectionQuestionCounts[] = uniqueSections.map(section => {
-            const sectionQuestionIds = selectedExam.questionGroups
-                .filter(qg => qg.examSection?.id === section.id)
-                .flatMap(qg => qg.questions?.map(q => q.id) || []);
-
-            const totalQuestions = sectionQuestionIds.length;
-
-            const completedCount = sectionQuestionIds.filter(questionId => {
-                const evaluation = evaluations && evaluations.find(ev => ev.questionId === questionId);
-                return evaluation && (
-                    (evaluation.answer && evaluation.answer.trim() !== '') ||
-                    evaluation.isEmptyAnswer === 'true'
-                );
-            }).length;
-
-            return {
-                id: section.id!,
-                sectionId: section.id!,
-                questionCount: totalQuestions,
-                completedQuestionCount: completedCount,
-                unDoneQuestionCount: totalQuestions - completedCount,
-                createdAt: new Date().toISOString(),
-                status: 'ACTIVE'
-            };
-        });
-
-        setSectionQuestionStatics(statistics);
-    }, [selectedExam, evaluations]);
+            //setSectionQuestionStatics(statistics);
+        }, [selectedExam, evaluations]);
 
 
 
+     */
 
 
     return (
         <div className="space-y-6">
             {
-                activeScreen === 'SECTION' ? <ExamSectionsList sectionQuestionStatics={sectionQuestionStatics} sections={getUniqueSortedExamSections()} onSectionSelect={setSelectedSection}/> :
-                    <ExamApplicationScreen questionGroups={questionGroups} onExitExam={()=>setActiveScreen('SECTION')} />
+                activeScreen === 'SECTION' ?
+                    <ExamSectionsList sectionQuestionStatics={sectionQuestionStatics} sections={examSections}
+                                      onSectionSelect={setSelectedSection}/> :
+                    <ExamApplicationScreen questionGroups={questionGroups}
+                                           onExitExam={() => setActiveScreen('SECTION')}/>
             }
-
-
 
 
         </div>
