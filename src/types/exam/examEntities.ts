@@ -482,6 +482,21 @@ export interface ExamImportError {
 }
 
 
+//ceyhun
+export interface QuestionAnswerRequest {
+    applicationId: string;
+    questionId: string;
+    answer: string;
+    mediaType: EMediaType;
+    questionType: EQuestionType;
+    evaluationId: string;
+    isEmptyAnswer: boolean;
+}
+
+
+
+
+
 export type EvaluationDto = DatabaseObjectDto & {
 
     id: string;

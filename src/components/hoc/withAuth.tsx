@@ -26,7 +26,6 @@ export default function withAuth<P extends object>(
 
             // Eğer belirli roller gerekiyorsa ve kullanıcının o rolleri yoksa
 
-            console.log("ceyhun 10")
             if (
                 !loading &&
                 isAuthenticated &&
@@ -53,7 +52,6 @@ export default function withAuth<P extends object>(
         }
 
         // Rol kontrolü varsa ve gereken roller yoksa
-        console.log("ceyhun 11")
         if (
             requiredRoles.length > 0 &&
             !requiredRoles.some(role => user?.roleSet.includes(role))

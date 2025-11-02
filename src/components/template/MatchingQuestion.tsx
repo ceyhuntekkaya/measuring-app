@@ -1,13 +1,16 @@
 import React, {useState, useEffect, useMemo} from 'react';
 import { MatchingTemplateDto } from '@/types/exam/questionTemplates';
+import {QuestionTemplateType} from "@/types/exam/examEntities";
+import {EMediaType, EQuestionType} from "@/types/exam/enum";
 
 interface MatchingQuestionProps {
     template: MatchingTemplateDto;
     isPreview?: boolean;
-    onAnswerChange?: (matches: MatchingAnswers) => void;
+    onAnswerChange?: (questionId:string, template: QuestionTemplateType, selectedOption: string, type: EQuestionType, mediaType: EMediaType, isEmptyAnswer: boolean) => void;
     initialAnswer?: MatchingAnswers;
     isSubmitted?: boolean;
     showCorrectAnswer?: boolean;
+    questionId: string;
 }
 
 interface MatchingAnswers {
@@ -38,6 +41,7 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
                                                                onAnswerChange,
                                                                initialAnswer = {},
                                                                isSubmitted = false,
+                                                               questionId,
                                                                showCorrectAnswer = false
                                                            }) => {
     const [matches, setMatches] = useState<MatchingAnswers>(initialAnswer);
@@ -121,10 +125,14 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
 
         setMatches(newMatches);
 
-        if (onAnswerChange) {
-            onAnswerChange(newMatches);
-        }
+
     };
+
+    const handleSaveAnswer =()=>{
+        if (onAnswerChange) {
+            onAnswerChange(questionId, template, matches ? JSON.stringify(matches) : '', EQuestionType.MATCHING, EMediaType.TEXT, false);
+        }
+    }
 
     const handleDragStart = (rightId: string): void => {
         if (isSubmitted && !isPreview) return;
@@ -564,7 +572,7 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
                     </div>
                 </div>
             </div>
-
+            <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
             {/* Overall Explanation */}
             {isSubmitted && showCorrectAnswer && template.explanation && (
                 <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">

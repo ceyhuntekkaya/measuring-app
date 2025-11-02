@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {OrderingItem, OrderingTemplateDto} from '@/types/exam/questionTemplates';
+import {QuestionTemplateType} from "@/types/exam/examEntities";
+import {EMediaType, EQuestionType} from "@/types/exam/enum";
 
 interface OrderingQuestionProps {
     template: OrderingTemplateDto;
     isPreview?: boolean;
-    onAnswerChange?: (orderedItems: string[] | null) => void;
+    onAnswerChange?: (questionId:string, template: QuestionTemplateType, selectedOption: string, type: EQuestionType, mediaType: EMediaType, isEmptyAnswer: boolean) => void;
     initialAnswer?: string[] | null;
     isSubmitted?: boolean;
     showCorrectAnswer?: boolean;
+    questionId: string;
 }
 
 const OrderingQuestion: React.FC<OrderingQuestionProps> = ({
@@ -16,6 +19,7 @@ const OrderingQuestion: React.FC<OrderingQuestionProps> = ({
                                                                onAnswerChange,
                                                                initialAnswer = null,
                                                                isSubmitted = false,
+                                                               questionId,
                                                                showCorrectAnswer = false
                                                            }) => {
     const [orderedItems, setOrderedItems] = useState<string[]>([]);
@@ -77,9 +81,7 @@ const OrderingQuestion: React.FC<OrderingQuestionProps> = ({
         setDraggedIndex(null);
         setDragOverIndex(null);
 
-        if (onAnswerChange) {
-            onAnswerChange(newOrderedItems);
-        }
+
     };
 
     const handleDragEnd = () => {
@@ -100,10 +102,14 @@ const OrderingQuestion: React.FC<OrderingQuestionProps> = ({
 
         setOrderedItems(newOrderedItems);
 
-        if (onAnswerChange) {
-            onAnswerChange(newOrderedItems);
-        }
+
     };
+
+    const handleSaveAnswer =()=>{
+        if (onAnswerChange) {
+            onAnswerChange(questionId, template, orderedItems ? JSON.stringify(orderedItems) : '', EQuestionType.ORDERING, EMediaType.TEXT, false);
+        }
+    }
 
     const getItemById = (id: string) => {
         return template.options?.items?.find(item => item.id === id);
@@ -406,7 +412,7 @@ const OrderingQuestion: React.FC<OrderingQuestionProps> = ({
                     );
                 })}
             </div>
-
+            <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
             {/* Overall Explanation */}
             {isSubmitted && showCorrectAnswer && template.explanation && (
                 <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">

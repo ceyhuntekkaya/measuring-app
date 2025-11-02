@@ -1,9 +1,9 @@
 'use client';
 
 import React, {useEffect, useState} from 'react';
-import {QuestionGroupDto, QuestionTemplateType} from "@/types/exam/examEntities";
+import {QuestionAnswerRequest, QuestionGroupDto, QuestionTemplateType} from "@/types/exam/examEntities";
 import {useQuestion} from "@/hooks/exam/use-question";
-import {EQuestionType} from "@/types/exam/enum";
+import {EMediaType, EQuestionType} from "@/types/exam/enum";
 import MultipleChoiceQuestion from "@/components/template/MultipleChoiceQuestion";
 import {
     AudioResponseTemplateDto,
@@ -26,6 +26,8 @@ import DragAndDropQuestion from "@/components/template/DragAndDropQuestion";
 import AudioResponseQuestion from "@/components/template/AudioResponseQuestion";
 import VideoResponseQuestion from "@/components/template/VideoResponseQuestion";
 import ImageResponseQuestion from "@/components/template/ImageResponseQuestion";
+import {useExamApplicationContext} from "@/contexts/ExamApplicationContext";
+import {useExamResult} from "@/hooks/exam/use-exam-result";
 
 interface ExamApplicationScreenProps {
     questionGroups: QuestionGroupDto[];
@@ -39,6 +41,10 @@ export default function ExamApplicationScreen({
     const [currentGroupIndex, setCurrentGroupIndex] = useState(0);
     const [completedGroups, setCompletedGroups] = useState<Set<number>>(new Set());
     const [showExitModal, setShowExitModal] = useState(false);
+    const {application, evaluations} = useExamApplicationContext();
+    const {saveAnswer} = useExamResult();
+
+
 
     console.log("ceyhun",setCompletedGroups)
 
@@ -62,19 +68,18 @@ export default function ExamApplicationScreen({
     const handleCancelExit = () => {
         setShowExitModal(false);
     };
-/*
-    // Test için bir grubu tamamlanmış olarak işaretle
-    const markAsCompleted = (index: number) => {
-        setCompletedGroups(prev => new Set([...prev, index]));
-    };
+    /*
+        // Test için bir grubu tamamlanmış olarak işaretle
+        const markAsCompleted = (index: number) => {
+            setCompletedGroups(prev => new Set([...prev, index]));
+        };
 
- */
+     */
 
     const {
         questionsByGroup,
         getQuestionsByGroup,
     } = useQuestion();
-
 
 
     const {
@@ -89,37 +94,67 @@ export default function ExamApplicationScreen({
         }
     }, [currentGroupIndex]);
 
-    const renderTemplateSpecificForm = (type: EQuestionType, template: QuestionTemplateType) => {
+
+    useEffect(() => {
+        // alert(questionGroups.length)
+        if (questionGroups && questionGroups.length > 0) {
+            getQuestionGroupById(questionGroups[0].id);
+            getQuestionsByGroup(questionGroups[0].id)
+        }
+    }, []);
+
+
+    const onAnswerChange = (questionId: string, template: QuestionTemplateType, selectedOption: string, type: EQuestionType, mediaType: EMediaType, isEmptyAnswer: boolean) => {
+
+        const evaluation = evaluations?.find(e => e.questionId === questionId);
+        const answerData: QuestionAnswerRequest = {
+            applicationId: application?.id || '',
+            questionId: evaluation?.questionId || '',
+            answer: selectedOption,
+            mediaType: mediaType,
+            questionType: type,
+            evaluationId: evaluation?.id || '',
+            isEmptyAnswer,
+        }
+      saveAnswer(answerData);
+    };
+
+    const renderTemplateSpecificForm = (questionId: string, type: EQuestionType, template: QuestionTemplateType) => {
 
 
         switch (type) {
             case 'MULTIPLE_CHOICE':
-                return <MultipleChoiceQuestion template={template as MultipleChoiceTemplateDto}/>;
-
-            case 'TRUE_FALSE':
-                return <TrueFalseQuestion template={template as TrueFalseTemplateDto}/>;
-            case 'FILL_IN_THE_BLANKS':
-                return <FillInTheBlanksQuestion template={template as FillInTheBlanksTemplateDto}/>;
-            case 'SHORT_ANSWER':
-                return <ShortAnswerQuestion template={template as ShortAnswerTemplateDto}/>;
-            case 'ESSAY':
-                return <EssayQuestion template={template as EssayTemplateDto}/>;
-            case 'MATCHING':
-                return <MatchingQuestion template={template as MatchingTemplateDto}/>;
-            case 'ORDERING':
-                return <OrderingQuestion template={template as OrderingTemplateDto}/>;
-            case 'MULTIPLE_RESPONSE':
-                return <MultipleResponseQuestion template={template as MultipleResponseTemplateDto}/>;
-            case 'HOT_SPOT':
-                return <HotSpotQuestion template={template as HotSpotTemplateDto}/>;
-            case 'DRAG_AND_DROP':
-                return <DragAndDropQuestion template={template as DragAndDropTemplateDto}/>;
+                return <MultipleChoiceQuestion template={template as MultipleChoiceTemplateDto}
+                                               onAnswerChange={onAnswerChange} questionId={questionId}/>;
             case 'AUDIO_RESPONSE':
-                return <AudioResponseQuestion template={template as AudioResponseTemplateDto}/>;
+                return <AudioResponseQuestion template={template as AudioResponseTemplateDto} onAnswerChange={onAnswerChange} questionId={questionId}/>;
+            case 'TRUE_FALSE':
+                return <TrueFalseQuestion template={template as TrueFalseTemplateDto} onAnswerChange={onAnswerChange} questionId={questionId}/>;
+            case 'FILL_IN_THE_BLANKS':
+                return <FillInTheBlanksQuestion template={template as FillInTheBlanksTemplateDto} onAnswerChange={onAnswerChange} questionId={questionId}/>;
+            case 'SHORT_ANSWER':
+                return <ShortAnswerQuestion template={template as ShortAnswerTemplateDto} onAnswerChange={onAnswerChange} questionId={questionId}/>;
+            case 'ESSAY':
+                return <EssayQuestion template={template as EssayTemplateDto} onAnswerChange={onAnswerChange} questionId={questionId}/>;
             case 'VIDEO_RESPONSE':
-                return <VideoResponseQuestion template={template as VideoResponseTemplateDto}/>;
+                return <VideoResponseQuestion template={template as VideoResponseTemplateDto} onAnswerChange={onAnswerChange} questionId={questionId}/>;
+
+
+
+
+
+            case 'MATCHING':
+                return <MatchingQuestion template={template as MatchingTemplateDto} onAnswerChange={onAnswerChange} questionId={questionId}/>;
+            case 'ORDERING':
+                return <OrderingQuestion template={template as OrderingTemplateDto} onAnswerChange={onAnswerChange} questionId={questionId}/>;
+            case 'MULTIPLE_RESPONSE':
+                return <MultipleResponseQuestion template={template as MultipleResponseTemplateDto} onAnswerChange={onAnswerChange} questionId={questionId}/>;
+            case 'HOT_SPOT':
+                return <HotSpotQuestion template={template as HotSpotTemplateDto} onAnswerChange={onAnswerChange} questionId={questionId}/>;
+            case 'DRAG_AND_DROP':
+                return <DragAndDropQuestion template={template as DragAndDropTemplateDto} onAnswerChange={onAnswerChange} questionId={questionId}/>;
             case 'IMAGE_RESPONSE':
-                return <ImageResponseQuestion template={template as ImageResponseTemplateDto}/>;
+                return <ImageResponseQuestion template={template as ImageResponseTemplateDto} onAnswerChange={onAnswerChange} questionId={questionId}/>;
             default:
                 return (
                     <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
@@ -129,8 +164,6 @@ export default function ExamApplicationScreen({
                     </div>
                 );
         }
-
-
     };
 
     return (
@@ -167,48 +200,38 @@ export default function ExamApplicationScreen({
             </header>
 
             {/* Main Content Area */}
-            <main className="flex-1 overflow-y-auto p-3">
-                <div className="mx-auto">
-                    <div className="bg-white rounded-lg shadow-sm p-5 min-h-[500px]">
-                        {/* Buraya soru içeriği gelecek */}
+            {
+                selectedQuestionGroup &&
+                <main className="flex-1 overflow-y-auto p-3">
+                    <div className="mx-auto">
+                        <div className="bg-white rounded-lg shadow-sm p-5 min-h-[500px]">
+                            {/* Buraya soru içeriği gelecek */}
 
-                        {
-                            /*
-                            <div className="text-center text-gray-500">
-                            <p className="text-lg font-medium">Soru Grubu {currentGroupIndex + 1}</p>
-                            <p className="mt-2">Soru içeriği buraya gelecek</p>
+                            <h3 className="flex items-center gap-2">SORU GRUP: {currentGroupIndex + 1}</h3>
+                            {
+                                questionsByGroup && selectedQuestionGroup?.headers?.map((header, key) => (
+                                    <div key={key}>{header.content}</div>
+                                ))
+                            }
 
-                            {// Test butonu - daha sonra kaldırılacak }
-                        <button
-                            onClick={() => markAsCompleted(currentGroupIndex)}
-                            className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                        >
-                            Bu Grubu Tamamlandı Olarak İşaretle (Test)
-                        </button>
+
+                            {
+                                questionsByGroup && questionsByGroup.map((question, key) => (
+                                    <div key={key} className="p-4 border-b">
+                                        <h3 className="flex items-center gap-2">SORU: {key + 1} - {question.questionType} </h3>
+                                        {
+                                            question.questionType && question.questionTemplate &&
+                                            renderTemplateSpecificForm(question.id, question.questionType, question.questionTemplate)
+                                        }
+                                    </div>
+                                ))
+                                //<MultipleChoiceQuestion template={}/>
+                            }
+                        </div>
                     </div>
-                             */
-                        }
-                        {
-                            selectedQuestionGroup?.headers?.map((header, key) => (
-                                <div key={key}>{header.content}</div>
-                            ))
-                        }
+                </main>
+            }
 
-
-                        {
-                            questionsByGroup.map((question, key) => (
-                                <div key={key} className="p-4 border-b">
-                                    {
-                                        question.questionType && question.questionTemplate &&
-                                        renderTemplateSpecificForm(question.questionType, question.questionTemplate)
-                                    }
-                                </div>
-                            ))
-                            //<MultipleChoiceQuestion template={}/>
-                        }
-                    </div>
-                </div>
-            </main>
 
             {/* Bottom Navigation */}
             <footer className="bg-white border-t border-gray-200 p-4 shadow-lg">

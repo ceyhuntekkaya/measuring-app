@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ImageResponseTemplateDto } from '@/types/exam/questionTemplates';
+import {QuestionTemplateType} from "@/types/exam/examEntities";
+import {EMediaType, EQuestionType} from "@/types/exam/enum";
 
 interface ImageResponseQuestionProps {
     template: ImageResponseTemplateDto;
     isPreview?: boolean;
-    onAnswerChange?: (imageData: ImageAnswerData | null) => void;
+    onAnswerChange?: (questionId:string, template: QuestionTemplateType, selectedOption: string, type: EQuestionType, mediaType: EMediaType, isEmptyAnswer: boolean) => void;
     initialAnswer?: ImageAnswerData | null;
     isSubmitted?: boolean;
     showCorrectAnswer?: boolean;
+    questionId: string;
 }
 
 interface ImageAnswerData {
@@ -30,6 +33,7 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                                                                          onAnswerChange,
                                                                          initialAnswer = null,
                                                                          isSubmitted = false,
+                                                                         questionId,
                                                                          showCorrectAnswer = false
                                                                      }) => {
     const [imageAnswer, setImageAnswer] = useState<ImageAnswerData | null>(initialAnswer);
@@ -119,9 +123,15 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
         setImageAnswer(newImageData);
 
         if (onAnswerChange) {
-            onAnswerChange(newImageData);
+           // onAnswerChange(newImageData);
         }
     };
+
+    const handleSaveAnswer =()=>{
+        if (onAnswerChange) {
+            onAnswerChange(questionId, template, imageAnswer && imageAnswer.imageUrl ? imageAnswer.imageUrl  : '', EQuestionType.IMAGE_RESPONSE, EMediaType.IMAGE, false);
+        }
+    }
 
     const handleUploadClick = (): void => {
         if (isSubmitted && !isPreview) return;
@@ -220,7 +230,7 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                     setImageAnswer(newImageData);
 
                     if (onAnswerChange) {
-                        onAnswerChange(newImageData);
+                      //  onAnswerChange(newImageData);
                     }
                 }
             }, 'image/png');
@@ -245,7 +255,7 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
         setImageAnswer(null);
 
         if (onAnswerChange) {
-            onAnswerChange(null);
+           // onAnswerChange(null);
         }
     };
 
@@ -255,7 +265,7 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
         setImageAnswer(null);
 
         if (onAnswerChange) {
-            onAnswerChange(null);
+          //  onAnswerChange(null);
         }
     };
 
@@ -564,7 +574,7 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                     )}
                 </div>
             )}
-
+            <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
             {/* Submission Status */}
             {isSubmitted && imageAnswer && (
                 <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded">

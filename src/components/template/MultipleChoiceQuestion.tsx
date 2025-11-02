@@ -1,17 +1,19 @@
 import React, {useState, useEffect} from 'react';
 import {MultipleChoiceTemplateDto, ChoiceOption} from '@/types/exam/questionTemplates';
 import {
-    EMediaType,
+    EMediaType, EQuestionType,
 } from "@/types/exam/enum";
+import {QuestionTemplateType} from "@/types/exam/examEntities";
 
 
 interface MultipleChoiceQuestionProps {
     template: MultipleChoiceTemplateDto;
     isPreview?: boolean;
-    onAnswerChange?: (selectedOption: string | null) => void;
+    onAnswerChange?: (questionId:string, template: QuestionTemplateType, selectedOption: string, type: EQuestionType, mediaType: EMediaType, isEmptyAnswer: boolean) => void;
     initialAnswer?: string | null;
     isSubmitted?: boolean;
     showCorrectAnswer?: boolean;
+    questionId:string;
 }
 
 const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
@@ -20,7 +22,8 @@ const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
                                                                            onAnswerChange,
                                                                            initialAnswer = null,
                                                                            isSubmitted = false,
-                                                                           showCorrectAnswer = false
+                                                                           showCorrectAnswer = false,
+                                                                           questionId
                                                                        }) => {
     const [selectedOption, setSelectedOption] = useState<string | null>(initialAnswer);
     const [shuffledOptions, setShuffledOptions] = useState<ChoiceOption[]>([]);
@@ -44,9 +47,8 @@ const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
 
         const newSelection = selectedOption === optionId ? null : optionId;
         setSelectedOption(newSelection);
-
         if (onAnswerChange) {
-            onAnswerChange(newSelection);
+            onAnswerChange(questionId, template, newSelection ? newSelection : '', EQuestionType.MULTIPLE_CHOICE, EMediaType.TEXT, false);
         }
     };
 

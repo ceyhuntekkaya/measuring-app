@@ -12,16 +12,13 @@ export function useRequireAuth(requiredRoles: Role[] = []) {
         if (loading) return;
 
         if (!isAuthenticated) {
-            console.log('useRequireAuth - Not authenticated, redirecting to login');
             router.replace(`/login?redirectTo=${window.location.pathname}`);
             return;
         }
-        console.log("ceyhun 17")
         if (
             requiredRoles.length > 0 &&
             !requiredRoles.some(role => user?.roleSet.includes(role))
         ) {
-            console.log('useRequireAuth - User lacks required roles, redirecting');
             router.replace(user ? `/app` : '/login');
         }
     }, [loading, isAuthenticated, user, router, requiredRoles]);

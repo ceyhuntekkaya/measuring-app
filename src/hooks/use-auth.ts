@@ -53,7 +53,6 @@ export function useAuth() {
     const hasRole = useCallback(
         (role: Role) => {
             if (!user) return false;
-            console.log("ceyhun 1")
             return user.roleSet.includes(role);
         },
         [user]
@@ -65,7 +64,6 @@ export function useAuth() {
 
     const isAdmin = useCallback(() => {
         if (!user) return false;
-        console.log("ceyhun 2")
         return user.roleSet.includes('ADMIN');
     }, [user]);
 
@@ -107,7 +105,6 @@ export function useProtectedRoute(requiredRole?: string, requiredPermissions: Pe
         }
 
         if (requiredPermissions.length > 0 && !hasAllPermissions(requiredPermissions)) {
-            console.log("requiredPermissions")
             return false;
         }
 

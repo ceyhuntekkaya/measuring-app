@@ -1,13 +1,16 @@
 import React, {useState, useEffect, useRef, useMemo} from 'react';
 import { HotSpotTemplateDto, HotSpotArea } from '@/types/exam/questionTemplates';
+import {QuestionTemplateType} from "@/types/exam/examEntities";
+import {EMediaType, EQuestionType} from "@/types/exam/enum";
 
 interface HotSpotQuestionProps {
     template: HotSpotTemplateDto;
     isPreview?: boolean;
-    onAnswerChange?: (selectedSpots: string[]) => void;
+    onAnswerChange?: (questionId:string, template: QuestionTemplateType, selectedOption: string, type: EQuestionType, mediaType: EMediaType, isEmptyAnswer: boolean) => void;
     initialAnswer?: string[];
     isSubmitted?: boolean;
     showCorrectAnswer?: boolean;
+    questionId: string;
 }
 
 interface Point {
@@ -28,6 +31,7 @@ const HotSpotQuestion: React.FC<HotSpotQuestionProps> = ({
                                                              onAnswerChange,
                                                              initialAnswer = [],
                                                              isSubmitted = false,
+                                                             questionId,
                                                              showCorrectAnswer = false
                                                          }) => {
     const [selectedSpots, setSelectedSpots] = useState<string[]>(initialAnswer);
@@ -90,10 +94,14 @@ const HotSpotQuestion: React.FC<HotSpotQuestionProps> = ({
 
         setSelectedSpots(newSelectedSpots);
 
-        if (onAnswerChange) {
-            onAnswerChange(newSelectedSpots);
-        }
+
     };
+
+    const handleSaveAnswer =()=>{
+        if (onAnswerChange) {
+            onAnswerChange(questionId, template, selectedSpots ? JSON.stringify(selectedSpots) : '', EQuestionType.HOT_SPOT, EMediaType.TEXT, false);
+        }
+    }
 
     const evaluateSpots = (): void => {
         if (!template.options?.hotSpots) return;
@@ -568,7 +576,7 @@ const HotSpotQuestion: React.FC<HotSpotQuestionProps> = ({
                     </div>
                 </div>
             )}
-
+            <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
             {/* Feedback for Selected Spots */}
             {isSubmitted && showCorrectAnswer && spotResults.length > 0 && (
                 <div className="space-y-3">

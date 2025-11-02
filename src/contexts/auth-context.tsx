@@ -49,8 +49,6 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
                         setApplication(userData.application ? userData.application : null);
 
                     }else{
-                        console.log(userData.user)
-                        console.log("ceyhun 6565")
                         setUser(userData.user as User);
                     }
 
@@ -103,7 +101,6 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
 
 
     const login = async (username: string, password: string): Promise<boolean> => {
-        console.log("login sayfası ")
         try {
             setLoading(true);
             const response = await authService.login(username, password);
@@ -111,7 +108,6 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
             localStorage.setItem('refreshToken', response.refreshToken);
             document.cookie = `accessToken=${response.accessToken}; path=/; secure; samesite=strict`;
             setUser(response.user);
-            console.log("ceyhun 15")
             const path = response.user.roleSet.includes('ADMIN') ? '/admin' :
                 response.user.roleSet.includes('USER') ? '/admin' :
                     response.user.roleSet.includes('LEARNER') ? '/learner' :
@@ -163,7 +159,6 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
     };
 
     const refreshToken = async (): Promise<boolean> => {
-        console.log("refreshToken sayfası ")
         try {
             const newAccessToken = await authService.refreshToken();
             if (newAccessToken) {
@@ -194,21 +189,12 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
 
 
     const examLogin = async (examCode: string): Promise<boolean> => {
-
-        console.log("examLogin sayfası ")
         try {
             setLoading(true);
             const response = await authService.examLogin(examCode);
             localStorage.setItem('accessToken', response.accessToken);
             localStorage.setItem('refreshToken', response.refreshToken);
             document.cookie = `accessToken=${response.accessToken}; path=/; secure; samesite=strict`;
-
-
-            console.log(response.user)
-            console.log(response.examSession)
-            console.log(response.exam)
-            console.log(response.evaluations)
-            console.log(response.application)
 
             setCandidate(response.user);
             setExamSession(response.examSession);
@@ -227,11 +213,7 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
 
 
     const getPathByRole = (): string => {
-        console.log("ceyhun 16")
-        console.log(user)
-
         if (user?.role && user?.role === "LEARNER") return '/learner';
-
         if (user?.roleSet.includes('ADMIN')) return '/admin';
         if (user?.roleSet.includes('USER')) return '/app';
         if (user?.roleSet.includes('LEARNER')) return '/learner';

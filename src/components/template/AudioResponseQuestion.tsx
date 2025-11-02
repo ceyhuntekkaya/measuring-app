@@ -1,13 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AudioResponseTemplateDto } from '@/types/exam/questionTemplates';
+import {QuestionTemplateType} from "@/types/exam/examEntities";
+import {EMediaType, EQuestionType} from "@/types/exam/enum";
+import {UploadedFileDto} from "@/types/exam/miscDtos";
+import {uploadAudioFile} from "@/services/api/upload-file";
 
 interface AudioResponseQuestionProps {
     template: AudioResponseTemplateDto;
     isPreview?: boolean;
-    onAnswerChange?: (audioData: AudioAnswerData | null) => void;
+    onAnswerChange?: (questionId:string, template: QuestionTemplateType, selectedOption: string, type: EQuestionType, mediaType: EMediaType, isEmptyAnswer: boolean) => void;
     initialAnswer?: AudioAnswerData | null;
     isSubmitted?: boolean;
     showCorrectAnswer?: boolean;
+    questionId: string;
 }
 
 interface AudioAnswerData {
@@ -16,6 +21,7 @@ interface AudioAnswerData {
     duration?: number;
     recordedAt?: string;
     fileName?: string;
+    uploadedFileData?: UploadedFileDto; // Upload sonucu
 }
 
 const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
@@ -23,16 +29,21 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                                                                          isPreview = false,
                                                                          onAnswerChange,
                                                                          initialAnswer = null,
+                                                                         questionId,
                                                                          isSubmitted = false,
                                                                          showCorrectAnswer = false
                                                                      }) => {
     const [audioAnswer, setAudioAnswer] = useState<AudioAnswerData | null>(initialAnswer);
+
+    const [audioAnswerPath, setAudioAnswerPath] = useState<string>('');
     const [isRecording, setIsRecording] = useState<boolean>(false);
     const [isPaused, setIsPaused] = useState<boolean>(false);
     const [recordingTime, setRecordingTime] = useState<number>(0);
     const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
     const [error, setError] = useState<string>('');
     const [audioLevel, setAudioLevel] = useState<number>(0);
+    const [uploadProgress, setUploadProgress] = useState<number>(0);
+    const [isUploading, setIsUploading] = useState<boolean>(false);
 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioContextRef = useRef<AudioContext | null>(null);
@@ -41,19 +52,16 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
     const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const animationFrameRef = useRef<number | null>(null);
 
+    console.log("ceyhun: ",mediaStream )
+    console.log("ceyhun: ",showCorrectAnswer )
+
     useEffect(() => {
         setAudioAnswer(initialAnswer);
     }, [initialAnswer]);
 
-    console.log(showCorrectAnswer)
-
+    // Cleanup ONLY on unmount - EMPTY dependency array!
     useEffect(() => {
-        // Cleanup on unmount
         return () => {
-            stopRecording();
-            if (mediaStream) {
-                mediaStream.getTracks().forEach(track => track.stop());
-            }
             if (timerIntervalRef.current) {
                 clearInterval(timerIntervalRef.current);
             }
@@ -63,8 +71,15 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
             if (audioContextRef.current) {
                 audioContextRef.current.close();
             }
+            if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+                try {
+                    mediaRecorderRef.current.stop();
+                } catch (e) {
+                    console.error('Error stopping recorder on unmount:', e);
+                }
+            }
         };
-    }, [mediaStream]);
+    }, []);
 
     const setupAudioAnalyser = (stream: MediaStream): void => {
         try {
@@ -98,6 +113,67 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
         animationFrameRef.current = requestAnimationFrame(updateAudioLevel);
     };
 
+    const handleUploadAudio = async (audioBlob: Blob, duration: number): Promise<AudioAnswerData> => {
+
+        // Eğer entityId yoksa veya preview modundaysa upload yapma
+        if (!questionId || isPreview) {
+            const url = URL.createObjectURL(audioBlob);
+            return {
+                audioUrl: url,
+                audioBlob: audioBlob,
+                duration: duration,
+                recordedAt: new Date().toISOString(),
+                fileName: `audio-response-${Date.now()}.webm`
+            };
+        }
+
+        setIsUploading(true);
+        setUploadProgress(0);
+        setError('');
+
+        try {
+            const uploadedFiles = await uploadAudioFile(
+                audioBlob,
+                questionId,
+                'AUDIO_RESPONSE',
+                {
+                    onProgress: (progress) => {
+                        setUploadProgress(progress);
+                    },
+                    onError: (errorMsg) => {
+                        setError(errorMsg);
+                    }
+                }
+            );
+
+            setIsUploading(false);
+
+            if (uploadedFiles && uploadedFiles.length > 0) {
+                const uploadedFile = uploadedFiles[0];
+
+                setAudioAnswerPath(uploadedFile.path || '--')
+                const url = URL.createObjectURL(audioBlob);
+
+                return {
+                    audioUrl: url,
+                    audioBlob: audioBlob,
+                    duration: duration,
+                    recordedAt: new Date().toISOString(),
+                    fileName: uploadedFile.fileName || `audio-response-${Date.now()}.webm`,
+                    uploadedFileData: uploadedFile
+                };
+            } else {
+                throw new Error('Upload başarısız: Sunucudan veri dönmedi');
+            }
+
+        } catch (err) {
+            setIsUploading(false);
+            const errorMsg = err instanceof Error ? err.message : 'Audio yükleme başarısız';
+            setError(errorMsg);
+            throw err;
+        }
+    };
+
     const startRecording = async (): Promise<void> => {
         if (isSubmitted && !isPreview) return;
 
@@ -112,7 +188,6 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                 mimeType: 'audio/webm;codecs=opus',
             };
 
-            // Fallback to generic webm if opus is not supported
             if (!MediaRecorder.isTypeSupported(options.mimeType || '')) {
                 options.mimeType = 'audio/webm';
             }
@@ -127,36 +202,51 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                 }
             };
 
-            mediaRecorder.onstop = () => {
+            mediaRecorder.onstop = async () => {
                 const blob = new Blob(recordedChunksRef.current, { type: 'audio/webm' });
-                const url = URL.createObjectURL(blob);
+                const finalDuration = recordingTime;
 
-                const newAudioData: AudioAnswerData = {
-                    audioUrl: url,
-                    audioBlob: blob,
-                    duration: recordingTime,
-                    recordedAt: new Date().toISOString(),
-                    fileName: `audio-response-${Date.now()}.webm`
-                };
+                try {
+                    // Upload audio and get the result
+                    const newAudioData = await handleUploadAudio(blob, finalDuration);
+                    setAudioAnswer(newAudioData);
 
-                setAudioAnswer(newAudioData);
-
-                if (onAnswerChange) {
-                    onAnswerChange(newAudioData);
+                    // Call onAnswerChange if upload was successful
+                    if (onAnswerChange && newAudioData.uploadedFileData) {
+                        onAnswerChange(
+                            questionId,
+                            template,
+                            newAudioData.uploadedFileData.path  || '',
+                            EQuestionType.AUDIO_RESPONSE,
+                            EMediaType.AUDIO,
+                            false
+                        );
+                    }
+                } catch (err) {
+                    console.error('Upload failed:', err);
+                    // Even if upload fails, keep the local audio
+                    const url = URL.createObjectURL(blob);
+                    setAudioAnswer({
+                        audioUrl: url,
+                        audioBlob: blob,
+                        duration: finalDuration,
+                        recordedAt: new Date().toISOString(),
+                        fileName: `audio-response-${Date.now()}.webm`
+                    });
                 }
 
-                // Stop all tracks
-                if (mediaStream) {
-                    mediaStream.getTracks().forEach(track => track.stop());
-                }
+                // Cleanup
+                stream.getTracks().forEach(track => track.stop());
                 setMediaStream(null);
                 setAudioLevel(0);
 
                 if (animationFrameRef.current) {
                     cancelAnimationFrame(animationFrameRef.current);
+                    animationFrameRef.current = null;
                 }
                 if (audioContextRef.current) {
                     audioContextRef.current.close();
+                    audioContextRef.current = null;
                 }
             };
 
@@ -165,12 +255,14 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
             setIsPaused(false);
             setRecordingTime(0);
 
-            // Start timer
+            if (timerIntervalRef.current) {
+                clearInterval(timerIntervalRef.current);
+            }
+
             timerIntervalRef.current = setInterval(() => {
                 setRecordingTime(prev => {
                     const newTime = prev + 1;
 
-                    // Auto-stop if max duration reached
                     if (template.maxRecordingDuration && newTime >= template.maxRecordingDuration) {
                         stopRecording();
                     }
@@ -186,6 +278,20 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
         }
     };
 
+    const handleSaveAnswer = () => {
+        if (onAnswerChange && audioAnswerPath) {
+            // If we have uploaded file data, use its ID
+            onAnswerChange(
+                questionId,
+                template,
+                audioAnswerPath,
+                EQuestionType.AUDIO_RESPONSE,
+                EMediaType.AUDIO,
+                !audioAnswer
+            );
+        }
+    }
+
     const pauseRecording = (): void => {
         if (mediaRecorderRef.current && isRecording && !isPaused) {
             mediaRecorderRef.current.pause();
@@ -193,6 +299,7 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
 
             if (timerIntervalRef.current) {
                 clearInterval(timerIntervalRef.current);
+                timerIntervalRef.current = null;
             }
         }
     };
@@ -202,7 +309,6 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
             mediaRecorderRef.current.resume();
             setIsPaused(false);
 
-            // Resume timer
             timerIntervalRef.current = setInterval(() => {
                 setRecordingTime(prev => {
                     const newTime = prev + 1;
@@ -235,9 +341,10 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
 
         setAudioAnswer(null);
         setRecordingTime(0);
+        setUploadProgress(0);
 
         if (onAnswerChange) {
-            onAnswerChange(null);
+            onAnswerChange(questionId, template, '', EQuestionType.AUDIO_RESPONSE, EMediaType.AUDIO, true);
         }
     };
 
@@ -310,8 +417,7 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
 
     return (
         <div className="space-y-6">
-            {/* Question Title */}
-            {template.title && template.title === "NOT_SET" && (
+            {template.title && template.title !== "NOT_SET" && (
                 <div className="mb-4">
                     <h3 className="text-lg font-semibold text-gray-800">{template.title}</h3>
                     {template.description && (
@@ -320,34 +426,20 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                 </div>
             )}
 
-            {/* Question Statement
-            {template.statement && (
-                <div className="mb-6">
-                    <p className="text-gray-800 text-base leading-relaxed">{template.statement}</p>
-                </div>
-            )}
-            */}
-            {/* Prompt */}
             {template.prompt && (
                 <div className="mb-4 p-4 bg-purple-50 border-l-4 border-purple-400 rounded">
                     <p className="text-purple-700">{template.prompt}</p>
                 </div>
             )}
 
-            {/* Audio Prompt */}
             {template.audioPromptUrl && (
                 <div className="mb-6">
-                    <audio
-                        src={template.audioPromptUrl}
-                        controls
-                        className="w-full"
-                    >
+                    <audio src={template.audioPromptUrl} controls className="w-full">
                         Tarayıcınız ses oynatmayı desteklemiyor.
                     </audio>
                 </div>
             )}
 
-            {/* Recording Duration Info */}
             {getDurationInfo() && (
                 <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
                     <div className="flex items-center space-x-2">
@@ -361,41 +453,6 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                 </div>
             )}
 
-            {/* Grading Criteria
-            {template.gradingCriteria && template.gradingCriteria.length > 0 && (
-                <div className="mb-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
-                    <h4 className="font-semibold text-yellow-800 mb-2">Değerlendirme Kriterleri:</h4>
-                    <ul className="list-disc list-inside space-y-1">
-                        {template.gradingCriteria.map((criterion, index) => (
-                            <li key={index} className="text-yellow-700 text-sm">{criterion}</li>
-                        ))}
-                    </ul>
-                </div>
-            )}
-            */}
-            {/* Rubric
-            {template.rubric && (
-                <div className="mb-4 p-4 bg-green-50 border-l-4 border-green-400 rounded">
-                    <h4 className="font-semibold text-green-800 mb-2">Değerlendirme Rubriği:</h4>
-                    <p className="text-green-700 text-sm whitespace-pre-wrap">{template.rubric}</p>
-                </div>
-            )}
-            */}
-            {/* Manual Grading Notice
-            {template.requiresManualGrading && (
-                <div className="mb-4 p-3 bg-orange-50 border-l-4 border-orange-400 rounded">
-                    <div className="flex items-start space-x-2">
-                        <svg className="w-5 h-5 text-orange-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                        </svg>
-                        <p className="text-orange-800 text-sm">
-                            Bu soru manuel değerlendirme gerektirir. Yanıtınız öğretmeniniz tarafından değerlendirilecektir.
-                        </p>
-                    </div>
-                </div>
-            )}
-            */}
-            {/* Error Message */}
             {error && (
                 <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-400 rounded">
                     <div className="flex items-start space-x-2">
@@ -407,30 +464,39 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                 </div>
             )}
 
-            {/* Audio Recording Section */}
+            {/* Upload Progress Bar */}
+            {isUploading && (
+                <div className="mb-4 p-4 bg-blue-50 border-l-4 border-blue-400 rounded">
+                    <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-blue-800">Ses dosyası yükleniyor...</span>
+                        <span className="text-sm font-bold text-blue-900">{uploadProgress}%</span>
+                    </div>
+                    <div className="w-full bg-blue-200 rounded-full h-2.5">
+                        <div
+                            className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                            style={{ width: `${uploadProgress}%` }}
+                        ></div>
+                    </div>
+                </div>
+            )}
+
             <div className="border-2 border-gray-300 rounded-lg p-6 bg-gray-50">
-                {/* Recording Visualizer */}
                 {isRecording && (
                     <div className="mb-6">
                         <div className="bg-white p-4 rounded-lg border-2 border-blue-500">
                             <div className="flex items-center justify-between mb-3">
                                 <span className="text-sm font-medium text-gray-700">Kayıt Durumu:</span>
                                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                    isPaused
-                                        ? 'bg-yellow-100 text-yellow-800'
-                                        : 'bg-red-100 text-red-800'
+                                    isPaused ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
                                 }`}>
                                     {isPaused ? '⏸ Duraklatıldı' : '● Kaydediliyor'}
                                 </span>
                             </div>
-
-                            {/* Audio Level Meter */}
                             {renderAudioLevelMeter()}
                         </div>
                     </div>
                 )}
 
-                {/* Recorded Audio Playback */}
                 {audioAnswer?.audioUrl && !isRecording && (
                     <div className="mb-6">
                         <div className="bg-white p-4 rounded-lg border-2 border-green-500">
@@ -438,6 +504,11 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                                 <h4 className="font-semibold text-gray-700">Kaydedilen Ses:</h4>
                                 <div className="text-sm text-gray-600">
                                     <span className="font-medium">Süre:</span> {formatTime(audioAnswer.duration || 0)}
+                                    {audioAnswer.uploadedFileData && (
+                                        <span className="ml-3 px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">
+                                            ✓ Yüklendi
+                                        </span>
+                                    )}
                                     {!isValidDuration() && (
                                         <span className="ml-2 text-red-600 font-semibold">
                                             ⚠️ Süre gereksinimlerini karşılamıyor
@@ -445,46 +516,35 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                                     )}
                                 </div>
                             </div>
-                            <audio
-                                src={audioAnswer.audioUrl}
-                                controls
-                                className="w-full"
-                            >
+                            <audio src={audioAnswer.audioUrl} controls className="w-full">
                                 Tarayıcınız ses oynatmayı desteklemiyor.
                             </audio>
                         </div>
                     </div>
                 )}
 
-                {/* Recording Timer */}
                 {isRecording && (
                     <div className="mb-6 text-center">
-                        <div className="inline-flex items-center space-x-3 bg-white px-6 py-3 rounded-full border-2 border-gray-300">
-                            <div className={`w-4 h-4 rounded-full ${
-                                isPaused ? 'bg-yellow-500' : 'bg-red-500 animate-pulse'
-                            }`}></div>
-                            <span className="font-mono text-2xl font-bold text-gray-800">
+                        <div className="inline-flex items-center space-x-3 bg-white px-6 py-3 rounded-full border-2 border-gray-300 shadow-lg">
+                            <div className={`w-4 h-4 rounded-full ${isPaused ? 'bg-yellow-500' : 'bg-red-500 animate-pulse'}`}></div>
+                            <span className="font-mono text-3xl font-bold text-gray-800">
                                 {formatTime(recordingTime)}
                             </span>
                         </div>
                         {template.maxRecordingDuration && (
                             <p className="text-sm text-gray-600 mt-2">
-                                Kalan süre: {formatTime(template.maxRecordingDuration - recordingTime)}
+                                Kalan süre: {formatTime(Math.max(0, template.maxRecordingDuration - recordingTime))}
                             </p>
                         )}
                     </div>
                 )}
 
-                {/* Control Buttons */}
                 <div className="flex items-center justify-center space-x-3">
                     {!audioAnswer && !isRecording && (
                         <button
                             onClick={startRecording}
-                            disabled={isSubmitted && !isPreview}
-                            className={`px-6 py-3 text-white rounded-lg font-semibold transition-all duration-200 flex items-center space-x-2 ${
-                                getRecordingButtonStyle()
-                            }`}
-                        >
+                            disabled={(isSubmitted && !isPreview) || isUploading}
+                            className={`px-6 py-3 text-white rounded-lg font-semibold transition-all duration-200 flex items-center space-x-2 ${getRecordingButtonStyle()}`}>
                             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
                             </svg>
@@ -494,19 +554,13 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
 
                     {isRecording && !isPaused && (
                         <>
-                            <button
-                                onClick={pauseRecording}
-                                className="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-semibold transition-all duration-200 flex items-center space-x-2"
-                            >
+                            <button onClick={pauseRecording} className="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-semibold transition-all duration-200 flex items-center space-x-2">
                                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                                 </svg>
                                 <span>Duraklat</span>
                             </button>
-                            <button
-                                onClick={stopRecording}
-                                className="px-6 py-3 bg-gray-700 hover:bg-gray-800 text-white rounded-lg font-semibold transition-all duration-200 flex items-center space-x-2"
-                            >
+                            <button onClick={stopRecording} className="px-6 py-3 bg-gray-700 hover:bg-gray-800 text-white rounded-lg font-semibold transition-all duration-200 flex items-center space-x-2">
                                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clipRule="evenodd" />
                                 </svg>
@@ -517,19 +571,13 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
 
                     {isRecording && isPaused && (
                         <>
-                            <button
-                                onClick={resumeRecording}
-                                className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold transition-all duration-200 flex items-center space-x-2"
-                            >
+                            <button onClick={resumeRecording} className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold transition-all duration-200 flex items-center space-x-2">
                                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
                                 </svg>
                                 <span>Devam Et</span>
                             </button>
-                            <button
-                                onClick={stopRecording}
-                                className="px-6 py-3 bg-gray-700 hover:bg-gray-800 text-white rounded-lg font-semibold transition-all duration-200 flex items-center space-x-2"
-                            >
+                            <button onClick={stopRecording} className="px-6 py-3 bg-gray-700 hover:bg-gray-800 text-white rounded-lg font-semibold transition-all duration-200 flex items-center space-x-2">
                                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clipRule="evenodd" />
                                 </svg>
@@ -542,28 +590,21 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                         <>
                             <button
                                 onClick={deleteRecording}
-                                disabled={isSubmitted && !isPreview}
+                                disabled={(isSubmitted && !isPreview) || isUploading}
                                 className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center space-x-2 ${
-                                    isSubmitted && !isPreview
-                                        ? 'bg-gray-400 text-white cursor-not-allowed'
-                                        : 'bg-red-500 hover:bg-red-600 text-white'
-                                }`}
-                            >
+                                    (isSubmitted && !isPreview) || isUploading ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-red-500 hover:bg-red-600 text-white'
+                                }`}>
                                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                                 </svg>
                                 <span>Kaydı Sil</span>
                             </button>
-
                             <button
                                 onClick={startRecording}
-                                disabled={isSubmitted && !isPreview}
+                                disabled={(isSubmitted && !isPreview) || isUploading}
                                 className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center space-x-2 ${
-                                    isSubmitted && !isPreview
-                                        ? 'bg-gray-400 text-white cursor-not-allowed'
-                                        : 'bg-blue-500 hover:bg-blue-600 text-white'
-                                }`}
-                            >
+                                    (isSubmitted && !isPreview) || isUploading ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 text-white'
+                                }`}>
                                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
                                 </svg>
@@ -573,27 +614,28 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                     )}
                 </div>
 
-                {/* Info Text */}
                 {!audioAnswer && !isRecording && (
                     <div className="mt-4 text-center">
-                        <p className="text-sm text-gray-600">
-                            Mikrofon ile sesli yanıt kaydedebilirsiniz
-                        </p>
+                        <p className="text-sm text-gray-600">Mikrofon ile sesli yanıt kaydedebilirsiniz</p>
                     </div>
                 )}
             </div>
 
+            <button
+                className={"btn btn-success"}
+                onClick={handleSaveAnswer}
+                disabled={isUploading || !audioAnswer}
+            >
+                KAYDET
+            </button>
 
-            {/* Submission Status */}
             {isSubmitted && audioAnswer && (
                 <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded">
                     <div className="flex items-center space-x-2">
                         <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
-                        <p className="text-green-800 font-semibold">
-                            Sesli yanıtınız başarıyla gönderildi
-                        </p>
+                        <p className="text-green-800 font-semibold">Sesli yanıtınız başarıyla gönderildi</p>
                     </div>
                     {template.requiresManualGrading && (
                         <p className="text-green-700 text-sm mt-2">
@@ -603,7 +645,6 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                 </div>
             )}
 
-            {/* Preview Mode Indicator */}
             {isPreview && (
                 <div className="mt-4 p-3 bg-gray-100 border border-gray-300 rounded">
                     <p className="text-gray-600 text-sm italic">
@@ -612,64 +653,23 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                 </div>
             )}
 
-            {/* Question Metadata (only in preview) */}
             {isPreview && (
                 <div className="mt-4 p-4 bg-gray-50 rounded border">
                     <h4 className="font-semibold text-gray-700 mb-2">Soru Bilgileri:</h4>
                     <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                        {template.subject && (
-                            <div><strong>Konu:</strong> {template.subject}</div>
-                        )}
-                        {template.difficulty && (
-                            <div><strong>Zorluk:</strong> {template.difficulty}</div>
-                        )}
-                        {template.points && (
-                            <div><strong>Puan:</strong> {template.points}</div>
-                        )}
-                        {template.timeLimit && (
-                            <div><strong>Süre:</strong> {template.timeLimit} saniye</div>
-                        )}
-                        {template.minRecordingDuration && (
-                            <div><strong>Min. Kayıt:</strong> {formatTime(template.minRecordingDuration)}</div>
-                        )}
-                        {template.maxRecordingDuration && (
-                            <div><strong>Maks. Kayıt:</strong> {formatTime(template.maxRecordingDuration)}</div>
-                        )}
-                        {template.requiresManualGrading !== undefined && (
-                            <div><strong>Manuel Değerlendirme:</strong> {template.requiresManualGrading ? 'Evet' : 'Hayır'}</div>
-                        )}
+                        {template.subject && <div><strong>Konu:</strong> {template.subject}</div>}
+                        {template.difficulty && <div><strong>Zorluk:</strong> {template.difficulty}</div>}
+                        {template.points && <div><strong>Puan:</strong> {template.points}</div>}
+                        {template.timeLimit && <div><strong>Süre:</strong> {template.timeLimit} saniye</div>}
+                        {template.minRecordingDuration && <div><strong>Min. Kayıt:</strong> {formatTime(template.minRecordingDuration)}</div>}
+                        {template.maxRecordingDuration && <div><strong>Maks. Kayıt:</strong> {formatTime(template.maxRecordingDuration)}</div>}
+                        {template.requiresManualGrading !== undefined && <div><strong>Manuel Değerlendirme:</strong> {template.requiresManualGrading ? 'Evet' : 'Hayır'}</div>}
                         {template.tags && template.tags.length > 0 && (
-                            <div className="col-span-2">
-                                <strong>Etiketler:</strong> {template.tags.join(', ')}
-                            </div>
+                            <div className="col-span-2"><strong>Etiketler:</strong> {template.tags.join(', ')}</div>
                         )}
                     </div>
                 </div>
             )}
-
-            {/* Development Notes - Comment for future exam implementation */}
-            {/*
-        TODO: Real exam implementation
-        - Integrate with exam session management
-        - Implement audio upload to backend/cloud storage
-        - Add audio compression options for large files
-        - Handle upload progress indication
-        - Add retry mechanism for failed uploads
-        - Implement audio quality settings
-        - Support for multiple audio formats
-        - Add audio waveform visualization
-        - Implement auto-save functionality
-        - Handle network issues and offline scenarios
-        - Add audio playback speed controls
-        - Implement audio editing features (trim, etc.)
-        - Add noise reduction/cancellation
-        - Support for speech-to-text transcription
-        - Add AI-based audio analysis (optional)
-        - Implement plagiarism detection for audio
-        - Handle browser compatibility issues
-        - Add mobile device support
-        - Implement accessibility features
-      */}
         </div>
     );
 };

@@ -17,7 +17,7 @@ import {
     ExamValidationResult,
     ExamExportRequest,
     ExamImportRequest,
-    ExamImportResult
+    ExamImportResult, QuestionAnswerRequest
 } from "@/types/exam/examEntities";
 
 class ExamService {
@@ -286,6 +286,12 @@ class ExamService {
     async restoreExam(id: string): Promise<ApiResponse<ExamDto>> {
         const response = await api.put<ApiResponse<ExamDto>>(`${this.baseUrl}/${id}/restore`);
         return response.data;
+    }
+
+    async saveAnswer(createRequest: QuestionAnswerRequest) {
+        const response = await api.post<ApiResponse<string>>(`/question/result/record/`, createRequest);
+        return response.data;
+
     }
 }
 

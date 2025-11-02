@@ -20,7 +20,7 @@ export default function Page() {
     const [activeScreen, setActiveScreen] = useState<'SECTION' | 'QUESTION_GROUPS'>('SECTION');
     const [selectedSection, setSelectedSection] = useState<ExamSectionDto | null>(null);
 
-    console.log("ceyhun", setSectionQuestionStatics)
+    console.log(setSectionQuestionStatics)
 
     useEffect(() => {
         const loadInitialData = async () => {
@@ -59,11 +59,17 @@ export default function Page() {
     return (
         <div className="space-y-6">
             {
-                activeScreen === 'SECTION' ?
-                    <ExamSectionsList sectionQuestionStatics={sectionQuestionStatics} sections={examSections}
-                                      onSectionSelect={selectSection}/> :
-                    <ExamApplicationScreen questionGroups={questionGroups}
-                                           onExitExam={() => setActiveScreen('SECTION')}/>
+                activeScreen === 'SECTION' &&
+                <ExamSectionsList sectionQuestionStatics={sectionQuestionStatics} sections={examSections}
+                                  onSectionSelect={selectSection}/>
+            }
+
+
+            {
+                questionGroups && questionGroups.length > 0 && activeScreen === 'QUESTION_GROUPS' &&
+
+                <ExamApplicationScreen questionGroups={questionGroups}
+                                       onExitExam={() => setActiveScreen('SECTION')}/>
             }
         </div>
     );

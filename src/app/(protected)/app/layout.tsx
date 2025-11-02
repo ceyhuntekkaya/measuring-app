@@ -18,7 +18,6 @@ export default function AppLayout({
     const router = useRouter();
 
     useEffect(() => {
-        console.log("ceyhun 4")
         if (!loading && (!user || !user.roleSet.includes('USER') )) {
         router.push('/login');
         }

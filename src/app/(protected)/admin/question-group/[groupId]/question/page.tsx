@@ -159,32 +159,32 @@ export default function QuestionPage() {
     const renderTemplateSpecificForm = (type: EQuestionType, template: QuestionTemplateType) => {
         switch (type) {
             case 'MULTIPLE_CHOICE':
-                return <MultipleChoiceQuestion template={template as MultipleChoiceTemplateDto}/>;
+                return <MultipleChoiceQuestion template={template as MultipleChoiceTemplateDto} questionId={''}/>;
 
             case 'TRUE_FALSE':
-                return <TrueFalseQuestion template={template as TrueFalseTemplateDto}/>;
+                return <TrueFalseQuestion template={template as TrueFalseTemplateDto} questionId={''}/>;
             case 'FILL_IN_THE_BLANKS':
-                return <FillInTheBlanksQuestion template={template as FillInTheBlanksTemplateDto}/>;
+                return <FillInTheBlanksQuestion template={template as FillInTheBlanksTemplateDto} questionId={''}/>;
             case 'SHORT_ANSWER':
-                return <ShortAnswerQuestion template={template as ShortAnswerTemplateDto}/>;
+                return <ShortAnswerQuestion template={template as ShortAnswerTemplateDto} questionId={''}/>;
             case 'ESSAY':
-                return <EssayQuestion template={template as EssayTemplateDto}/>;
+                return <EssayQuestion template={template as EssayTemplateDto} questionId={''}/>;
             case 'MATCHING':
-                return <MatchingQuestion template={template as MatchingTemplateDto}/>;
+                return <MatchingQuestion template={template as MatchingTemplateDto} questionId={''}/>;
             case 'ORDERING':
-                return <OrderingQuestion template={template as OrderingTemplateDto}/>;
+                return <OrderingQuestion template={template as OrderingTemplateDto} questionId={''}/>;
             case 'MULTIPLE_RESPONSE':
-                return <MultipleResponseQuestion template={template as MultipleResponseTemplateDto}/>;
+                return <MultipleResponseQuestion template={template as MultipleResponseTemplateDto} questionId={''}/>;
             case 'HOT_SPOT':
-                return <HotSpotQuestion template={template as HotSpotTemplateDto}/>;
+                return <HotSpotQuestion template={template as HotSpotTemplateDto} questionId={''}/>;
             case 'DRAG_AND_DROP':
-                return <DragAndDropQuestion template={template as DragAndDropTemplateDto}/>;
+                return <DragAndDropQuestion template={template as DragAndDropTemplateDto} questionId={''}/>;
             case 'AUDIO_RESPONSE':
-                return <AudioResponseQuestion template={template as AudioResponseTemplateDto}/>;
+                return <AudioResponseQuestion template={template as AudioResponseTemplateDto} questionId={''}/>;
             case 'VIDEO_RESPONSE':
-                return <VideoResponseQuestion template={template as VideoResponseTemplateDto}/>;
+                return <VideoResponseQuestion template={template as VideoResponseTemplateDto} questionId={''}/>;
             case 'IMAGE_RESPONSE':
-                return <ImageResponseQuestion template={template as ImageResponseTemplateDto}/>;
+                return <ImageResponseQuestion template={template as ImageResponseTemplateDto} questionId={''}/>;
             default:
                 return (
                     <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">

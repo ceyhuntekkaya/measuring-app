@@ -11,9 +11,6 @@ export default function AdminLayout({
     const {user, candidate} = useAuth();
 
     if (!candidate && !user) {
-        console.log("ceyhun 3")
-        console.log(candidate)
-        console.log(user)
         return null;
     }
 
