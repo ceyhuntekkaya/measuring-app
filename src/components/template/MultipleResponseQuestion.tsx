@@ -1,13 +1,16 @@
 import React, {useState, useEffect, useMemo} from 'react';
 import {MultipleResponseTemplateDto, ResponseOption} from '@/types/exam/questionTemplates';
+import {QuestionTemplateType} from "@/types/exam/examEntities";
+import {EMediaType, EQuestionType} from "@/types/exam/enum";
 
 interface MultipleResponseQuestionProps {
     template: MultipleResponseTemplateDto;
     isPreview?: boolean;
-    onAnswerChange?: (selectedIds: string[]) => void;
+    onAnswerChange?: (questionId:string, template: QuestionTemplateType, selectedOption: string, type: EQuestionType, mediaType: EMediaType, isEmptyAnswer: boolean) => void;
     initialAnswer?: string[];
     isSubmitted?: boolean;
     showCorrectAnswer?: boolean;
+    questionId: string;
 }
 
 interface OptionResult {
@@ -25,6 +28,7 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
                                                                                onAnswerChange,
                                                                                initialAnswer = [],
                                                                                isSubmitted = false,
+                                                                               questionId,
                                                                                showCorrectAnswer = false
                                                                            }) => {
     const [selectedOptions, setSelectedOptions] = useState<string[]>(initialAnswer);
@@ -85,10 +89,14 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
 
         setSelectedOptions(newSelectedOptions);
 
-        if (onAnswerChange) {
-            onAnswerChange(newSelectedOptions);
-        }
+
     };
+
+    const handleSaveAnswer =()=>{
+        if (onAnswerChange) {
+            onAnswerChange(questionId, template, selectedOptions ? JSON.stringify(selectedOptions) : '', EQuestionType.MULTIPLE_RESPONSE, EMediaType.TEXT, false);
+        }
+    }
 
     const evaluateAnswers = (): void => {
         if (!template.options?.choices) return;
@@ -456,7 +464,7 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
                     </div>
                 ))}
             </div>
-
+            <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
             {/* Overall Explanation */}
             {isSubmitted && showCorrectAnswer && template.explanation && (
                 <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">

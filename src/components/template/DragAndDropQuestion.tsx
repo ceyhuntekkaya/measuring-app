@@ -1,13 +1,16 @@
 import React, {useState, useEffect, useMemo} from 'react';
 import { DragAndDropTemplateDto } from '@/types/exam/questionTemplates';
+import {QuestionTemplateType} from "@/types/exam/examEntities";
+import {EMediaType, EQuestionType} from "@/types/exam/enum";
 
 interface DragAndDropQuestionProps {
     template: DragAndDropTemplateDto;
     isPreview?: boolean;
-    onAnswerChange?: (placements: DragDropPlacements) => void;
+    onAnswerChange?: (questionId:string, template: QuestionTemplateType, selectedOption: string, type: EQuestionType, mediaType: EMediaType, isEmptyAnswer: boolean) => void;
     initialAnswer?: DragDropPlacements;
     isSubmitted?: boolean;
     showCorrectAnswer?: boolean;
+    questionId: string;
 }
 
 interface DragDropPlacements {
@@ -49,6 +52,7 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
                                                                      onAnswerChange,
                                                                      initialAnswer = {},
                                                                      isSubmitted = false,
+                                                                     questionId,
                                                                      showCorrectAnswer = false
                                                                  }) => {
     const [placements, setPlacements] = useState<DragDropPlacements>(initialAnswer);
@@ -172,10 +176,14 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
         setDraggedItemId(null);
         setDragOverZoneId(null);
 
-        if (onAnswerChange) {
-            onAnswerChange(newPlacements);
-        }
+
     };
+
+    const handleSaveAnswer =()=>{
+        if (onAnswerChange) {
+            onAnswerChange(questionId, template, placements ? JSON.stringify(placements) : '', EQuestionType.DRAG_AND_DROP, EMediaType.TEXT, false);
+        }
+    }
 
     const handleDragEnd = (): void => {
         setDraggedItemId(null);
@@ -191,7 +199,7 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
         setPlacements(newPlacements);
 
         if (onAnswerChange) {
-            onAnswerChange(newPlacements);
+         //   onAnswerChange(newPlacements);
         }
     };
 
@@ -585,7 +593,7 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
                     </div>
                 </div>
             </div>
-
+            <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
             {/* Overall Explanation */}
             {isSubmitted && showCorrectAnswer && template.explanation && (
                 <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">

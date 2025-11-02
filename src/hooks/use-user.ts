@@ -91,8 +91,6 @@ export const useUser = (): UseUserReturn => {
         try {
             setLoading(true);
             setError(null);
-            console.log(createRequest);
-            console.log(JSON.stringify(createRequest));
             const response = await userService.createUser(createRequest);
             if (response.data && response.success) {
                 setSelectedUser(response.data);

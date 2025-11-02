@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { TrueFalseTemplateDto } from '@/types/exam/questionTemplates';
+import {QuestionTemplateType} from "@/types/exam/examEntities";
+import {EMediaType, EQuestionType} from "@/types/exam/enum";
 
 interface TrueFalseQuestionProps {
     template: TrueFalseTemplateDto;
     isPreview?: boolean;
-    onAnswerChange?: (selectedAnswer: boolean | null) => void;
+    onAnswerChange?: (questionId:string, template: QuestionTemplateType, selectedOption: string, type: EQuestionType, mediaType: EMediaType, isEmptyAnswer: boolean) => void;
     initialAnswer?: boolean | null;
     isSubmitted?: boolean;
     showCorrectAnswer?: boolean;
+    questionId: string;
 }
 
 const TrueFalseQuestion: React.FC<TrueFalseQuestionProps> = ({
@@ -16,7 +19,8 @@ const TrueFalseQuestion: React.FC<TrueFalseQuestionProps> = ({
                                                                  onAnswerChange,
                                                                  initialAnswer = null,
                                                                  isSubmitted = false,
-                                                                 showCorrectAnswer = false
+                                                                 showCorrectAnswer = false,
+                                                                 questionId
                                                              }) => {
     const [selectedAnswer, setSelectedAnswer] = useState<boolean | null>(initialAnswer);
 
@@ -31,7 +35,7 @@ const TrueFalseQuestion: React.FC<TrueFalseQuestionProps> = ({
         setSelectedAnswer(newSelection);
 
         if (onAnswerChange) {
-            onAnswerChange(newSelection);
+            onAnswerChange(questionId, template, newSelection ? newSelection+'' : 'false', EQuestionType.TRUE_FALSE, EMediaType.TEXT, false);
         }
     };
 

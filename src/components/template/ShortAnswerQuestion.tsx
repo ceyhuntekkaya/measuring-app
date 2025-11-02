@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { ShortAnswerTemplateDto, AcceptableAnswer } from '@/types/exam/questionTemplates';
+import {QuestionTemplateType} from "@/types/exam/examEntities";
+import {EMediaType, EQuestionType} from "@/types/exam/enum";
 
 interface ShortAnswerQuestionProps {
     template: ShortAnswerTemplateDto;
     isPreview?: boolean;
-    onAnswerChange?: (answer: string) => void;
+    onAnswerChange?: (questionId:string, template: QuestionTemplateType, selectedOption: string, type: EQuestionType, mediaType: EMediaType, isEmptyAnswer: boolean) => void;
     initialAnswer?: string;
     isSubmitted?: boolean;
     showCorrectAnswer?: boolean;
+    questionId: string;
 }
 
 const ShortAnswerQuestion: React.FC<ShortAnswerQuestionProps> = ({
@@ -16,6 +19,7 @@ const ShortAnswerQuestion: React.FC<ShortAnswerQuestionProps> = ({
                                                                      onAnswerChange,
                                                                      initialAnswer = '',
                                                                      isSubmitted = false,
+                                                                     questionId,
                                                                      showCorrectAnswer = false
                                                                  }) => {
     const [answer, setAnswer] = useState<string>(initialAnswer);
@@ -37,10 +41,15 @@ const ShortAnswerQuestion: React.FC<ShortAnswerQuestionProps> = ({
         setAnswer(value);
         setCharacterCount(value.length);
 
-        if (onAnswerChange) {
-            onAnswerChange(value);
-        }
     };
+
+
+
+    const handleSaveAnswer =()=>{
+        if (onAnswerChange) {
+            onAnswerChange(questionId, template, answer ? answer : '', EQuestionType.SHORT_ANSWER, EMediaType.TEXT, false);
+        }
+    }
 
     const checkAnswer = (userAnswer: string): { isCorrect: boolean; matchedAnswer?: AcceptableAnswer; score: number } => {
         if (!template.options?.acceptableAnswers || template.options.acceptableAnswers.length === 0) {
@@ -159,7 +168,6 @@ const ShortAnswerQuestion: React.FC<ShortAnswerQuestionProps> = ({
                 <label className="block text-sm font-medium text-gray-700">
                     Cevabınız:
                 </label>
-
                 <textarea
                     value={answer}
                     onChange={(e) => handleAnswerChange(e.target.value)}
@@ -169,6 +177,7 @@ const ShortAnswerQuestion: React.FC<ShortAnswerQuestionProps> = ({
                     rows={4}
                     maxLength={template.maxCharacters}
                 />
+                <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
 
                 {/* Character Count */}
                 <div className="flex justify-between items-center text-sm">
@@ -187,6 +196,7 @@ const ShortAnswerQuestion: React.FC<ShortAnswerQuestionProps> = ({
                         </div>
                     )}
                 </div>
+
             </div>
 
             {/* Manual Grading Note
@@ -228,6 +238,7 @@ const ShortAnswerQuestion: React.FC<ShortAnswerQuestionProps> = ({
                             {answer || 'Cevap verilmedi'}
                         </div>
                     </div>
+
 
                     {/* Accepted Answers */}
                     {template.options?.acceptableAnswers && template.options.acceptableAnswers.length > 0 && (

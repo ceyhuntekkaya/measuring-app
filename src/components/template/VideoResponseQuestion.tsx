@@ -1,13 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { VideoResponseTemplateDto } from '@/types/exam/questionTemplates';
+import {QuestionTemplateType} from "@/types/exam/examEntities";
+import {EMediaType, EQuestionType} from "@/types/exam/enum";
+import {uploadVideoFile} from "@/services/api/upload-file";
+import {UploadedFileDto} from "@/types/exam/miscDtos";
 
 interface VideoResponseQuestionProps {
     template: VideoResponseTemplateDto;
     isPreview?: boolean;
-    onAnswerChange?: (videoData: VideoAnswerData | null) => void;
+    onAnswerChange?: (questionId:string, template: QuestionTemplateType, selectedOption: string, type: EQuestionType, mediaType: EMediaType, isEmptyAnswer: boolean) => void;
     initialAnswer?: VideoAnswerData | null;
     isSubmitted?: boolean;
     showCorrectAnswer?: boolean;
+    questionId: string;
 }
 
 interface VideoAnswerData {
@@ -16,6 +21,7 @@ interface VideoAnswerData {
     duration?: number;
     recordedAt?: string;
     fileName?: string;
+    uploadedFileData?: UploadedFileDto;
 }
 
 const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
@@ -23,37 +29,124 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                                                                          isPreview = false,
                                                                          onAnswerChange,
                                                                          initialAnswer = null,
+                                                                         questionId,
                                                                          isSubmitted = false,
                                                                          showCorrectAnswer = false
                                                                      }) => {
     const [videoAnswer, setVideoAnswer] = useState<VideoAnswerData | null>(initialAnswer);
+    const [videoAnswerPath, setVideoAnswerPath] = useState<string>('');
     const [isRecording, setIsRecording] = useState<boolean>(false);
     const [recordingTime, setRecordingTime] = useState<number>(0);
     const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
     const [error, setError] = useState<string>('');
+    const [uploadProgress, setUploadProgress] = useState<number>(0);
+    const [isUploading, setIsUploading] = useState<boolean>(false);
 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const videoPreviewRef = useRef<HTMLVideoElement>(null);
     const recordedChunksRef = useRef<Blob[]>([]);
     const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-    console.log(showCorrectAnswer)
+    console.log("ceyhun: ", showCorrectAnswer)
+
     useEffect(() => {
         setVideoAnswer(initialAnswer);
     }, [initialAnswer]);
 
+    // Cleanup ONLY on unmount - EMPTY dependency array!
     useEffect(() => {
-        // Cleanup on unmount
         return () => {
-            stopRecording();
-            if (mediaStream) {
-                mediaStream.getTracks().forEach(track => track.stop());
-            }
             if (timerIntervalRef.current) {
                 clearInterval(timerIntervalRef.current);
             }
+            if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+                try {
+                    mediaRecorderRef.current.stop();
+                } catch (e) {
+                    console.error('Error stopping recorder on unmount:', e);
+                }
+            }
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+            }
         };
-    }, [mediaStream]);
+    }, []); // CRITICAL: Empty array!
+
+    const handleUploadVideo = async (videoBlob: Blob, duration: number): Promise<VideoAnswerData> => {
+        // Eğer entityId yoksa veya preview modundaysa upload yapma
+        if (!template || isPreview) {
+            const url = URL.createObjectURL(videoBlob);
+            return {
+                videoUrl: url,
+                videoBlob: videoBlob,
+                duration: duration,
+                recordedAt: new Date().toISOString(),
+                fileName: `video-response-${Date.now()}.webm`
+            };
+        }
+
+        setIsUploading(true);
+        setUploadProgress(0);
+        setError('');
+        try {
+            const uploadedFiles = await uploadVideoFile(
+                videoBlob,
+                questionId,
+                'VIDEO_RESPONSE',
+                {
+                    onProgress: (progress) => {
+                        setUploadProgress(progress);
+                    },
+                    onError: (errorMsg) => {
+                        setError(errorMsg);
+                    }
+                }
+            );
+
+            setIsUploading(false);
+
+            if (uploadedFiles && uploadedFiles.length > 0) {
+                const uploadedFile = uploadedFiles[0];
+                const url = URL.createObjectURL(videoBlob);
+                setVideoAnswerPath(uploadedFile.path || '')
+                return {
+                    videoUrl: url,
+                    videoBlob: videoBlob,
+                    duration: duration,
+                    recordedAt: new Date().toISOString(),
+                    fileName: uploadedFile.fileName || `video-response-${Date.now()}.webm`,
+                    uploadedFileData: uploadedFile
+                };
+            } else {
+                throw new Error('Upload başarısız: Sunucudan veri dönmedi');
+            }
+
+        } catch (err) {
+            setIsUploading(false);
+            const errorMsg = err instanceof Error ? err.message : 'Video yükleme başarısız';
+            setError(errorMsg);
+            throw err;
+        }
+    };
+
+    // Video preview setup when stream is available
+    useEffect(() => {
+        if (mediaStream && videoPreviewRef.current && isRecording) {
+            console.log('📹 Setting up video preview...');
+            videoPreviewRef.current.srcObject = mediaStream;
+            videoPreviewRef.current.muted = true;
+
+            videoPreviewRef.current.onloadedmetadata = async () => {
+                console.log('📹 Metadata loaded, playing...');
+                try {
+                    await videoPreviewRef.current?.play();
+                    console.log('✅ Video playing!');
+                } catch (playErr) {
+                    console.error('❌ Error playing:', playErr);
+                }
+            };
+        }
+    }, [mediaStream, isRecording]);
 
     const startRecording = async (): Promise<void> => {
         if (isSubmitted && !isPreview) return;
@@ -66,8 +159,6 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
             };
 
             if (template.allowScreenRecording) {
-                // For screen recording, we would use getDisplayMedia
-                // This is a simplified version
                 constraints.video = {
                     width: { ideal: 1920 },
                     height: { ideal: 1080 }
@@ -77,15 +168,12 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
             const stream = await navigator.mediaDevices.getUserMedia(constraints);
             setMediaStream(stream);
 
-            if (videoPreviewRef.current) {
-                videoPreviewRef.current.srcObject = stream;
-            }
+
 
             const options: MediaRecorderOptions = {
                 mimeType: 'video/webm;codecs=vp9',
             };
 
-            // Fallback to vp8 if vp9 is not supported
             if (!MediaRecorder.isTypeSupported(options.mimeType || '')) {
                 options.mimeType = 'video/webm;codecs=vp8';
             }
@@ -100,41 +188,63 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                 }
             };
 
-            mediaRecorder.onstop = () => {
+            mediaRecorder.onstop = async () => {
                 const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
-                const url = URL.createObjectURL(blob);
+                const finalDuration = recordingTime;
 
-                const newVideoData: VideoAnswerData = {
-                    videoUrl: url,
-                    videoBlob: blob,
-                    duration: recordingTime,
-                    recordedAt: new Date().toISOString(),
-                    fileName: `video-response-${Date.now()}.webm`
-                };
+                try {
+                    // Upload video and get the result
+                    const newVideoData = await handleUploadVideo(blob, finalDuration);
+                    setVideoAnswer(newVideoData);
 
-                setVideoAnswer(newVideoData);
-
-                if (onAnswerChange) {
-                    onAnswerChange(newVideoData);
+                    // Call onAnswerChange if upload was successful
+                    if (onAnswerChange && newVideoData.uploadedFileData) {
+                        onAnswerChange(
+                            questionId,
+                            template,
+                            newVideoData.uploadedFileData.path  || '',
+                            EQuestionType.VIDEO_RESPONSE,
+                            EMediaType.VIDEO,
+                            false
+                        );
+                    }
+                } catch (err) {
+                    console.error('Upload failed:', err);
+                    // Even if upload fails, keep the local video
+                    const url = URL.createObjectURL(blob);
+                    setVideoAnswer({
+                        videoUrl: url,
+                        videoBlob: blob,
+                        duration: finalDuration,
+                        recordedAt: new Date().toISOString(),
+                        fileName: `video-response-${Date.now()}.webm`
+                    });
                 }
 
                 // Stop all tracks
-                if (mediaStream) {
-                    mediaStream.getTracks().forEach(track => track.stop());
-                }
+                stream.getTracks().forEach(track => track.stop());
                 setMediaStream(null);
+
+                // Clear video preview
+                if (videoPreviewRef.current) {
+                    videoPreviewRef.current.srcObject = null;
+                }
             };
 
             mediaRecorder.start();
             setIsRecording(true);
             setRecordingTime(0);
 
+            // Clear any existing timer
+            if (timerIntervalRef.current) {
+                clearInterval(timerIntervalRef.current);
+            }
+
             // Start timer
             timerIntervalRef.current = setInterval(() => {
                 setRecordingTime(prev => {
                     const newTime = prev + 1;
 
-                    // Auto-stop if max duration reached
                     if (template.maxRecordingDuration && newTime >= template.maxRecordingDuration) {
                         stopRecording();
                     }
@@ -149,6 +259,19 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
             console.error('Error accessing media devices:', err);
         }
     };
+
+    const handleSaveAnswer = () => {
+        if (onAnswerChange && videoAnswer) {
+            onAnswerChange(
+                questionId,
+                template,
+                videoAnswerPath,
+                EQuestionType.VIDEO_RESPONSE,
+                EMediaType.VIDEO,
+                !videoAnswer
+            );
+        }
+    }
 
     const stopRecording = (): void => {
         if (mediaRecorderRef.current && isRecording) {
@@ -167,9 +290,10 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
 
         setVideoAnswer(null);
         setRecordingTime(0);
+        setUploadProgress(0);
 
         if (onAnswerChange) {
-            onAnswerChange(null);
+            onAnswerChange(questionId, template, '', EQuestionType.VIDEO_RESPONSE, EMediaType.VIDEO, true);
         }
     };
 
@@ -223,8 +347,7 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
 
     return (
         <div className="space-y-6">
-            {/* Question Title */}
-            {template.title && template.title === "NOT_SET" && (
+            {template.title && template.title !== "NOT_SET" && (
                 <div className="mb-4">
                     <h3 className="text-lg font-semibold text-gray-800">{template.title}</h3>
                     {template.description && (
@@ -233,27 +356,14 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                 </div>
             )}
 
-            {/* Question Statement
-            {template.statement && (
-                <div className="mb-6">
-                    <p className="text-gray-800 text-base leading-relaxed">{template.statement}</p>
-                </div>
-            )}
-            */}
-            {/* Prompt */}
             {template.prompt && (
                 <div className="mb-4 p-4 bg-purple-50 border-l-4 border-purple-400 rounded">
-                    {//<h4 className="font-semibold text-purple-800 mb-2">Soru İstemi:</h4>
-                    }
                     <p className="text-purple-700">{template.prompt}</p>
                 </div>
             )}
 
-            {/* Video Prompt */}
             {template.videoPromptUrl && (
                 <div className="mb-6">
-                    {//<h4 className="font-semibold text-gray-700 mb-2">Video İstem:</h4>
-                    }
                     <video
                         src={template.videoPromptUrl}
                         controls
@@ -264,7 +374,6 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                 </div>
             )}
 
-            {/* Recording Duration Info */}
             {getDurationInfo() && (
                 <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
                     <div className="flex items-center space-x-2">
@@ -278,41 +387,6 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                 </div>
             )}
 
-            {/* Grading Criteria
-            {template.gradingCriteria && template.gradingCriteria.length > 0 && (
-                <div className="mb-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
-                    <h4 className="font-semibold text-yellow-800 mb-2">Değerlendirme Kriterleri:</h4>
-                    <ul className="list-disc list-inside space-y-1">
-                        {template.gradingCriteria.map((criterion, index) => (
-                            <li key={index} className="text-yellow-700 text-sm">{criterion}</li>
-                        ))}
-                    </ul>
-                </div>
-            )}
-            */}
-            {/* Rubric
-            {template.rubric && (
-                <div className="mb-4 p-4 bg-green-50 border-l-4 border-green-400 rounded">
-                    <h4 className="font-semibold text-green-800 mb-2">Değerlendirme Rubriği:</h4>
-                    <p className="text-green-700 text-sm whitespace-pre-wrap">{template.rubric}</p>
-                </div>
-            )}
-            */}
-            {/* Manual Grading Notice
-            {template.requiresManualGrading && (
-                <div className="mb-4 p-3 bg-orange-50 border-l-4 border-orange-400 rounded">
-                    <div className="flex items-start space-x-2">
-                        <svg className="w-5 h-5 text-orange-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                        </svg>
-                        <p className="text-orange-800 text-sm">
-                            Bu soru manuel değerlendirme gerektirir. Yanıtınız öğretmeniniz tarafından değerlendirilecektir.
-                        </p>
-                    </div>
-                </div>
-            )}
-            */}
-            {/* Error Message */}
             {error && (
                 <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-400 rounded">
                     <div className="flex items-start space-x-2">
@@ -324,22 +398,46 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                 </div>
             )}
 
+            {/* Upload Progress Bar */}
+            {isUploading && (
+                <div className="mb-4 p-4 bg-blue-50 border-l-4 border-blue-400 rounded">
+                    <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-blue-800">Video dosyası yükleniyor...</span>
+                        <span className="text-sm font-bold text-blue-900">{uploadProgress}%</span>
+                    </div>
+                    <div className="w-full bg-blue-200 rounded-full h-2.5">
+                        <div
+                            className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                            style={{ width: `${uploadProgress}%` }}
+                        ></div>
+                    </div>
+                </div>
+            )}
+
             {/* Video Recording Section */}
             <div className="border-2 border-gray-300 rounded-lg p-6 bg-gray-50">
-                {/* Live Preview / Recorded Video */}
+                {/* Live Preview During Recording */}
                 {(isRecording || mediaStream) && (
                     <div className="mb-4">
-                        <video
-                            ref={videoPreviewRef}
-                            autoPlay
-                            muted
-                            className="w-full max-w-2xl mx-auto rounded-lg border-2 border-blue-500"
-                        />
+                        <div className="relative">
+                            <video
+                                ref={videoPreviewRef}
+                                autoPlay
+                                muted
+                                playsInline
+                                className="w-full max-w-2xl mx-auto rounded-lg border-2 border-red-500 shadow-lg"
+                            />
+                            {/* Recording Indicator Overlay */}
+                            <div className="absolute top-4 left-4 flex items-center space-x-2 bg-red-600 text-white px-3 py-2 rounded-lg shadow-lg">
+                                <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+                                <span className="font-semibold">REC</span>
+                            </div>
+                        </div>
                     </div>
                 )}
 
                 {/* Recorded Video Playback */}
-                {videoAnswer?.videoUrl && !isRecording && !mediaStream && (
+                {videoAnswer?.videoUrl && !isRecording && (
                     <div className="mb-4">
                         <video
                             src={videoAnswer.videoUrl}
@@ -348,6 +446,11 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                         />
                         <div className="mt-2 text-center text-sm text-gray-600">
                             <span className="font-medium">Kayıt Süresi:</span> {formatTime(videoAnswer.duration || 0)}
+                            {videoAnswer.uploadedFileData && (
+                                <span className="ml-3 px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">
+                                    ✓ Yüklendi
+                                </span>
+                            )}
                             {!isValidDuration() && (
                                 <span className="ml-2 text-red-600 font-semibold">
                                     ⚠️ Süre gereksinimlerini karşılamıyor
@@ -360,13 +463,15 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                 {/* Recording Timer */}
                 {isRecording && (
                     <div className="mb-4 text-center">
-                        <div className="inline-flex items-center space-x-2 bg-red-100 text-red-700 px-4 py-2 rounded-full font-mono text-xl font-bold">
-                            <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
-                            <span>{formatTime(recordingTime)}</span>
+                        <div className="inline-flex items-center space-x-3 bg-white px-6 py-3 rounded-full border-2 border-gray-300 shadow-lg">
+                            <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse"></div>
+                            <span className="font-mono text-3xl font-bold text-gray-800">
+                                {formatTime(recordingTime)}
+                            </span>
                         </div>
                         {template.maxRecordingDuration && (
                             <p className="text-sm text-gray-600 mt-2">
-                                Maksimum süre: {formatTime(template.maxRecordingDuration)}
+                                Kalan süre: {formatTime(Math.max(0, template.maxRecordingDuration - recordingTime))}
                             </p>
                         )}
                     </div>
@@ -377,7 +482,7 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                     {!videoAnswer && !isRecording && (
                         <button
                             onClick={startRecording}
-                            disabled={isSubmitted && !isPreview}
+                            disabled={(isSubmitted && !isPreview) || isUploading}
                             className={`px-6 py-3 text-white rounded-lg font-semibold transition-all duration-200 flex items-center space-x-2 ${
                                 getRecordingButtonStyle()
                             }`}
@@ -405,9 +510,9 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                         <>
                             <button
                                 onClick={deleteRecording}
-                                disabled={isSubmitted && !isPreview}
+                                disabled={(isSubmitted && !isPreview) || isUploading}
                                 className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center space-x-2 ${
-                                    isSubmitted && !isPreview
+                                    (isSubmitted && !isPreview) || isUploading
                                         ? 'bg-gray-400 text-white cursor-not-allowed'
                                         : 'bg-red-500 hover:bg-red-600 text-white'
                                 }`}
@@ -420,9 +525,9 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
 
                             <button
                                 onClick={startRecording}
-                                disabled={isSubmitted && !isPreview}
+                                disabled={(isSubmitted && !isPreview) || isUploading}
                                 className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center space-x-2 ${
-                                    isSubmitted && !isPreview
+                                    (isSubmitted && !isPreview) || isUploading
                                         ? 'bg-gray-400 text-white cursor-not-allowed'
                                         : 'bg-blue-500 hover:bg-blue-600 text-white'
                                 }`}
@@ -449,15 +554,14 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                 )}
             </div>
 
-            {/* Allowed Formats Info
-            {template.allowedFormats && (
-                <div className="mt-4 p-3 bg-gray-100 border border-gray-300 rounded">
-                    <p className="text-gray-700 text-sm">
-                        <strong>Desteklenen Formatlar:</strong> {template.allowedFormats}
-                    </p>
-                </div>
-            )}
-            */}
+            <button
+                className={"btn btn-success"}
+                onClick={handleSaveAnswer}
+                disabled={isUploading || !videoAnswer}
+            >
+                KAYDET
+            </button>
+
             {/* Submission Status */}
             {isSubmitted && videoAnswer && (
                 <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded">
@@ -491,62 +595,20 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                 <div className="mt-4 p-4 bg-gray-50 rounded border">
                     <h4 className="font-semibold text-gray-700 mb-2">Soru Bilgileri:</h4>
                     <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                        {template.subject && (
-                            <div><strong>Konu:</strong> {template.subject}</div>
-                        )}
-                        {template.difficulty && (
-                            <div><strong>Zorluk:</strong> {template.difficulty}</div>
-                        )}
-                        {template.points && (
-                            <div><strong>Puan:</strong> {template.points}</div>
-                        )}
-                        {template.timeLimit && (
-                            <div><strong>Süre:</strong> {template.timeLimit} saniye</div>
-                        )}
-                        {template.minRecordingDuration && (
-                            <div><strong>Min. Kayıt:</strong> {formatTime(template.minRecordingDuration)}</div>
-                        )}
-                        {template.maxRecordingDuration && (
-                            <div><strong>Maks. Kayıt:</strong> {formatTime(template.maxRecordingDuration)}</div>
-                        )}
-                        {template.requiresManualGrading !== undefined && (
-                            <div><strong>Manuel Değerlendirme:</strong> {template.requiresManualGrading ? 'Evet' : 'Hayır'}</div>
-                        )}
-                        {template.allowScreenRecording !== undefined && (
-                            <div><strong>Ekran Kaydı:</strong> {template.allowScreenRecording ? 'İzinli' : 'İzinsiz'}</div>
-                        )}
+                        {template.subject && <div><strong>Konu:</strong> {template.subject}</div>}
+                        {template.difficulty && <div><strong>Zorluk:</strong> {template.difficulty}</div>}
+                        {template.points && <div><strong>Puan:</strong> {template.points}</div>}
+                        {template.timeLimit && <div><strong>Süre:</strong> {template.timeLimit} saniye</div>}
+                        {template.minRecordingDuration && <div><strong>Min. Kayıt:</strong> {formatTime(template.minRecordingDuration)}</div>}
+                        {template.maxRecordingDuration && <div><strong>Maks. Kayıt:</strong> {formatTime(template.maxRecordingDuration)}</div>}
+                        {template.requiresManualGrading !== undefined && <div><strong>Manuel Değerlendirme:</strong> {template.requiresManualGrading ? 'Evet' : 'Hayır'}</div>}
+                        {template.allowScreenRecording !== undefined && <div><strong>Ekran Kaydı:</strong> {template.allowScreenRecording ? 'İzinli' : 'İzinsiz'}</div>}
                         {template.tags && template.tags.length > 0 && (
-                            <div className="col-span-2">
-                                <strong>Etiketler:</strong> {template.tags.join(', ')}
-                            </div>
+                            <div className="col-span-2"><strong>Etiketler:</strong> {template.tags.join(', ')}</div>
                         )}
                     </div>
                 </div>
             )}
-
-            {/* Development Notes - Comment for future exam implementation */}
-            {/*
-        TODO: Real exam implementation
-        - Integrate with exam session management
-        - Implement video upload to backend/cloud storage
-        - Add compression options for large video files
-        - Handle upload progress indication
-        - Add retry mechanism for failed uploads
-        - Implement video quality settings
-        - Support for multiple video formats
-        - Add video thumbnail generation
-        - Implement auto-save functionality
-        - Handle network issues and offline scenarios
-        - Add screen recording permission handling
-        - Implement video playback controls
-        - Add accessibility features (captions, transcripts)
-        - Support for multiple languages/localization
-        - Add AI-based video analysis (optional)
-        - Implement plagiarism detection for videos
-        - Add video editing features (trim, crop)
-        - Handle browser compatibility issues
-        - Add mobile device support
-      */}
         </div>
     );
 };

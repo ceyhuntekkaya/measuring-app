@@ -18,7 +18,6 @@ class UserService {
 
     // CRUD Operations
     async createUser(createRequest: UserFormData): Promise<ApiResponse<UserDto>> {
-        console.log(createRequest);
         const response = await api.post<ApiResponse<UserDto>>(`${this.baseUrl}`, createRequest);
         return response.data;
     }
@@ -232,7 +231,6 @@ class UserService {
 
     // Helper method to check if user has specific role
     hasRole(user: UserDto, role: Role): boolean {
-        console.log("ceyhun 6")
         return user.roleSet ? user.roleSet.includes(role) : false;
     }
 

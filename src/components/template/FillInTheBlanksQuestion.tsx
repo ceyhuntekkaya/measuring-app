@@ -1,13 +1,16 @@
 import React, {useState, useEffect} from 'react';
 import {FillInTheBlanksTemplateDto} from '@/types/exam/questionTemplates';
+import {QuestionTemplateType} from "@/types/exam/examEntities";
+import {EMediaType, EQuestionType} from "@/types/exam/enum";
 
 interface FillInTheBlanksQuestionProps {
     template: FillInTheBlanksTemplateDto;
     isPreview?: boolean;
-    onAnswerChange?: (answers: BlankAnswers) => void;
+    onAnswerChange?: (questionId: string, template: QuestionTemplateType, selectedOption: string, type: EQuestionType, mediaType: EMediaType, isEmptyAnswer: boolean) => void;
     initialAnswer?: BlankAnswers;
     isSubmitted?: boolean;
     showCorrectAnswer?: boolean;
+    questionId: string;
 }
 
 interface BlankAnswers {
@@ -21,6 +24,12 @@ interface BlankResult {
     acceptableAnswers: string[];
     feedback?: string;
     score?: number;
+
+}
+
+interface SingleBlankAnswer {
+    blankId: string;
+    answer: string;
 }
 
 const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
@@ -29,11 +38,12 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
                                                                              onAnswerChange,
                                                                              initialAnswer = {},
                                                                              isSubmitted = false,
-                                                                             showCorrectAnswer = false
+                                                                             showCorrectAnswer = false,
+                                                                             questionId
                                                                          }) => {
     const [answers, setAnswers] = useState<BlankAnswers>(initialAnswer);
-    const [blankResults, setBlankResults] = useState<BlankResult[]>([]);
 
+    const [blankResults, setBlankResults] = useState<BlankResult[]>([]);
 
 
     useEffect(() => {
@@ -42,16 +52,45 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
         }
     }, [isSubmitted, showCorrectAnswer, answers]);
 
+
     const handleInputChange = (blankId: string, value: string): void => {
         if (isSubmitted && !isPreview) return;
 
+        //const propName = "blank_"+blankId;
         const newAnswers = {...answers, [blankId]: value};
         setAnswers(newAnswers);
 
         if (onAnswerChange) {
-            onAnswerChange(newAnswers);
+            //   onAnswerChange(questionId, template, newAnswers ? JSON.stringify(newAnswers) : '', EQuestionType.TRUE_FALSE, EMediaType.TEXT, false);
         }
     };
+
+    const handleSaveAnswer = () => {
+        if (onAnswerChange) {
+            function convertToBlankAnswers(
+                answer: Record<string, string>
+            ): SingleBlankAnswer[] {
+                return Object.entries(answer).map(([index, answerValue]) => {
+                    const blankIndex = parseInt(index) - 1; // "1" -> index 0, "2" -> index 1
+
+                    if (template && template.options && template.options.blanks) {
+                        const blank = template.options?.blanks[blankIndex];
+                        return {
+                            blankId: blank?.blankId || '',
+                            answer: answerValue
+                        };
+                    }
+                    return {
+                        blankId: '',
+                        answer: answerValue
+                    };
+                });
+            }
+
+            const converted = convertToBlankAnswers(answers);
+            onAnswerChange(questionId, template, answers ? JSON.stringify(converted) : '', EQuestionType.TRUE_FALSE, EMediaType.TEXT, false);
+        }
+    }
 
 
     const evaluateAnswers = (): void => {
@@ -155,7 +194,6 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
     const renderBlankInput = (blankId: string): React.ReactNode => {
         const userAnswer = answers[blankId] || '';
         const result = blankResults.find(r => r.blankId === blankId);
-
         const getInputStyle = (): string => {
             const baseStyle = "inline-block mx-1 px-3 py-1 border-b-2 outline-none transition-all duration-200 ";
 
@@ -184,7 +222,9 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
                 <input
                     type="text"
                     value={userAnswer}
-                    onChange={(e) => handleInputChange(blankId, e.target.value)}
+                    onChange={(e) => {
+                        handleInputChange(blankId, e.target.value)
+                    }}
                     disabled={isSubmitted && !isPreview}
                     className={getInputStyle()}
                     style={{width: getInputWidth(), minWidth: '100px'}}
@@ -375,7 +415,7 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
                     {parseTextWithBlanks()}
                 </div>
             </div>
-
+            <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
             {/* Blank Feedback (for incorrect answers) */}
             {renderBlankFeedback()}
 

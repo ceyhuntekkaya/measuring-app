@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { EssayTemplateDto } from '@/types/exam/questionTemplates';
+import {QuestionTemplateType} from "@/types/exam/examEntities";
+import {EMediaType, EQuestionType} from "@/types/exam/enum";
 
 interface EssayQuestionProps {
     template: EssayTemplateDto;
     isPreview?: boolean;
-    onAnswerChange?: (essayData: EssayAnswerData | null) => void;
+    onAnswerChange?: (questionId:string, template: QuestionTemplateType, selectedOption: string, type: EQuestionType, mediaType: EMediaType, isEmptyAnswer: boolean) => void;
     initialAnswer?: EssayAnswerData | null;
     isSubmitted?: boolean;
     showCorrectAnswer?: boolean;
+    questionId: string;
 }
 
 interface EssayAnswerData {
@@ -23,6 +26,7 @@ const EssayQuestion: React.FC<EssayQuestionProps> = ({
                                                          onAnswerChange,
                                                          initialAnswer = null,
                                                          isSubmitted = false,
+                                                         questionId,
                                                          showCorrectAnswer = false
                                                      }) => {
     const [essayText, setEssayText] = useState<string>(initialAnswer?.text || '');
@@ -66,7 +70,7 @@ const EssayQuestion: React.FC<EssayQuestionProps> = ({
         const newText = e.target.value;
         setEssayText(newText);
         updateCounts(newText);
-
+/*
         const essayData: EssayAnswerData = {
             text: newText,
             wordCount: newText.trim().split(/\s+/).filter(word => word.length > 0).length,
@@ -74,10 +78,16 @@ const EssayQuestion: React.FC<EssayQuestionProps> = ({
             submittedAt: new Date().toISOString()
         };
 
-        if (onAnswerChange) {
-            onAnswerChange(newText.trim() ? essayData : null);
-        }
+ */
+
+
     };
+
+    const handleSaveAnswer =()=>{
+        if (onAnswerChange) {
+            onAnswerChange(questionId, template, essayText ? essayText : '', EQuestionType.ESSAY, EMediaType.TEXT, false);
+        }
+    }
 
     const getWordCountStatus = (): { status: 'valid' | 'warning' | 'invalid'; message: string } => {
         if (!template.minWords && !template.maxWords) {
@@ -171,7 +181,7 @@ const EssayQuestion: React.FC<EssayQuestionProps> = ({
         setCharacterCount(0);
 
         if (onAnswerChange) {
-            onAnswerChange(null);
+           // onAnswerChange(null);
         }
     };
 
@@ -225,6 +235,7 @@ const EssayQuestion: React.FC<EssayQuestionProps> = ({
                             </span>
                         </div>
                     </div>
+
                 </div>
             )}
 
@@ -337,8 +348,9 @@ const EssayQuestion: React.FC<EssayQuestionProps> = ({
                     className="w-full p-4 resize-none outline-none bg-white text-gray-800 disabled:bg-gray-100 disabled:cursor-not-allowed"
                     style={{ minHeight: '300px' }}
                 />
-            </div>
 
+            </div>
+            <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
             {/* Writing Tips */}
             {!isSubmitted && essayText.length === 0 && (
                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">

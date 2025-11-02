@@ -118,7 +118,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({applicationId}) => {
                 if (xhr.status === 200) {
                     try {
                         const response = JSON.parse(xhr.responseText);
-                        console.log(response)
+                        console.log(response);
                         showNotification.success('Ses kaydı başarıyla yüklendi!');
                         updateApplicationStateStatus(EApplicationUpdateState.VOICE)
 
