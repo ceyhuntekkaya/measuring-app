@@ -4,6 +4,7 @@ import {EMediaType, EQuestionGroupType, EQuestionType} from "@/types/exam/enum";
 import {QuestionTemplateType} from "@/types/exam/examEntities";
 
 export type CreateQuestionGroupRequest = {
+    id?: string;
     name: string;
     examTypeId: string;
     examSectionId: string;
@@ -28,6 +29,7 @@ export type CreateQuestionRequest = {
 }
 
 export type CreateQuestionGroupHeaderRequest = {
+    id?: string;
     orderNumber: number;
     mediaType?: EMediaType; // Example enum values
     content: string;

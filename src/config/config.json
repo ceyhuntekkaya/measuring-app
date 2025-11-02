@@ -6,7 +6,7 @@
     "aiUrl2": "http://185.72.9.3:11434i",
     "aiUrl": "https://chat.studyscore.ai/ollama"
   },
-  "api_server": {
+  "api_local": {
     "invokeUrl": "http://localhost:8080/api",
     "baseUrl": "http://localhost:3000",
     "aiUrl2": "http://185.72.9.3:11434i",

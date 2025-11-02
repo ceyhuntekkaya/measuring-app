@@ -54,10 +54,6 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
     };
 
 
-
-
-    console.log(JSON.stringify(template, null, 2));
-
     const evaluateAnswers = (): void => {
         if (!template.options?.blanks) return;
 

@@ -17,6 +17,7 @@ import { QuestionGroupDto } from "@/types/exam/examEntities";
 import { FileUpload } from "@/components/ui/file-upload";
 
 interface QuestionGroupFormData {
+    id?: string
     name: string;
     examTypeId: string;
     examSectionId: string;
@@ -96,6 +97,7 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                                                                  onExamSectionChange
                                                              }) => {
     const [formData, setFormData] = useState<QuestionGroupFormData>({
+        id:'',
         name: '',
         examTypeId: '',
         examSectionId: '',
@@ -108,10 +110,13 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
     const [errors, setErrors] = useState<QuestionGroupFormErrors>({});
     const [filteredSections, setFilteredSections] = useState<ExamSectionDto[]>([]);
     const [filteredGroupTypes, setFilteredGroupTypes] = useState<QuestionGroupTypeDto[]>([]);
+    const [isInitialized, setIsInitialized] = useState(false);
 
+    // QuestionGroup geldiğinde form verilerini doldur (sadece bir kez)
     useEffect(() => {
-        if (questionGroup) {
+        if (questionGroup && !isInitialized) {
             setFormData({
+                id: questionGroup.id || '',
                 name: questionGroup.name || '',
                 examTypeId: questionGroup.examType?.id || '',
                 examSectionId: questionGroup.examSection?.id || '',
@@ -119,13 +124,15 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                 maximumScore: questionGroup.maximumScore,
                 durationInSeconds: questionGroup.durationInSeconds,
                 headers: questionGroup.headers?.map(h => ({
+                    id: h.id,
                     orderNumber: h.orderNumber || 1,
                     mediaType: h.mediaType || EMediaType.TEXT,
                     content: h.content || ''
                 })) || []
             });
+            setIsInitialized(true);
         }
-    }, [questionGroup]);
+    }, [questionGroup, isInitialized]);
 
     // Exam Type değiştiğinde sections'ı filtrele
     useEffect(() => {
@@ -133,15 +140,18 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
             const filtered = examSections.filter(section => section.examType?.id === formData.examTypeId);
             setFilteredSections(filtered);
 
-            // Eğer seçili section artık mevcut değilse temizle
-            if (formData.examSectionId && !filtered.find(s => s.id === formData.examSectionId)) {
-                setFormData(prev => ({ ...prev, examSectionId: '' }));
+            // Eğer seçili section filtered listede yoksa ve bu create modu ise temizle
+            // Update modunda ise mevcut seçimi koru
+            if (!questionGroup && formData.examSectionId && !filtered.find(s => s.id === formData.examSectionId)) {
+                setFormData(prev => ({ ...prev, examSectionId: '', questionGroupTypeId: '' }));
             }
         } else {
             setFilteredSections([]);
-            setFormData(prev => ({ ...prev, examSectionId: '' }));
+            if (!questionGroup) {
+                setFormData(prev => ({ ...prev, examSectionId: '', questionGroupTypeId: '' }));
+            }
         }
-    }, [formData.examTypeId, examSections, formData.examSectionId]);
+    }, [formData.examTypeId, examSections, questionGroup]);
 
     // Exam Section değiştiğinde group types'ı filtrele
     useEffect(() => {
@@ -149,15 +159,19 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
             const filtered = questionGroupTypes.filter(type => type.examSection?.id === formData.examSectionId);
             setFilteredGroupTypes(filtered);
 
-            // Eğer seçili group type artık mevcut değilse temizle
-            if (formData.questionGroupTypeId && !filtered.find(t => t.id === formData.questionGroupTypeId)) {
+            // Eğer seçili group type filtered listede yoksa ve bu create modu ise temizle
+            // Update modunda ise mevcut seçimi koru
+            if (!questionGroup && formData.questionGroupTypeId && !filtered.find(t => t.id === formData.questionGroupTypeId)) {
                 setFormData(prev => ({ ...prev, questionGroupTypeId: '' }));
             }
         } else {
             setFilteredGroupTypes([]);
-            setFormData(prev => ({ ...prev, questionGroupTypeId: '' }));
+            if (!questionGroup) {
+                setFormData(prev => ({ ...prev, questionGroupTypeId: '' }));
+            }
         }
-    }, [formData.examSectionId, questionGroupTypes, formData.questionGroupTypeId]);
+    }, [formData.examSectionId, questionGroupTypes, questionGroup]);
+
 
     const handleChange = <T extends keyof QuestionGroupFormData>(
         name: T,
@@ -167,18 +181,35 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
             ...prev,
             [name]: value
         }));
+
+        // Clear error for this field
+        if (errors[name as keyof QuestionGroupFormErrors]) {
+            setErrors(prev => ({
+                ...prev,
+                [name]: undefined
+            }));
+        }
+
+        // Propagate changes to parent
+        if (name === 'examTypeId') {
+            onExamTypeChange(value as string);
+        } else if (name === 'examSectionId') {
+            onExamSectionChange(value as string);
+        }
     };
 
-    const addHeader = () => {
-        const newHeader: CreateQuestionGroupHeaderRequest = {
-            orderNumber: formData.headers.length + 1,
-            mediaType: EMediaType.TEXT,
-            content: ''
-        };
 
+    const addHeader = () => {
         setFormData(prev => ({
             ...prev,
-            headers: [...prev.headers, newHeader]
+            headers: [
+                ...prev.headers,
+                {
+                    orderNumber: prev.headers.length + 1,
+                    mediaType: EMediaType.TEXT,
+                    content: ''
+                }
+            ]
         }));
     };
 
@@ -209,13 +240,11 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
         }));
     };
 
-    const validateForm = (): boolean => {
+    const validate = (): boolean => {
         const newErrors: QuestionGroupFormErrors = {};
 
         if (!formData.name.trim()) {
             newErrors.name = 'Soru grubu adı zorunludur';
-        } else if (formData.name.trim().length < 3) {
-            newErrors.name = 'Soru grubu adı en az 3 karakter olmalıdır';
         }
 
         if (!formData.examTypeId) {
@@ -230,12 +259,8 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
             newErrors.questionGroupTypeId = 'Soru grubu tipi seçimi zorunludur';
         }
 
-        if (formData.maximumScore !== undefined && formData.maximumScore < 0) {
-            newErrors.maximumScore = 'Maksimum puan 0\'dan küçük olamaz';
-        }
-
-        if (formData.durationInSeconds !== undefined && formData.durationInSeconds < 0) {
-            newErrors.durationInSeconds = 'Süre 0\'dan küçük olamaz';
+        if (formData.headers.length === 0) {
+            newErrors.headers = 'En az bir başlık eklemelisiniz';
         }
 
         setErrors(newErrors);
@@ -243,141 +268,137 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
     };
 
     const handleSubmit = () => {
-        if (!validateForm()) {
+        if (!validate()) {
             return;
         }
 
-        const requestData: CreateQuestionGroupRequest = {
-            name: formData.name.trim(),
-            examTypeId: formData.examTypeId,
-            examSectionId: formData.examSectionId,
-            questionGroupTypeId: formData.questionGroupTypeId,
-            maximumScore: formData.maximumScore,
-            durationInSeconds: formData.durationInSeconds,
-            headers: formData.headers
+        const submitData: CreateQuestionGroupRequest = {
+            ...formData,
+            maximumScore: formData.maximumScore || 0,
+            durationInSeconds: formData.durationInSeconds || 0
         };
 
-        onSubmit(requestData);
+        onSubmit(submitData);
     };
 
     return (
-        <Card>
+        <Card className="w-full">
             <CardHeader>
-                <CardTitle>
-                    {questionGroup ? 'Soru Grubu Düzenle' : 'Yeni Soru Grubu Oluştur'}
-                </CardTitle>
+                <CardTitle>{questionGroup ? "Soru Grubu Düzenle" : "Yeni Soru Grubu Oluştur"}</CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="space-y-6">
+
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
-                        {/* Soru Grubu Adı */}
-                        <div className="space-y-2 md:col-span-5">
-                            <Label htmlFor="name">Soru Grubu Adı *</Label>
-                            <Input
-                                id="name"
-                                value={formData.name}
-                                onChange={(e) => handleChange('name', e.target.value)}
-                                placeholder="Soru grubu adını giriniz"
-                                className={errors.name ? 'border-red-500' : ''}
-                                disabled={loading}
-                            />
-                            {errors.name && (
-                                <Alert variant="destructive">
-                                    <AlertDescription>{errors.name}</AlertDescription>
-                                </Alert>
-                            )}
-                        </div>
+                    {/* Soru Grubu Adı */}
+                    <div className="space-y-2">
+                        <Label htmlFor="name">Soru Grubu Adı *</Label>
+                        <Input
+                            id="name"
+                            value={formData.name}
+                            onChange={(e) => handleChange('name', e.target.value)}
+                            placeholder="Soru grubu adını giriniz"
+                            className={errors.name ? 'border-red-500' : ''}
+                            disabled={loading}
+                        />
+                        {errors.name && (
+                            <Alert variant="destructive">
+                                <AlertDescription>{errors.name}</AlertDescription>
+                            </Alert>
+                        )}
+                    </div>
 
-                        {/* Sınav Tipi */}
-                        <div className="space-y-2">
-                            <Label htmlFor="examType">Sınav Tipi *</Label>
-                            <Select
-                                onValueChange={(value) => {
-                                    handleChange('examTypeId', value as string);
-                                    onExamTypeChange(value as string);
-                                }}
-                                value={formData.examTypeId}
-                                disabled={loading}
-                            >
-                                <SelectTrigger className={errors.examTypeId ? 'border-red-500' : ''}>
-                                    <SelectValue placeholder="Sınav tipi seçin" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectGroup>
-                                        {examTypes.map(examType => (
-                                            <SelectItem key={examType.id} value={examType.id || ''}>
-                                                {examType.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
-                            {errors.examTypeId && (
-                                <Alert variant="destructive">
-                                    <AlertDescription>{errors.examTypeId}</AlertDescription>
-                                </Alert>
-                            )}
-                        </div>
+                    {/* Sınav Tipi */}
+                    <div className="space-y-2">
+                        <Label htmlFor="examTypeId">Sınav Tipi *</Label>
+                        <Select
+                            onValueChange={(value) => handleChange('examTypeId', value as string)}
+                            value={formData.examTypeId}
+                            disabled={loading}
+                            searchable={false}
+                            sortable={false}
+                        >
+                            <SelectTrigger className={errors.examTypeId ? 'border-red-500' : ''}>
+                                <SelectValue placeholder="Sınav tipi seçiniz" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                    {examTypes.map((type) => (
+                                        <SelectItem key={type.id} value={type.id!}>
+                                            {type.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
+                        {errors.examTypeId && (
+                            <Alert variant="destructive">
+                                <AlertDescription>{errors.examTypeId}</AlertDescription>
+                            </Alert>
+                        )}
+                    </div>
 
-                        {/* Sınav Bölümü */}
-                        <div className="space-y-2">
-                            <Label htmlFor="examSection">Sınav Bölümü *</Label>
-                            <Select
-                                onValueChange={(value) => {
-                                    handleChange('examSectionId', value as string);
-                                    onExamSectionChange(value as string);
-                                }}
-                                value={formData.examSectionId}
-                                disabled={!formData.examTypeId || loading}
-                            >
-                                <SelectTrigger className={errors.examSectionId ? 'border-red-500' : ''}>
-                                    <SelectValue placeholder="Sınav bölümü seçin" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectGroup>
-                                        {filteredSections.map(section => (
-                                            <SelectItem key={section.id} value={section.id || ''}>
-                                                {section.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
-                            {errors.examSectionId && (
-                                <Alert variant="destructive">
-                                    <AlertDescription>{errors.examSectionId}</AlertDescription>
-                                </Alert>
-                            )}
-                        </div>
+                    {/* Sınav Bölümü */}
+                    <div className="space-y-2">
+                        <Label htmlFor="examSectionId">Sınav Bölümü *</Label>
+                        <Select
+                            onValueChange={(value) => handleChange('examSectionId', value as string)}
+                            value={formData.examSectionId}
+                            disabled={loading || !formData.examTypeId}
+                            searchable={false}
+                            sortable={false}
+                        >
+                            <SelectTrigger className={errors.examSectionId ? 'border-red-500' : ''}>
+                                <SelectValue placeholder={formData.examTypeId ? "Sınav bölümü seçiniz" : "Önce sınav tipi seçiniz"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                    {filteredSections.map((section) => (
+                                        <SelectItem key={section.id} value={section.id!}>
+                                            {section.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
+                        {errors.examSectionId && (
+                            <Alert variant="destructive">
+                                <AlertDescription>{errors.examSectionId}</AlertDescription>
+                            </Alert>
+                        )}
+                    </div>
 
-                        {/* Soru Grubu Tipi */}
-                        <div className="space-y-2">
-                            <Label htmlFor="questionGroupType">Soru Grubu Tipi *</Label>
-                            <Select
-                                onValueChange={(value) => handleChange('questionGroupTypeId', value as string)}
-                                value={formData.questionGroupTypeId}
-                                disabled={!formData.examSectionId || loading}
-                            >
-                                <SelectTrigger className={errors.questionGroupTypeId ? 'border-red-500' : ''}>
-                                    <SelectValue placeholder="Soru grubu tipi seçin" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectGroup>
-                                        {filteredGroupTypes.map(groupType => (
-                                            <SelectItem key={groupType.id} value={groupType.id || ''}>
-                                                {groupType.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
-                            {errors.questionGroupTypeId && (
-                                <Alert variant="destructive">
-                                    <AlertDescription>{errors.questionGroupTypeId}</AlertDescription>
-                                </Alert>
-                            )}
-                        </div>
+                    {/* Soru Grubu Tipi */}
+                    <div className="space-y-2">
+                        <Label htmlFor="questionGroupTypeId">Soru Grubu Tipi *</Label>
+                        <Select
+                            onValueChange={(value) => handleChange('questionGroupTypeId', value as string)}
+                            value={formData.questionGroupTypeId}
+                            disabled={loading || !formData.examSectionId}
+                            searchable={false}
+                            sortable={false}
+                        >
+                            <SelectTrigger className={errors.questionGroupTypeId ? 'border-red-500' : ''}>
+                                <SelectValue placeholder={formData.examSectionId ? "Soru grubu tipi seçiniz" : "Önce sınav bölümü seçiniz"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                    {filteredGroupTypes.map((type) => (
+                                        <SelectItem key={type.id} value={type.id!}>
+                                            {type.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
+                        {errors.questionGroupTypeId && (
+                            <Alert variant="destructive">
+                                <AlertDescription>{errors.questionGroupTypeId}</AlertDescription>
+                            </Alert>
+                        )}
+                    </div>
 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Maksimum Puan */}
                         <div className="space-y-2">
                             <Label htmlFor="maximumScore">Maksimum Puan</Label>
@@ -421,7 +442,7 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                             )}
                         </div>
                     </div>
-
+                    </div>
                     {/* Headers Section */}
                     <div className="space-y-4">
                         <div className="flex justify-between items-center">
