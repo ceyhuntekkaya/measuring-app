@@ -12,4 +12,6 @@ export default function ExamLayout({
             {children}
         </FullscreenLock>
     );
+
+
 }

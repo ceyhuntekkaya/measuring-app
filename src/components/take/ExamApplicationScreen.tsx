@@ -6,13 +6,26 @@ import {useQuestion} from "@/hooks/exam/use-question";
 import {EQuestionType} from "@/types/exam/enum";
 import MultipleChoiceQuestion from "@/components/template/MultipleChoiceQuestion";
 import {
-    FillInTheBlanksTemplateDto,
-    MultipleChoiceTemplateDto,
-    TrueFalseTemplateDto
+    AudioResponseTemplateDto,
+    DragAndDropTemplateDto,
+    EssayTemplateDto,
+    FillInTheBlanksTemplateDto, HotSpotTemplateDto, ImageResponseTemplateDto, MatchingTemplateDto,
+    MultipleChoiceTemplateDto, MultipleResponseTemplateDto, OrderingTemplateDto, ShortAnswerTemplateDto,
+    TrueFalseTemplateDto, VideoResponseTemplateDto
 } from "@/types/exam/questionTemplates";
 import TrueFalseQuestion from "@/components/template/TrueFalseQuestion";
 import FillInTheBlanksQuestion from "@/components/template/FillInTheBlanksQuestion";
 import {useQuestionGroup} from "@/hooks/exam/use-question-group";
+import ShortAnswerQuestion from "@/components/template/ShortAnswerQuestion";
+import EssayQuestion from "@/components/template/EssayQuestion";
+import MatchingQuestion from "@/components/template/MatchingQuestion";
+import OrderingQuestion from "@/components/template/OrderingQuestion";
+import MultipleResponseQuestion from "@/components/template/MultipleResponseQuestion";
+import HotSpotQuestion from "@/components/template/HotSpotQuestion";
+import DragAndDropQuestion from "@/components/template/DragAndDropQuestion";
+import AudioResponseQuestion from "@/components/template/AudioResponseQuestion";
+import VideoResponseQuestion from "@/components/template/VideoResponseQuestion";
+import ImageResponseQuestion from "@/components/template/ImageResponseQuestion";
 
 interface ExamApplicationScreenProps {
     questionGroups: QuestionGroupDto[];
@@ -27,7 +40,8 @@ export default function ExamApplicationScreen({
     const [completedGroups, setCompletedGroups] = useState<Set<number>>(new Set());
     const [showExitModal, setShowExitModal] = useState(false);
 
-console.log(setCompletedGroups)
+    console.log("ceyhun",setCompletedGroups)
+
 
     const totalGroups = questionGroups.length;
     const progressPercentage = (completedGroups.size / totalGroups) * 100;
@@ -86,40 +100,26 @@ console.log(setCompletedGroups)
                 return <TrueFalseQuestion template={template as TrueFalseTemplateDto}/>;
             case 'FILL_IN_THE_BLANKS':
                 return <FillInTheBlanksQuestion template={template as FillInTheBlanksTemplateDto}/>;
-            /*  case 'SHORT_ANSWER':
-                    return <ShortAnswerTemplateForm onChange={commonProps.onChange}
-                                                    value={commonProps.value as ShortAnswerTemplateDto}/>;
-                case 'ESSAY':
-                    return <EssayTemplateForm onChange={commonProps.onChange}
-                                              value={commonProps.value as EssayTemplateDto}/>;
-                case 'MATCHING':
-                    return <MatchingTemplateForm onChange={commonProps.onChange}
-                                                 value={commonProps.value as MatchingTemplateDto}/>;
-                case 'ORDERING':
-                    return <OrderingTemplateForm onChange={commonProps.onChange}
-                                                 value={commonProps.value as OrderingTemplateDto}/>;
-                case 'MULTIPLE_RESPONSE':
-                    return <MultipleResponseTemplateForm onChange={commonProps.onChange}
-                                                         value={commonProps.value as MultipleResponseTemplateDto}/>;
-                case 'HOT_SPOT':
-                    return <HotSpotTemplateForm onChange={commonProps.onChange}
-                                                value={commonProps.value as HotSpotTemplateDto}/>;
-                case 'DRAG_AND_DROP':
-                    return <DragAndDropTemplateForm onChange={commonProps.onChange}
-                                                    value={commonProps.value as DragAndDropTemplateDto}/>;
-                case 'AUDIO_RESPONSE':
-                    return <AudioResponseTemplateForm onChange={commonProps.onChange}
-                                                      value={commonProps.value as AudioResponseTemplateDto}/>;
-                case 'VIDEO_RESPONSE':
-                    return <VideoResponseTemplateForm onChange={commonProps.onChange}
-                                                      value={commonProps.value as VideoResponseTemplateDto}/>;
-                case 'IMAGE_RESPONSE':
-                    return <ImageResponseTemplateForm onChange={commonProps.onChange}
-                                                      value={commonProps.value as ImageResponseTemplateDto}/>;
-
-
-                     */
-
+            case 'SHORT_ANSWER':
+                return <ShortAnswerQuestion template={template as ShortAnswerTemplateDto}/>;
+            case 'ESSAY':
+                return <EssayQuestion template={template as EssayTemplateDto}/>;
+            case 'MATCHING':
+                return <MatchingQuestion template={template as MatchingTemplateDto}/>;
+            case 'ORDERING':
+                return <OrderingQuestion template={template as OrderingTemplateDto}/>;
+            case 'MULTIPLE_RESPONSE':
+                return <MultipleResponseQuestion template={template as MultipleResponseTemplateDto}/>;
+            case 'HOT_SPOT':
+                return <HotSpotQuestion template={template as HotSpotTemplateDto}/>;
+            case 'DRAG_AND_DROP':
+                return <DragAndDropQuestion template={template as DragAndDropTemplateDto}/>;
+            case 'AUDIO_RESPONSE':
+                return <AudioResponseQuestion template={template as AudioResponseTemplateDto}/>;
+            case 'VIDEO_RESPONSE':
+                return <VideoResponseQuestion template={template as VideoResponseTemplateDto}/>;
+            case 'IMAGE_RESPONSE':
+                return <ImageResponseQuestion template={template as ImageResponseTemplateDto}/>;
             default:
                 return (
                     <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
@@ -129,6 +129,8 @@ console.log(setCompletedGroups)
                     </div>
                 );
         }
+
+
     };
 
     return (
@@ -165,9 +167,9 @@ console.log(setCompletedGroups)
             </header>
 
             {/* Main Content Area */}
-            <main className="flex-1 overflow-y-auto p-6">
+            <main className="flex-1 overflow-y-auto p-3">
                 <div className="mx-auto">
-                    <div className="bg-white rounded-lg shadow-sm p-8 min-h-[500px]">
+                    <div className="bg-white rounded-lg shadow-sm p-5 min-h-[500px]">
                         {/* Buraya soru içeriği gelecek */}
 
                         {

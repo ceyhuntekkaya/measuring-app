@@ -22,7 +22,7 @@ interface UseQuestionGroupReturn {
     loading: boolean;
     error: Error | null;
     createQuestionGroup: (createRequest: CreateQuestionGroupRequest) => Promise<void>;
-    updateQuestionGroup: (id: string, updateRequest: CreateQuestionGroupRequest) => Promise<void>;
+    updateQuestionGroup: (updateRequest: CreateQuestionGroupRequest) => Promise<void>;
     getQuestionGroupById: (id: string) => Promise<void>;
     getQuestionGroupsByExamSection: (examSectionId: string) => Promise<void>;
     getQuestionGroupsByExamType: (examTypeId: string) => Promise<void>;
@@ -70,11 +70,11 @@ export const useQuestionGroup = (): UseQuestionGroupReturn => {
         }
     }, []);
 
-    const updateQuestionGroup = useCallback(async (id: string, updateRequest: CreateQuestionGroupRequest) => {
+    const updateQuestionGroup = useCallback(async (updateRequest: CreateQuestionGroupRequest) => {
         try {
             setLoading(true);
             setError(null);
-            const response = await questionGroupService.updateQuestionGroup(id, updateRequest);
+            const response = await questionGroupService.updateQuestionGroup(updateRequest.id || '', updateRequest);
             if (response.data && response.success) {
                 setSelectedQuestionGroup(response.data);
                 showNotification.success('Soru grubu başarıyla güncellendi!');

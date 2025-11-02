@@ -95,13 +95,6 @@ export default function QuestionGroupPage() {
 
 
 
-
-
-
-
-
-
-
         {
             key: 'approvalCompletedDate',
             header: 'ONAY DURUMU',
@@ -110,7 +103,7 @@ export default function QuestionGroupPage() {
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => router.push(`/admin/question-group/${record.id}`)}
                 >
-                    {(record as QuestionGroupDto).questionGroupType?.name}
+                    {(record as QuestionGroupDto).status}
                 </div>
             )
         },

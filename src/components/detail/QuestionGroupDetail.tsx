@@ -1,12 +1,15 @@
 import React from 'react';
 import { QuestionGroupDto } from '@/types/exam/examEntities';
 import { EApprovalStatus, EExamType, EQuestionGroupType, EMediaType, EQuestionType } from '@/types/exam/enum';
+import {Button} from "@/components/ui/button";
 
 interface QuestionGroupDetailProps {
     selectedQuestionGroup: QuestionGroupDto | null;
+    onEdit: () => void;
+    onDelete: () => void;
 }
 
-const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuestionGroup }) => {
+const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuestionGroup, onEdit, onDelete  }) => {
     if (!selectedQuestionGroup) {
         return (
             <div className="flex items-center justify-center h-64">
@@ -123,6 +126,26 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
 
     return (
         <div className="mx-auto p-6 space-y-6">
+
+            <div className="flex items-center justify-between">
+                <div>
+
+                </div>
+                <div className="flex space-x-3">
+                    {onEdit && (
+                        <Button variant="outline" onClick={onEdit}>
+                            Düzenle
+                        </Button>
+                    )}
+
+                    {onDelete && (
+                        <Button variant="outline" onClick={onDelete}>
+                            Sil
+                        </Button>
+                    )}
+                </div>
+            </div>
+
             {/* Header */}
             <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
                 <div className="flex items-start justify-between mb-4">
