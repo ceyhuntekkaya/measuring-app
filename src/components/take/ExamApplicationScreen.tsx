@@ -1,7 +1,12 @@
 'use client';
 
 import React, {useEffect, useState} from 'react';
-import {QuestionAnswerRequest, QuestionGroupDto, QuestionTemplateType} from "@/types/exam/examEntities";
+import {
+    QuestionAnswerRequest,
+    QuestionGroupDto,
+    QuestionGroupHeaderDto,
+    QuestionTemplateType
+} from "@/types/exam/examEntities";
 import {useQuestion} from "@/hooks/exam/use-question";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
 import MultipleChoiceQuestion from "@/components/template/MultipleChoiceQuestion";
@@ -28,6 +33,8 @@ import VideoResponseQuestion from "@/components/template/VideoResponseQuestion";
 import ImageResponseQuestion from "@/components/template/ImageResponseQuestion";
 import {useExamApplicationContext} from "@/contexts/ExamApplicationContext";
 import {useExamResult} from "@/hooks/exam/use-exam-result";
+import siteConfig from "@/config/config.json";
+const API_URL = siteConfig.api.invokeUrl + "/upload/serve";
 
 interface ExamApplicationScreenProps {
     questionGroups: QuestionGroupDto[];
@@ -166,6 +173,167 @@ export default function ExamApplicationScreen({
         }
     };
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    const renderContent = (material: QuestionGroupHeaderDto) => {
+
+        switch (material.mediaType) {
+            case "VIDEO":
+
+
+
+                // Normal video dosyaları için mevcut kod
+                return (
+                    <div className="ratio ratio-16x9 mb-4">
+                        <video
+                            className="w-100"
+                            controls
+                            src={ `${API_URL}/${material.content}`}
+                        >
+                            Your browser does not support the video file.
+                        </video>
+                    </div>
+                );
+
+            case "AUDIO":
+                return (
+                    <div className="mb-4">
+                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+                            <div className="flex items-center gap-4 mb-4">
+                                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center shadow-md">
+                                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z" />
+                                    </svg>
+                                </div>
+                                <div className="flex-1">
+                                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                                        Ses Dosyası
+                                    </h4>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        Dinlemek için lütfen oynatma tuşuna basınız.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {
+                                /*
+                                 <AudioPlayer
+                                autoPlay
+                                src="http://example.com/audio.mp3"
+                                onPlay={e => console.log("onPlay")}
+                                // other props here
+                            />
+                                 */
+                            }
+
+
+
+                            <audio
+                                className="w-full h-10 outline-none"
+                                controls
+                                src={ `${API_URL}/${material.content}`}
+                                style={{
+                                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+                                }}
+                            >
+                                Your browser does not support the audio file.
+                            </audio>
+                        </div>
+                    </div>
+                );
+
+            case "PDF":
+                return (
+                    <div className="mb-4 border border-4">
+                        <iframe
+                            src={material.content || ""}
+                            className="w-100"
+                            style={{ height: "600px" }}
+                            title={`${material.name || 'title'}`}
+                        ></iframe>
+                    </div>
+                );
+
+            case "DOCUMENT":
+                return (
+                    <div className="mb-4">
+                        <a
+
+                            href={ `${API_URL}/${material.content}`}
+                            className="btn btn-primary"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            download={material.uploadedFileName || undefined}
+                        >
+                            <i className="bi bi-file-earmark-text me-2"></i>
+                            Download Document
+                        </a>
+                    </div>
+                );
+
+            case "IMAGE":
+                return (
+                    <div className="mb-4 text-center">
+                        <img
+                            src={ `${API_URL}/${material.content}`}
+                            alt={`${material.name || 'images'}`}
+                            className="img-fluid"
+                            style={{ maxHeight: "500px" }}
+                        />
+                    </div>
+                );
+
+
+
+            case "TEXT":
+            default:
+                const processContent = (content: string): string => {
+                    if (!content) return '';
+                    return /<\/?[a-z][\s\S]*>/i.test(content)
+                        ? content
+                        : content.replace(/\n/g, '<br/>').replace(/\\n/g, '<br/>');
+                };
+
+                return (
+                    <div className="mb-4 card">
+                        <div className="card-body">
+                            {material.content ? (
+                                <div dangerouslySetInnerHTML={{ __html: processContent(material.content) }} />
+                            ) : (
+                                <div className="alert alert-warning">
+                                    <i className="bi bi-exclamation-triangle me-2"></i>
+                                    No content found.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                );
+        }
+    };
+
     return (
         <div className="h-screen w-screen flex flex-col bg-gray-50"
              style={{height: "calc(100vh - 100px)"}}>
@@ -210,7 +378,9 @@ export default function ExamApplicationScreen({
                             <h3 className="flex items-center gap-2">SORU GRUP: {currentGroupIndex + 1}</h3>
                             {
                                 questionsByGroup && selectedQuestionGroup?.headers?.map((header, key) => (
-                                    <div key={key}>{header.content}</div>
+                                    <div key={key}>{renderContent(header)}</div>
+
+
                                 ))
                             }
 
