@@ -10,7 +10,7 @@ import {
     EMediaType,
     EQuestionType, ESessionState
 } from "@/types/exam/enum";
-import {BranchDto, BrandDto} from "@/types/management/brand";
+import {ApplicationDto, BranchDto, BrandDto} from "@/types/management/brand";
 import {EEvaluationStatus, UserDto} from "@/types/auth";
 import {DatabaseObjectDto} from "@/types/exam/miscDtos";
 import {
@@ -20,6 +20,7 @@ import {
     MultipleChoiceTemplateDto, MultipleResponseTemplateDto, OrderingTemplateDto, ShortAnswerTemplateDto,
     TrueFalseTemplateDto, VideoResponseTemplateDto
 } from "@/types/exam/questionTemplates";
+import {RecordType} from "@/types/ui/table";
 
 
 export interface BaseQuestionTemplateFormData {
@@ -55,6 +56,23 @@ export type QuestionTemplateType =
     | AudioResponseTemplateDto
     | VideoResponseTemplateDto
     | ImageResponseTemplateDto;
+
+
+
+
+
+export interface EvaluationGroupData extends RecordType{
+    question: QuestionDto;
+    evaluation: EvaluationDto;
+}
+export interface EvaluationGroup extends RecordType{
+    data: EvaluationGroupData[];
+    application: ApplicationDto;
+}
+
+
+
+
 
 
 export type QuestionDto = DatabaseObjectDto & {

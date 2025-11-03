@@ -5,6 +5,7 @@ import { ApiResponse } from "@/types/exam/examValidationAndAnalytics";
 import {QuestionDto, QuestionSearchRequest} from "@/types/exam/examEntities";
 import {EQuestionType} from "@/types/exam/enum";
 import {QuestionGroupQuestionStatistics, QuestionValidation} from "@/types/exam/examResponses";
+import {QuestionId} from "@/types/management/brand";
 
 
 class QuestionService {
@@ -93,6 +94,13 @@ class QuestionService {
         const response = await api.post<ApiResponse<QuestionDto>>(`${this.baseUrl}/${questionId}/duplicate`, {
             newName
         });
+        return response.data;
+    }
+
+
+
+    async getAllQuestionByIdList(idList: QuestionId[]): Promise<ApiResponse<QuestionDto[]>> {
+        const response = await api.post<ApiResponse<QuestionDto[]>>(`${this.baseUrl}/id/list/`, idList);
         return response.data;
     }
 }

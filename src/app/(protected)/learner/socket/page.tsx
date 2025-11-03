@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Client } from '@stomp/stompjs';
+import siteConfig from "@/config/config.json";
+
 
 export default function WebSocketTest() {
     const [connected, setConnected] = useState(false);
@@ -9,9 +11,18 @@ export default function WebSocketTest() {
     const [messages, setMessages] = useState<string[]>([]);
     const [client, setClient] = useState<Client | null>(null);
 
+
+    const getWebSocketUrl = () => {
+        const apiUrl = siteConfig.api.invokeUrl;
+        const wsProtocol = apiUrl.startsWith('https') ? 'wss' : 'ws';
+        const urlWithoutProtocol = apiUrl.replace(/^https?:\/\//, '');
+        return `${wsProtocol}://${urlWithoutProtocol}/ws`; // veya /api/ws
+    };
+
+
     useEffect(() => {
         const stompClient = new Client({
-            brokerURL: 'ws://localhost:8080/api/ws', // Native WebSocket
+            brokerURL: getWebSocketUrl(), // Native WebSocket
             reconnectDelay: 5000,
             heartbeatIncoming: 4000,
             heartbeatOutgoing: 4000,

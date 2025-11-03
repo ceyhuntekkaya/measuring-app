@@ -14,6 +14,7 @@ import {formatDate} from '@/utils/date-formater';
 import LoadingComp from "@/components/ui/loading-comp";
 import ExamParticipants from "@/components/proctor/ExamParticipants";
 import {useApplication} from "@/hooks/exam/use-application";
+import ExamEvaluationPanel from "@/components/proctor/ExamEvaluation";
 
 interface ExamSessionDetailProps {
     examSession: ExamSessionDto;
@@ -160,7 +161,10 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                     >
                         Genel Bilgiler
                     </button>
-                    <button
+
+                    {
+                        /*
+                        <button
                         onClick={() => setActiveTab("exam")}
                         className={`py-4 px-1 border-b-2 font-medium text-sm ${
                             activeTab === "exam"
@@ -190,6 +194,9 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                     >
                         Katılımcılar & Sonuçlar
                     </button>
+                         */
+                    }
+
 
                     <button
                         onClick={() => setActiveTab("evaluation")}
@@ -570,22 +577,7 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
 
                 {/* Değerlendirme Sekmesi */}
                 {activeTab === "evaluation" && (
-                    <div className="grid grid-cols-1 gap-6">
-
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Değerlendirme</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="flex items-center justify-center p-6 bg-gray-100">
-                                    <div className="border border-gray-300 rounded-2xl p-6 shadow-lg bg-white text-center">
-                                        Sınav uygulaması tamamlanmadan değerlendirme açılmamatadır.
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                    </div>
+                    <ExamEvaluationPanel sessionId={examSession.id} candidates ={examSessionApplications ? examSessionApplications : []}/>
                 )}
             </div>
         </div>
