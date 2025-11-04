@@ -77,6 +77,12 @@ export const adminRoutes: RouteConfig = {
                     path: '/admin/sessions',
                     icon: Computer,
                     requiredRoles: ['ADMIN'],
+                },
+                {
+                    title: 'Sertifikalar',
+                    path: '/admin/certificates',
+                    icon: Computer,
+                    requiredRoles: ['ADMIN'],
                 }
 
             ]
