@@ -13,6 +13,7 @@ import {UserDto, Permission, Department, Role} from '@/types/auth';
 import {BrandDto} from '@/types/management/brand';
 import { formatDate } from '@/utils/date-formater';
 import LoadingComp from "@/components/ui/loading-comp";
+import {departmentConverter, permissionConverter, roleConverter} from "@/utils/name-converter";
 
 interface UserDetailProps {
     user: UserDto;
@@ -332,7 +333,7 @@ const UserDetailPage: React.FC<UserDetailProps> = ({
                                         {user.roleSet?.length > 0 ? (
                                             user.roleSet.map((role: Role) => (
                                                 <Badge key={role} variant="secondary">
-                                                    {role}
+                                                    {roleConverter(role)}
                                                 </Badge>
                                             ))
                                         ) : (
@@ -354,7 +355,8 @@ const UserDetailPage: React.FC<UserDetailProps> = ({
                                         {user.departmentSet?.length > 0 ? (
                                             user.departmentSet.map((dept: Department) => (
                                                 <Badge key={dept} variant="outline">
-                                                    {dept}
+
+                                                    {departmentConverter(dept)}
                                                 </Badge>
                                             ))
                                         ) : (
@@ -377,7 +379,7 @@ const UserDetailPage: React.FC<UserDetailProps> = ({
                                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                                         {user.authoritySet.map((permission: Permission) => (
                                             <Badge key={permission} variant="default" className="text-xs">
-                                                {permission}
+                                                  {permissionConverter(permission)}
                                             </Badge>
                                         ))}
                                     </div>

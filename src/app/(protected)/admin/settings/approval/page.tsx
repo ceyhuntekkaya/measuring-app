@@ -9,7 +9,7 @@ export default function AdminPage() {
         <div className="space-y-6">
             <PageHeader/>
             <div className="p-6 pt-1">
-                Onay ayarlarınız sayfası henüz geliştirilmedi. Lütfen daha sonra tekrar deneyin.
+                Onay ayarlarını değiştirme yetkini bulanmamaktadır..
 
             </div>
         </div>
