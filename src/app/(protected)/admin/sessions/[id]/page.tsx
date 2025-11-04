@@ -7,6 +7,7 @@ import LoadingComp from "@/components/ui/loading-comp";
 import ExamSessionDetail from "@/components/detail/ExamSessionDetail";
 import {useExamSession} from "@/hooks/exam/use-exam-session";
 import {showNotification} from "@/lib/notification";
+import { AdminWebSocketProvider } from '@/components/websocket/AdminWebSocketProvider';
 
 export default function CandidateDetailPage() {
     const params = useParams();
@@ -130,6 +131,7 @@ export default function CandidateDetailPage() {
     }
 
     return (
+        <AdminWebSocketProvider  sessionId={sessionId}>
         <div className="space-y-6">
             <PageHeader/>
             <div className="p-1">
@@ -152,6 +154,7 @@ export default function CandidateDetailPage() {
                 }
             </div>
         </div>
+        </AdminWebSocketProvider>
     );
 
 

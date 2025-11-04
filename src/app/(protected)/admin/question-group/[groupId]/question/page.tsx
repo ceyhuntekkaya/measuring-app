@@ -34,6 +34,7 @@ import MultipleResponseQuestion from "@/components/template/MultipleResponseQues
 import OrderingQuestion from "@/components/template/OrderingQuestion";
 import Checkbox from "@/components/ui/checkbox";
 import FilePreview from "@/components/ui/file-preview";
+import {getQuestionTypeLabel} from "@/utils/question-type-convert";
 
 export default function QuestionPage() {
     const router = useRouter();
@@ -135,7 +136,7 @@ export default function QuestionPage() {
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => router.push(`/admin/question-group/${groupId}/question/${record.id}`)}
                 >
-                    {(record as QuestionDto).questionType}
+                    {getQuestionTypeLabel((record as QuestionDto).questionType)}
                 </div>
             )
         },

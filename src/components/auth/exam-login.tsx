@@ -1,19 +1,51 @@
 import React, {FormEvent, useEffect, useState} from 'react';
 import {Mail, ArrowRight } from 'lucide-react';
 import {useAuthContext} from "@/contexts/auth-context";
-import {useRouter, useSearchParams} from "next/navigation";
+import {useParams, useRouter, useSearchParams} from "next/navigation";
 import logo from '@/assets/eyadis.png';
 import Image from "next/image";
 
 export default function ExamLoginPage() {
-    const [username, setUsername] = useState('APP-1761588564715-033e0c57');
+    const [username, setUsername] = useState(''); ///APP-1761588564715-033e0c57
     const [error, setError] = useState('');
     const [isLoggingIn, setIsLoggingIn] = useState(false);
     const { examLogin, isAuthenticated, getPathByRole } = useAuthContext();
     const router = useRouter();
     const searchParams = useSearchParams();
 
+    const params = useParams();
+    const examId = params.id as string;
+
     const redirectTo = searchParams?.get('redirectTo') || '';
+
+
+
+
+
+    const loginHandler = async (usernameData:string)=>{
+        setError('');
+        setIsLoggingIn(true);
+
+        try {
+            const success = await examLogin(usernameData);
+            if (!success) {
+                setError('Login failed. Please check your username and password.');
+            }
+        } catch (err) {
+            console.error('Login error:', err);
+            setError('An error occurred during login. Please try again later.');
+        } finally {
+            setIsLoggingIn(false);
+        }
+    }
+
+    useEffect(() => {
+        if (examId) {
+            //setUsername(examId);
+            loginHandler(examId)
+        }
+    }, [examId]);
+
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -33,21 +65,10 @@ export default function ExamLoginPage() {
             return;
         }
 
-        setError('');
-        setIsLoggingIn(true);
-
-        try {
-            const success = await examLogin(username);
-            if (!success) {
-                setError('Login failed. Please check your username and password.');
-            }
-        } catch (err) {
-            console.error('Login error:', err);
-            setError('An error occurred during login. Please try again later.');
-        } finally {
-            setIsLoggingIn(false);
-        }
+        loginHandler(username)
     };
+
+
 
     return (
         <div className="min-h-screen w-full relative overflow-hidden">

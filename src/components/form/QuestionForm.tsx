@@ -22,6 +22,7 @@ import BaseQuestionTemplateForm, {
     BaseQuestionTemplateFormHandle
 } from "@/components/form/template/BaseQuestionTemplateForm";
 import {useParams} from "next/navigation";
+import {getQuestionTypeLabel} from "@/utils/question-type-convert";
 
 interface QuestionFormData {
     name: string;
@@ -611,7 +612,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                                         <SelectGroup>
                                             {Object.entries(EQuestionType).map(([key, value]) => (
                                                 <SelectItem key={key} value={key}>
-                                                    {value}
+                                                    {getQuestionTypeLabel(value)}
                                                 </SelectItem>
                                             ))}
                                         </SelectGroup>
