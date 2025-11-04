@@ -10,6 +10,7 @@ import Checkbox from "@/components/ui/checkbox";
 import {UserDto, UserFormData, Permission, Department, Role, PermissionList, DepartmentList} from "@/types/auth";
 import {BrandDto} from "@/types/management/brand";
 import {EStatus} from "@/types/exam/enum";
+import {departmentConverter, permissionConverter, roleConverter} from "@/utils/name-converter";
 
 interface UserFormErrors {
     username?: string;
@@ -459,7 +460,7 @@ const UserForm: React.FC<UserFormProps> = ({
                                         }
                                     />
                                     <Label htmlFor={`role-${role}`} className="text-sm">
-                                        {role}
+                                        {roleConverter(role)}
                                     </Label>
                                 </div>
                             ))}
@@ -485,7 +486,7 @@ const UserForm: React.FC<UserFormProps> = ({
                                         }
                                     />
                                     <Label htmlFor={`dept-${dept}`} className="text-sm">
-                                        {DepartmentList[dept]}
+                                        {departmentConverter(DepartmentList[dept] as Department)}
                                     </Label>
                                 </div>
                             ))}
@@ -511,7 +512,7 @@ const UserForm: React.FC<UserFormProps> = ({
                                         }
                                     />
                                     <Label htmlFor={`perm-${permission}`} className="text-sm">
-                                        {PermissionList[permission]}
+                                        {permissionConverter(PermissionList[permission] as Permission)}
                                     </Label>
                                 </div>
                             ))}

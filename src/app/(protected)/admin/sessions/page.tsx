@@ -8,6 +8,7 @@ import {Column, RecordType} from "@/types/ui/table";
 import LoadingComp from "@/components/ui/loading-comp";
 import DynamicTable from "@/components/ui/dynamic-table";
 import {useExamSession} from "@/hooks/exam/use-exam-session";
+import {formatDate} from "@/utils/date-formater";
 
 
 export default function AdminPage() {
@@ -39,7 +40,7 @@ export default function AdminPage() {
         ,
         {
             key: 'description',
-            header: 'description',
+            header: 'Açıklama',
             render: (value, record) => (
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
@@ -51,7 +52,7 @@ export default function AdminPage() {
         },
         {
             key: 'quota',
-            header: 'quota',
+            header: 'KOTA',
             render: (value, record) => (
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
@@ -64,7 +65,7 @@ export default function AdminPage() {
         ,
         {
             key: 'examTemplate',
-            header: 'examTemplate',
+            header: 'Sınav Tipi',
             render: (value, record) => (
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
@@ -77,29 +78,17 @@ export default function AdminPage() {
         ,
         {
             key: 'startDate',
-            header: 'startDate',
+            header: 'Başlama',
             render: (value, record) => (
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => router.push(`/admin/sessions/${record.id}`)}
                 >
-                    {value as string}
+                    {formatDate(value as string, 'dateTime') }
                 </div>
             )
         }
-        ,
-        {
-            key: 'startDate',
-            header: 'Katılımcı Sayısı',
-            render: (value, record) => (
-                <div
-                    className="font-medium cursor-pointer hover:text-blue-600"
-                    onClick={() => router.push(`/admin/sessions/${record.id}`)}
-                >
-                    {value as string}
-                </div>
-            )
-        }
+
     ];
 
     const handleAdd = () => {

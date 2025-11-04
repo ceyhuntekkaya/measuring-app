@@ -63,50 +63,13 @@ export default function QuestionGroupPage() {
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => router.push(`/admin/question-group/${record.id}`)}
                 >
-                    {(record as QuestionGroupDto).examType?.name}
+                    {(record as QuestionGroupDto).examType?.name}<br/>
+                    {(record as QuestionGroupDto).examSection?.name}  <br/>{(record as QuestionGroupDto).questionGroupType?.name}
                 </div>
             )
         }
         ,
-        {
-            key: 'Bölüm',
-            header: 'Bölüm',
-            render: (value, record) => (
-                <div
-                    className="font-medium cursor-pointer hover:text-blue-600"
-                    onClick={() => router.push(`/admin/question-group/${record.id}`)}
-                >
-                    {(record as QuestionGroupDto).examSection?.name}
-                </div>
-            )
-        },
-        {
-            key: 'Grup',
-            header: 'Grup',
-            render: (value, record) => (
-                <div
-                    className="font-medium cursor-pointer hover:text-blue-600"
-                    onClick={() => router.push(`/admin/question-group/${record.id}`)}
-                >
-                    {(record as QuestionGroupDto).questionGroupType?.name}
-                </div>
-            )
-        },
 
-
-
-        {
-            key: 'approvalCompletedDate',
-            header: 'ONAY DURUMU',
-            render: (value, record) => (
-                <div
-                    className="font-medium cursor-pointer hover:text-blue-600"
-                    onClick={() => router.push(`/admin/question-group/${record.id}`)}
-                >
-                    {(record as QuestionGroupDto).status}
-                </div>
-            )
-        },
 
 
 

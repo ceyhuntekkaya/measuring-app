@@ -6,7 +6,7 @@ import logo from '@/assets/eyadis.png';
 import Image from "next/image";
 
 export default function ExamLoginPage() {
-    const [username, setUsername] = useState(''); ///APP-1761588564715-033e0c57
+    const [username, setUsername] = useState('APP-1761588564715-033e0c57'); ///APP-1761588564715-033e0c57
     const [error, setError] = useState('');
     const [isLoggingIn, setIsLoggingIn] = useState(false);
     const { examLogin, isAuthenticated, getPathByRole } = useAuthContext();

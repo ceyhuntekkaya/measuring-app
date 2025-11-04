@@ -7,8 +7,6 @@ import {
     PenLine,
     Computer,
     SignatureIcon,
-    Hotel,
-    HousePlugIcon,
     Type,
     Users,
     GaugeCircle,
@@ -77,6 +75,12 @@ export const adminRoutes: RouteConfig = {
                     path: '/admin/sessions',
                     icon: Computer,
                     requiredRoles: ['ADMIN'],
+                },
+                {
+                    title: 'Sertifikalar',
+                    path: '/admin/certificates',
+                    icon: Computer,
+                    requiredRoles: ['ADMIN'],
                 }
 
             ]
@@ -119,6 +123,7 @@ export const adminRoutes: RouteConfig = {
             icon: Settings,
             requiredRoles: ['ADMIN'],
             children:[
+                /*
                 {
                     title: 'Onay Ayarları',
                     path: '/admin/settings/approval',
@@ -137,6 +142,8 @@ export const adminRoutes: RouteConfig = {
                     icon: HousePlugIcon,
                     requiredRoles: ['ADMIN'],
                 },
+
+                 */
                 {
                     title: 'Kullanıcılar',
                     path: '/admin/users',
