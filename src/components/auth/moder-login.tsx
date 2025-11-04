@@ -6,8 +6,8 @@ import logo from '@/assets/eyadis.png';
 import Image from "next/image";
 
 export default function CorporateLoginPage() {
-    const [username, setUsername] = useState('admin@genixo.ai');
-    const [password, setPassword] = useState('admin@genixo.ai');
+    const [username, setUsername] = useState(''); //admin@genixo.ai
+    const [password, setPassword] = useState(''); //admin@genixo.ai
     const [error, setError] = useState('');
     const [isLoggingIn, setIsLoggingIn] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);

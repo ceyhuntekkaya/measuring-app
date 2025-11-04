@@ -110,6 +110,11 @@ export interface MoveBranchRequest {
     targetBrandId: string;
 }
 
+export interface QuestionId {
+    questionId: string;
+}
+
+
 // types/application/applicationTypes.ts
 export type ApplicationDto = DatabaseObjectDto & {
 

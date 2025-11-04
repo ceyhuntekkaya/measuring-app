@@ -1,9 +1,9 @@
 import React, {useState} from "react";
-import {CandidateDto} from "@/types/management/brand";
+import {ApplicationDto} from "@/types/management/brand";
 
 
 export const ChatWindow = ({ participant, onClose }: {
-    participant: CandidateDto;
+    participant: ApplicationDto;
     onClose: () => void;
 }) => {
     const [message, setMessage] = useState('');
@@ -25,7 +25,7 @@ export const ChatWindow = ({ participant, onClose }: {
                             <img src={participant.photo.toString()} alt={participant.name} className="w-full h-full object-cover" />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center text-blue-500 text-sm font-semibold">
-                                {participant.name.charAt(0)}
+                                {participant.candidateName ? participant.candidateName.charAt(0) : 'X'}
                             </div>
                         )}
                     </div>

@@ -12,7 +12,7 @@ import {
 } from '@/types/management/brand';
 import { showNotification } from '@/lib/notification';
 import {applicationService} from "@/services/api/management/appication-service";
-import {UpdateApplicationState} from "@/types/exam/examEntities";
+import {EvaluationDto, UpdateApplicationState} from "@/types/exam/examEntities";
 
 interface UseApplicationReturn {
     applications: ApplicationDto[] | null;
@@ -43,6 +43,8 @@ interface UseApplicationReturn {
     createApplicationsForCandidates: (examSessionId: string, examId: string, candidateIds: string[], namePrefix?: string, codePrefix?: string) => Promise<void>;
     clearApplicationData: () => void;
     updateApplicationState: (applicationId: string, updateApplicationState: UpdateApplicationState) => Promise<void>;
+    getApplicationEvaluationsBySession: (sessionId: string) => Promise<void>;
+    sessionEvaluations: EvaluationDto[] | null;
 }
 
 export const useApplication = (): UseApplicationReturn => {
@@ -55,6 +57,10 @@ export const useApplication = (): UseApplicationReturn => {
     const [examSessionApplicationsSummary, setExamSessionApplicationsSummary] = useState<ExamSessionApplicationsSummary | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
+
+    const [sessionEvaluations, setSessionEvaluations] = useState<EvaluationDto[] | null>(null);
+
+
 
     const createApplication = useCallback(async (createRequest: ApplicationFormData) => {
         try {
@@ -407,6 +413,32 @@ export const useApplication = (): UseApplicationReturn => {
         }
     }, []);
 
+
+
+
+
+
+
+
+
+    const getApplicationEvaluationsBySession = useCallback(async (sessionId: string) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await applicationService.getApplicationEvaluationsBySession(sessionId);
+            if (response.data && response.success) {
+                setSessionEvaluations(response.data);
+            } else {
+                throw new Error(response.message);
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err : new Error('An error occurred'));
+            showNotification.error('Başvuru alınırken bir hata oluştu!');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
     const clearApplicationData = useCallback(() => {
         setApplications(null);
         setSelectedApplication(null);
@@ -446,6 +478,8 @@ export const useApplication = (): UseApplicationReturn => {
         quickCreateApplication,
         createApplicationsForCandidates,
         clearApplicationData,
-        updateApplicationState
+        updateApplicationState,
+        getApplicationEvaluationsBySession,
+        sessionEvaluations
     };
 };

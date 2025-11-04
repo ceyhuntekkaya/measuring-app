@@ -11,7 +11,7 @@ import {
     ApplicationSearchParams
 } from "@/types/management/brand";
 import {EStatus} from "@/types/exam/enum";
-import {UpdateApplicationState} from "@/types/exam/examEntities";
+import {EvaluationDto, UpdateApplicationState} from "@/types/exam/examEntities";
 
 class ApplicationService {
     private readonly baseUrl = '/applications';
@@ -151,6 +151,14 @@ class ApplicationService {
         return response.data;
 
     }
+
+    async getApplicationEvaluationsBySession(sessionId: string): Promise<ApiResponse<EvaluationDto[]>> {
+        const response = await api.get<ApiResponse<EvaluationDto[]>>(`${this.baseUrl}/session/evaluation/${sessionId}`);
+        return response.data;
+    }
+
+
+
 }
 
 export const applicationService = new ApplicationService();

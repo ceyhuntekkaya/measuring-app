@@ -17,7 +17,7 @@ import {
     ExamValidationResult,
     ExamExportRequest,
     ExamImportRequest,
-    ExamImportResult, QuestionAnswerRequest
+    ExamImportResult, QuestionAnswerRequest, EvaluationDto
 } from "@/types/exam/examEntities";
 
 class ExamService {
@@ -290,6 +290,12 @@ class ExamService {
 
     async saveAnswer(createRequest: QuestionAnswerRequest) {
         const response = await api.post<ApiResponse<string>>(`/question/result/record/`, createRequest);
+        return response.data;
+
+    }
+
+    async saveEvaluation(id:string, evaluation: EvaluationDto) {
+        const response = await api.post<ApiResponse<string>>(`/question/result/record/${id}`, evaluation);
         return response.data;
 
     }

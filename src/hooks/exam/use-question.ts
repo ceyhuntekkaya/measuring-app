@@ -9,9 +9,11 @@ import {QuestionDto, QuestionSearchRequest} from "@/types/exam/examEntities";
 import {CreateQuestionRequest} from "@/types/exam/examRequests";
 import {EQuestionType} from "@/types/exam/enum";
 import {questionService} from "@/services/api/exam/question-service";
+import {QuestionId} from "@/types/management/brand";
 
 interface UseQuestionReturn {
     questions: QuestionDto[];
+    sessionQuestions: QuestionDto[];
     selectedQuestion: QuestionDto | null;
     questionsByGroup: QuestionDto[];
     questionsByTemplate: QuestionDto[];
@@ -36,10 +38,13 @@ interface UseQuestionReturn {
     validateQuestion: (id: string) => Promise<void>;
     duplicateQuestion: (questionId: string, newName?: string) => Promise<void>;
     clearQuestionData: () => void;
+    getAllQuestionByIdList: (idList: QuestionId[]) => void;
 }
 
 export const useQuestion = (): UseQuestionReturn => {
     const [questions, setQuestions] = useState<QuestionDto[]>([]);
+    const [sessionQuestions, setSessionQuestionss] = useState<QuestionDto[]>([]);
+
     const [selectedQuestion, setSelectedQuestion] = useState<QuestionDto | null>(null);
     const [questionsByGroup, setQuestionsByGroup] = useState<QuestionDto[]>([]);
     const [questionsByTemplate, setQuestionsByTemplate] = useState<QuestionDto[]>([]);
@@ -308,6 +313,30 @@ export const useQuestion = (): UseQuestionReturn => {
         }
     }, []);
 
+    const getAllQuestionByIdList = useCallback(async (idList: QuestionId[]) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await questionService.getAllQuestionByIdList(idList);
+            if (response.data && response.success) {
+                setSessionQuestionss(response.data);
+            } else {
+                throw new Error(response.message);
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err : new Error('An error occurred'));
+            showNotification.error('Veri çekilirken bir hata oluştu!');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+
+
+
+
+
+
     const clearQuestionData = useCallback(() => {
         setQuestions([]);
         setSelectedQuestion(null);
@@ -345,6 +374,8 @@ export const useQuestion = (): UseQuestionReturn => {
         getGroupQuestionStatistics,
         validateQuestion,
         duplicateQuestion,
-        clearQuestionData
+        clearQuestionData,
+        sessionQuestions,
+        getAllQuestionByIdList
     };
 };

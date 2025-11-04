@@ -1,0 +1,25 @@
+'use client';
+
+// LEARNER component
+import { useWebSocket } from '@/contexts/WebSocketContext';
+
+function LearnerChat() {
+    const { chatMessages, sendChat, status } = useWebSocket();
+
+    // ...
+}
+
+// ADMIN component
+import { useAdminWebSocket } from '@/components/websocket/AdminWebSocketProvider';
+
+function AdminProctoring() {
+    const { infoMessages, sendCommand, status } = useAdminWebSocket();
+
+    // ...
+}
+
+
+
+Hepsini yapalım ama ben kullanacağım komponenti vereyim sana. Onlar üzerinden yapalım. Sistem zaten çalışan bir sistem. Sayfalar var. İçlerine entegre edeceğiz.
+
+Learner chat ile başlayalım.

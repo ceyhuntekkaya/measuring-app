@@ -16,6 +16,8 @@ import {useExamSession} from "@/hooks/exam/use-exam-session";
 import {EStatus} from "@/types/exam/enum";
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {Label} from "@/components/ui/label";
+import siteConfig from '@/config/config.json';
+
 
 export default function CandidatePage() {
     const router = useRouter();
@@ -24,6 +26,9 @@ export default function CandidatePage() {
     const [filteredCandidates, setFilteredCandidates] = useState<CandidateDto[]>([]);
     const [showExamModal, setShowExamModal] = useState(false);
     const [filteredExams, setFilteredExams] = useState<ExamDto[]>([]);
+
+    const LINK_URL = siteConfig.api.linkUrl;
+
 
     const {
         getAllCandidates,
@@ -241,13 +246,18 @@ export default function CandidatePage() {
         },
         {
             key: 'application',
-            header: 'Uygulama Adı',
+            header: 'Uygulama Kod',
             render: (value, record) => (
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => router.push(`/admin/candidates/${record.id}`)}
                 >
-                    {(record as CandidateDto).application?.name || 'Atanmamış'}
+                    {
+                        (record as CandidateDto).application?.code ?
+                        `${LINK_URL}${(record as CandidateDto).application?.code}`
+                        : 'Atanmamış'
+
+                    }
                 </div>
             )
         }
