@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import {
     QuestionAnswerRequest,
     QuestionGroupDto,
@@ -35,6 +35,179 @@ import {useExamApplicationContext} from "@/contexts/ExamApplicationContext";
 import {useExamResult} from "@/hooks/exam/use-exam-result";
 import siteConfig from "@/config/config.json";
 const API_URL = siteConfig.api.invokeUrl + "/upload/serve";
+
+interface AudioPlayerWithProgressProps {
+    material: QuestionGroupHeaderDto;
+}
+
+const AudioPlayerWithProgress: React.FC<AudioPlayerWithProgressProps> = ({ material }) => {
+    const [progress, setProgress] = useState(0);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [playCount, setPlayCount] = useState(0);
+    const [showProgress, setShowProgress] = useState(true);
+    const [audioReady, setAudioReady] = useState(false);
+    const [isDisabled, setIsDisabled] = useState(false);
+    const audioRef = useRef<HTMLAudioElement>(null);
+    const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+    const MAX_PLAYS = 3;
+    const PROGRESS_DURATION = 10; // 10 saniye
+
+    // İlk progress bar (10 saniye)
+    useEffect(() => {
+        if (!audioReady && !isDisabled) {
+            setProgress(0);
+            setShowProgress(true);
+            
+            progressIntervalRef.current = setInterval(() => {
+                setProgress(prev => {
+                    if (prev >= 100) {
+                        if (progressIntervalRef.current) {
+                            clearInterval(progressIntervalRef.current);
+                        }
+                        setShowProgress(false);
+                        setAudioReady(true);
+                        return 100;
+                    }
+                    return prev + (100 / PROGRESS_DURATION);
+                });
+            }, 1000);
+        }
+
+        return () => {
+            if (progressIntervalRef.current) {
+                clearInterval(progressIntervalRef.current);
+            }
+        };
+    }, [audioReady, isDisabled]);
+
+    // Audio hazır olduğunda otomatik başlat
+    useEffect(() => {
+        if (audioReady && audioRef.current && playCount < MAX_PLAYS && !isDisabled) {
+            audioRef.current.play().catch((err: Error) => {
+                console.error('Audio play error:', err);
+            });
+            setIsPlaying(true);
+        }
+    }, [audioReady, playCount, isDisabled]);
+
+    // Audio bittiğinde progress bar göster ve tekrar başlat
+    const handleAudioEnded = () => {
+        setIsPlaying(false);
+        const newPlayCount = playCount + 1;
+        setPlayCount(newPlayCount);
+
+        if (newPlayCount >= MAX_PLAYS) {
+            setIsDisabled(true);
+            setShowProgress(false);
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current.currentTime = 0;
+            }
+            return;
+        }
+
+        // 10 saniye progress bar göster
+        setShowProgress(true);
+        setProgress(0);
+        setAudioReady(false);
+
+        progressIntervalRef.current = setInterval(() => {
+            setProgress(prev => {
+                if (prev >= 100) {
+                    if (progressIntervalRef.current) {
+                        clearInterval(progressIntervalRef.current);
+                    }
+                    setShowProgress(false);
+                    setAudioReady(true);
+                    return 100;
+                }
+                return prev + (100 / PROGRESS_DURATION);
+            });
+        }, 1000);
+    };
+
+    return (
+        <div className="mb-4">
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-4 mb-4">
+                    <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center shadow-md">
+                        <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z" />
+                        </svg>
+                    </div>
+                    <div className="flex-1">
+                        <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                            Ses Dosyası
+                        </h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {isDisabled 
+                                ? `Ses ${MAX_PLAYS} kez dinlendi. Artık dinlenemez.`
+                                : isPlaying 
+                                    ? `Dinleniyor... (${playCount + 1}/${MAX_PLAYS})`
+                                    : showProgress 
+                                        ? 'Hazırlanıyor...'
+                                        : 'Dinleniyor...'}
+                        </p>
+                    </div>
+                </div>
+
+                {/* Progress Bar */}
+                {showProgress && (
+                    <div className="mb-4">
+                        <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                            <div
+                                className="h-full bg-blue-600 transition-all duration-300 ease-linear"
+                                style={{ width: `${progress}%` }}
+                            />
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2 text-center">
+                            {Math.round(progress)}% - Hazırlanıyor...
+                        </p>
+                    </div>
+                )}
+
+                {/* Audio Player - Controls yok, sadece dinleme */}
+                <audio
+                    ref={audioRef}
+                    className="w-full h-10 outline-none"
+                    src={`${API_URL}/${material.content}`}
+                    onEnded={handleAudioEnded}
+                    onPlay={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
+                    style={{
+                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
+                        pointerEvents: isDisabled ? 'none' : 'auto'
+                    }}
+                    controls={false}
+                >
+                    Your browser does not support the audio file.
+                </audio>
+
+                {/* Dinleme durumu gösterimi */}
+                {!showProgress && !isDisabled && (
+                    <div className="mt-4 text-center">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 rounded-full">
+                            <div className={`w-3 h-3 rounded-full ${isPlaying ? 'bg-red-500 animate-pulse' : 'bg-gray-400'}`}></div>
+                            <span className="text-sm text-blue-700 font-medium">
+                                {isPlaying ? 'Dinleniyor...' : 'Bekleniyor...'}
+                            </span>
+                        </div>
+                    </div>
+                )}
+
+                {/* 3 kez dinlendikten sonra mesaj */}
+                {isDisabled && (
+                    <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-center">
+                        <p className="text-sm text-yellow-800 font-medium">
+                            ⚠️ Ses dosyası {MAX_PLAYS} kez dinlendi. Artık dinlenemez.
+                        </p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
 
 interface ExamApplicationScreenProps {
     questionGroups: QuestionGroupDto[];
@@ -219,51 +392,7 @@ export default function ExamApplicationScreen({
                 );
 
             case "AUDIO":
-                return (
-                    <div className="mb-4">
-                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-                            <div className="flex items-center gap-4 mb-4">
-                                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center shadow-md">
-                                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z" />
-                                    </svg>
-                                </div>
-                                <div className="flex-1">
-                                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                                        Ses Dosyası
-                                    </h4>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                                        Dinlemek için lütfen oynatma tuşuna basınız.
-                                    </p>
-                                </div>
-                            </div>
-
-                            {
-                                /*
-                                 <AudioPlayer
-                                autoPlay
-                                src="http://example.com/audio.mp3"
-                                onPlay={e => console.log("onPlay")}
-                                // other props here
-                            />
-                                 */
-                            }
-
-
-
-                            <audio
-                                className="w-full h-10 outline-none"
-                                controls
-                                src={ `${API_URL}/${material.content}`}
-                                style={{
-                                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
-                                }}
-                            >
-                                Your browser does not support the audio file.
-                            </audio>
-                        </div>
-                    </div>
-                );
+                return <AudioPlayerWithProgress material={material} />;
 
             case "PDF":
                 return (
