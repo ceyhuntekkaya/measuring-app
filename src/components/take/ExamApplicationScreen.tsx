@@ -388,7 +388,7 @@ export default function ExamApplicationScreen({
                             {
                                 questionsByGroup && questionsByGroup.map((question, key) => (
                                     <div key={key} className="p-4 border-b">
-                                        <h3 className="flex items-center gap-2">SORU: {key + 1} - {question.questionType} </h3>
+                                        <h3 className="flex items-center gap-2">SORU: {key + 1} </h3>
                                         {
                                             question.questionType && question.questionTemplate &&
                                             renderTemplateSpecificForm(question.id, question.questionType, question.questionTemplate)

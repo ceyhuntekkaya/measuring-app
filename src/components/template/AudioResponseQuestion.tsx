@@ -204,7 +204,25 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
 
             mediaRecorder.onstop = async () => {
                 const blob = new Blob(recordedChunksRef.current, { type: 'audio/webm' });
-                const finalDuration = recordingTime;
+                
+                // Gerçek ses dosyasının süresini al
+                const getActualDuration = (): Promise<number> => {
+                    return new Promise((resolve) => {
+                        const url = URL.createObjectURL(blob);
+                        const audio = new Audio(url);
+                        audio.addEventListener('loadedmetadata', () => {
+                            const actualDuration = Math.round(audio.duration);
+                            URL.revokeObjectURL(url);
+                            resolve(actualDuration || recordingTime); // Fallback olarak recordingTime kullan
+                        });
+                        audio.addEventListener('error', () => {
+                            URL.revokeObjectURL(url);
+                            resolve(recordingTime); // Hata durumunda recordingTime kullan
+                        });
+                    });
+                };
+
+                const finalDuration = await getActualDuration();
 
                 try {
                     // Upload audio and get the result
@@ -418,8 +436,10 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
     return (
         <div className="space-y-6">
             {template.title && template.title !== "NOT_SET" && (
-                <div className="mb-4">
-                    <h3 className="text-lg font-semibold text-gray-800">{template.title}</h3>
+                <div className="mb-4">{
+                    //  <h3 className="text-lg font-semibold text-gray-800">{template.title}</h3>
+                }
+                   
                     {template.description && (
                         <p className="text-gray-600 mt-1">{template.description}</p>
                     )}
