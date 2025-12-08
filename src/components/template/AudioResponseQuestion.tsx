@@ -229,12 +229,15 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                     const newAudioData = await handleUploadAudio(blob, finalDuration);
                     setAudioAnswer(newAudioData);
 
-                    // Call onAnswerChange if upload was successful
+                    // Upload başarılı olduğunda otomatik olarak kaydet
                     if (onAnswerChange && newAudioData.uploadedFileData) {
+                        const filePath = newAudioData.uploadedFileData.path || '';
+                        setAudioAnswerPath(filePath);
+                        // Otomatik kaydetme işlemi
                         onAnswerChange(
                             questionId,
                             template,
-                            newAudioData.uploadedFileData.path  || '',
+                            filePath,
                             EQuestionType.AUDIO_RESPONSE,
                             EMediaType.AUDIO,
                             false

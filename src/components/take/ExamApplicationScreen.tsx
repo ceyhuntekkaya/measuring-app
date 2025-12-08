@@ -363,7 +363,7 @@ export default function ExamApplicationScreen({
                     onClick={handleExitClick}
                     className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                 >
-                    Sınavdan Çık
+                    Bölüm Listesine Dön.
                 </button>
             </header>
 
@@ -373,9 +373,11 @@ export default function ExamApplicationScreen({
                 <main className="flex-1 overflow-y-auto p-3">
                     <div className="mx-auto">
                         <div className="bg-white rounded-lg shadow-sm p-5 min-h-[500px]">
-                            {/* Buraya soru içeriği gelecek */}
+                            {/* Buraya soru içeriği gelecek
+                             <h3 className="flex items-center gap-2">SORU GRUP: {currentGroupIndex + 1}</h3>
+                              */}
 
-                            <h3 className="flex items-center gap-2">SORU GRUP: {currentGroupIndex + 1}</h3>
+                            {/* <h3 className="flex items-center gap-2">SORU GRUP: {currentGroupIndex + 1}</h3> */}
                             {
                                 questionsByGroup && selectedQuestionGroup?.headers?.map((header, key) => (
                                     <div key={key}>{renderContent(header)}</div>
@@ -439,10 +441,10 @@ export default function ExamApplicationScreen({
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
                         <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                            Sınavdan Çıkmak İstediğinize Emin Misiniz?
+                            Bölümden Çıkmak İstediğinize Emin Misiniz?
                         </h2>
                         <p className="text-gray-600 mb-6">
-                            Sınavdan çıkarsanız, yanıtlarınız kaydedilecektir ancak geri dönemezsiniz.
+                            Bölümden çıkarsanız, yanıtlarınız kaydedilecektir ancak geri dönemezsiniz.
                         </p>
                         <div className="flex gap-3 justify-end">
                             <button
