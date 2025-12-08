@@ -221,13 +221,15 @@ export default function ExamApplicationScreen({
     const [currentGroupIndex, setCurrentGroupIndex] = useState(0);
     const [completedGroups, setCompletedGroups] = useState<Set<number>>(new Set());
     const [showExitModal, setShowExitModal] = useState(false);
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+    const [answeredQuestions, setAnsweredQuestions] = useState<Set<string>>(new Set());
     const {application, evaluations} = useExamApplicationContext();
     const {saveAnswer} = useExamResult();
 
 
 
     console.log("ceyhun",setCompletedGroups)
-
+    console.log("ceyhun",evaluations)
 
     const totalGroups = questionGroups.length;
     const progressPercentage = (completedGroups.size / totalGroups) * 100;
@@ -270,7 +272,10 @@ export default function ExamApplicationScreen({
     useEffect(() => {
         if (questionGroups && questionGroups.length > 0) {
             getQuestionGroupById(questionGroups[currentGroupIndex].id);
-            getQuestionsByGroup(questionGroups[currentGroupIndex].id)
+            getQuestionsByGroup(questionGroups[currentGroupIndex].id);
+            // Yeni grup seçildiğinde soru index'ini sıfırla
+            setCurrentQuestionIndex(0);
+            setAnsweredQuestions(new Set());
         }
     }, [currentGroupIndex]);
 
@@ -279,10 +284,24 @@ export default function ExamApplicationScreen({
         // alert(questionGroups.length)
         if (questionGroups && questionGroups.length > 0) {
             getQuestionGroupById(questionGroups[0].id);
-            getQuestionsByGroup(questionGroups[0].id)
+            getQuestionsByGroup(questionGroups[0].id);
+            setCurrentQuestionIndex(0);
+            setAnsweredQuestions(new Set());
         }
     }, []);
 
+    // questionsByGroup değiştiğinde index'i sıfırla
+    useEffect(() => {
+        setCurrentQuestionIndex(0);
+        setAnsweredQuestions(new Set());
+    }, [questionsByGroup?.length]);
+
+
+    // Section adında KARŞILIKLI KONUŞMA geçiyor mu kontrol et
+    const isConversationSection = (): boolean => {
+        const sectionName = selectedQuestionGroup?.examSection?.name?.toUpperCase() || '';
+        return sectionName.includes('KARŞILIKLI') && sectionName.includes('KONUŞMA');
+    };
 
     const onAnswerChange = (questionId: string, template: QuestionTemplateType, selectedOption: string, type: EQuestionType, mediaType: EMediaType, isEmptyAnswer: boolean) => {
 
@@ -297,6 +316,17 @@ export default function ExamApplicationScreen({
             isEmptyAnswer,
         }
       saveAnswer(answerData);
+
+      // KARŞILIKLI KONUŞMA section'ında ve soru cevaplandıysa (boş değilse) bir sonraki soruya geç
+      if (isConversationSection() && !isEmptyAnswer && !answeredQuestions.has(questionId)) {
+          setAnsweredQuestions(prev => new Set([...prev, questionId]));
+          // Bir sonraki soruya geç
+          if (questionsByGroup && currentQuestionIndex < questionsByGroup.length - 1) {
+              setTimeout(() => {
+                  setCurrentQuestionIndex(prev => prev + 1);
+              }, 500); // Kısa bir gecikme ile geçiş yap
+          }
+      }
     };
 
     const renderTemplateSpecificForm = (questionId: string, type: EQuestionType, template: QuestionTemplateType) => {
@@ -307,7 +337,7 @@ export default function ExamApplicationScreen({
                 return <MultipleChoiceQuestion template={template as MultipleChoiceTemplateDto}
                                                onAnswerChange={onAnswerChange} questionId={questionId}/>;
             case 'AUDIO_RESPONSE':
-                return <AudioResponseQuestion template={template as AudioResponseTemplateDto} onAnswerChange={onAnswerChange} questionId={questionId}/>;
+                return <AudioResponseQuestion key={questionId} template={template as AudioResponseTemplateDto} onAnswerChange={onAnswerChange} questionId={questionId}/>;
             case 'TRUE_FALSE':
                 return <TrueFalseQuestion template={template as TrueFalseTemplateDto} onAnswerChange={onAnswerChange} questionId={questionId}/>;
             case 'FILL_IN_THE_BLANKS':
@@ -517,16 +547,50 @@ export default function ExamApplicationScreen({
 
 
                             {
-                                questionsByGroup && questionsByGroup.map((question, key) => (
-                                    <div key={key} className="p-4 border-b">
-                                        <h3 className="flex items-center gap-2">SORU: {key + 1} </h3>
-                                        {
-                                            question.questionType && question.questionTemplate &&
-                                            renderTemplateSpecificForm(question.id, question.questionType, question.questionTemplate)
-                                        }
-                                    </div>
+                                questionsByGroup && (isConversationSection() ? (
+                                    // KARŞILIKLI KONUŞMA: Tek tek soru göster
+                                    currentQuestionIndex < questionsByGroup.length ? (
+                                        <div className="p-4 border-b">
+                                            <h3 className="flex items-center gap-2">
+                                                SORU: {currentQuestionIndex + 1} / {questionsByGroup.length}
+                                            </h3>
+                                            {
+                                                questionsByGroup[currentQuestionIndex].questionType && 
+                                                questionsByGroup[currentQuestionIndex].questionTemplate &&
+                                                renderTemplateSpecificForm(
+                                                    questionsByGroup[currentQuestionIndex].id, 
+                                                    questionsByGroup[currentQuestionIndex].questionType!, 
+                                                    questionsByGroup[currentQuestionIndex].questionTemplate!
+                                                )
+                                            }
+                                        </div>
+                                    ) : (
+                                        <div className="p-4 border-b text-center">
+                                            <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+                                                <svg className="w-16 h-16 text-green-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <h3 className="text-xl font-semibold text-green-800 mb-2">
+                                                    Tüm Sorular Tamamlandı!
+                                                </h3>
+                                                <p className="text-green-600">
+                                                    Bu bölümdeki tüm soruları cevapladınız.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )
+                                ) : (
+                                    // Diğer section'lar: Tüm soruları alt alta göster
+                                    questionsByGroup.map((question, key) => (
+                                        <div key={key} className="p-4 border-b">
+                                            <h3 className="flex items-center gap-2">SORU: {key + 1} </h3>
+                                            {
+                                                question.questionType && question.questionTemplate &&
+                                                renderTemplateSpecificForm(question.id, question.questionType, question.questionTemplate)
+                                            }
+                                        </div>
+                                    ))
                                 ))
-                                //<MultipleChoiceQuestion template={}/>
                             }
                         </div>
                     </div>

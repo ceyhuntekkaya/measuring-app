@@ -56,7 +56,7 @@ export class WebSocketService {
 
             debug: (str) => {
                 if (this.config.debug) {
-                    console.log('[STOMP]', str);
+                    //console.log('[STOMP]', str);
                 }
             },
 
