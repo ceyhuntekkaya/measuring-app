@@ -16,8 +16,22 @@ export default function ExamLoginPage() {
     const params = useParams();
     const examId = params.id as string;
 
-    const redirectTo = searchParams?.get('redirectTo') || '';
 
+    console.log(examId)
+    console.log("ceyhun Tekkaya")
+    console.log("ceyhun Tekkaya")
+    console.log("ceyhun Tekkaya")
+    console.log("ceyhun Tekkaya")
+    console.log("ceyhun Tekkaya")
+    console.log("ceyhun Tekkaya")
+
+    const redirectTo = searchParams?.get('redirectTo') || '';
+    console.log("ceyhun Tekkaya")
+    console.log("ceyhun Tekkaya")
+    console.log("ceyhun Tekkaya")
+    console.log("ceyhun Tekkaya")
+    console.log("ceyhun Tekkaya")
+    console.log("ceyhun Tekkaya")
 
 
 
@@ -25,6 +39,13 @@ export default function ExamLoginPage() {
     const loginHandler = async (usernameData:string)=>{
         setError('');
         setIsLoggingIn(true);
+
+        console.log("ceyhun Tekkaya")
+        console.log("ceyhun Tekkaya")
+        console.log("ceyhun Tekkaya")
+        console.log("ceyhun Tekkaya")
+        console.log("ceyhun Tekkaya")
+        console.log("ceyhun Tekkaya")
 
         try {
             const success = await examLogin(usernameData);

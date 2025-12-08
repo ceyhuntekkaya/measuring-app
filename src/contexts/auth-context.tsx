@@ -64,6 +64,7 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
 
                         currentPath !== '/about' &&
                         currentPath !== '/exam' &&
+                        !currentPath.startsWith('/exam') &&
 
                         currentPath !== '/' &&
                         !currentPath.startsWith('/_next') &&

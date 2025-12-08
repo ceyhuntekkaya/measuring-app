@@ -14,13 +14,14 @@ export default function UserDashboard() {
     const {examSession, application, updateApplicationStateStatus} = useExamApplicationContext();
     const router = useRouter();
 
-
     useEffect(() => {
         if (application && application.notificationRead) {
             router.push('/learner/check');
         }
     }, [application, router]);
 
+
+    console.log(examSession?.startDate)
 
     // Bugünün tarihini kontrol et (saat bilgisi olmadan sadece gün)
     const isToday = (date: Date | undefined) => {
@@ -76,21 +77,13 @@ export default function UserDashboard() {
                     <div
                         className="w-full bg-gradient-to-br m-2 from-blue-50 to-indigo-50 rounded-xl shadow-xl p-4 md:p-12 border border-blue-100">
                         <div className="text-center mb-3">
-                            <div
-                                className="inline-flex items-center justify-center w-20 h-20 bg-blue-600 rounded-full mb-6 shadow-lg">
-                                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor"
-                                     viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                </svg>
-                            </div>
-                            <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">e-YADİS TÜRKÇE</h1>
-                            <div className="w-24 h-1 bg-blue-600 mx-auto rounded-full"></div>
+                            <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">e-YADİS</h1>
+
                         </div>
 
                         <div className="bg-white rounded-lg p-6 md:p-8 shadow-md mb-6">
                             <p className="text-gray-700 leading-relaxed mb-4">
-                                Türkçeyi yabancı dil olarak öğrenen yetişkin bireylerin dil becerilerini Türkiye içinde
+                              Türkçeyi yabancı dil olarak öğrenen yetişkin bireylerin dil becerilerini Türkiye içinde
                                 veya dışında
                                 internet üzerinden bilgisayar tabanlı olarak ölçmek üzere <span
                                 className="font-semibold">Ankara Üniversitesi
