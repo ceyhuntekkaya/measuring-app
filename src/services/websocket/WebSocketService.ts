@@ -30,7 +30,7 @@ export class WebSocketService {
      */
     connect(token: string, username: string, role: 'ADMIN' | 'LEARNER', sessionId: string): void {
         if (this.client?.active) {
-            console.warn('WebSocket already connected');
+      //      console.warn('WebSocket already connected');
             return;
         }
 
@@ -56,25 +56,25 @@ export class WebSocketService {
 
             debug: (str) => {
                 if (this.config.debug) {
-                    //console.log('[STOMP]', str);
+                    console.log('[STOMP]', str);
                 }
             },
 
             onConnect: () => {
-                console.log('✅ WebSocket Connected');
+            //    console.log('✅ WebSocket Connected');
                 this.updateStatus(ConnectionStatus.CONNECTED);
                 this.setupSubscriptions();
             },
 
             onDisconnect: () => {
-                console.log('❌ WebSocket Disconnected');
+             //   console.log('❌ WebSocket Disconnected');
                 this.updateStatus(ConnectionStatus.DISCONNECTED);
                 this.clearSubscriptions();
             },
 
             onStompError: (frame) => {
-                console.error('⚠️ STOMP Error:', frame.headers['message']);
-                console.error('Details:', frame.body);
+             //   console.error('⚠️ STOMP Error:', frame.headers['message']);
+            //    console.error('Details:', frame.body);
                 this.updateError(frame.headers['message'] || 'STOMP error occurred');
                 this.updateStatus(ConnectionStatus.ERROR);
             },
@@ -86,12 +86,12 @@ export class WebSocketService {
             },
 
             onWebSocketClose: () => {
-                console.log('🔌 WebSocket Closed');
+             //   console.log('🔌 WebSocket Closed');
                 this.updateStatus(ConnectionStatus.RECONNECTING);
             },
         });
-        console.log(this.client.connectHeaders.Authorization)
-        console.log(this.client.connectHeaders.sessionId)
+      //  console.log(this.client.connectHeaders.Authorization)
+      //  console.log(this.client.connectHeaders.sessionId)
         this.client.activate();
     }
 
@@ -109,7 +109,7 @@ export class WebSocketService {
         }
 
         if (this.subscriptions.size > 0) {
-            console.log('⚠️ Subscriptions already exist, skipping...');
+        //    console.log('⚠️ Subscriptions already exist, skipping...');
             return;
         }
 
@@ -178,7 +178,7 @@ export class WebSocketService {
             );
         }
 
-        console.log(`📡 Subscriptions setup for ${this.currentRole}`);
+      //  console.log(`📡 Subscriptions setup for ${this.currentRole}`);
     }
 
     /**
@@ -189,7 +189,7 @@ export class WebSocketService {
 
         const subscription = this.client.subscribe(destination, callback);
         this.subscriptions.set(destination, subscription);
-        console.log(`✅ Subscribed to: ${destination}`);
+  console.log(`✅ Subscribed to: ${destination}`);
     }
 
     /**
@@ -198,9 +198,8 @@ export class WebSocketService {
     private handleMessage(message: IMessage): void {
         try {
 
-            console.log("CEYHUN MESAJ: SYSTE: ", message)
             const parsedMessage: WebSocketMessage = JSON.parse(message.body);
-            console.log('📨 Received message:', parsedMessage);
+           console.log('📨 Received message:', parsedMessage);
 
             // Notify all callbacks
             this.messageCallbacks.forEach(callback => callback(parsedMessage));
@@ -214,7 +213,7 @@ export class WebSocketService {
      */
     sendChat(message: string, targetId: string, senderName: string): void {
         if (!this.isConnected() || !this.currentSessionId) {
-            console.warn('Cannot send chat: not connected');
+        //    console.warn('Cannot send chat: not connected');
             return;
         }
 
@@ -232,12 +231,12 @@ export class WebSocketService {
      */
     sendCommand(payload: CommandPayload): void {
         if (!this.isConnected() || !this.currentSessionId) {
-            console.warn('Cannot send command: not connected');
+        //    console.warn('Cannot send command: not connected');
             return;
         }
 
         if (this.currentRole !== 'ADMIN') {
-            console.warn('Only ADMIN can send commands');
+        //    console.warn('Only ADMIN can send commands');
             return;
         }
 
@@ -249,7 +248,7 @@ export class WebSocketService {
      */
     sendInfo(payload: InfoPayload): void {
         if (!this.isConnected() || !this.currentSessionId) {
-            console.warn('Cannot send info: not connected');
+       //     console.warn('Cannot send info: not connected');
             return;
         }
 
@@ -261,7 +260,7 @@ export class WebSocketService {
      */
     private publish(destination: string, body: unknown): void {
         if (!this.client || !this.client.connected) {
-            console.error('Client not connected');
+         //   console.error('Client not connected');
             return;
         }
 
@@ -270,7 +269,7 @@ export class WebSocketService {
             body: JSON.stringify(body),
         });
 
-        console.log(`📤 Sent to ${destination}:`, body);
+    //    console.log(`📤 Sent to ${destination}:`, body);
     }
 
     /**
@@ -346,7 +345,7 @@ export class WebSocketService {
             this.currentUsername = null;
             this.currentRole = null;
             this.currentSessionId = null;
-            console.log('🔌 WebSocket disconnected');
+         //   console.log('🔌 WebSocket disconnected');
         }
     }
 

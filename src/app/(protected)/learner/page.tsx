@@ -21,8 +21,6 @@ export default function UserDashboard() {
     }, [application, router]);
 
 
-    console.log(examSession?.startDate)
-
     // Bugünün tarihini kontrol et (saat bilgisi olmadan sadece gün)
     const isToday = (date: Date | undefined) => {
         if (!date) return false;

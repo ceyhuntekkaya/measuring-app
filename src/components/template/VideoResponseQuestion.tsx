@@ -47,11 +47,12 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
     const recordedChunksRef = useRef<Blob[]>([]);
     const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-    console.log("ceyhun: ", showCorrectAnswer)
 
     useEffect(() => {
         setVideoAnswer(initialAnswer);
     }, [initialAnswer]);
+
+    console.log(showCorrectAnswer)
 
     // Cleanup ONLY on unmount - EMPTY dependency array!
     useEffect(() => {

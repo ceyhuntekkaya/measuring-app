@@ -500,7 +500,6 @@ export interface ExamImportError {
 }
 
 
-//ceyhun
 export interface QuestionAnswerRequest {
     applicationId: string;
     questionId: string;

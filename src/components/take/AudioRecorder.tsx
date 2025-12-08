@@ -26,6 +26,9 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({applicationId}) => {
     const timerRef = useRef<NodeJS.Timeout | null>(null);
     const audioBlobRef = useRef<Blob | null>(null);
 
+
+    console.log(isPaused)
+
     const startRecording = async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({audio: true});
@@ -76,6 +79,8 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({applicationId}) => {
             }
         }
     };
+
+    console.log(stopRecording)
 
     const uploadAudio = async () => {
         if (!audioBlobRef.current) {

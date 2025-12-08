@@ -33,6 +33,7 @@ import VideoResponseQuestion from "@/components/template/VideoResponseQuestion";
 import ImageResponseQuestion from "@/components/template/ImageResponseQuestion";
 import {useExamApplicationContext} from "@/contexts/ExamApplicationContext";
 import {useExamResult} from "@/hooks/exam/use-exam-result";
+import {UploadedFileDto} from "@/types/exam/miscDtos";
 import siteConfig from "@/config/config.json";
 const API_URL = siteConfig.api.invokeUrl + "/upload/serve";
 
@@ -226,11 +227,7 @@ export default function ExamApplicationScreen({
     const {application, evaluations} = useExamApplicationContext();
     const {saveAnswer} = useExamResult();
 
-
-
-    console.log("ceyhun",setCompletedGroups)
-    console.log("ceyhun",evaluations)
-
+console.log(setCompletedGroups)
     const totalGroups = questionGroups.length;
     const progressPercentage = (completedGroups.size / totalGroups) * 100;
 
@@ -329,42 +326,147 @@ export default function ExamApplicationScreen({
       }
     };
 
-    const renderTemplateSpecificForm = (questionId: string, type: EQuestionType, template: QuestionTemplateType) => {
+    // Evaluation'dan initialAnswer'ı parse et
+    const getInitialAnswer = (questionId: string, type: EQuestionType): unknown => {
+        const evaluation = evaluations?.find(e => e.questionId === questionId);
+        if (!evaluation || !evaluation.answer || typeof evaluation.answer !== 'string') {
+            return null;
+        }
 
+        const answerString = evaluation.answer;
+
+        try {
+            // TRUE_FALSE için boolean'a çevir
+            if (type === 'TRUE_FALSE') {
+                if (answerString === 'true' || answerString === 'TRUE') return true;
+                if (answerString === 'false' || answerString === 'FALSE') return false;
+                return null;
+            }
+
+            // JSON string ise parse et
+            if (answerString.startsWith('{') || answerString.startsWith('[')) {
+                const parsed = JSON.parse(answerString);
+                // ESSAY için EssayAnswerData formatına çevir
+                if (type === 'ESSAY' && typeof parsed === 'string') {
+                    const text = parsed;
+                    return { 
+                        text: text,
+                        wordCount: text.trim().split(/\s+/).filter(word => word.length > 0).length,
+                        characterCount: text.replace(/\s/g, '').length
+                    };
+                }
+                return parsed;
+            }
+            // ESSAY için string'i EssayAnswerData formatına çevir
+            if (type === 'ESSAY') {
+                const text = answerString;
+                return { 
+                    text: text,
+                    wordCount: text.trim().split(/\s+/).filter(word => word.length > 0).length,
+                    characterCount: text.replace(/\s/g, '').length
+                };
+            }
+            // String ise direkt döndür
+            return answerString;
+        } catch (e) {
+            console.log('Parse error:', e);
+            // Parse edilemezse
+            if (type === 'ESSAY') {
+                const text = answerString;
+                return { 
+                    text: text,
+                    wordCount: text.trim().split(/\s+/).filter(word => word.length > 0).length,
+                    characterCount: text.replace(/\s/g, '').length
+                };
+            }
+            return answerString;
+        }
+    };
+
+    // Evaluation'dan cevabı string olarak al (gösterme için)
+    const getAnswerForDisplay = (questionId: string): string => {
+        const evaluation = evaluations?.find(e => e.questionId === questionId);
+        if (!evaluation || !evaluation.answer) {
+            return '';
+        }
+        return evaluation.answer;
+    };
+
+    const renderTemplateSpecificForm = (questionId: string, type: EQuestionType, template: QuestionTemplateType) => {
+        const initialAnswer = getInitialAnswer(questionId, type);
 
         switch (type) {
             case 'MULTIPLE_CHOICE':
                 return <MultipleChoiceQuestion template={template as MultipleChoiceTemplateDto}
-                                               onAnswerChange={onAnswerChange} questionId={questionId}/>;
+                                               onAnswerChange={onAnswerChange} 
+                                               questionId={questionId}
+                                               initialAnswer={initialAnswer as string | null}/>;
             case 'AUDIO_RESPONSE':
-                return <AudioResponseQuestion key={questionId} template={template as AudioResponseTemplateDto} onAnswerChange={onAnswerChange} questionId={questionId}/>;
+                return <AudioResponseQuestion key={questionId} 
+                                              template={template as AudioResponseTemplateDto} 
+                                              onAnswerChange={onAnswerChange} 
+                                              questionId={questionId}
+                                              initialAnswer={(initialAnswer as unknown) as { audioUrl?: string; audioBlob?: Blob; duration?: number; recordedAt?: string; fileName?: string; uploadedFileData?: UploadedFileDto } | null}/>;
             case 'TRUE_FALSE':
-                return <TrueFalseQuestion template={template as TrueFalseTemplateDto} onAnswerChange={onAnswerChange} questionId={questionId}/>;
+                return <TrueFalseQuestion template={template as TrueFalseTemplateDto} 
+                                          onAnswerChange={onAnswerChange} 
+                                          questionId={questionId}
+                                          initialAnswer={initialAnswer as boolean | null}/>;
             case 'FILL_IN_THE_BLANKS':
-                return <FillInTheBlanksQuestion template={template as FillInTheBlanksTemplateDto} onAnswerChange={onAnswerChange} questionId={questionId}/>;
+                return <FillInTheBlanksQuestion template={template as FillInTheBlanksTemplateDto} 
+                                                onAnswerChange={onAnswerChange} 
+                                                questionId={questionId}
+                                                initialAnswer={initialAnswer as { [blankId: string]: string } | undefined}/>;
             case 'SHORT_ANSWER':
-                return <ShortAnswerQuestion template={template as ShortAnswerTemplateDto} onAnswerChange={onAnswerChange} questionId={questionId}/>;
+                return <ShortAnswerQuestion template={template as ShortAnswerTemplateDto} 
+                                            onAnswerChange={onAnswerChange} 
+                                            questionId={questionId}
+                                            initialAnswer={initialAnswer as string || ''}/>;
             case 'ESSAY':
-                return <EssayQuestion template={template as EssayTemplateDto} onAnswerChange={onAnswerChange} questionId={questionId}/>;
+                return <EssayQuestion template={template as EssayTemplateDto} 
+                                      onAnswerChange={onAnswerChange} 
+                                      questionId={questionId}
+                                      initialAnswer={initialAnswer as { text: string; wordCount: number; characterCount: number } | null}/>;
             case 'VIDEO_RESPONSE':
-                return <VideoResponseQuestion template={template as VideoResponseTemplateDto} onAnswerChange={onAnswerChange} questionId={questionId}/>;
+                return <VideoResponseQuestion template={template as VideoResponseTemplateDto} 
+                                              onAnswerChange={onAnswerChange} 
+                                              questionId={questionId}
+                                              initialAnswer={(initialAnswer as unknown) as { videoUrl?: string; videoBlob?: Blob; duration?: number; recordedAt?: string; fileName?: string; uploadedFileData?: UploadedFileDto } | null}/>;
 
 
 
 
 
             case 'MATCHING':
-                return <MatchingQuestion template={template as MatchingTemplateDto} onAnswerChange={onAnswerChange} questionId={questionId}/>;
+                return <MatchingQuestion template={template as MatchingTemplateDto} 
+                                         onAnswerChange={onAnswerChange} 
+                                         questionId={questionId}
+                                         initialAnswer={initialAnswer as { [leftId: string]: string } | undefined}/>;
             case 'ORDERING':
-                return <OrderingQuestion template={template as OrderingTemplateDto} onAnswerChange={onAnswerChange} questionId={questionId}/>;
+                return <OrderingQuestion template={template as OrderingTemplateDto} 
+                                         onAnswerChange={onAnswerChange} 
+                                         questionId={questionId}
+                                         initialAnswer={initialAnswer as string[] | null | undefined}/>;
             case 'MULTIPLE_RESPONSE':
-                return <MultipleResponseQuestion template={template as MultipleResponseTemplateDto} onAnswerChange={onAnswerChange} questionId={questionId}/>;
+                return <MultipleResponseQuestion template={template as MultipleResponseTemplateDto} 
+                                                onAnswerChange={onAnswerChange} 
+                                                questionId={questionId}
+                                                initialAnswer={initialAnswer as string[]}/>;
             case 'HOT_SPOT':
-                return <HotSpotQuestion template={template as HotSpotTemplateDto} onAnswerChange={onAnswerChange} questionId={questionId}/>;
+                return <HotSpotQuestion template={template as HotSpotTemplateDto} 
+                                       onAnswerChange={onAnswerChange} 
+                                       questionId={questionId}
+                                       initialAnswer={initialAnswer as string[]}/>;
             case 'DRAG_AND_DROP':
-                return <DragAndDropQuestion template={template as DragAndDropTemplateDto} onAnswerChange={onAnswerChange} questionId={questionId}/>;
+                return <DragAndDropQuestion template={template as DragAndDropTemplateDto} 
+                                            onAnswerChange={onAnswerChange} 
+                                            questionId={questionId}
+                                            initialAnswer={initialAnswer as { [zoneId: string]: string[] } | undefined}/>;
             case 'IMAGE_RESPONSE':
-                return <ImageResponseQuestion template={template as ImageResponseTemplateDto} onAnswerChange={onAnswerChange} questionId={questionId}/>;
+                return <ImageResponseQuestion template={template as ImageResponseTemplateDto} 
+                                              onAnswerChange={onAnswerChange} 
+                                              questionId={questionId}
+                                              initialAnswer={initialAnswer as { imageUrl?: string; imageBlob?: Blob; fileName?: string; uploadedFileData?: unknown } | null}/>;
             default:
                 return (
                     <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
@@ -553,6 +655,11 @@ export default function ExamApplicationScreen({
                                         <div className="p-4 border-b">
                                             <h3 className="flex items-center gap-2">
                                                 SORU: {currentQuestionIndex + 1} / {questionsByGroup.length}
+                                                {getAnswerForDisplay(questionsByGroup[currentQuestionIndex].id) && (
+                                                    <span className="text-sm text-gray-500 ml-2">
+                                                        | GENIXO ESKİ CEVAP: {getAnswerForDisplay(questionsByGroup[currentQuestionIndex].id)}
+                                                    </span>
+                                                )}
                                             </h3>
                                             {
                                                 questionsByGroup[currentQuestionIndex].questionType && 
@@ -583,7 +690,14 @@ export default function ExamApplicationScreen({
                                     // Diğer section'lar: Tüm soruları alt alta göster
                                     questionsByGroup.map((question, key) => (
                                         <div key={key} className="p-4 border-b">
-                                            <h3 className="flex items-center gap-2">SORU: {key + 1} </h3>
+                                            <h3 className="flex items-center gap-2">
+                                                SORU: {key + 1}
+                                                {getAnswerForDisplay(question.id) && (
+                                                    <span className="text-sm text-gray-500 ml-2">
+                                                        | GENIXO ESKİ CEVAP: {getAnswerForDisplay(question.id)}
+                                                    </span>
+                                                )}
+                                            </h3>
                                             {
                                                 question.questionType && question.questionTemplate &&
                                                 renderTemplateSpecificForm(question.id, question.questionType, question.questionTemplate)

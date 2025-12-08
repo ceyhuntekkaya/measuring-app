@@ -120,8 +120,6 @@ export default function CandidatePage() {
 
     const handleAssignApplications = async (selectedExam: ExamDto | null) => {
 
-        // ceyhun
-
 
         if (!selectedExamSession || selectedCandidates.length === 0) return;
 

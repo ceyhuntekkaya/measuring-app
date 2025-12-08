@@ -52,8 +52,10 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
     const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const animationFrameRef = useRef<number | null>(null);
 
-    console.log("ceyhun: ",mediaStream )
-    console.log("ceyhun: ",showCorrectAnswer )
+
+    console.log(mediaStream)
+    console.log(showCorrectAnswer)
+
 
     useEffect(() => {
         setAudioAnswer(initialAnswer);

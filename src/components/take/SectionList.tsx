@@ -24,8 +24,7 @@ const ExamSectionsList: React.FC<ExamSectionsListProps> = ({
         return orderA - orderB;
     });
 
-console.log("ceyhun: ", sectionQuestionStatics)
-
+console.log("tomer: ",sectionQuestionStatics)
     return (
         <div className="w-full mx-auto p-6 pt-4 bg-white">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Sınav Bölümleri</h2>

@@ -135,9 +135,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
     );
 
     const sendCommand = useCallback((payload: CommandPayload) => {
-        console.log(payload)
-        // ceyhun kontrol et
-        console.error('LEARNER cannot send commands');
+        console.error('LEARNER cannot send commands', payload);
     }, []);
 
     const sendInfo = useCallback((payload: InfoPayload) => {
