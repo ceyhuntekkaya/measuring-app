@@ -21,31 +21,24 @@ const FullscreenLock: React.FC<{ children: React.ReactNode }> = ({ children }) =
     const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const lastWindowSizeRef = useRef({ width: window.innerWidth, height: window.innerHeight });
 
-    // Developer Tools açık mı kontrol et (window boyutu değişikliği ile)
     const checkDevTools = (): boolean => {
         const currentWidth = window.innerWidth;
         const currentHeight = window.innerHeight;
         const lastSize = lastWindowSizeRef.current;
         
-        // Eğer window boyutu beklenmedik şekilde küçüldüyse (devtools açıldığında olabilir)
         const widthDiff = Math.abs(currentWidth - lastSize.width);
         const heightDiff = Math.abs(currentHeight - lastSize.height);
         
-        // Önemli bir boyut değişikliği varsa (devtools açılmış olabilir)
         if (widthDiff > 50 || heightDiff > 50) {
             lastWindowSizeRef.current = { width: currentWidth, height: currentHeight };
         }
         
-        // DevTools açık mı kontrol et (console.log ile test edilebilir)
-        // DevTools açıldığında genelde window.outerHeight - window.innerHeight farkı artar
         const heightDiff2 = window.outerHeight - window.innerHeight;
         const widthDiff2 = window.outerWidth - window.innerWidth;
         
-        // Eğer outer ve inner boyutlar arasında büyük fark varsa devtools açık olabilir
         return heightDiff2 > 100 || widthDiff2 > 100;
     };
 
-    // Tüm kontrolleri yap ve uyarı durumunu belirle
     const checkAllConditions = useCallback(() => {
         const doc = document as DocumentWithFullscreen;
         const isFull = !!(
@@ -56,12 +49,10 @@ const FullscreenLock: React.FC<{ children: React.ReactNode }> = ({ children }) =
         );
         setIsFullscreen(isFull);
 
-        // Tüm kontrol koşulları
         const isPageHidden = document.hidden;
         const hasFocus = document.hasFocus();
         const devToolsOpen = checkDevTools();
 
-        // Eğer fullscreen değilse veya herhangi bir sorun varsa uyarı göster
         if (!isFull || isPageHidden || !hasFocus || devToolsOpen) {
             setShowWarning(true);
         } else {
@@ -72,12 +63,7 @@ const FullscreenLock: React.FC<{ children: React.ReactNode }> = ({ children }) =
         }
     }, []);
 
-    // Tam ekran durumunu kontrol et (eski fonksiyon, geriye dönük uyumluluk için)
-    const checkFullscreen = () => {
-        checkAllConditions();
-    };
 
-    // Tam ekran isteği
     const requestFullscreen = async () => {
         try {
             const elem = containerRef.current as ElementWithFullscreen | null;
@@ -97,7 +83,6 @@ const FullscreenLock: React.FC<{ children: React.ReactNode }> = ({ children }) =
         }
     };
 
-    // Tam ekrandan çık
     const exitFullscreen = async () => {
         try {
             if (document.exitFullscreen) {
@@ -115,10 +100,8 @@ const FullscreenLock: React.FC<{ children: React.ReactNode }> = ({ children }) =
     };
 
     useEffect(() => {
-        // İlk kontrol
         checkAllConditions();
 
-        // Fullscreen değişikliklerini dinle
         const events = [
             'fullscreenchange',
             'webkitfullscreenchange',
@@ -130,14 +113,12 @@ const FullscreenLock: React.FC<{ children: React.ReactNode }> = ({ children }) =
             document.addEventListener(event, checkAllConditions);
         });
 
-        // Sayfa görünürlüğünü kontrol et (başka sekmeye geçildiğinde)
         const handleVisibilityChange = () => {
             checkAllConditions();
         };
 
         document.addEventListener('visibilitychange', handleVisibilityChange);
 
-        // Pencere odak değişikliklerini dinle
         const handleWindowBlur = () => {
             setShowWarning(true);
         };
@@ -149,7 +130,6 @@ const FullscreenLock: React.FC<{ children: React.ReactNode }> = ({ children }) =
         window.addEventListener('blur', handleWindowBlur);
         window.addEventListener('focus', handleWindowFocus);
 
-        // Window resize event'i (devtools açıldığında veya pencere boyutu değiştiğinde)
         const handleResize = () => {
             lastWindowSizeRef.current = { width: window.innerWidth, height: window.innerHeight };
             checkAllConditions();
@@ -157,12 +137,10 @@ const FullscreenLock: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
         window.addEventListener('resize', handleResize);
 
-        // Periyodik kontrol (her 500ms'de bir)
         checkIntervalRef.current = setInterval(() => {
             checkAllConditions();
         }, 500);
 
-        // Cleanup
         return () => {
             events.forEach(event => {
                 document.removeEventListener(event, checkAllConditions);

@@ -11,7 +11,6 @@ interface VideoResponseQuestionProps {
     onAnswerChange?: (questionId:string, template: QuestionTemplateType, selectedOption: string, type: EQuestionType, mediaType: EMediaType, isEmptyAnswer: boolean) => void;
     initialAnswer?: VideoAnswerData | null;
     isSubmitted?: boolean;
-    showCorrectAnswer?: boolean;
     questionId: string;
 }
 
@@ -30,8 +29,7 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                                                                          onAnswerChange,
                                                                          initialAnswer = null,
                                                                          questionId,
-                                                                         isSubmitted = false,
-                                                                         showCorrectAnswer = false
+                                                                         isSubmitted = false
                                                                      }) => {
     const [videoAnswer, setVideoAnswer] = useState<VideoAnswerData | null>(initialAnswer);
     const [videoAnswerPath, setVideoAnswerPath] = useState<string>('');
@@ -52,9 +50,7 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
         setVideoAnswer(initialAnswer);
     }, [initialAnswer]);
 
-    console.log(showCorrectAnswer)
 
-    // Cleanup ONLY on unmount - EMPTY dependency array!
     useEffect(() => {
         return () => {
             if (timerIntervalRef.current) {
@@ -133,17 +129,14 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
     // Video preview setup when stream is available
     useEffect(() => {
         if (mediaStream && videoPreviewRef.current && isRecording) {
-            console.log('📹 Setting up video preview...');
             videoPreviewRef.current.srcObject = mediaStream;
             videoPreviewRef.current.muted = true;
 
             videoPreviewRef.current.onloadedmetadata = async () => {
-                console.log('📹 Metadata loaded, playing...');
                 try {
                     await videoPreviewRef.current?.play();
-                    console.log('✅ Video playing!');
                 } catch (playErr) {
-                    console.error('❌ Error playing:', playErr);
+                    console.log(playErr)
                 }
             };
         }

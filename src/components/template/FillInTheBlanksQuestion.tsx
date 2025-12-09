@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useMemo} from 'react';
 import {FillInTheBlanksTemplateDto} from '@/types/exam/questionTemplates';
 import {QuestionTemplateType} from "@/types/exam/examEntities";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
@@ -45,22 +45,28 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
 
     const [blankResults, setBlankResults] = useState<BlankResult[]>([]);
 
-    console.log("FillInTheBlanksQuestion initialAnswer: ", initialAnswer)
+    // initialAnswer'ı stable hale getir (obje referansı değişmesin diye)
+    const stableInitialAnswer = useMemo(() => {
+        if (!initialAnswer || typeof initialAnswer !== 'object') {
+            return {};
+        }
+        return initialAnswer;
+    }, [questionId, JSON.stringify(initialAnswer)]);
 
     // initialAnswer değiştiğinde state'i güncelle (soru değiştiğinde veya eski cevap yüklendiğinde)
     useEffect(() => {
-        if (initialAnswer && typeof initialAnswer === 'object') {
+        if (stableInitialAnswer && typeof stableInitialAnswer === 'object') {
             // initialAnswer'ı kontrol et ve güncelle
-            const hasValidData = Object.keys(initialAnswer).length > 0;
+            const hasValidData = Object.keys(stableInitialAnswer).length > 0;
             if (hasValidData) {
-                setAnswers(initialAnswer);
+                setAnswers(stableInitialAnswer);
             } else {
                 setAnswers({});
             }
         } else {
             setAnswers({});
         }
-    }, [questionId, initialAnswer]);
+    }, [questionId, stableInitialAnswer]);
 
     useEffect(() => {
         if (isSubmitted && showCorrectAnswer) {
@@ -179,9 +185,10 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
         const regex = /\[blank_([^\]]+)\]/g;
         let lastIndex = 0;
         let match: RegExpExecArray | null;
+        let blankIndex = 0; // Template'deki blank'ların sırasını takip et
 
         while ((match = regex.exec(template.textWithBlanks)) !== null) {
-            const blankId = match[1];
+            const matchedId = match[1]; // Regex'ten yakalanan değer (örneğin "1", "2" veya "blank_1765265652017")
             const matchIndex = match.index;
 
             // Add text before the blank
@@ -194,9 +201,30 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
                 );
             }
 
+            // Gerçek blankId'yi bul
+            let actualBlankId: string;
+            
+            // Eğer matchedId zaten "blank_" ile başlıyorsa (örneğin "blank_1765265652017"), direkt kullan
+            if (matchedId.startsWith('blank_')) {
+                actualBlankId = matchedId;
+            } else {
+                // Eğer matchedId bir sayı ise (örneğin "1", "2"), template.options.blanks array'inden gerçek blankId'yi al
+                const numericIndex = parseInt(matchedId, 10);
+                if (!isNaN(numericIndex) && template.options?.blanks && template.options.blanks[numericIndex - 1]) {
+                    // Index 1-based ise (1, 2, 3...), 0-based'e çevir (0, 1, 2...)
+                    actualBlankId = template.options.blanks[numericIndex - 1].blankId || matchedId;
+                } else if (template.options?.blanks && template.options.blanks[blankIndex]) {
+                    // Eğer parse edilemezse, blankIndex kullan (sırayla)
+                    actualBlankId = template.options.blanks[blankIndex].blankId || matchedId;
+                } else {
+                    // Fallback: matchedId'yi kullan
+                    actualBlankId = matchedId;
+                }
+            }
             // Add the blank input
-            parts.push(renderBlankInput(blankId));
+            parts.push(renderBlankInput(actualBlankId));
 
+            blankIndex++; // Bir sonraki blank için index'i artır
             lastIndex = regex.lastIndex;
         }
 
@@ -215,7 +243,6 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
 
     const renderBlankInput = (blankId: string): React.ReactNode => {
         const currentAnswers = answers || {};
-        console.log("renderBlankInput", blankId, currentAnswers);
         const userAnswer = currentAnswers[blankId] || '';
         const result = blankResults.find(r => r.blankId === blankId);
         const getInputStyle = (): string => {

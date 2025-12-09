@@ -41,11 +41,9 @@ const isPublicPath = (path: string): boolean => {
 
 export function middleware(request: NextRequest) {
     const {pathname} = request.nextUrl;
-    console.log('Middleware - Checking path:', pathname);
 
     // Public path kontrolü
     if (isPublicPath(pathname)) {
-        console.log('Middleware - Public path, allowing access:', pathname);
         return NextResponse.next();
     }
 
@@ -53,7 +51,6 @@ export function middleware(request: NextRequest) {
 
     // Token yoksa login'e yönlendir
     if (!token) {
-        console.log('Middleware - No token, redirecting to login from', pathname);
         const loginUrl = new URL('/login', request.url);
 
         // Orijinal hedef URL'i parametre olarak ekle, giriş yaptıktan sonra kullanıcıyı geri yönlendirmek için
@@ -68,30 +65,11 @@ export function middleware(request: NextRequest) {
 
         // Token expired kontrolü
         if (decoded.exp * 1000 < Date.now()) {
-            console.log('Middleware - Token expired, redirecting to login');
             return NextResponse.redirect(new URL('/login', request.url));
         }
-
-        const user = decoded.user;
-        const brands = decoded.brands;
-        const departments = decoded.departments;
         const roles = decoded.roles;
-        const authorities = decoded.authorities;
-
         // Yetki kontrolü
         if (!isPathAllowed(pathname, roles)) {
-            console.log('Middleware - Unauthorized access attempt:', {
-                path: pathname,
-                departments: departments,
-                brands: brands,
-                roles: roles,
-                authorities: authorities,
-                user: user
-            });
-
-            // Kullanıcının rolüne göre yönlendirme yap
-
-
             const redirectPath = roles.includes('ADMIN') ? '/admin' :
                 roles.includes('USER') ? '/admin' :
                     roles.includes('LEARNER') ? '/learner' :
@@ -100,12 +78,10 @@ export function middleware(request: NextRequest) {
                         roles.includes('COMPANY') ? '/company' :
                             '/app';
 
-            console.log(`Middleware - Redirecting to proper role path: ${redirectPath}`);
             return NextResponse.redirect(new URL(redirectPath, request.url));
         }
 
         // Tüm kontroller geçti, erişim izni ver
-        console.log('Middleware - Access granted to:', pathname);
         return NextResponse.next();
     } catch (error) {
         console.error('Middleware - Token validation failed:', error);

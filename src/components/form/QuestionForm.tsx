@@ -80,9 +80,6 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
     });
 
 
-
-    console.log(formData)
-console.log(JSON.stringify(formData, null, 2));
     const [baseFormData, setBaseFormData] = useState<BaseQuestionTemplateFormData>({
         title: '',
         description: '',
@@ -364,13 +361,6 @@ console.log(JSON.stringify(formData, null, 2));
         // 2. BaseTemplate validation (BaseQuestionTemplateForm + Template Form)
         // BaseQuestionTemplateForm kendi içinde template validation'ını da çağırıyor
         const isBaseTemplateFormValid = baseTemplateValidateRef.current?.validate() ?? false;
-
-        const isBaseTemplateFormValidData = baseTemplateValidateRef.current?.getErrors() ;
-
-
-        console.log(isBaseTemplateFormValid)
-        console.log(isBaseTemplateFormValidData)
-
 
         if (!isBaseTemplateFormValid) {
             setErrors(prev => ({

@@ -289,27 +289,12 @@ export class WebSocketService {
             const parsedMessage: WebSocketMessage = JSON.parse(message.body);
             const destination = message.headers.destination || '';
             
-            // Sadece önemli mesajları logla (ALERT ve presence-sync)
             const isPresenceSync = destination.includes('presence-sync');
-            const isAlert = parsedMessage.type === 'INFO' && 
-                          parsedMessage.payload && 
-                          typeof parsedMessage.payload === 'object' &&
-                          'infoType' in parsedMessage.payload &&
-                          parsedMessage.payload.infoType === 'ALERT';
-
-            if (isAlert && parsedMessage.type === 'INFO') {
-                const infoPayload = parsedMessage.payload as InfoPayload;
-                console.log('🚨 ALERT received:', {
-                    from: parsedMessage.senderId,
-                    role: parsedMessage.senderRole
-                });
-            }
 
             if (isPresenceSync) {
                 console.log('📋 Presence sync received');
             }
 
-            // Notify all callbacks
             this.messageCallbacks.forEach(callback => callback(parsedMessage));
         } catch (error) {
             console.error('❌ Failed to parse message:', error);

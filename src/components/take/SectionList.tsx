@@ -1,22 +1,15 @@
 import React from 'react';
 import {ExamSectionDto} from "@/types/exam/examTemplates";
-import {SectionQuestionCounts} from "@/app/(protected)/learner/check/start/page";
 import {useExamApplicationContext} from "@/contexts/ExamApplicationContext";
-
-
-
-
 
 interface ExamSectionsListProps {
     sections: ExamSectionDto[];
     onSectionSelect?: (section: ExamSectionDto) => void;
-    sectionQuestionStatics:SectionQuestionCounts[];
 }
 
 const ExamSectionsList: React.FC<ExamSectionsListProps> = ({
                                                                sections,
-                                                               onSectionSelect,
-                                                               sectionQuestionStatics
+                                                               onSectionSelect
                                                            }) => {
     const {candidate} = useExamApplicationContext();
     
@@ -31,7 +24,6 @@ const ExamSectionsList: React.FC<ExamSectionsListProps> = ({
     const userName = candidate ? `${candidate.name || ''} ${candidate.lastName || ''}`.trim() : '';
     const greeting = userName ? `Merhaba, ${userName}` : 'Sınav Bölümleri';
 
-console.log("tomer: ",sectionQuestionStatics)
     return (
         <div className="w-full mx-auto p-6 pt-4 bg-white">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">{greeting}</h2>

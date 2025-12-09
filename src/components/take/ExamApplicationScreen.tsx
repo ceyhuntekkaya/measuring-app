@@ -228,14 +228,13 @@ export default function ExamApplicationScreen({
                                                   onExitExam
                                               }: ExamApplicationScreenProps) {
     const [currentGroupIndex, setCurrentGroupIndex] = useState(0);
-    const [completedGroups, setCompletedGroups] = useState<Set<number>>(new Set());
+    const [completedGroups] = useState<Set<number>>(new Set());
     const [showExitModal, setShowExitModal] = useState(false);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [answeredQuestions, setAnsweredQuestions] = useState<Set<string>>(new Set());
     const {application, evaluations} = useExamApplicationContext();
     const {saveAnswer} = useExamResult();
 
-console.log(setCompletedGroups)
     const totalGroups = questionGroups.length;
     const progressPercentage = (completedGroups.size / totalGroups) * 100;
 
@@ -255,13 +254,6 @@ console.log(setCompletedGroups)
     const handleCancelExit = () => {
         setShowExitModal(false);
     };
-    /*
-        // Test için bir grubu tamamlanmış olarak işaretle
-        const markAsCompleted = (index: number) => {
-            setCompletedGroups(prev => new Set([...prev, index]));
-        };
-
-     */
 
     const {
         questionsByGroup,
@@ -311,9 +303,17 @@ console.log(setCompletedGroups)
     const onAnswerChange = (questionId: string, template: QuestionTemplateType, selectedOption: string, type: EQuestionType, mediaType: EMediaType, isEmptyAnswer: boolean) => {
 
         const evaluation = evaluations?.find(e => e.questionId === questionId);
+        // Eğer evaluation null ise, gelen questionId parametresini kullan (backend yeni evaluation oluşturacak)
+        const finalQuestionId = evaluation?.questionId || questionId;
+        
+        if (!finalQuestionId) {
+            console.error('onAnswerChange: questionId is required but was not provided');
+            return;
+        }
+        
         const answerData: QuestionAnswerRequest = {
             applicationId: application?.id || '',
-            questionId: evaluation?.questionId || '',
+            questionId: finalQuestionId,
             answer: selectedOption,
             mediaType: mediaType,
             questionType: type,
@@ -338,13 +338,10 @@ console.log(setCompletedGroups)
     const getInitialAnswer = (questionId: string, type: EQuestionType): unknown => {
         const evaluation = evaluations?.find(e => e.questionId === questionId);
         if (!evaluation || !evaluation.answer || typeof evaluation.answer !== 'string') {
-            console.log(`getInitialAnswer: No evaluation or answer for questionId: ${questionId}, type: ${type}`);
             return null;
         }
 
         const answerString = evaluation.answer;
-
-        console.log(`getInitialAnswer: type=${type}, questionId=${questionId}, answerString=${answerString}, evaluation.questionType=${(evaluation as any).questionType || 'N/A'}`);
 
         try {
             // TRUE_FALSE için boolean'a çevir
@@ -364,26 +361,21 @@ console.log(setCompletedGroups)
                     if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
                         // Eğer optionId property'si varsa onu döndür
                         if ('optionId' in parsed && typeof parsed.optionId === 'string') {
-                            console.log(`MULTIPLE_CHOICE: Found optionId in JSON: ${parsed.optionId}`);
                             return parsed.optionId;
                         }
                         // Eğer direkt string değer varsa (örneğin {"value": "optionId"})
                         const values = Object.values(parsed);
                         if (values.length === 1 && typeof values[0] === 'string') {
-                            console.log(`MULTIPLE_CHOICE: Found single string value in JSON: ${values[0]}`);
                             return values[0];
                         }
                         // Eğer obje ama optionId yoksa, null döndür
-                        console.log('MULTIPLE_CHOICE: JSON object but no optionId found, returning null');
                         return null;
                     }
                     // Eğer parsed bir string ise (JSON içinde string)
                     if (typeof parsed === 'string') {
-                        console.log(`MULTIPLE_CHOICE: Parsed JSON is string: ${parsed}`);
                         return parsed;
                     }
                     // Diğer durumlarda null
-                    console.log('MULTIPLE_CHOICE: Unexpected JSON format, returning null');
                     return null;
                 }
                 
@@ -396,6 +388,13 @@ console.log(setCompletedGroups)
                         characterCount: text.replace(/\s/g, '').length
                     };
                 }
+                // MULTIPLE_RESPONSE için JSON array formatı
+                if (type === 'MULTIPLE_RESPONSE' && Array.isArray(parsed)) {
+                    // Array içindeki tüm elemanları string'e çevir
+                    const optionsArray = parsed.map(item => String(item)).filter(item => item.length > 0);
+                    return optionsArray;
+                }
+                
                 // FILL_IN_THE_BLANKS için parse işlemi
                 if (type === 'FILL_IN_THE_BLANKS') {
                     // Eğer array formatında ise (SingleBlankAnswer[])
@@ -406,7 +405,6 @@ console.log(setCompletedGroups)
                                 blankAnswers[item.blankId] = item.answer;
                             }
                         });
-                        console.log("FILL_IN_THE_BLANKS: Parsed from array, blankAnswers:", blankAnswers);
                         return blankAnswers;
                     }
                     // Eğer obje formatında ise (zaten doğru format: {blankId: answer})
@@ -418,11 +416,8 @@ console.log(setCompletedGroups)
                                 blankAnswers[key] = value;
                             }
                         });
-                        console.log("FILL_IN_THE_BLANKS: Parsed from object, blankAnswers:", blankAnswers);
                         return blankAnswers;
                     }
-                    // Diğer durumlarda null
-                    console.log("FILL_IN_THE_BLANKS: Unexpected format, returning null");
                     return null;
                 }
                 return parsed;
@@ -432,11 +427,8 @@ console.log(setCompletedGroups)
             if (type === 'MULTIPLE_CHOICE') {
                 // Boş string ise null döndür
                 if (!answerString || answerString.trim() === '') {
-                    console.log('MULTIPLE_CHOICE: Empty answer string, returning null');
                     return null;
                 }
-                // String ise direkt döndür (option ID)
-                console.log(`MULTIPLE_CHOICE: Returning answer string: ${answerString}`);
                 return answerString;
             }
             // ESSAY için string'i EssayAnswerData formatına çevir
@@ -450,8 +442,29 @@ console.log(setCompletedGroups)
             }
             // FILL_IN_THE_BLANKS için string ise (JSON string değilse), null döndür
             if (type === 'FILL_IN_THE_BLANKS') {
-                console.log("FILL_IN_THE_BLANKS: answerString is not JSON, returning null");
                 return null;
+            }
+            // AUDIO_RESPONSE veya VIDEO_RESPONSE veya IMAGE_RESPONSE için string path ise AudioAnswerData/VideoAnswerData/ImageAnswerData formatına çevir
+            if (type === 'AUDIO_RESPONSE' || type === 'VIDEO_RESPONSE' || type === 'IMAGE_RESPONSE') {
+                // Eğer string path ise, uploadedFileData ile birlikte döndür
+                if (answerString && answerString.trim() !== '') {
+                    return {
+                        uploadedFileData: {
+                            path: answerString.trim()
+                        }
+                    };
+                }
+                return null;
+            }
+            // MULTIPLE_RESPONSE için virgülle ayrılmış string'i array'e çevir
+            if (type === 'MULTIPLE_RESPONSE') {
+                // Boş string ise boş array döndür
+                if (!answerString || answerString.trim() === '') {
+                    return [];
+                }
+                // Virgülle ayrılmış string'i array'e çevir ve trim et
+                const optionsArray = answerString.split(',').map(option => option.trim()).filter(option => option.length > 0);
+                return optionsArray;
             }
             // String ise direkt döndür
             return answerString;
@@ -470,6 +483,14 @@ console.log(setCompletedGroups)
             if (type === 'MULTIPLE_CHOICE') {
                 return answerString || null;
             }
+            // MULTIPLE_RESPONSE için parse hatası olsa bile virgülle ayrılmış string'i array'e çevir
+            if (type === 'MULTIPLE_RESPONSE') {
+                if (!answerString || answerString.trim() === '') {
+                    return [];
+                }
+                const optionsArray = answerString.split(',').map(option => option.trim()).filter(option => option.length > 0);
+                return optionsArray;
+            }
             return answerString;
         }
     };
@@ -485,9 +506,6 @@ console.log(setCompletedGroups)
 
     const renderTemplateSpecificForm = (questionId: string, type: EQuestionType, template: QuestionTemplateType) => {
         const initialAnswer = getInitialAnswer(questionId, type);
-        if(type === EQuestionType.FILL_IN_THE_BLANKS){
-            console.log(initialAnswer)
-        }
 
         switch (type) {
             case 'MULTIPLE_CHOICE':
@@ -572,7 +590,7 @@ console.log(setCompletedGroups)
                                               template={template as ImageResponseTemplateDto} 
                                               onAnswerChange={onAnswerChange} 
                                               questionId={questionId}
-                                              initialAnswer={initialAnswer as { imageUrl?: string; imageBlob?: Blob; fileName?: string; uploadedFileData?: unknown } | null}/>;
+                                              initialAnswer={(initialAnswer as unknown) as { imageUrl?: string; imageBlob?: Blob; fileName?: string; uploadedFileData?: UploadedFileDto } | null}/>;
             default:
                 return (
                     <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">

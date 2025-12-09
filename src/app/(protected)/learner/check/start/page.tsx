@@ -15,12 +15,10 @@ export interface SectionQuestionCounts {
 
 export default function Page() {
     const {exam: examState, examSections, getExamData} = useExamApplicationContext();
-    const [sectionQuestionStatics, setSectionQuestionStatics] = useState<SectionQuestionCounts[]>([]);
     const [questionGroups, setQuestionGroups] = useState<QuestionGroupDto[]>([]);
     const [activeScreen, setActiveScreen] = useState<'SECTION' | 'SECTION_DESCRIPTION' | 'QUESTION_GROUPS'>('SECTION');
     const [selectedSection, setSelectedSection] = useState<ExamSectionDto | null>(null);
 
-    console.log(setSectionQuestionStatics)
 
     useEffect(() => {
         const loadInitialData = async () => {
@@ -116,7 +114,7 @@ export default function Page() {
         <div className="space-y-6">
             {
                 activeScreen === 'SECTION' &&
-                <ExamSectionsList sectionQuestionStatics={sectionQuestionStatics} sections={examSections}
+                <ExamSectionsList sections={examSections}
                                   onSectionSelect={selectSection}/>
             }
 

@@ -17,7 +17,6 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({applicationId}) => {
 
     const {updateApplicationStateStatus} = useExamApplicationContext();
     const [isRecording, setIsRecording] = useState(false);
-    const [isPaused, setIsPaused] = useState(false);
     const [audioURL, setAudioURL] = useState('');
     const [recordingTime, setRecordingTime] = useState(0);
     const [isUploading, setIsUploading] = useState(false);
@@ -25,9 +24,6 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({applicationId}) => {
     const audioChunksRef = useRef<Blob[]>([]);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
     const audioBlobRef = useRef<Blob | null>(null);
-
-
-    console.log(isPaused)
 
     const startRecording = async () => {
         try {
@@ -67,20 +63,6 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({applicationId}) => {
         }
     };
 
-    const stopRecording = () => {
-        if (mediaRecorderRef.current && isRecording) {
-            mediaRecorderRef.current.stop();
-            setIsRecording(false);
-            setIsPaused(false);
-
-            if (timerRef.current) {
-                clearInterval(timerRef.current);
-                timerRef.current = null;
-            }
-        }
-    };
-
-    console.log(stopRecording)
 
     const uploadAudio = async () => {
         if (!audioBlobRef.current) {
@@ -103,8 +85,8 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({applicationId}) => {
             xhr.addEventListener('load', () => {
                 if (xhr.status === 200) {
                     try {
-                        const response = JSON.parse(xhr.responseText);
-                        console.log(response);
+                        JSON.parse(xhr.responseText);
+                        //console.log(response);
                         showNotification.success('Ses kaydı başarıyla yüklendi!');
                         updateApplicationStateStatus(EApplicationUpdateState.VOICE)
 
@@ -151,7 +133,6 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({applicationId}) => {
             // Kaydı durdur
             mediaRecorderRef.current.stop();
             setIsRecording(false);
-            setIsPaused(false);
         }
     }, [recordingTime, isRecording]);
 

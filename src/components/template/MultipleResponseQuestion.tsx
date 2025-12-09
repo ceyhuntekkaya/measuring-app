@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useMemo} from 'react';
+import React, {useState, useEffect, useMemo, useCallback} from 'react';
 import {MultipleResponseTemplateDto, ResponseOption} from '@/types/exam/questionTemplates';
 import {QuestionTemplateType} from "@/types/exam/examEntities";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
@@ -36,10 +36,34 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
     const [optionResults, setOptionResults] = useState<OptionResult[]>([]);
 
 
+    // initialAnswer içindeki text'leri option ID'lerine çevir
+    const convertTextsToIds = useCallback((texts: string[]): string[] => {
+        if (!template.options?.choices || !texts || texts.length === 0) {
+            return [];
+        }
+        
+        const optionIds: string[] = [];
+        texts.forEach(text => {
+            // Option text'ine göre ID bul
+            const option = template.options?.choices?.find(opt => opt.text === text);
+            if (option && option.id) {
+                optionIds.push(option.id);
+            } else {
+                // Eğer text bulunamazsa, direkt text'i ID olarak kullan (fallback)
+                // Belki de backend'den zaten ID geliyor
+                optionIds.push(text);
+            }
+        });
+        return optionIds;
+    }, [template.options?.choices]);
 
-
-
-    const stableInitialAnswer = useMemo(() => initialAnswer, [JSON.stringify(initialAnswer)]);
+    const stableInitialAnswer = useMemo(() => {
+        if (!initialAnswer || initialAnswer.length === 0) {
+            return [];
+        }
+        // Text'leri ID'lere çevir
+        return convertTextsToIds(initialAnswer);
+    }, [initialAnswer?.join(','), convertTextsToIds]);
 
     useEffect(() => {
         setSelectedOptions(stableInitialAnswer || []);

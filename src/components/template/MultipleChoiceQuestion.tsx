@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {MultipleChoiceTemplateDto, ChoiceOption} from '@/types/exam/questionTemplates';
 import {
     EMediaType, EQuestionType,
@@ -28,6 +28,22 @@ const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
     const [selectedOption, setSelectedOption] = useState<string | null>(initialAnswer);
     const [shuffledOptions, setShuffledOptions] = useState<ChoiceOption[]>([]);
 
+    // initialAnswer içindeki text'i option ID'sine çevir
+    const convertTextToId = useCallback((text: string | null): string | null => {
+        if (!text || !template.options?.choices) {
+            return text;
+        }
+        
+        // Option text'ine göre ID bul
+        const option = template.options.choices.find(opt => opt.text === text);
+        if (option && option.id) {
+            return option.id;
+        }
+        
+        // Eğer text bulunamazsa, direkt text'i ID olarak kullan (fallback - belki de backend'den zaten ID geliyor)
+        return text;
+    }, [template.options?.choices]);
+
     useEffect(() => {
         if (template.options?.choices) {
             // Shuffle options if specified in template and not in preview mode
@@ -38,12 +54,19 @@ const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
         }
     }, [template, isPreview]);
 
+    // template.options.choices'i stable hale getir - sadece ID'leri kullan
+    /*
+    const choicesIds = useMemo(() => {
+        return template.options?.choices?.map(c => c.id).filter(Boolean).join(',') || '';
+    }, [template.options?.choices?.length]);
 
-
+     */
 
     useEffect(() => {
-        setSelectedOption(initialAnswer);
-    }, [initialAnswer]);
+        // initialAnswer text ise ID'ye çevir
+        const convertedId = convertTextToId(initialAnswer);
+        setSelectedOption(convertedId);
+    }, [initialAnswer, convertTextToId]);
 
     const handleOptionSelect = (optionId: string) => {
         if (isSubmitted && !isPreview) return; // Prevent changes after submission

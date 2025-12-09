@@ -19,7 +19,6 @@ export default function withAuth<P extends object>(
         useEffect(() => {
             // Eğer yüklenme tamamlanmışsa ve kullanıcı yoksa
             if (!loading && !isAuthenticated) {
-                console.log('WithAuth - Not authenticated, redirecting to login');
                 router.replace(`/login?redirectTo=${window.location.pathname}`);
                 return;
             }
@@ -32,7 +31,6 @@ export default function withAuth<P extends object>(
                 requiredRoles.length > 0 &&
                 !requiredRoles.some(role => user?.roleSet.includes(role))
             ) {
-                console.log('WithAuth - User lacks required roles, redirecting to proper page');
                 router.replace(user ? `/app` : '/login');
             }
         }, [loading, isAuthenticated, user, router]);

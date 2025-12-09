@@ -9,7 +9,6 @@ interface EssayQuestionProps {
     onAnswerChange?: (questionId:string, template: QuestionTemplateType, selectedOption: string, type: EQuestionType, mediaType: EMediaType, isEmptyAnswer: boolean) => void;
     initialAnswer?: EssayAnswerData | null;
     isSubmitted?: boolean;
-    showCorrectAnswer?: boolean;
     questionId: string;
 }
 
@@ -26,8 +25,7 @@ const EssayQuestion: React.FC<EssayQuestionProps> = ({
                                                          onAnswerChange,
                                                          initialAnswer = null,
                                                          isSubmitted = false,
-                                                         questionId,
-                                                         showCorrectAnswer = false
+                                                         questionId
                                                      }) => {
     const [essayText, setEssayText] = useState<string>(initialAnswer?.text || '');
     const [wordCount, setWordCount] = useState<number>(0);
@@ -36,7 +34,6 @@ const EssayQuestion: React.FC<EssayQuestionProps> = ({
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    console.log(showCorrectAnswer)
     useEffect(() => {
         if (initialAnswer) {
             setEssayText(initialAnswer.text);

@@ -4,7 +4,7 @@ import React, {useState, useRef, useEffect} from "react";
 import {ApplicationDto} from "@/types/management/brand";
 import {useAdminWebSocket} from "@/components/websocket/AdminWebSocketProvider";
 import {useAuthContext} from "@/contexts/auth-context";
-import {ConnectionStatus, ChatMessage as ChatMessageType} from "@/types/websocket.types";
+import {ConnectionStatus} from "@/types/websocket.types";
 import {Send, X} from "lucide-react";
 
 export const ChatWindow = ({ participant, onClose }: {
@@ -17,7 +17,6 @@ export const ChatWindow = ({ participant, onClose }: {
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const isConnected = status === ConnectionStatus.CONNECTED;
-    const currentUsername = user?.username || '';
     const targetUsername = participant.username || '';
 
     // Filter messages for this specific participant
