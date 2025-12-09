@@ -63,13 +63,24 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
     // Value değiştiğinde form data'yı güncelle (Update modu için)
     useEffect(() => {
         if (value) {
+            // Eğer correctOptionIndices yoksa, choices array'indeki isCorrect değerlerine göre hesapla
+            let correctIndices: number[] = [];
+            if (value.correctOptionIndices && value.correctOptionIndices.length > 0) {
+                correctIndices = value.correctOptionIndices;
+            } else if (value.options?.choices) {
+                // choices array'indeki isCorrect: true olan seçeneklerin index'lerini bul
+                correctIndices = value.options.choices
+                    .map((choice, index) => choice.isCorrect ? index : -1)
+                    .filter(index => index !== -1);
+            }
+            
             setFormData({
                 question: value.question || '',
                 options: value.options || {
                     choices: [],
                     selectionInstruction: ''
                 },
-                correctOptionIndices: value.correctOptionIndices || [],
+                correctOptionIndices: correctIndices,
                 minSelections: value.minSelections,
                 maxSelections: value.maxSelections,
                 shuffleOptions: value.shuffleOptions ?? true,

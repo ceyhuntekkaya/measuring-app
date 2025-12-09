@@ -52,6 +52,12 @@ const TrueFalseTemplateForm = forwardRef<TrueFalseTemplateFormHandle, TrueFalseT
 
     useEffect(() => {
         if (value) {
+            // Eğer correctAnswer null veya undefined ise, options.correctAnswer değerini kullan
+            let correctAnswer = value.correctAnswer;
+            if (correctAnswer === null || correctAnswer === undefined) {
+                correctAnswer = value.options?.correctAnswer ?? true;
+            }
+            
             setFormData({
                 statement: value.statement || '',
                 options: value.options || {
@@ -61,7 +67,7 @@ const TrueFalseTemplateForm = forwardRef<TrueFalseTemplateFormHandle, TrueFalseT
                     trueFeedback: '',
                     falseFeedback: ''
                 },
-                correctAnswer: value.correctAnswer ?? true,
+                correctAnswer: correctAnswer,
                 explanation: value.explanation || ''
             });
         }
@@ -74,14 +80,15 @@ const TrueFalseTemplateForm = forwardRef<TrueFalseTemplateFormHandle, TrueFalseT
         const updatedData = { ...formData, [field]: newValue };
         setFormData(updatedData);
 
-        if (validateForm()) {
-            onChange({
-                statement: updatedData.statement,
-                options: updatedData.options,
-                correctAnswer: updatedData.correctAnswer,
-                explanation: updatedData.explanation
-            });
-        }
+        // Her zaman onChange'i çağır, validation sadece submit için
+        // ÖNEMLİ: value'dan gelen id ve diğer base field'ları koru (update modu için gerekli)
+        onChange({
+            ...(value || {}), // id ve diğer base field'ları koru (value null ise boş obje)
+            statement: updatedData.statement,
+            options: updatedData.options,
+            correctAnswer: updatedData.correctAnswer,
+            explanation: updatedData.explanation
+        });
     };
 
     const updateOptions = <K extends keyof TrueFalseOptions>(

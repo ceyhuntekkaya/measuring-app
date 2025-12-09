@@ -158,10 +158,19 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
         FillInTheBlanksTemplateDto | ShortAnswerTemplateDto |
         MatchingTemplateDto | EssayTemplateDto | OrderingTemplateDto | MultipleResponseTemplateDto |
         HotSpotTemplateDto | DragAndDropTemplateDto | AudioResponseTemplateDto | VideoResponseTemplateDto | ImageResponseTemplateDto) => {
-        setFormData(prev => ({
-            ...prev,
-            templateData: templateData
-        }));
+        setFormData(prev => {
+            // ÖNEMLİ: Mevcut templateData'daki base field'ları koru (id, title, description, vb.)
+            // Sadece template-specific field'ları merge et
+            const mergedTemplateData = prev.templateData ? {
+                ...prev.templateData, // Mevcut base field'ları koru (id, title, description, subject, difficulty, points, timeLimit, instructions, tags, isActive, vb.)
+                ...templateData // Template-specific field'ları override et (question, options, correctOptionIndex, vb.)
+            } : templateData;
+            
+            return {
+                ...prev,
+                templateData: mergedTemplateData
+            };
+        });
     }, []);
 
 

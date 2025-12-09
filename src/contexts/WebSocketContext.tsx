@@ -97,7 +97,11 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
         if (!token) return;
 
         isConnectingRef.current = true;
-        console.log(`🔌 LEARNER connecting to session: ${sessionId}`);
+        console.log(`🔌 LEARNER connecting to session: ${sessionId}`, {
+            username,
+            hasToken: !!token,
+            examSessionId: examSession?.id
+        });
         serviceRef.current.connect(token, username, role, sessionId);
     }, [autoConnect, username, sessionId, role]);
 
@@ -111,11 +115,11 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
 
             case MessageType.COMMAND:
                 setLastCommand(message as CommandMessage);
-                console.log('⚡ Command received:', (message as CommandMessage).payload.action);
                 break;
 
             case MessageType.INFO:
-                setInfoMessages((prev) => [...prev, message as InfoMessage]);
+                const infoMsg = message as InfoMessage;
+                setInfoMessages((prev) => [...prev, infoMsg]);
                 break;
 
             default:

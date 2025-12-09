@@ -1,6 +1,7 @@
 import React from 'react';
 import {ExamSectionDto} from "@/types/exam/examTemplates";
 import {SectionQuestionCounts} from "@/app/(protected)/learner/check/start/page";
+import {useExamApplicationContext} from "@/contexts/ExamApplicationContext";
 
 
 
@@ -17,6 +18,8 @@ const ExamSectionsList: React.FC<ExamSectionsListProps> = ({
                                                                onSectionSelect,
                                                                sectionQuestionStatics
                                                            }) => {
+    const {candidate} = useExamApplicationContext();
+    
     // orderNumber'a göre sırala
     const sortedSections = [...sections].sort((a, b) => {
         const orderA = a.orderNumber ?? 0;
@@ -24,10 +27,14 @@ const ExamSectionsList: React.FC<ExamSectionsListProps> = ({
         return orderA - orderB;
     });
 
+    // Kullanıcı adı soyadı
+    const userName = candidate ? `${candidate.name || ''} ${candidate.lastName || ''}`.trim() : '';
+    const greeting = userName ? `Merhaba, ${userName}` : 'Sınav Bölümleri';
+
 console.log("tomer: ",sectionQuestionStatics)
     return (
         <div className="w-full mx-auto p-6 pt-4 bg-white">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Sınav Bölümleri</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">{greeting}</h2>
 
             <div className="space-y-3">
                 {sortedSections.map((section, index) => (

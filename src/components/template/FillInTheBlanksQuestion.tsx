@@ -41,10 +41,26 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
                                                                              showCorrectAnswer = false,
                                                                              questionId
                                                                          }) => {
-    const [answers, setAnswers] = useState<BlankAnswers>(initialAnswer);
+    const [answers, setAnswers] = useState<BlankAnswers>(initialAnswer || {});
 
     const [blankResults, setBlankResults] = useState<BlankResult[]>([]);
 
+    console.log("FillInTheBlanksQuestion initialAnswer: ", initialAnswer)
+
+    // initialAnswer değiştiğinde state'i güncelle (soru değiştiğinde veya eski cevap yüklendiğinde)
+    useEffect(() => {
+        if (initialAnswer && typeof initialAnswer === 'object') {
+            // initialAnswer'ı kontrol et ve güncelle
+            const hasValidData = Object.keys(initialAnswer).length > 0;
+            if (hasValidData) {
+                setAnswers(initialAnswer);
+            } else {
+                setAnswers({});
+            }
+        } else {
+            setAnswers({});
+        }
+    }, [questionId, initialAnswer]);
 
     useEffect(() => {
         if (isSubmitted && showCorrectAnswer) {
@@ -57,7 +73,8 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
         if (isSubmitted && !isPreview) return;
 
         //const propName = "blank_"+blankId;
-        const newAnswers = {...answers, [blankId]: value};
+        const currentAnswers = answers || {};
+        const newAnswers = {...currentAnswers, [blankId]: value};
         setAnswers(newAnswers);
 
         if (onAnswerChange) {
@@ -70,6 +87,9 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
             function convertToBlankAnswers(
                 answer: Record<string, string>
             ): SingleBlankAnswer[] {
+                if (!answer || typeof answer !== 'object') {
+                    return [];
+                }
                 return Object.entries(answer).map(([index, answerValue]) => {
                     const blankIndex = parseInt(index) - 1; // "1" -> index 0, "2" -> index 1
 
@@ -87,8 +107,9 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
                 });
             }
 
-            const converted = convertToBlankAnswers(answers);
-            onAnswerChange(questionId, template, answers ? JSON.stringify(converted) : '', EQuestionType.TRUE_FALSE, EMediaType.TEXT, false);
+            const currentAnswers = answers || {};
+            const converted = convertToBlankAnswers(currentAnswers);
+            onAnswerChange(questionId, template, currentAnswers ? JSON.stringify(converted) : '', EQuestionType.TRUE_FALSE, EMediaType.TEXT, false);
         }
     }
 
@@ -96,9 +117,10 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
     const evaluateAnswers = (): void => {
         if (!template.options?.blanks) return;
 
+        const currentAnswers = answers || {};
         const results: BlankResult[] = template.options.blanks.map(blank => {
             const blankId = blank.blankId || '';
-            const userAnswer = answers[blankId] || '';
+            const userAnswer = currentAnswers[blankId] || '';
             const acceptableAnswers = blank.acceptableAnswers || [];
 
             // Determine case sensitivity
@@ -192,7 +214,9 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
     };
 
     const renderBlankInput = (blankId: string): React.ReactNode => {
-        const userAnswer = answers[blankId] || '';
+        const currentAnswers = answers || {};
+        console.log("renderBlankInput", blankId, currentAnswers);
+        const userAnswer = currentAnswers[blankId] || '';
         const result = blankResults.find(r => r.blankId === blankId);
         const getInputStyle = (): string => {
             const baseStyle = "inline-block mx-1 px-3 py-1 border-b-2 outline-none transition-all duration-200 ";
@@ -335,7 +359,11 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
 
     const getProgressInfo = (): { filled: number; total: number } => {
         const total = template.options?.blanks?.length || 0;
-        const filled = Object.values(answers).filter(answer => answer.trim() !== '').length;
+        // answers null veya undefined olabilir, kontrol et
+        if (!answers || typeof answers !== 'object') {
+            return {filled: 0, total};
+        }
+        const filled = Object.values(answers).filter(answer => answer && typeof answer === 'string' && answer.trim() !== '').length;
         return {filled, total};
     };
 

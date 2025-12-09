@@ -38,6 +38,9 @@ const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
         }
     }, [template, isPreview]);
 
+
+
+
     useEffect(() => {
         setSelectedOption(initialAnswer);
     }, [initialAnswer]);

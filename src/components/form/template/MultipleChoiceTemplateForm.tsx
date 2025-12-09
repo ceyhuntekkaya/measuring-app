@@ -55,10 +55,31 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
 
     useEffect(() => {
         if (value) {
+            // Eğer correctOptionIndex yoksa veya null ise, choices array'indeki isCorrect: true olan seçeneğin index'ini bul
+            let correctIndex = value.correctOptionIndex ?? null;
+            if (correctIndex === null || correctIndex === undefined) {
+                // choices array'indeki isCorrect: true olan seçeneğin index'ini bul
+                const correctChoiceIndex = value.options?.choices?.findIndex(choice => choice.isCorrect === true);
+                if (correctChoiceIndex !== undefined && correctChoiceIndex !== -1) {
+                    correctIndex = correctChoiceIndex;
+                } else {
+                    correctIndex = 0; // Varsayılan olarak ilk seçeneği seç
+                }
+            }
+            
+            // choices array'indeki isCorrect değerlerini correctOptionIndex'e göre ayarla
+            const choices = value.options?.choices?.map((choice, i) => ({
+                ...choice,
+                isCorrect: i === correctIndex
+            })) || [];
+            
             setFormData({
                 question: value.question || '',
-                options: value.options || {choices: []},
-                correctOptionIndex: value.correctOptionIndex || 0,
+                options: {
+                    ...(value.options || {}),
+                    choices: choices
+                },
+                correctOptionIndex: correctIndex,
                 explanation: value.explanation || '',
                 shuffleOptions: value.shuffleOptions || false
             });
@@ -69,18 +90,36 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
         field: T,
         newValue: MultipleChoiceTemplateFormData[T]
     ) => {
-        const updatedData = {...formData, [field]: newValue};
+        let updatedData = {...formData, [field]: newValue};
+
+        // Eğer correctOptionIndex değiştiyse, choices array'indeki isCorrect değerlerini de güncelle
+        if (field === 'correctOptionIndex') {
+            const updatedChoices = updatedData.options.choices?.map((choice, i) => ({
+                ...choice,
+                isCorrect: i === newValue
+            })) || [];
+            
+            updatedData = {
+                ...updatedData,
+                options: {
+                    ...updatedData.options,
+                    choices: updatedChoices
+                }
+            };
+        }
+
         setFormData(updatedData);
 
-        if (validateForm()) {
-            onChange({
-                question: updatedData.question,
-                options: updatedData.options,
-                correctOptionIndex: updatedData.correctOptionIndex,
-                explanation: updatedData.explanation,
-                shuffleOptions: updatedData.shuffleOptions
-            });
-        }
+        // Her zaman onChange'i çağır, validation sadece submit için
+        // ÖNEMLİ: value'dan gelen id ve diğer base field'ları koru (update modu için gerekli)
+        onChange({
+            ...(value || {}), // id ve diğer base field'ları koru (value null ise boş obje)
+            question: updatedData.question,
+            options: updatedData.options,
+            correctOptionIndex: updatedData.correctOptionIndex,
+            explanation: updatedData.explanation,
+            shuffleOptions: updatedData.shuffleOptions
+        });
     };
 
     const addChoice = () => {
@@ -94,17 +133,45 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
         };
 
         const updatedChoices = [...(formData.options.choices || []), newChoice];
-        handleChange('options', {...formData.options, choices: updatedChoices});
+        const updatedOptions = {...formData.options, choices: updatedChoices};
+        handleChange('options', updatedOptions);
     };
 
     const removeChoice = (index: number) => {
         const updatedChoices = formData.options.choices?.filter((_, i) => i !== index) || [];
-        handleChange('options', {...formData.options, choices: updatedChoices});
-
+        
         // Doğru cevap index'i ayarla
+        let newCorrectIndex = formData.correctOptionIndex;
         if (formData.correctOptionIndex >= updatedChoices.length) {
-            handleChange('correctOptionIndex', Math.max(0, updatedChoices.length - 1));
+            newCorrectIndex = Math.max(0, updatedChoices.length - 1);
+        } else if (formData.correctOptionIndex > index) {
+            // Silinen seçenek doğru seçeneğin önündeyse, index'i bir azalt
+            newCorrectIndex = formData.correctOptionIndex - 1;
         }
+        
+        // isCorrect değerlerini güncelle
+        const choicesWithCorrect = updatedChoices.map((choice, i) => ({
+            ...choice,
+            isCorrect: i === newCorrectIndex
+        }));
+        
+        const updatedOptions = {...formData.options, choices: choicesWithCorrect};
+        const updatedData = {
+            ...formData,
+            options: updatedOptions,
+            correctOptionIndex: newCorrectIndex
+        };
+        setFormData(updatedData);
+        
+        // ÖNEMLİ: value'dan gelen id ve diğer base field'ları koru (update modu için gerekli)
+        onChange({
+            ...(value || {}), // id ve diğer base field'ları koru (value null ise boş obje)
+            question: updatedData.question,
+            options: updatedData.options,
+            correctOptionIndex: updatedData.correctOptionIndex,
+            explanation: updatedData.explanation,
+            shuffleOptions: updatedData.shuffleOptions
+        });
     };
 
     const updateChoice = <K extends keyof ChoiceOption>(

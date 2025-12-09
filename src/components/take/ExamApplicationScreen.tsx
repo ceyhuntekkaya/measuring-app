@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useEffect, useState, useRef} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
     QuestionAnswerRequest,
     QuestionGroupDto,
@@ -14,9 +14,16 @@ import {
     AudioResponseTemplateDto,
     DragAndDropTemplateDto,
     EssayTemplateDto,
-    FillInTheBlanksTemplateDto, HotSpotTemplateDto, ImageResponseTemplateDto, MatchingTemplateDto,
-    MultipleChoiceTemplateDto, MultipleResponseTemplateDto, OrderingTemplateDto, ShortAnswerTemplateDto,
-    TrueFalseTemplateDto, VideoResponseTemplateDto
+    FillInTheBlanksTemplateDto,
+    HotSpotTemplateDto,
+    ImageResponseTemplateDto,
+    MatchingTemplateDto,
+    MultipleChoiceTemplateDto,
+    MultipleResponseTemplateDto,
+    OrderingTemplateDto,
+    ShortAnswerTemplateDto,
+    TrueFalseTemplateDto,
+    VideoResponseTemplateDto
 } from "@/types/exam/questionTemplates";
 import TrueFalseQuestion from "@/components/template/TrueFalseQuestion";
 import FillInTheBlanksQuestion from "@/components/template/FillInTheBlanksQuestion";
@@ -35,6 +42,7 @@ import {useExamApplicationContext} from "@/contexts/ExamApplicationContext";
 import {useExamResult} from "@/hooks/exam/use-exam-result";
 import {UploadedFileDto} from "@/types/exam/miscDtos";
 import siteConfig from "@/config/config.json";
+
 const API_URL = siteConfig.api.invokeUrl + "/upload/serve";
 
 interface AudioPlayerWithProgressProps {
@@ -330,10 +338,13 @@ console.log(setCompletedGroups)
     const getInitialAnswer = (questionId: string, type: EQuestionType): unknown => {
         const evaluation = evaluations?.find(e => e.questionId === questionId);
         if (!evaluation || !evaluation.answer || typeof evaluation.answer !== 'string') {
+            console.log(`getInitialAnswer: No evaluation or answer for questionId: ${questionId}, type: ${type}`);
             return null;
         }
 
         const answerString = evaluation.answer;
+
+        console.log(`getInitialAnswer: type=${type}, questionId=${questionId}, answerString=${answerString}, evaluation.questionType=${(evaluation as any).questionType || 'N/A'}`);
 
         try {
             // TRUE_FALSE için boolean'a çevir
@@ -346,6 +357,36 @@ console.log(setCompletedGroups)
             // JSON string ise parse et
             if (answerString.startsWith('{') || answerString.startsWith('[')) {
                 const parsed = JSON.parse(answerString);
+                
+                // MULTIPLE_CHOICE için JSON objesi ise optionId'yi çıkar
+                if (type === 'MULTIPLE_CHOICE') {
+                    // Eğer parsed bir obje ise ve optionId property'si varsa
+                    if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+                        // Eğer optionId property'si varsa onu döndür
+                        if ('optionId' in parsed && typeof parsed.optionId === 'string') {
+                            console.log(`MULTIPLE_CHOICE: Found optionId in JSON: ${parsed.optionId}`);
+                            return parsed.optionId;
+                        }
+                        // Eğer direkt string değer varsa (örneğin {"value": "optionId"})
+                        const values = Object.values(parsed);
+                        if (values.length === 1 && typeof values[0] === 'string') {
+                            console.log(`MULTIPLE_CHOICE: Found single string value in JSON: ${values[0]}`);
+                            return values[0];
+                        }
+                        // Eğer obje ama optionId yoksa, null döndür
+                        console.log('MULTIPLE_CHOICE: JSON object but no optionId found, returning null');
+                        return null;
+                    }
+                    // Eğer parsed bir string ise (JSON içinde string)
+                    if (typeof parsed === 'string') {
+                        console.log(`MULTIPLE_CHOICE: Parsed JSON is string: ${parsed}`);
+                        return parsed;
+                    }
+                    // Diğer durumlarda null
+                    console.log('MULTIPLE_CHOICE: Unexpected JSON format, returning null');
+                    return null;
+                }
+                
                 // ESSAY için EssayAnswerData formatına çevir
                 if (type === 'ESSAY' && typeof parsed === 'string') {
                     const text = parsed;
@@ -355,7 +396,48 @@ console.log(setCompletedGroups)
                         characterCount: text.replace(/\s/g, '').length
                     };
                 }
+                // FILL_IN_THE_BLANKS için parse işlemi
+                if (type === 'FILL_IN_THE_BLANKS') {
+                    // Eğer array formatında ise (SingleBlankAnswer[])
+                    if (Array.isArray(parsed)) {
+                        const blankAnswers: { [blankId: string]: string } = {};
+                        parsed.forEach((item: { blankId?: string; answer?: string }) => {
+                            if (item.blankId && item.answer !== undefined) {
+                                blankAnswers[item.blankId] = item.answer;
+                            }
+                        });
+                        console.log("FILL_IN_THE_BLANKS: Parsed from array, blankAnswers:", blankAnswers);
+                        return blankAnswers;
+                    }
+                    // Eğer obje formatında ise (zaten doğru format: {blankId: answer})
+                    if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+                        // Objenin tüm key'leri blankId formatında mı kontrol et
+                        const blankAnswers: { [blankId: string]: string } = {};
+                        Object.entries(parsed).forEach(([key, value]) => {
+                            if (typeof value === 'string') {
+                                blankAnswers[key] = value;
+                            }
+                        });
+                        console.log("FILL_IN_THE_BLANKS: Parsed from object, blankAnswers:", blankAnswers);
+                        return blankAnswers;
+                    }
+                    // Diğer durumlarda null
+                    console.log("FILL_IN_THE_BLANKS: Unexpected format, returning null");
+                    return null;
+                }
                 return parsed;
+            }
+
+            // MULTIPLE_CHOICE için string (option ID) döndür (JSON değilse)
+            if (type === 'MULTIPLE_CHOICE') {
+                // Boş string ise null döndür
+                if (!answerString || answerString.trim() === '') {
+                    console.log('MULTIPLE_CHOICE: Empty answer string, returning null');
+                    return null;
+                }
+                // String ise direkt döndür (option ID)
+                console.log(`MULTIPLE_CHOICE: Returning answer string: ${answerString}`);
+                return answerString;
             }
             // ESSAY için string'i EssayAnswerData formatına çevir
             if (type === 'ESSAY') {
@@ -365,6 +447,11 @@ console.log(setCompletedGroups)
                     wordCount: text.trim().split(/\s+/).filter(word => word.length > 0).length,
                     characterCount: text.replace(/\s/g, '').length
                 };
+            }
+            // FILL_IN_THE_BLANKS için string ise (JSON string değilse), null döndür
+            if (type === 'FILL_IN_THE_BLANKS') {
+                console.log("FILL_IN_THE_BLANKS: answerString is not JSON, returning null");
+                return null;
             }
             // String ise direkt döndür
             return answerString;
@@ -378,6 +465,10 @@ console.log(setCompletedGroups)
                     wordCount: text.trim().split(/\s+/).filter(word => word.length > 0).length,
                     characterCount: text.replace(/\s/g, '').length
                 };
+            }
+            // MULTIPLE_CHOICE için parse hatası olsa bile string döndür
+            if (type === 'MULTIPLE_CHOICE') {
+                return answerString || null;
             }
             return answerString;
         }
@@ -394,10 +485,14 @@ console.log(setCompletedGroups)
 
     const renderTemplateSpecificForm = (questionId: string, type: EQuestionType, template: QuestionTemplateType) => {
         const initialAnswer = getInitialAnswer(questionId, type);
+        if(type === EQuestionType.FILL_IN_THE_BLANKS){
+            console.log(initialAnswer)
+        }
 
         switch (type) {
             case 'MULTIPLE_CHOICE':
-                return <MultipleChoiceQuestion template={template as MultipleChoiceTemplateDto}
+                return <MultipleChoiceQuestion key={questionId}
+                                               template={template as MultipleChoiceTemplateDto}
                                                onAnswerChange={onAnswerChange} 
                                                questionId={questionId}
                                                initialAnswer={initialAnswer as string | null}/>;
@@ -408,27 +503,32 @@ console.log(setCompletedGroups)
                                               questionId={questionId}
                                               initialAnswer={(initialAnswer as unknown) as { audioUrl?: string; audioBlob?: Blob; duration?: number; recordedAt?: string; fileName?: string; uploadedFileData?: UploadedFileDto } | null}/>;
             case 'TRUE_FALSE':
-                return <TrueFalseQuestion template={template as TrueFalseTemplateDto} 
+                return <TrueFalseQuestion key={questionId}
+                                          template={template as TrueFalseTemplateDto} 
                                           onAnswerChange={onAnswerChange} 
                                           questionId={questionId}
                                           initialAnswer={initialAnswer as boolean | null}/>;
             case 'FILL_IN_THE_BLANKS':
-                return <FillInTheBlanksQuestion template={template as FillInTheBlanksTemplateDto} 
+                return <FillInTheBlanksQuestion key={questionId}
+                                                template={template as FillInTheBlanksTemplateDto} 
                                                 onAnswerChange={onAnswerChange} 
                                                 questionId={questionId}
                                                 initialAnswer={initialAnswer as { [blankId: string]: string } | undefined}/>;
             case 'SHORT_ANSWER':
-                return <ShortAnswerQuestion template={template as ShortAnswerTemplateDto} 
+                return <ShortAnswerQuestion key={questionId}
+                                            template={template as ShortAnswerTemplateDto} 
                                             onAnswerChange={onAnswerChange} 
                                             questionId={questionId}
                                             initialAnswer={initialAnswer as string || ''}/>;
             case 'ESSAY':
-                return <EssayQuestion template={template as EssayTemplateDto} 
+                return <EssayQuestion key={questionId}
+                                      template={template as EssayTemplateDto} 
                                       onAnswerChange={onAnswerChange} 
                                       questionId={questionId}
                                       initialAnswer={initialAnswer as { text: string; wordCount: number; characterCount: number } | null}/>;
             case 'VIDEO_RESPONSE':
-                return <VideoResponseQuestion template={template as VideoResponseTemplateDto} 
+                return <VideoResponseQuestion key={questionId}
+                                              template={template as VideoResponseTemplateDto} 
                                               onAnswerChange={onAnswerChange} 
                                               questionId={questionId}
                                               initialAnswer={(initialAnswer as unknown) as { videoUrl?: string; videoBlob?: Blob; duration?: number; recordedAt?: string; fileName?: string; uploadedFileData?: UploadedFileDto } | null}/>;
@@ -438,32 +538,38 @@ console.log(setCompletedGroups)
 
 
             case 'MATCHING':
-                return <MatchingQuestion template={template as MatchingTemplateDto} 
+                return <MatchingQuestion key={questionId}
+                                         template={template as MatchingTemplateDto} 
                                          onAnswerChange={onAnswerChange} 
                                          questionId={questionId}
                                          initialAnswer={initialAnswer as { [leftId: string]: string } | undefined}/>;
             case 'ORDERING':
-                return <OrderingQuestion template={template as OrderingTemplateDto} 
+                return <OrderingQuestion key={questionId}
+                                         template={template as OrderingTemplateDto} 
                                          onAnswerChange={onAnswerChange} 
                                          questionId={questionId}
                                          initialAnswer={initialAnswer as string[] | null | undefined}/>;
             case 'MULTIPLE_RESPONSE':
-                return <MultipleResponseQuestion template={template as MultipleResponseTemplateDto} 
+                return <MultipleResponseQuestion key={questionId}
+                                                template={template as MultipleResponseTemplateDto} 
                                                 onAnswerChange={onAnswerChange} 
                                                 questionId={questionId}
                                                 initialAnswer={initialAnswer as string[]}/>;
             case 'HOT_SPOT':
-                return <HotSpotQuestion template={template as HotSpotTemplateDto} 
+                return <HotSpotQuestion key={questionId}
+                                       template={template as HotSpotTemplateDto} 
                                        onAnswerChange={onAnswerChange} 
                                        questionId={questionId}
                                        initialAnswer={initialAnswer as string[]}/>;
             case 'DRAG_AND_DROP':
-                return <DragAndDropQuestion template={template as DragAndDropTemplateDto} 
+                return <DragAndDropQuestion key={questionId}
+                                            template={template as DragAndDropTemplateDto} 
                                             onAnswerChange={onAnswerChange} 
                                             questionId={questionId}
                                             initialAnswer={initialAnswer as { [zoneId: string]: string[] } | undefined}/>;
             case 'IMAGE_RESPONSE':
-                return <ImageResponseQuestion template={template as ImageResponseTemplateDto} 
+                return <ImageResponseQuestion key={questionId}
+                                              template={template as ImageResponseTemplateDto} 
                                               onAnswerChange={onAnswerChange} 
                                               questionId={questionId}
                                               initialAnswer={initialAnswer as { imageUrl?: string; imageBlob?: Blob; fileName?: string; uploadedFileData?: unknown } | null}/>;
@@ -657,7 +763,7 @@ console.log(setCompletedGroups)
                                                 SORU: {currentQuestionIndex + 1} / {questionsByGroup.length}
                                                 {getAnswerForDisplay(questionsByGroup[currentQuestionIndex].id) && (
                                                     <span className="text-sm text-gray-500 ml-2">
-                                                        | GENIXO ESKİ CEVAP: {getAnswerForDisplay(questionsByGroup[currentQuestionIndex].id)}
+                                                        | 22 GENIXO ESKİ CEVAP: {getAnswerForDisplay(questionsByGroup[currentQuestionIndex].id)}
                                                     </span>
                                                 )}
                                             </h3>
@@ -689,21 +795,21 @@ console.log(setCompletedGroups)
                                 ) : (
                                     // Diğer section'lar: Tüm soruları alt alta göster
                                     questionsByGroup.map((question, key) => (
-                                        <div key={key} className="p-4 border-b">
+                                    <div key={key} className="p-4 border-b">
                                             <h3 className="flex items-center gap-2">
                                                 SORU: {key + 1}
                                                 {getAnswerForDisplay(question.id) && (
                                                     <span className="text-sm text-gray-500 ml-2">
-                                                        | GENIXO ESKİ CEVAP: {getAnswerForDisplay(question.id)}
+                                                        | 44 GENIXO ESKİ CEVAP: {getAnswerForDisplay(question.id)}
                                                     </span>
                                                 )}
                                             </h3>
-                                            {
-                                                question.questionType && question.questionTemplate &&
-                                                renderTemplateSpecificForm(question.id, question.questionType, question.questionTemplate)
-                                            }
-                                        </div>
-                                    ))
+                                        {
+                                            question.questionType && question.questionTemplate &&
+                                            renderTemplateSpecificForm(question.id, question.questionType, question.questionTemplate)
+                                        }
+                                    </div>
+                                ))
                                 ))
                             }
                         </div>

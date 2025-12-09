@@ -35,7 +35,7 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
     const [allQuestionIdList, setAllQuestionIdList] = useState<QuestionId[] | null>(null);
     const [selectedApplication, setSelectedApplication] = useState<string | null>(null);
     const [selectedEvaluation, setSelectedEvaluation] = useState<EvaluationGroupData | null>(null);
-    const [filterType, setFilterType] = useState<EEvaluationStatus | 'ALL'>('PENDING');
+    const [filterType, setFilterType] = useState<EEvaluationStatus | 'ALL'>('ALL');
 
     const [applicationQuestionDataWithEvaluation, setApplicationQuestionDataWithEvaluation] = useState<EvaluationGroup | null>(null);
     const [filteredApplicationQuestionDataWithEvaluation, setFilteredApplicationQuestionDataWithEvaluation] = useState<EvaluationGroupData[] | null>(null);
@@ -115,7 +115,7 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
                 application: application
             };
 
-            setFilterType('PENDING')
+            setFilterType('ALL')
 
             setApplicationQuestionDataWithEvaluation(evaluationGroup);
         }
@@ -125,7 +125,7 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
         return (
             <>
                 {
-                    filteredApplicationQuestionDataWithEvaluation && filteredApplicationQuestionDataWithEvaluation.length > 0 &&
+                    filteredApplicationQuestionDataWithEvaluation  &&
 
                     <div>
                         <Label htmlFor="examType">Sınav Durumu Seçin:</Label>
@@ -139,20 +139,23 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
                             <SelectContent>
                                 <SelectGroup>
 
+                                    <SelectItem value={'ALL'}>
+                                        TÜMÜ
+                                    </SelectItem>
                                     <SelectItem value={'NOT_STARTED'}>
-                                        NOT_STARTED
+                                        BAŞLANMAMIŞ
                                     </SelectItem>
                                     <SelectItem value={'EVALUATED'}>
-                                        EVALUATED
+                                        DEĞERLENDİRİLMİŞ
                                     </SelectItem>
                                     <SelectItem value={'PENDING'}>
-                                        PENDING
+                                        BEKLEMEDE
                                     </SelectItem>
                                     <SelectItem value={'CANCELLED'}>
-                                        CANCELLED
+                                        İPTAL EDİLMİŞ
                                     </SelectItem>
                                     <SelectItem value={'FINISHED'}>
-                                        FINISHED
+                                        BİTMİŞ
                                     </SelectItem>
                                 </SelectGroup>
                             </SelectContent>

@@ -55,7 +55,7 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
                                                                      questionId,
                                                                      showCorrectAnswer = false
                                                                  }) => {
-    const [placements, setPlacements] = useState<DragDropPlacements>(initialAnswer);
+    const [placements, setPlacements] = useState<DragDropPlacements>(initialAnswer || {});
     const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
     const [dragOverZoneId, setDragOverZoneId] = useState<string | null>(null);
     const [availableItems, setAvailableItems] = useState<DraggableItem[]>([]);
@@ -66,7 +66,7 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
     const stableInitialAnswer = useMemo(() => initialAnswer, [JSON.stringify(initialAnswer)]);
 
     useEffect(() => {
-        setPlacements(stableInitialAnswer);
+        setPlacements(stableInitialAnswer || {});
     }, [stableInitialAnswer]);
 
     useEffect(() => {
@@ -102,7 +102,8 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
     };
 
     const getItemLocation = (itemId: string): { zoneId: string | null; index: number } => {
-        for (const [zoneId, items] of Object.entries(placements)) {
+        const currentPlacements = placements || {};
+        for (const [zoneId, items] of Object.entries(currentPlacements)) {
             const index = items.indexOf(itemId);
             if (index !== -1) {
                 return { zoneId, index };
@@ -139,7 +140,8 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
 
         // Check if zone has max items limit
         if (!template.allowMultipleItemsPerZone && zone?.maxItems) {
-            const currentItems = placements[targetZoneId] || [];
+            const currentPlacements = placements || {};
+            const currentItems = currentPlacements[targetZoneId] || [];
             if (currentItems.length >= zone.maxItems && !currentItems.includes(draggedItemId)) {
                 setDraggedItemId(null);
                 setDragOverZoneId(null);
@@ -147,12 +149,13 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
             }
         }
 
-        const newPlacements = { ...placements };
+        const currentPlacements = placements || {};
+        const newPlacements = { ...currentPlacements };
 
         // Remove item from its current location
         const currentLocation = getItemLocation(draggedItemId);
         if (currentLocation.zoneId) {
-            newPlacements[currentLocation.zoneId] = newPlacements[currentLocation.zoneId].filter(
+            newPlacements[currentLocation.zoneId] = (newPlacements[currentLocation.zoneId] || []).filter(
                 id => id !== draggedItemId
             );
         }
@@ -193,8 +196,9 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
     const removeItemFromZone = (itemId: string, zoneId: string): void => {
         if (isSubmitted && !isPreview) return;
 
-        const newPlacements = { ...placements };
-        newPlacements[zoneId] = newPlacements[zoneId].filter(id => id !== itemId);
+        const currentPlacements = placements || {};
+        const newPlacements = { ...currentPlacements };
+        newPlacements[zoneId] = (newPlacements[zoneId] || []).filter(id => id !== itemId);
 
         setPlacements(newPlacements);
 
@@ -259,7 +263,8 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
         const baseStyle = "min-h-[120px] p-4 border-2 rounded-lg transition-all duration-200 ";
 
         if (isSubmitted && showCorrectAnswer) {
-            const zoneItems = placements[zoneId] || [];
+            const currentPlacements = placements || {};
+            const zoneItems = currentPlacements[zoneId] || [];
             const allCorrect = zoneItems.every(itemId => {
                 const item = getItemById(itemId);
                 return item?.correctZoneId === zoneId;
@@ -515,7 +520,7 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
 
                                 {/* Items in this zone */}
                                 <div className="space-y-2">
-                                    {(placements[zone.id] || []).map(itemId => {
+                                    {((placements || {})[zone.id] || []).map(itemId => {
                                         const item = getItemById(itemId);
                                         if (!item) return null;
 
@@ -580,7 +585,10 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
                                 </div>
 
                                 {/* Empty state */}
-                                {(!placements[zone.id] || placements[zone.id].length === 0) && (
+                                {(() => {
+                                    const currentPlacements = placements || {};
+                                    return (!currentPlacements[zone.id] || currentPlacements[zone.id].length === 0);
+                                })() && (
                                     <div className="text-center text-gray-400 py-8 border-2 border-dashed border-gray-300 rounded">
                                         <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />

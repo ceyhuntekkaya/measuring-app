@@ -12,11 +12,14 @@ class QuestionService {
     private readonly baseUrl = '/questions';
 
     async createQuestion(createRequest: CreateQuestionRequest): Promise<ApiResponse<QuestionDto>> {
+        console.log(JSON.stringify(createRequest));
         const response = await api.post<ApiResponse<QuestionDto>>(`${this.baseUrl}`, createRequest);
         return response.data;
     }
 
     async updateQuestion(id: string, updateRequest: CreateQuestionRequest): Promise<ApiResponse<QuestionDto>> {
+
+        console.log(JSON.stringify(updateRequest));
         const response = await api.put<ApiResponse<QuestionDto>>(`${this.baseUrl}/${id}`, updateRequest);
         return response.data;
     }

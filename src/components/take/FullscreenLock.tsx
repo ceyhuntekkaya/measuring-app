@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 
 // Tarayıcı API tipleri için interface'ler
 interface DocumentWithFullscreen extends Document {
@@ -18,9 +18,35 @@ const FullscreenLock: React.FC<{ children: React.ReactNode }> = ({ children }) =
     const [showWarning, setShowWarning] = useState(true); // Başlangıçta uyarı göster
     const containerRef = useRef<HTMLDivElement>(null);
     const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const lastWindowSizeRef = useRef({ width: window.innerWidth, height: window.innerHeight });
 
-    // Tam ekran durumunu kontrol et
-    const checkFullscreen = () => {
+    // Developer Tools açık mı kontrol et (window boyutu değişikliği ile)
+    const checkDevTools = (): boolean => {
+        const currentWidth = window.innerWidth;
+        const currentHeight = window.innerHeight;
+        const lastSize = lastWindowSizeRef.current;
+        
+        // Eğer window boyutu beklenmedik şekilde küçüldüyse (devtools açıldığında olabilir)
+        const widthDiff = Math.abs(currentWidth - lastSize.width);
+        const heightDiff = Math.abs(currentHeight - lastSize.height);
+        
+        // Önemli bir boyut değişikliği varsa (devtools açılmış olabilir)
+        if (widthDiff > 50 || heightDiff > 50) {
+            lastWindowSizeRef.current = { width: currentWidth, height: currentHeight };
+        }
+        
+        // DevTools açık mı kontrol et (console.log ile test edilebilir)
+        // DevTools açıldığında genelde window.outerHeight - window.innerHeight farkı artar
+        const heightDiff2 = window.outerHeight - window.innerHeight;
+        const widthDiff2 = window.outerWidth - window.innerWidth;
+        
+        // Eğer outer ve inner boyutlar arasında büyük fark varsa devtools açık olabilir
+        return heightDiff2 > 100 || widthDiff2 > 100;
+    };
+
+    // Tüm kontrolleri yap ve uyarı durumunu belirle
+    const checkAllConditions = useCallback(() => {
         const doc = document as DocumentWithFullscreen;
         const isFull = !!(
             doc.fullscreenElement ||
@@ -30,7 +56,13 @@ const FullscreenLock: React.FC<{ children: React.ReactNode }> = ({ children }) =
         );
         setIsFullscreen(isFull);
 
-        if (!isFull) {
+        // Tüm kontrol koşulları
+        const isPageHidden = document.hidden;
+        const hasFocus = document.hasFocus();
+        const devToolsOpen = checkDevTools();
+
+        // Eğer fullscreen değilse veya herhangi bir sorun varsa uyarı göster
+        if (!isFull || isPageHidden || !hasFocus || devToolsOpen) {
             setShowWarning(true);
         } else {
             setShowWarning(false);
@@ -38,6 +70,11 @@ const FullscreenLock: React.FC<{ children: React.ReactNode }> = ({ children }) =
                 clearTimeout(warningTimeoutRef.current);
             }
         }
+    }, []);
+
+    // Tam ekran durumunu kontrol et (eski fonksiyon, geriye dönük uyumluluk için)
+    const checkFullscreen = () => {
+        checkAllConditions();
     };
 
     // Tam ekran isteği
@@ -78,6 +115,9 @@ const FullscreenLock: React.FC<{ children: React.ReactNode }> = ({ children }) =
     };
 
     useEffect(() => {
+        // İlk kontrol
+        checkAllConditions();
+
         // Fullscreen değişikliklerini dinle
         const events = [
             'fullscreenchange',
@@ -87,31 +127,58 @@ const FullscreenLock: React.FC<{ children: React.ReactNode }> = ({ children }) =
         ] as const;
 
         events.forEach(event => {
-            document.addEventListener(event, checkFullscreen);
+            document.addEventListener(event, checkAllConditions);
         });
 
         // Sayfa görünürlüğünü kontrol et (başka sekmeye geçildiğinde)
         const handleVisibilityChange = () => {
-            if (document.hidden) {
-                setShowWarning(true);
-            } else {
-                checkFullscreen();
-            }
+            checkAllConditions();
         };
 
         document.addEventListener('visibilitychange', handleVisibilityChange);
 
+        // Pencere odak değişikliklerini dinle
+        const handleWindowBlur = () => {
+            setShowWarning(true);
+        };
+
+        const handleWindowFocus = () => {
+            checkAllConditions();
+        };
+
+        window.addEventListener('blur', handleWindowBlur);
+        window.addEventListener('focus', handleWindowFocus);
+
+        // Window resize event'i (devtools açıldığında veya pencere boyutu değiştiğinde)
+        const handleResize = () => {
+            lastWindowSizeRef.current = { width: window.innerWidth, height: window.innerHeight };
+            checkAllConditions();
+        };
+
+        window.addEventListener('resize', handleResize);
+
+        // Periyodik kontrol (her 500ms'de bir)
+        checkIntervalRef.current = setInterval(() => {
+            checkAllConditions();
+        }, 500);
+
         // Cleanup
         return () => {
             events.forEach(event => {
-                document.removeEventListener(event, checkFullscreen);
+                document.removeEventListener(event, checkAllConditions);
             });
             document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('blur', handleWindowBlur);
+            window.removeEventListener('focus', handleWindowFocus);
+            window.removeEventListener('resize', handleResize);
             if (warningTimeoutRef.current) {
                 clearTimeout(warningTimeoutRef.current);
             }
+            if (checkIntervalRef.current) {
+                clearInterval(checkIntervalRef.current);
+            }
         };
-    }, []);
+    }, [checkAllConditions]);
 
     return (
         <div ref={containerRef} className="relative w-screen h-screen bg-gray-900">

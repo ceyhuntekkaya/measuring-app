@@ -248,7 +248,7 @@ export default function CandidatePage() {
             render: (value, record) => (
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
-                    onClick={() => router.push(`/admin/candidates/${record.id}`)}
+
                 >
                     {
                         (record as CandidateDto).application?.code ?

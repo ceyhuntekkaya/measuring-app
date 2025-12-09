@@ -82,16 +82,15 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
         const updatedData = { ...formData, [field]: newValue };
         setFormData(updatedData);
 
-        if (validateForm()) {
-            onChange({
-                question: updatedData.question,
-                options: updatedData.options,
-                maxCharacters: updatedData.maxCharacters,
-                minCharacters: updatedData.minCharacters,
-                rubric: updatedData.rubric,
-                requiresManualGrading: updatedData.requiresManualGrading
-            });
-        }
+        // Her zaman onChange'i çağır, validation sadece submit için
+        onChange({
+            question: updatedData.question,
+            options: updatedData.options,
+            maxCharacters: updatedData.maxCharacters,
+            minCharacters: updatedData.minCharacters,
+            rubric: updatedData.rubric,
+            requiresManualGrading: updatedData.requiresManualGrading
+        });
     };
 
     const updateOptions = <K extends keyof ShortAnswerOptions>(

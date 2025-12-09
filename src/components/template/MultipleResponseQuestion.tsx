@@ -31,7 +31,7 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
                                                                                questionId,
                                                                                showCorrectAnswer = false
                                                                            }) => {
-    const [selectedOptions, setSelectedOptions] = useState<string[]>(initialAnswer);
+    const [selectedOptions, setSelectedOptions] = useState<string[]>(initialAnswer || []);
     const [shuffledOptions, setShuffledOptions] = useState<ResponseOption[]>([]);
     const [optionResults, setOptionResults] = useState<OptionResult[]>([]);
 
@@ -42,7 +42,7 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
     const stableInitialAnswer = useMemo(() => initialAnswer, [JSON.stringify(initialAnswer)]);
 
     useEffect(() => {
-        setSelectedOptions(stableInitialAnswer);
+        setSelectedOptions(stableInitialAnswer || []);
     }, [stableInitialAnswer]);
 
     useEffect(() => {
