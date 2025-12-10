@@ -41,6 +41,8 @@ import ImageResponseQuestion from "@/components/template/ImageResponseQuestion";
 import {useExamApplicationContext} from "@/contexts/ExamApplicationContext";
 import {useExamResult} from "@/hooks/exam/use-exam-result";
 import {UploadedFileDto} from "@/types/exam/miscDtos";
+import {useApplication} from "@/hooks/exam/use-application";
+import {ESessionState} from "@/types/exam/enum";
 import siteConfig from "@/config/config.json";
 
 const API_URL = siteConfig.api.invokeUrl + "/upload/serve";
@@ -49,7 +51,7 @@ interface AudioPlayerWithProgressProps {
     material: QuestionGroupHeaderDto;
 }
 
-const AudioPlayerWithProgress: React.FC<AudioPlayerWithProgressProps> = ({ material }) => {
+const AudioPlayerWithProgress: React.FC<AudioPlayerWithProgressProps> = ({material}) => {
     const [progress, setProgress] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
     const [playCount, setPlayCount] = useState(0);
@@ -67,7 +69,7 @@ const AudioPlayerWithProgress: React.FC<AudioPlayerWithProgressProps> = ({ mater
         if (!audioReady && !isDisabled) {
             setProgress(0);
             setShowProgress(true);
-            
+
             progressIntervalRef.current = setInterval(() => {
                 setProgress(prev => {
                     if (prev >= 100) {
@@ -138,11 +140,13 @@ const AudioPlayerWithProgress: React.FC<AudioPlayerWithProgressProps> = ({ mater
 
     return (
         <div className="mb-4">
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+            <div
+                className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
                 <div className="flex items-center gap-4 mb-4">
                     <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center shadow-md">
                         <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z" />
+                            <path
+                                d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z"/>
                         </svg>
                     </div>
                     <div className="flex-1">
@@ -150,24 +154,23 @@ const AudioPlayerWithProgress: React.FC<AudioPlayerWithProgressProps> = ({ mater
                             Ses Dosyası
                         </h4>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {isDisabled 
+                            {isDisabled
                                 ? `Ses ${MAX_PLAYS} kez dinlendi. Artık dinlenemez.`
-                                : isPlaying 
+                                : isPlaying
                                     ? `Dinleniyor... (${playCount + 1}/${MAX_PLAYS})`
-                                    : showProgress 
+                                    : showProgress
                                         ? 'Hazırlanıyor...'
                                         : 'Dinleniyor...'}
                         </p>
                     </div>
                 </div>
 
-                {/* Progress Bar */}
                 {showProgress && (
                     <div className="mb-4">
                         <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                             <div
                                 className="h-full bg-blue-600 transition-all duration-300 ease-linear"
-                                style={{ width: `${progress}%` }}
+                                style={{width: `${progress}%`}}
                             />
                         </div>
                         <p className="text-xs text-gray-500 mt-2 text-center">
@@ -176,7 +179,6 @@ const AudioPlayerWithProgress: React.FC<AudioPlayerWithProgressProps> = ({ mater
                     </div>
                 )}
 
-                {/* Audio Player - Controls yok, sadece dinleme */}
                 <audio
                     ref={audioRef}
                     className="w-full h-10 outline-none"
@@ -193,11 +195,11 @@ const AudioPlayerWithProgress: React.FC<AudioPlayerWithProgressProps> = ({ mater
                     Your browser does not support the audio file.
                 </audio>
 
-                {/* Dinleme durumu gösterimi */}
                 {!showProgress && !isDisabled && (
                     <div className="mt-4 text-center">
                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 rounded-full">
-                            <div className={`w-3 h-3 rounded-full ${isPlaying ? 'bg-red-500 animate-pulse' : 'bg-gray-400'}`}></div>
+                            <div
+                                className={`w-3 h-3 rounded-full ${isPlaying ? 'bg-red-500 animate-pulse' : 'bg-gray-400'}`}></div>
                             <span className="text-sm text-blue-700 font-medium">
                                 {isPlaying ? 'Dinleniyor...' : 'Bekleniyor...'}
                             </span>
@@ -205,7 +207,6 @@ const AudioPlayerWithProgress: React.FC<AudioPlayerWithProgressProps> = ({ mater
                     </div>
                 )}
 
-                {/* 3 kez dinlendikten sonra mesaj */}
                 {isDisabled && (
                     <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-center">
                         <p className="text-sm text-yellow-800 font-medium">
@@ -234,6 +235,7 @@ export default function ExamApplicationScreen({
     const [answeredQuestions, setAnsweredQuestions] = useState<Set<string>>(new Set());
     const {application, evaluations} = useExamApplicationContext();
     const {saveAnswer} = useExamResult();
+    const {setApplicationStartedAt, updateApplicationSessionState} = useApplication();
 
     const totalGroups = questionGroups.length;
     const progressPercentage = (completedGroups.size / totalGroups) * 100;
@@ -266,11 +268,26 @@ export default function ExamApplicationScreen({
         getQuestionGroupById,
     } = useQuestionGroup();
 
+    // Sınav başladığında API çağrıları (sadece bir kez çalışsın)
+    const hasInitializedRef = useRef(false);
+    useEffect(() => {
+        if (application?.id && !hasInitializedRef.current) {
+            hasInitializedRef.current = true;
+            
+            // startedAt null ise setApplicationStartedAt çağır
+            if (!application.startedAt) {
+                setApplicationStartedAt(application.id);
+            }
+            
+            // Sınav durumunu IN_PROGRESS yap
+            updateApplicationSessionState(application.id, ESessionState.IN_PROGRESS);
+        }
+    }, [application?.id, application?.startedAt, setApplicationStartedAt, updateApplicationSessionState]);
+
     useEffect(() => {
         if (questionGroups && questionGroups.length > 0) {
             getQuestionGroupById(questionGroups[currentGroupIndex].id);
             getQuestionsByGroup(questionGroups[currentGroupIndex].id);
-            // Yeni grup seçildiğinde soru index'ini sıfırla
             setCurrentQuestionIndex(0);
             setAnsweredQuestions(new Set());
         }
@@ -278,7 +295,6 @@ export default function ExamApplicationScreen({
 
 
     useEffect(() => {
-        // alert(questionGroups.length)
         if (questionGroups && questionGroups.length > 0) {
             getQuestionGroupById(questionGroups[0].id);
             getQuestionsByGroup(questionGroups[0].id);
@@ -287,14 +303,12 @@ export default function ExamApplicationScreen({
         }
     }, []);
 
-    // questionsByGroup değiştiğinde index'i sıfırla
     useEffect(() => {
         setCurrentQuestionIndex(0);
         setAnsweredQuestions(new Set());
     }, [questionsByGroup?.length]);
 
 
-    // Section adında KARŞILIKLI KONUŞMA geçiyor mu kontrol et
     const isConversationSection = (): boolean => {
         const sectionName = selectedQuestionGroup?.examSection?.name?.toUpperCase() || '';
         return sectionName.includes('KARŞILIKLI') && sectionName.includes('KONUŞMA');
@@ -303,14 +317,13 @@ export default function ExamApplicationScreen({
     const onAnswerChange = (questionId: string, template: QuestionTemplateType, selectedOption: string, type: EQuestionType, mediaType: EMediaType, isEmptyAnswer: boolean) => {
 
         const evaluation = evaluations?.find(e => e.questionId === questionId);
-        // Eğer evaluation null ise, gelen questionId parametresini kullan (backend yeni evaluation oluşturacak)
         const finalQuestionId = evaluation?.questionId || questionId;
-        
+
         if (!finalQuestionId) {
             console.error('onAnswerChange: questionId is required but was not provided');
             return;
         }
-        
+
         const answerData: QuestionAnswerRequest = {
             applicationId: application?.id || '',
             questionId: finalQuestionId,
@@ -322,19 +335,16 @@ export default function ExamApplicationScreen({
         }
       saveAnswer(answerData);
 
-      // KARŞILIKLI KONUŞMA section'ında ve soru cevaplandıysa (boş değilse) bir sonraki soruya geç
-      if (isConversationSection() && !isEmptyAnswer && !answeredQuestions.has(questionId)) {
-          setAnsweredQuestions(prev => new Set([...prev, questionId]));
-          // Bir sonraki soruya geç
-          if (questionsByGroup && currentQuestionIndex < questionsByGroup.length - 1) {
-              setTimeout(() => {
-                  setCurrentQuestionIndex(prev => prev + 1);
-              }, 500); // Kısa bir gecikme ile geçiş yap
-          }
-      }
+        if (isConversationSection() && !isEmptyAnswer && !answeredQuestions.has(questionId)) {
+            setAnsweredQuestions(prev => new Set([...prev, questionId]));
+            if (questionsByGroup && currentQuestionIndex < questionsByGroup.length - 1) {
+                setTimeout(() => {
+                    setCurrentQuestionIndex(prev => prev + 1);
+                }, 500);
+            }
+        }
     };
 
-    // Evaluation'dan initialAnswer'ı parse et
     const getInitialAnswer = (questionId: string, type: EQuestionType): unknown => {
         const evaluation = evaluations?.find(e => e.questionId === questionId);
         if (!evaluation || !evaluation.answer || typeof evaluation.answer !== 'string') {
@@ -344,60 +354,46 @@ export default function ExamApplicationScreen({
         const answerString = evaluation.answer;
 
         try {
-            // TRUE_FALSE için boolean'a çevir
             if (type === 'TRUE_FALSE') {
                 if (answerString === 'true' || answerString === 'TRUE') return true;
                 if (answerString === 'false' || answerString === 'FALSE') return false;
                 return null;
             }
 
-            // JSON string ise parse et
             if (answerString.startsWith('{') || answerString.startsWith('[')) {
                 const parsed = JSON.parse(answerString);
-                
-                // MULTIPLE_CHOICE için JSON objesi ise optionId'yi çıkar
+
                 if (type === 'MULTIPLE_CHOICE') {
-                    // Eğer parsed bir obje ise ve optionId property'si varsa
                     if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-                        // Eğer optionId property'si varsa onu döndür
                         if ('optionId' in parsed && typeof parsed.optionId === 'string') {
                             return parsed.optionId;
                         }
-                        // Eğer direkt string değer varsa (örneğin {"value": "optionId"})
                         const values = Object.values(parsed);
                         if (values.length === 1 && typeof values[0] === 'string') {
                             return values[0];
                         }
-                        // Eğer obje ama optionId yoksa, null döndür
                         return null;
                     }
-                    // Eğer parsed bir string ise (JSON içinde string)
                     if (typeof parsed === 'string') {
                         return parsed;
                     }
-                    // Diğer durumlarda null
                     return null;
                 }
-                
-                // ESSAY için EssayAnswerData formatına çevir
+
                 if (type === 'ESSAY' && typeof parsed === 'string') {
                     const text = parsed;
-                    return { 
+                    return {
                         text: text,
                         wordCount: text.trim().split(/\s+/).filter(word => word.length > 0).length,
                         characterCount: text.replace(/\s/g, '').length
                     };
                 }
-                // MULTIPLE_RESPONSE için JSON array formatı
                 if (type === 'MULTIPLE_RESPONSE' && Array.isArray(parsed)) {
-                    // Array içindeki tüm elemanları string'e çevir
                     const optionsArray = parsed.map(item => String(item)).filter(item => item.length > 0);
                     return optionsArray;
                 }
-                
-                // FILL_IN_THE_BLANKS için parse işlemi
+
                 if (type === 'FILL_IN_THE_BLANKS') {
-                    // Eğer array formatında ise (SingleBlankAnswer[])
                     if (Array.isArray(parsed)) {
                         const blankAnswers: { [blankId: string]: string } = {};
                         parsed.forEach((item: { blankId?: string; answer?: string }) => {
@@ -407,9 +403,7 @@ export default function ExamApplicationScreen({
                         });
                         return blankAnswers;
                     }
-                    // Eğer obje formatında ise (zaten doğru format: {blankId: answer})
                     if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-                        // Objenin tüm key'leri blankId formatında mı kontrol et
                         const blankAnswers: { [blankId: string]: string } = {};
                         Object.entries(parsed).forEach(([key, value]) => {
                             if (typeof value === 'string') {
@@ -423,30 +417,24 @@ export default function ExamApplicationScreen({
                 return parsed;
             }
 
-            // MULTIPLE_CHOICE için string (option ID) döndür (JSON değilse)
             if (type === 'MULTIPLE_CHOICE') {
-                // Boş string ise null döndür
                 if (!answerString || answerString.trim() === '') {
                     return null;
                 }
                 return answerString;
             }
-            // ESSAY için string'i EssayAnswerData formatına çevir
             if (type === 'ESSAY') {
                 const text = answerString;
-                return { 
+                return {
                     text: text,
                     wordCount: text.trim().split(/\s+/).filter(word => word.length > 0).length,
                     characterCount: text.replace(/\s/g, '').length
                 };
             }
-            // FILL_IN_THE_BLANKS için string ise (JSON string değilse), null döndür
             if (type === 'FILL_IN_THE_BLANKS') {
                 return null;
             }
-            // AUDIO_RESPONSE veya VIDEO_RESPONSE veya IMAGE_RESPONSE için string path ise AudioAnswerData/VideoAnswerData/ImageAnswerData formatına çevir
             if (type === 'AUDIO_RESPONSE' || type === 'VIDEO_RESPONSE' || type === 'IMAGE_RESPONSE') {
-                // Eğer string path ise, uploadedFileData ile birlikte döndür
                 if (answerString && answerString.trim() !== '') {
                     return {
                         uploadedFileData: {
@@ -456,34 +444,27 @@ export default function ExamApplicationScreen({
                 }
                 return null;
             }
-            // MULTIPLE_RESPONSE için virgülle ayrılmış string'i array'e çevir
             if (type === 'MULTIPLE_RESPONSE') {
-                // Boş string ise boş array döndür
                 if (!answerString || answerString.trim() === '') {
                     return [];
                 }
-                // Virgülle ayrılmış string'i array'e çevir ve trim et
                 const optionsArray = answerString.split(',').map(option => option.trim()).filter(option => option.length > 0);
                 return optionsArray;
             }
-            // String ise direkt döndür
             return answerString;
         } catch (e) {
             console.log('Parse error:', e);
-            // Parse edilemezse
             if (type === 'ESSAY') {
                 const text = answerString;
-                return { 
+                return {
                     text: text,
                     wordCount: text.trim().split(/\s+/).filter(word => word.length > 0).length,
                     characterCount: text.replace(/\s/g, '').length
                 };
             }
-            // MULTIPLE_CHOICE için parse hatası olsa bile string döndür
             if (type === 'MULTIPLE_CHOICE') {
                 return answerString || null;
             }
-            // MULTIPLE_RESPONSE için parse hatası olsa bile virgülle ayrılmış string'i array'e çevir
             if (type === 'MULTIPLE_RESPONSE') {
                 if (!answerString || answerString.trim() === '') {
                     return [];
@@ -495,14 +476,6 @@ export default function ExamApplicationScreen({
         }
     };
 
-    // Evaluation'dan cevabı string olarak al (gösterme için)
-    const getAnswerForDisplay = (questionId: string): string => {
-        const evaluation = evaluations?.find(e => e.questionId === questionId);
-        if (!evaluation || !evaluation.answer) {
-            return '';
-        }
-        return evaluation.answer;
-    };
 
     const renderTemplateSpecificForm = (questionId: string, type: EQuestionType, template: QuestionTemplateType) => {
         const initialAnswer = getInitialAnswer(questionId, type);
@@ -511,86 +484,110 @@ export default function ExamApplicationScreen({
             case 'MULTIPLE_CHOICE':
                 return <MultipleChoiceQuestion key={questionId}
                                                template={template as MultipleChoiceTemplateDto}
-                                               onAnswerChange={onAnswerChange} 
+                                               onAnswerChange={onAnswerChange}
                                                questionId={questionId}
                                                initialAnswer={initialAnswer as string | null}/>;
             case 'AUDIO_RESPONSE':
-                return <AudioResponseQuestion key={questionId} 
-                                              template={template as AudioResponseTemplateDto} 
-                                              onAnswerChange={onAnswerChange} 
+                return <AudioResponseQuestion key={questionId}
+                                              template={template as AudioResponseTemplateDto}
+                                              onAnswerChange={onAnswerChange}
                                               questionId={questionId}
-                                              initialAnswer={(initialAnswer as unknown) as { audioUrl?: string; audioBlob?: Blob; duration?: number; recordedAt?: string; fileName?: string; uploadedFileData?: UploadedFileDto } | null}/>;
+                                              initialAnswer={(initialAnswer as unknown) as {
+                                                  audioUrl?: string;
+                                                  audioBlob?: Blob;
+                                                  duration?: number;
+                                                  recordedAt?: string;
+                                                  fileName?: string;
+                                                  uploadedFileData?: UploadedFileDto
+                                              } | null}/>;
             case 'TRUE_FALSE':
                 return <TrueFalseQuestion key={questionId}
-                                          template={template as TrueFalseTemplateDto} 
-                                          onAnswerChange={onAnswerChange} 
+                                          template={template as TrueFalseTemplateDto}
+                                          onAnswerChange={onAnswerChange}
                                           questionId={questionId}
                                           initialAnswer={initialAnswer as boolean | null}/>;
             case 'FILL_IN_THE_BLANKS':
                 return <FillInTheBlanksQuestion key={questionId}
-                                                template={template as FillInTheBlanksTemplateDto} 
-                                                onAnswerChange={onAnswerChange} 
+                                                template={template as FillInTheBlanksTemplateDto}
+                                                onAnswerChange={onAnswerChange}
                                                 questionId={questionId}
-                                                initialAnswer={initialAnswer as { [blankId: string]: string } | undefined}/>;
+                                                initialAnswer={initialAnswer as {
+                                                    [blankId: string]: string
+                                                } | undefined}/>;
             case 'SHORT_ANSWER':
                 return <ShortAnswerQuestion key={questionId}
-                                            template={template as ShortAnswerTemplateDto} 
-                                            onAnswerChange={onAnswerChange} 
+                                            template={template as ShortAnswerTemplateDto}
+                                            onAnswerChange={onAnswerChange}
                                             questionId={questionId}
                                             initialAnswer={initialAnswer as string || ''}/>;
             case 'ESSAY':
                 return <EssayQuestion key={questionId}
-                                      template={template as EssayTemplateDto} 
-                                      onAnswerChange={onAnswerChange} 
+                                      template={template as EssayTemplateDto}
+                                      onAnswerChange={onAnswerChange}
                                       questionId={questionId}
-                                      initialAnswer={initialAnswer as { text: string; wordCount: number; characterCount: number } | null}/>;
+                                      initialAnswer={initialAnswer as {
+                                          text: string;
+                                          wordCount: number;
+                                          characterCount: number
+                                      } | null}/>;
             case 'VIDEO_RESPONSE':
                 return <VideoResponseQuestion key={questionId}
-                                              template={template as VideoResponseTemplateDto} 
-                                              onAnswerChange={onAnswerChange} 
+                                              template={template as VideoResponseTemplateDto}
+                                              onAnswerChange={onAnswerChange}
                                               questionId={questionId}
-                                              initialAnswer={(initialAnswer as unknown) as { videoUrl?: string; videoBlob?: Blob; duration?: number; recordedAt?: string; fileName?: string; uploadedFileData?: UploadedFileDto } | null}/>;
-
-
-
+                                              initialAnswer={(initialAnswer as unknown) as {
+                                                  videoUrl?: string;
+                                                  videoBlob?: Blob;
+                                                  duration?: number;
+                                                  recordedAt?: string;
+                                                  fileName?: string;
+                                                  uploadedFileData?: UploadedFileDto
+                                              } | null}/>;
 
 
             case 'MATCHING':
                 return <MatchingQuestion key={questionId}
-                                         template={template as MatchingTemplateDto} 
-                                         onAnswerChange={onAnswerChange} 
+                                         template={template as MatchingTemplateDto}
+                                         onAnswerChange={onAnswerChange}
                                          questionId={questionId}
                                          initialAnswer={initialAnswer as { [leftId: string]: string } | undefined}/>;
             case 'ORDERING':
                 return <OrderingQuestion key={questionId}
-                                         template={template as OrderingTemplateDto} 
-                                         onAnswerChange={onAnswerChange} 
+                                         template={template as OrderingTemplateDto}
+                                         onAnswerChange={onAnswerChange}
                                          questionId={questionId}
                                          initialAnswer={initialAnswer as string[] | null | undefined}/>;
             case 'MULTIPLE_RESPONSE':
                 return <MultipleResponseQuestion key={questionId}
-                                                template={template as MultipleResponseTemplateDto} 
-                                                onAnswerChange={onAnswerChange} 
-                                                questionId={questionId}
-                                                initialAnswer={initialAnswer as string[]}/>;
+                                                 template={template as MultipleResponseTemplateDto}
+                                                 onAnswerChange={onAnswerChange}
+                                                 questionId={questionId}
+                                                 initialAnswer={initialAnswer as string[]}/>;
             case 'HOT_SPOT':
                 return <HotSpotQuestion key={questionId}
-                                       template={template as HotSpotTemplateDto} 
-                                       onAnswerChange={onAnswerChange} 
-                                       questionId={questionId}
-                                       initialAnswer={initialAnswer as string[]}/>;
+                                        template={template as HotSpotTemplateDto}
+                                        onAnswerChange={onAnswerChange}
+                                        questionId={questionId}
+                                        initialAnswer={initialAnswer as string[]}/>;
             case 'DRAG_AND_DROP':
                 return <DragAndDropQuestion key={questionId}
-                                            template={template as DragAndDropTemplateDto} 
-                                            onAnswerChange={onAnswerChange} 
+                                            template={template as DragAndDropTemplateDto}
+                                            onAnswerChange={onAnswerChange}
                                             questionId={questionId}
-                                            initialAnswer={initialAnswer as { [zoneId: string]: string[] } | undefined}/>;
+                                            initialAnswer={initialAnswer as {
+                                                [zoneId: string]: string[]
+                                            } | undefined}/>;
             case 'IMAGE_RESPONSE':
                 return <ImageResponseQuestion key={questionId}
-                                              template={template as ImageResponseTemplateDto} 
-                                              onAnswerChange={onAnswerChange} 
+                                              template={template as ImageResponseTemplateDto}
+                                              onAnswerChange={onAnswerChange}
                                               questionId={questionId}
-                                              initialAnswer={(initialAnswer as unknown) as { imageUrl?: string; imageBlob?: Blob; fileName?: string; uploadedFileData?: UploadedFileDto } | null}/>;
+                                              initialAnswer={(initialAnswer as unknown) as {
+                                                  imageUrl?: string;
+                                                  imageBlob?: Blob;
+                                                  fileName?: string;
+                                                  uploadedFileData?: UploadedFileDto
+                                              } | null}/>;
             default:
                 return (
                     <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
@@ -603,44 +600,16 @@ export default function ExamApplicationScreen({
     };
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     const renderContent = (material: QuestionGroupHeaderDto) => {
 
         switch (material.mediaType) {
             case "VIDEO":
-
-
-
-                // Normal video dosyaları için mevcut kod
                 return (
                     <div className="ratio ratio-16x9 mb-4">
                         <video
                             className="w-100"
                             controls
-                            src={ `${API_URL}/${material.content}`}
+                            src={`${API_URL}/${material.content}`}
                         >
                             Your browser does not support the video file.
                         </video>
@@ -648,15 +617,15 @@ export default function ExamApplicationScreen({
                 );
 
             case "AUDIO":
-                return <AudioPlayerWithProgress material={material} />;
+                return <AudioPlayerWithProgress material={material}/>;
 
             case "PDF":
                 return (
-                    <div className="mb-4 border border-4">
+                    <div className="mb-4 border-4">
                         <iframe
                             src={material.content || ""}
                             className="w-100"
-                            style={{ height: "600px" }}
+                            style={{height: "600px"}}
                             title={`${material.name || 'title'}`}
                         ></iframe>
                     </div>
@@ -667,7 +636,7 @@ export default function ExamApplicationScreen({
                     <div className="mb-4">
                         <a
 
-                            href={ `${API_URL}/${material.content}`}
+                            href={`${API_URL}/${material.content}`}
                             className="btn btn-primary"
                             target="_blank"
                             rel="noopener noreferrer"
@@ -683,14 +652,13 @@ export default function ExamApplicationScreen({
                 return (
                     <div className="mb-4 text-center">
                         <img
-                            src={ `${API_URL}/${material.content}`}
+                            src={`${API_URL}/${material.content}`}
                             alt={`${material.name || 'images'}`}
                             className="img-fluid"
-                            style={{ maxHeight: "500px" }}
+                            style={{maxHeight: "500px"}}
                         />
                     </div>
                 );
-
 
 
             case "TEXT":
@@ -706,7 +674,7 @@ export default function ExamApplicationScreen({
                     <div className="mb-4 card">
                         <div className="card-body">
                             {material.content ? (
-                                <div dangerouslySetInnerHTML={{ __html: processContent(material.content) }} />
+                                <div dangerouslySetInnerHTML={{__html: processContent(material.content)}}/>
                             ) : (
                                 <div className="alert alert-warning">
                                     <i className="bi bi-exclamation-triangle me-2"></i>
@@ -722,12 +690,9 @@ export default function ExamApplicationScreen({
     return (
         <div className="h-screen w-screen flex flex-col bg-gray-50"
              style={{height: "calc(100vh - 100px)"}}>
-            {/* Header */}
-            <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm">
+            <header className="flex-shrink-0 h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm">
                 <div className="flex items-center gap-4 flex-1">
                     <h1 className="text-lg font-semibold text-gray-800">Sınav</h1>
-
-                    {/* Progress Bar */}
                     <div className="flex-1 max-w-md">
                         <div className="flex items-center gap-2">
                             <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -743,7 +708,6 @@ export default function ExamApplicationScreen({
                     </div>
                 </div>
 
-                {/* Exit Button */}
                 <button
                     onClick={handleExitClick}
                     className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -752,45 +716,29 @@ export default function ExamApplicationScreen({
                 </button>
             </header>
 
-            {/* Main Content Area */}
             {
                 selectedQuestionGroup &&
                 <main className="flex-1 overflow-y-auto p-3">
                     <div className="mx-auto">
                         <div className="bg-white rounded-lg shadow-sm p-5 min-h-[500px]">
-                            {/* Buraya soru içeriği gelecek
-                             <h3 className="flex items-center gap-2">SORU GRUP: {currentGroupIndex + 1}</h3>
-                              */}
-
-                            {/* <h3 className="flex items-center gap-2">SORU GRUP: {currentGroupIndex + 1}</h3> */}
                             {
                                 questionsByGroup && selectedQuestionGroup?.headers?.map((header, key) => (
                                     <div key={key}>{renderContent(header)}</div>
-
-
                                 ))
                             }
-
-
                             {
                                 questionsByGroup && (isConversationSection() ? (
-                                    // KARŞILIKLI KONUŞMA: Tek tek soru göster
                                     currentQuestionIndex < questionsByGroup.length ? (
                                         <div className="p-4 border-b">
                                             <h3 className="flex items-center gap-2">
                                                 SORU: {currentQuestionIndex + 1} / {questionsByGroup.length}
-                                                {getAnswerForDisplay(questionsByGroup[currentQuestionIndex].id) && (
-                                                    <span className="text-sm text-gray-500 ml-2">
-                                                        | 22 GENIXO ESKİ CEVAP: {getAnswerForDisplay(questionsByGroup[currentQuestionIndex].id)}
-                                                    </span>
-                                                )}
                                             </h3>
                                             {
-                                                questionsByGroup[currentQuestionIndex].questionType && 
+                                                questionsByGroup[currentQuestionIndex].questionType &&
                                                 questionsByGroup[currentQuestionIndex].questionTemplate &&
                                                 renderTemplateSpecificForm(
-                                                    questionsByGroup[currentQuestionIndex].id, 
-                                                    questionsByGroup[currentQuestionIndex].questionType!, 
+                                                    questionsByGroup[currentQuestionIndex].id,
+                                                    questionsByGroup[currentQuestionIndex].questionType!,
                                                     questionsByGroup[currentQuestionIndex].questionTemplate!
                                                 )
                                             }
@@ -798,8 +746,10 @@ export default function ExamApplicationScreen({
                                     ) : (
                                         <div className="p-4 border-b text-center">
                                             <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                                                <svg className="w-16 h-16 text-green-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                <svg className="w-16 h-16 text-green-500 mx-auto mb-4" fill="none"
+                                                     stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                                 </svg>
                                                 <h3 className="text-xl font-semibold text-green-800 mb-2">
                                                     Tüm Sorular Tamamlandı!
@@ -811,16 +761,11 @@ export default function ExamApplicationScreen({
                                         </div>
                                     )
                                 ) : (
-                                    // Diğer section'lar: Tüm soruları alt alta göster
                                     questionsByGroup.map((question, key) => (
                                     <div key={key} className="p-4 border-b">
                                             <h3 className="flex items-center gap-2">
                                                 SORU: {key + 1}
-                                                {getAnswerForDisplay(question.id) && (
-                                                    <span className="text-sm text-gray-500 ml-2">
-                                                        | 44 GENIXO ESKİ CEVAP: {getAnswerForDisplay(question.id)}
-                                                    </span>
-                                                )}
+
                                             </h3>
                                         {
                                             question.questionType && question.questionTemplate &&
@@ -835,9 +780,7 @@ export default function ExamApplicationScreen({
                 </main>
             }
 
-
-            {/* Bottom Navigation */}
-            <footer className="bg-white border-t border-gray-200 p-4 shadow-lg">
+            <footer className="flex-shrink-0 bg-white border-t border-gray-200 p-4 shadow-lg mt-auto">
                 <div className="max-w-6xl mx-auto">
                     <div className="flex items-center justify-center gap-2 flex-wrap">
                         {questionGroups.map((_, index) => {
@@ -867,7 +810,6 @@ export default function ExamApplicationScreen({
                 </div>
             </footer>
 
-            {/* Exit Confirmation Modal */}
             {showExitModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">

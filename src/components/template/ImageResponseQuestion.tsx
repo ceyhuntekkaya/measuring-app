@@ -55,8 +55,37 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
     const API_URL = siteConfig.api.invokeUrl + "/upload/serve";
 
     useEffect(() => {
-        setImageAnswer(initialAnswer);
+        if (!initialAnswer) {
+            setImageAnswer(null);
+            return;
+        }
 
+        // Eğer initialAnswer'da uploadedFileData varsa, imageUrl'i API URL formatında oluştur
+        if (initialAnswer.uploadedFileData?.path) {
+            const path = initialAnswer.uploadedFileData.path;
+            const imageUrl = `${API_URL}/${path}`;
+            setImageAnswer({
+                ...initialAnswer,
+                imageUrl: imageUrl, // API URL formatında
+                uploadedFileData: initialAnswer.uploadedFileData
+            });
+        } else if (typeof initialAnswer === 'object' && 'path' in initialAnswer) {
+            // Eğer initialAnswer direkt path içeriyorsa
+            const answerWithPath = initialAnswer as { path?: string } & ImageAnswerData;
+            const path = answerWithPath.path || '';
+            if (path) {
+                setImageAnswer({
+                    ...answerWithPath,
+                    imageUrl: `${API_URL}/${path}`
+                });
+            } else {
+                setImageAnswer(initialAnswer);
+            }
+        } else {
+            setImageAnswer(initialAnswer);
+        }
+
+        // Canvas'a çizim için image yükle
         if (initialAnswer?.imageUrl && template.requiresDrawing && canvasRef.current) {
             const canvas = canvasRef.current;
             const ctx = canvas.getContext('2d');
@@ -65,10 +94,12 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                 img.onload = () => {
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                 };
+                // imageUrl API URL formatında olabilir, CORS için crossOrigin ekle
+                img.crossOrigin = 'anonymous';
                 img.src = initialAnswer.imageUrl;
             }
         }
-    }, [initialAnswer, template.requiresDrawing]);
+    }, [initialAnswer, template.requiresDrawing, API_URL]);
 
     useEffect(() => {
         if (template.requiresDrawing && canvasRef.current) {
@@ -118,10 +149,12 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
 
             if (uploadedFiles && uploadedFiles.length > 0) {
                 const uploadedFile = uploadedFiles[0];
-                const url = URL.createObjectURL(imageFile);
+                const filePath = uploadedFile.path || '';
+                // Yeni kayıt için imageUrl'i API URL formatında oluştur
+                const imageUrl = filePath ? `${API_URL}/${filePath}` : URL.createObjectURL(imageFile);
 
                 return {
-                    imageUrl: url,
+                    imageUrl: imageUrl,
                     imageBlob: imageFile,
                     fileName: uploadedFile.fileName || imageFile.name,
                     fileSize: imageFile.size,
@@ -183,7 +216,6 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
         try {
             // Upload image and get the result
             const newImageData = await handleUploadImage(file);
-            setImageAnswer(newImageData);
 
             // Upload başarılı olduğunda otomatik olarak kaydet
             if (onAnswerChange && newImageData.uploadedFileData) {
@@ -198,6 +230,9 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                     false
                 );
             }
+            
+            // State'i en son güncelle ki yeni görsel görünsün
+            setImageAnswer(newImageData);
         } catch (err) {
             console.error('Image upload failed:', err);
             // Hata olsa bile local image'i göster
@@ -656,7 +691,12 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                             }
 
                             <img
-                                src={`${API_URL}/${imageAnswer}`}
+                                key={`${imageAnswer.imageUrl || ''}-${imageAnswer.uploadedFileData?.path || ''}`}
+                                src={
+                                    imageAnswer.uploadedFileData?.path
+                                        ? `${API_URL}/${imageAnswer.uploadedFileData.path}`
+                                        : imageAnswer.imageUrl || ''
+                                }
                                 alt="Yüklenen görsel"
                                 className="max-w-full h-auto rounded border border-gray-200"
                                 style={{ maxHeight: '600px' }}

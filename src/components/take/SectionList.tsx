@@ -1,6 +1,8 @@
 import React from 'react';
 import {ExamSectionDto} from "@/types/exam/examTemplates";
 import {useExamApplicationContext} from "@/contexts/ExamApplicationContext";
+import {useApplication} from "@/hooks/exam/use-application";
+import {ESessionState} from "@/types/exam/enum";
 
 interface ExamSectionsListProps {
     sections: ExamSectionDto[];
@@ -11,8 +13,24 @@ const ExamSectionsList: React.FC<ExamSectionsListProps> = ({
                                                                sections,
                                                                onSectionSelect
                                                            }) => {
-    const {candidate} = useExamApplicationContext();
-    
+    const {candidate, application} = useExamApplicationContext();
+    const {setApplicationEndedAt, updateApplicationSessionState, loading} = useApplication();
+
+    const handleCompleteExam = async () => {
+        if (!application?.id) {
+            return;
+        }
+
+        if (window.confirm('Sınavı tamamlamak istediğinize emin misiniz? Bu işlem geri alınamaz.')) {
+            try {
+                await setApplicationEndedAt(application.id);
+                await updateApplicationSessionState(application.id, ESessionState.FINISHED);
+            } catch (error) {
+                console.error('Sınav tamamlanırken hata oluştu:', error);
+            }
+        }
+    };
+
     // orderNumber'a göre sırala
     const sortedSections = [...sections].sort((a, b) => {
         const orderA = a.orderNumber ?? 0;
@@ -88,6 +106,17 @@ const ExamSectionsList: React.FC<ExamSectionsListProps> = ({
                         <p className="text-lg">Henüz sınav bölümü bulunmamaktadır.</p>
                     </div>
                 )}
+            </div>
+
+            {/* Sınavı Tamamla Butonu */}
+            <div className="mt-8 flex justify-center">
+                <button
+                    onClick={handleCompleteExam}
+                    disabled={loading || !application?.id}
+                    className="px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-lg transition-all transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none"
+                >
+                    {loading ? 'İşleniyor...' : 'Sınavı Tamamla'}
+                </button>
             </div>
         </div>
     );

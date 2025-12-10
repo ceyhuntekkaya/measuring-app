@@ -235,12 +235,22 @@ export interface ExamSessionDto extends DatabaseObjectDto {
     beginAt: string
     endAt: string
     sessionState: ESessionState;
+    isLive:boolean;
+    isFinish: boolean;
 }
+
 
 export interface CreateExamSectionRequest {
     name: string;
     examTypeId: string;
     orderNumber: number;
+}
+
+
+
+export interface UpdateExamSessionStateRequest {
+    examSessionId: string;
+    sessionState: ESessionState;
 }
 
 

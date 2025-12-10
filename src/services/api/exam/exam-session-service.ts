@@ -1,6 +1,6 @@
 
 import api from "@/services/api/base-api";
-import { ExamSessionDto } from "@/types/exam/examEntities";
+import {ExamSessionDto, UpdateExamSessionStateRequest} from "@/types/exam/examEntities";
 import {ApiResponse} from "@/types/exam/examValidationAndAnalytics";
 import {
     CopySessionRequest,
@@ -123,6 +123,39 @@ class ExamSessionService {
         const response = await api.put<ApiResponse<ExamSessionDto>>(`${this.baseUrl}/${id}/status`, statusRequest);
         return response.data;
     }
+
+
+
+
+
+
+
+
+
+
+// YENİ EKLENDİ - start
+
+    async resetExamSession(sessionId: string): Promise<ApiResponse<ExamSessionDto>> {
+        const response = await api.post<ApiResponse<ExamSessionDto>>(`${this.baseUrl}/${sessionId}/reset`);
+        return response.data;
+    }
+    async setExamSessionIsFinish(sessionId: string): Promise<ApiResponse<ExamSessionDto>> {
+        const response = await api.post<ApiResponse<ExamSessionDto>>(`${this.baseUrl}/${sessionId}/is-finish`);
+        return response.data;
+    }
+    async updateExamSessionSessionState(sessionId: string, updateRequest: UpdateExamSessionStateRequest): Promise<ApiResponse<ExamSessionDto>> {
+        const response = await api.post<ApiResponse<ExamSessionDto>>(`${this.baseUrl}/${sessionId}/session-state`, updateRequest);
+        return response.data;
+    }
+    async setExamSessionEndAt(sessionId: string): Promise<ApiResponse<ExamSessionDto>> {
+        const response = await api.post<ApiResponse<ExamSessionDto>>(`${this.baseUrl}/${sessionId}/end-at`);
+        return response.data;
+    }
+    async setExamSessionBeginAt(sessionId: string): Promise<ApiResponse<ExamSessionDto>> {
+        const response = await api.post<ApiResponse<ExamSessionDto>>(`${this.baseUrl}/${sessionId}/begin-at`);
+        return response.data;
+    }
 }
+// YENİ EKLENDİ - end
 
 export const examSessionService = new ExamSessionService();

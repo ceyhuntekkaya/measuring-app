@@ -8,7 +8,7 @@ import {
     BulkCreateApplicationRequest,
     ApplicationStatistics,
     ExamSessionApplicationsSummary,
-    ApplicationSearchParams
+    ApplicationSearchParams, UpdateSessionStateRequest, CancelApplicationRequest
 } from "@/types/management/brand";
 import {EStatus} from "@/types/exam/enum";
 import {EvaluationDto, UpdateApplicationState} from "@/types/exam/examEntities";
@@ -75,6 +75,40 @@ class ApplicationService {
         const response = await api.get<ApiResponse<ExamSessionApplicationsSummary>>(`${this.baseUrl}/exam-session/${examSessionId}/summary`);
         return response.data;
     }
+
+
+
+
+
+
+
+    async setApplicationStartedAt(applicationId: string): Promise<ApiResponse<ApplicationDto>> {
+        const response = await api.post<ApiResponse<ApplicationDto>>(`${this.baseUrl}/${applicationId}/started-at`);
+        return response.data;
+    }
+    async setApplicationEndedAt(applicationId: string): Promise<ApiResponse<ApplicationDto>> {
+        const response = await api.post<ApiResponse<ApplicationDto>>(`${this.baseUrl}/${applicationId}/ended-at`);
+        return response.data;
+    }
+    async updateApplicationSessionState(applicationId: string , updateRequest: UpdateSessionStateRequest): Promise<ApiResponse<ApplicationDto>> {
+        const response = await api.post<ApiResponse<ApplicationDto>>(`${this.baseUrl}/${applicationId}/session-state`, updateRequest);
+        return response.data;
+    }
+    async cancelApplication(applicationId: string, cancelRequest:CancelApplicationRequest): Promise<ApiResponse<ApplicationDto>> {
+        const response = await api.post<ApiResponse<ApplicationDto>>(`${this.baseUrl}/exam-session/${applicationId}/cancel`, cancelRequest);
+        return response.data;
+    }
+    async resetApplication(applicationId: string): Promise<ApiResponse<ApplicationDto>> {
+        const response = await api.post<ApiResponse<ApplicationDto>>(`${this.baseUrl}/${applicationId}/reset`);
+        return response.data;
+    }
+    async setApplicationEvaluated(applicationId: string): Promise<ApiResponse<ApplicationDto>> {
+        const response = await api.post<ApiResponse<ApplicationDto>>(`${this.baseUrl}/${applicationId}/evaluated`);
+        return response.data;
+    }
+
+
+
 
     async searchApplications(searchParams: ApplicationSearchParams = {}): Promise<ApiResponse<ApplicationDto[]>> {
         const params = new URLSearchParams();

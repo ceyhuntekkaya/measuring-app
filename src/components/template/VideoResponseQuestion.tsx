@@ -4,6 +4,7 @@ import {QuestionTemplateType} from "@/types/exam/examEntities";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
 import {uploadVideoFile} from "@/services/api/upload-file";
 import {UploadedFileDto} from "@/types/exam/miscDtos";
+import siteConfig from "@/config/config.json";
 
 interface VideoResponseQuestionProps {
     template: VideoResponseTemplateDto;
@@ -46,9 +47,42 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
     const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
 
+    const API_URL = siteConfig.api.invokeUrl + "/upload/serve";
+
     useEffect(() => {
-        setVideoAnswer(initialAnswer);
-    }, [initialAnswer]);
+        if (!initialAnswer) {
+            setVideoAnswer(null);
+            setVideoAnswerPath('');
+            return;
+        }
+
+        // Eğer initialAnswer'da uploadedFileData varsa, path'i set et ve videoAnswer'ı güncelle
+        if (initialAnswer.uploadedFileData?.path) {
+            const path = initialAnswer.uploadedFileData.path;
+            setVideoAnswerPath(path);
+            // videoAnswer state'ini de güncelle ki video element render edilsin
+            setVideoAnswer({
+                ...initialAnswer,
+                videoUrl: `${API_URL}/${path}`, // URL'i oluştur
+                uploadedFileData: initialAnswer.uploadedFileData
+            });
+        } else if (typeof initialAnswer === 'object' && 'path' in initialAnswer) {
+            // Eğer initialAnswer direkt path içeriyorsa (string olarak gelebilir)
+            const answerWithPath = initialAnswer as { path?: string } & VideoAnswerData;
+            const path = answerWithPath.path || '';
+            setVideoAnswerPath(path);
+            if (path) {
+                setVideoAnswer({
+                    ...answerWithPath,
+                    videoUrl: `${API_URL}/${path}`
+                });
+            } else {
+                setVideoAnswer(initialAnswer);
+            }
+        } else {
+            setVideoAnswer(initialAnswer);
+        }
+    }, [initialAnswer, API_URL]);
 
 
     useEffect(() => {
@@ -104,10 +138,12 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
 
             if (uploadedFiles && uploadedFiles.length > 0) {
                 const uploadedFile = uploadedFiles[0];
-                const url = URL.createObjectURL(videoBlob);
-                setVideoAnswerPath(uploadedFile.path || '')
+                const filePath = uploadedFile.path || '';
+                setVideoAnswerPath(filePath);
+                // Yeni kayıt için videoUrl'i API URL formatında oluştur
+                const videoUrl = filePath ? `${API_URL}/${filePath}` : URL.createObjectURL(videoBlob);
                 return {
-                    videoUrl: url,
+                    videoUrl: videoUrl,
                     videoBlob: videoBlob,
                     duration: duration,
                     recordedAt: new Date().toISOString(),
@@ -189,19 +225,23 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                 try {
                     // Upload video and get the result
                     const newVideoData = await handleUploadVideo(blob, finalDuration);
-                    setVideoAnswer(newVideoData);
-
+                    
                     // Call onAnswerChange if upload was successful
                     if (onAnswerChange && newVideoData.uploadedFileData) {
+                        const filePath = newVideoData.uploadedFileData.path || '';
+                        setVideoAnswerPath(filePath);
                         onAnswerChange(
                             questionId,
                             template,
-                            newVideoData.uploadedFileData.path  || '',
+                            filePath,
                             EQuestionType.VIDEO_RESPONSE,
                             EMediaType.VIDEO,
                             false
                         );
                     }
+                    
+                    // State'i en son güncelle ki yeni video görünsün
+                    setVideoAnswer(newVideoData);
                 } catch (err) {
                     console.error('Upload failed:', err);
                     // Even if upload fails, keep the local video
@@ -356,17 +396,6 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                 </div>
             )}
 
-            {template.videoPromptUrl && (
-                <div className="mb-6">
-                    <video
-                        src={template.videoPromptUrl}
-                        controls
-                        className="w-full max-w-2xl rounded-lg border border-gray-300"
-                    >
-                        Tarayıcınız video oynatmayı desteklemiyor.
-                    </video>
-                </div>
-            )}
 
             {getDurationInfo() && (
                 <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
@@ -431,10 +460,15 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                 )}
 
                 {/* Recorded Video Playback */}
-                {videoAnswer?.videoUrl && !isRecording && (
+                {(videoAnswer?.videoUrl || videoAnswerPath) && !isRecording && videoAnswer && (
                     <div className="mb-4">
                         <video
-                            src={videoAnswer.videoUrl}
+                            key={`${videoAnswer.videoUrl || ''}-${videoAnswerPath || ''}-${videoAnswer.uploadedFileData?.path || ''}`}
+                            src={
+                                videoAnswerPath 
+                                    ? `${API_URL}/${videoAnswerPath}` 
+                                    : videoAnswer.videoUrl || ''
+                            }
                             controls
                             className="w-full max-w-2xl mx-auto rounded-lg border-2 border-green-500"
                         />

@@ -52,17 +52,43 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
 
     const API_URL = siteConfig.api.invokeUrl + "/upload/serve";
 
+
+
+
     useEffect(() => {
-        setAudioAnswer(initialAnswer);
-        // Eğer initialAnswer'da uploadedFileData varsa, path'i set et
-        if (initialAnswer?.uploadedFileData?.path) {
-            setAudioAnswerPath(initialAnswer.uploadedFileData.path);
-        } else if (initialAnswer && typeof initialAnswer === 'object' && 'path' in initialAnswer) {
-            // Eğer initialAnswer direkt path içeriyorsa (string olarak gelebilir)
-            const answerWithPath = initialAnswer as { path?: string };
-            setAudioAnswerPath(answerWithPath.path || '');
+        if (!initialAnswer) {
+            setAudioAnswer(null);
+            setAudioAnswerPath('');
+            return;
         }
-    }, [initialAnswer]);
+
+        // Eğer initialAnswer'da uploadedFileData varsa, path'i set et ve audioAnswer'ı güncelle
+        if (initialAnswer.uploadedFileData?.path) {
+            const path = initialAnswer.uploadedFileData.path;
+            setAudioAnswerPath(path);
+            // audioAnswer state'ini de güncelle ki audio element render edilsin
+            setAudioAnswer({
+                ...initialAnswer,
+                audioUrl: `${API_URL}/${path}`, // URL'i oluştur
+                uploadedFileData: initialAnswer.uploadedFileData
+            });
+        } else if (typeof initialAnswer === 'object' && 'path' in initialAnswer) {
+            // Eğer initialAnswer direkt path içeriyorsa (string olarak gelebilir)
+            const answerWithPath = initialAnswer as { path?: string } & AudioAnswerData;
+            const path = answerWithPath.path || '';
+            setAudioAnswerPath(path);
+            if (path) {
+                setAudioAnswer({
+                    ...answerWithPath,
+                    audioUrl: `${API_URL}/${path}`
+                });
+            } else {
+                setAudioAnswer(initialAnswer);
+            }
+        } else {
+            setAudioAnswer(initialAnswer);
+        }
+    }, [initialAnswer, API_URL]);
 
     // Cleanup ONLY on unmount - EMPTY dependency array!
     useEffect(() => {
@@ -155,12 +181,14 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
 
             if (uploadedFiles && uploadedFiles.length > 0) {
                 const uploadedFile = uploadedFiles[0];
+                const filePath = uploadedFile.path || '';
 
-                setAudioAnswerPath(uploadedFile.path || '--')
-                const url = URL.createObjectURL(audioBlob);
+                setAudioAnswerPath(filePath);
+                // Yeni kayıt için audioUrl'i API URL formatında oluştur
+                const audioUrl = filePath ? `${API_URL}/${filePath}` : URL.createObjectURL(audioBlob);
 
                 return {
-                    audioUrl: url,
+                    audioUrl: audioUrl,
                     audioBlob: audioBlob,
                     duration: duration,
                     recordedAt: new Date().toISOString(),
@@ -231,8 +259,7 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                 try {
                     // Upload audio and get the result
                     const newAudioData = await handleUploadAudio(blob, finalDuration);
-                    setAudioAnswer(newAudioData);
-
+                    
                     // Upload başarılı olduğunda otomatik olarak kaydet
                     if (onAnswerChange && newAudioData.uploadedFileData) {
                         const filePath = newAudioData.uploadedFileData.path || '';
@@ -247,6 +274,9 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                             false
                         );
                     }
+                    
+                    // State'i en son güncelle ki yeni ses görünsün
+                    setAudioAnswer(newAudioData);
                 } catch (err) {
                     console.error('Upload failed:', err);
                     // Even if upload fails, keep the local audio
@@ -395,12 +425,14 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
     const isValidDuration = (): boolean => {
         if (!audioAnswer?.duration) return false;
 
-        const duration = audioAnswer.duration;
+        const duration = Math.round(audioAnswer.duration); // Saniye cinsinden, yuvarlanmış
 
+        // Min kontrolü: duration >= minRecordingDuration olmalı
         if (template.minRecordingDuration && duration < template.minRecordingDuration) {
             return false;
         }
 
+        // Max kontrolü: duration <= maxRecordingDuration olmalı
         if (template.maxRecordingDuration && duration > template.maxRecordingDuration) {
             return false;
         }
@@ -517,7 +549,7 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                     </div>
                 )}
 
-                {audioAnswer?.audioUrl && !isRecording && (
+                {(audioAnswer?.audioUrl || audioAnswerPath) && !isRecording && audioAnswer && (
                     <div className="mb-6">
                         <div className="bg-white p-4 rounded-lg border-2 border-green-500">
                             <div className="flex items-center justify-between mb-3">
@@ -529,14 +561,14 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                                             ✓ Yüklendi
                                         </span>
                                     )}
-                                    {!isValidDuration() && (
+                                    {audioAnswer.duration && !isValidDuration() && (
                                         <span className="ml-2 text-red-600 font-semibold">
-                                            ⚠️ Süre gereksinimlerini karşılamıyor
+                                            ⚠️ Süre gereksinimlerini karşılamıyor (Min: {template.minRecordingDuration || 0}s, Max: {template.maxRecordingDuration || '∞'}s, Mevcut: {Math.round(audioAnswer.duration)}s)
                                         </span>
                                     )}
                                 </div>
                             </div>
-                            <audio 
+                            <audio key={`${audioAnswer.audioUrl || ''}-${audioAnswerPath || ''}-${audioAnswer.uploadedFileData?.path || ''}`}
                                 src={
                                     audioAnswerPath 
                                         ? `${API_URL}/${audioAnswerPath}` 
