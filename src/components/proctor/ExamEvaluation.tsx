@@ -374,6 +374,7 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
                         template={template as MultipleChoiceTemplateDto}
                         isPreview={true}
                         isSubmitted={true}
+                        showLearnerEvaluation={true}
                         questionId={questionId}
                         initialAnswer={initialAnswer as string | null}
                     />;
@@ -383,6 +384,7 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
                         template={template as TrueFalseTemplateDto}
                         isPreview={true}
                         isSubmitted={true}
+                        showLearnerEvaluation={true}
                         questionId={questionId}
                         initialAnswer={initialAnswer as boolean | null}
                     />;
@@ -392,6 +394,7 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
                         template={template as FillInTheBlanksTemplateDto}
                         isPreview={true}
                         isSubmitted={true}
+                        showLearnerEvaluation={true}
                         questionId={questionId}
                         initialAnswer={initialAnswer as { [blankId: string]: string } | undefined}
                     />;
@@ -419,6 +422,7 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
                         template={template as MultipleResponseTemplateDto}
                         isPreview={true}
                         isSubmitted={true}
+                        showLearnerEvaluation={true}
                         questionId={questionId}
                         initialAnswer={initialAnswer as string[]}
                     />;
@@ -604,6 +608,22 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
                                         placeholder="Puan girin..."
                                     />
                                 </div>
+
+                                {/* Butonlar - Puan bölümünün altında */}
+                                <div className="flex justify-end gap-4 pt-4">
+                                    <button
+                                        onClick={handleCancel}
+                                        className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                                    >
+                                        İptal
+                                    </button>
+                                    <button
+                                        onClick={handleSave}
+                                        className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                                    >
+                                        Kaydet
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -662,21 +682,66 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
                         </div>
                     )}
 
-                    {/* Butonlar */}
-                    <div className="flex justify-end gap-4 mt-6">
-                        <button
-                            onClick={handleCancel}
-                            className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
-                        >
-                            İptal
-                        </button>
-                        <button
-                            onClick={handleSave}
-                            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                        >
-                            Kaydet
-                        </button>
-                    </div>
+                    {/* Önceki ve Sonraki Soru Butonları */}
+                    {selectedEvaluation && filteredApplicationQuestionDataWithEvaluation && (
+                        <div className="flex justify-between items-center gap-4 mt-6 pt-6 border-t border-gray-200">
+                            <button
+                                onClick={() => {
+                                    const currentIndex = filteredApplicationQuestionDataWithEvaluation.findIndex(
+                                        item => item.evaluation.id === selectedEvaluation.evaluation.id
+                                    );
+                                    if (currentIndex > 0) {
+                                        setSelectedEvaluation(filteredApplicationQuestionDataWithEvaluation[currentIndex - 1]);
+                                    }
+                                }}
+                                disabled={
+                                    !filteredApplicationQuestionDataWithEvaluation ||
+                                    filteredApplicationQuestionDataWithEvaluation.findIndex(
+                                        item => item.evaluation.id === selectedEvaluation.evaluation.id
+                                    ) === 0
+                                }
+                                className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                </svg>
+                                Önceki Soru
+                            </button>
+                            
+                            <div className="text-sm text-gray-600">
+                                {filteredApplicationQuestionDataWithEvaluation && selectedEvaluation && (
+                                    <span>
+                                        {filteredApplicationQuestionDataWithEvaluation.findIndex(
+                                            item => item.evaluation.id === selectedEvaluation.evaluation.id
+                                        ) + 1} / {filteredApplicationQuestionDataWithEvaluation.length}
+                                    </span>
+                                )}
+                            </div>
+
+                            <button
+                                onClick={() => {
+                                    const currentIndex = filteredApplicationQuestionDataWithEvaluation.findIndex(
+                                        item => item.evaluation.id === selectedEvaluation.evaluation.id
+                                    );
+                                    if (currentIndex < filteredApplicationQuestionDataWithEvaluation.length - 1) {
+                                        setSelectedEvaluation(filteredApplicationQuestionDataWithEvaluation[currentIndex + 1]);
+                                    }
+                                }}
+                                disabled={
+                                    !filteredApplicationQuestionDataWithEvaluation ||
+                                    filteredApplicationQuestionDataWithEvaluation.findIndex(
+                                        item => item.evaluation.id === selectedEvaluation.evaluation.id
+                                    ) === filteredApplicationQuestionDataWithEvaluation.length - 1
+                                }
+                                className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                            >
+                                Sonraki Soru
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         );

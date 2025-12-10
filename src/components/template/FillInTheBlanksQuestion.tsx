@@ -10,6 +10,7 @@ interface FillInTheBlanksQuestionProps {
     initialAnswer?: BlankAnswers;
     isSubmitted?: boolean;
     showCorrectAnswer?: boolean;
+    showLearnerEvaluation?: boolean;
     questionId: string;
 }
 
@@ -39,6 +40,7 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
                                                                              initialAnswer = {},
                                                                              isSubmitted = false,
                                                                              showCorrectAnswer = false,
+                                                                             showLearnerEvaluation = false,
                                                                              questionId
                                                                          }) => {
     const [answers, setAnswers] = useState<BlankAnswers>(initialAnswer || {});
@@ -76,14 +78,15 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
 
 
     const handleInputChange = (blankId: string, value: string): void => {
-        if (isSubmitted && !isPreview) return;
+        // isPreview true ise değişiklik yapılmasın
+        if (isPreview || (isSubmitted && !isPreview)) return;
 
         //const propName = "blank_"+blankId;
         const currentAnswers = answers || {};
         const newAnswers = {...currentAnswers, [blankId]: value};
         setAnswers(newAnswers);
 
-        if (onAnswerChange) {
+        if (onAnswerChange && !isPreview) {
             //   onAnswerChange(questionId, template, newAnswers ? JSON.stringify(newAnswers) : '', EQuestionType.TRUE_FALSE, EMediaType.TEXT, false);
         }
     };
@@ -248,6 +251,31 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
         const getInputStyle = (): string => {
             const baseStyle = "inline-block mx-1 px-3 py-1 border-b-2 outline-none transition-all duration-200 ";
 
+            // showLearnerEvaluation: Öğrencinin cevabı ile doğru cevabı karşılaştır
+            if (showLearnerEvaluation) {
+                const blank = template.options?.blanks?.find(b => b.blankId === blankId);
+                if (blank && blank.acceptableAnswers && blank.acceptableAnswers.length > 0) {
+                    const isCorrect = blank.acceptableAnswers.some(acceptable => {
+                        if (blank.caseSensitive) {
+                            return acceptable === userAnswer;
+                        } else {
+                            return acceptable.toLowerCase() === userAnswer.toLowerCase();
+                        }
+                    });
+
+                    if (userAnswer && isCorrect) {
+                        // Öğrenci doğru cevabı vermiş: Yeşil
+                        return baseStyle + "border-green-500 bg-green-50 text-green-800";
+                    } else if (userAnswer && !isCorrect) {
+                        // Öğrenci yanlış cevabı vermiş: Kırmızı
+                        return baseStyle + "border-red-500 bg-red-50 text-red-800";
+                    } else if (!userAnswer) {
+                        // Öğrenci cevap vermemiş ama doğru cevap var: Mavi (placeholder gibi)
+                        return baseStyle + "border-blue-500 bg-blue-50 text-blue-600 italic";
+                    }
+                }
+            }
+
             if (isSubmitted && showCorrectAnswer && result) {
                 if (result.isCorrect) {
                     return baseStyle + "border-green-500 bg-green-50 text-green-800";
@@ -276,7 +304,7 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
                     onChange={(e) => {
                         handleInputChange(blankId, e.target.value)
                     }}
-                    disabled={isSubmitted && !isPreview}
+                    disabled={isPreview || (isSubmitted && !isPreview)}
                     className={getInputStyle()}
                     style={{width: getInputWidth(), minWidth: '100px'}}
                     placeholder="..."
@@ -470,7 +498,9 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
                     {parseTextWithBlanks()}
                 </div>
             </div>
-            <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
+            {!isPreview && (
+                <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
+            )}
             {/* Blank Feedback (for incorrect answers) */}
             {renderBlankFeedback()}
 
@@ -550,15 +580,6 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
-
-            {/* Preview Mode Indicator */}
-            {isPreview && (
-                <div className="mt-4 p-3 bg-gray-100 border border-gray-300 rounded">
-                    <p className="text-gray-600 text-sm italic">
-                        👁️ Önizleme Modu - Bu sorunun nasıl görüneceğinin önizlemesidir
-                    </p>
                 </div>
             )}
 

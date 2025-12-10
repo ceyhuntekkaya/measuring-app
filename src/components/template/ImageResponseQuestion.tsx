@@ -722,7 +722,7 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
             )}
             
             {/* KAYDET butonu - sadece upload başarısız olursa veya manuel kaydetme gerekiyorsa göster */}
-            {imageAnswer && !isUploading && !imageAnswer.uploadedFileData && (
+            {!isPreview && imageAnswer && !isUploading && !imageAnswer.uploadedFileData && (
                 <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
             )}
             {/* Submission Status */}
@@ -741,15 +741,6 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                             Değerlendirme tamamlandığında sonuçları görebileceksiniz.
                         </p>
                     )}
-                </div>
-            )}
-
-            {/* Preview Mode Indicator */}
-            {isPreview && (
-                <div className="mt-4 p-3 bg-gray-100 border border-gray-300 rounded">
-                    <p className="text-gray-600 text-sm italic">
-                        👁️ Önizleme Modu - Bu sorunun nasıl görüneceğinin önizlemesidir
-                    </p>
                 </div>
             )}
 

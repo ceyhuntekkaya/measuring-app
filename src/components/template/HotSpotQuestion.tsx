@@ -568,7 +568,9 @@ const HotSpotQuestion: React.FC<HotSpotQuestionProps> = ({
                     </div>
                 </div>
             )}
-            <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
+            {!isPreview && (
+                <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
+            )}
             {/* Feedback for Selected Spots */}
             {isSubmitted && showCorrectAnswer && spotResults.length > 0 && (
                 <div className="space-y-3">
@@ -689,15 +691,6 @@ const HotSpotQuestion: React.FC<HotSpotQuestionProps> = ({
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
-
-            {/* Preview Mode Indicator */}
-            {isPreview && (
-                <div className="mt-4 p-3 bg-gray-100 border border-gray-300 rounded">
-                    <p className="text-gray-600 text-sm italic">
-                        👁️ Önizleme Modu - Bu sorunun nasıl görüneceğinin önizlemesidir
-                    </p>
                 </div>
             )}
 

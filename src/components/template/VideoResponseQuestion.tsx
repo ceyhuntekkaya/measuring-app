@@ -582,13 +582,15 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                 )}
             </div>
 
-            <button
-                className={"btn btn-success"}
-                onClick={handleSaveAnswer}
-                disabled={isUploading || !videoAnswer}
-            >
-                KAYDET
-            </button>
+            {!isPreview && (
+                <button
+                    className={"btn btn-success"}
+                    onClick={handleSaveAnswer}
+                    disabled={isUploading || !videoAnswer}
+                >
+                    KAYDET
+                </button>
+            )}
 
             {/* Submission Status */}
             {isSubmitted && videoAnswer && (
@@ -606,15 +608,6 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                             Değerlendirme tamamlandığında sonuçları görebileceksiniz.
                         </p>
                     )}
-                </div>
-            )}
-
-            {/* Preview Mode Indicator */}
-            {isPreview && (
-                <div className="mt-4 p-3 bg-gray-100 border border-gray-300 rounded">
-                    <p className="text-gray-600 text-sm italic">
-                        👁️ Önizleme Modu - Bu sorunun nasıl görüneceğinin önizlemesidir
-                    </p>
                 </div>
             )}
 

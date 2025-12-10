@@ -177,7 +177,9 @@ const ShortAnswerQuestion: React.FC<ShortAnswerQuestionProps> = ({
                     rows={4}
                     maxLength={template.maxCharacters}
                 />
-                <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
+                {!isPreview && (
+                    <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
+                )}
 
                 {/* Character Count */}
                 <div className="flex justify-between items-center text-sm">
@@ -287,15 +289,6 @@ const ShortAnswerQuestion: React.FC<ShortAnswerQuestionProps> = ({
                 <div className="p-4 bg-purple-50 border-l-4 border-purple-400 rounded">
                     <h4 className="font-semibold text-purple-800 mb-2">Değerlendirme Kriteri:</h4>
                     <div className="text-purple-700 text-sm whitespace-pre-line">{template.rubric}</div>
-                </div>
-            )}
-
-            {/* Preview Mode Indicator */}
-            {isPreview && (
-                <div className="mt-4 p-3 bg-gray-100 border border-gray-300 rounded">
-                    <p className="text-gray-600 text-sm italic">
-                        👁️ Önizleme Modu - Bu sorunun nasıl görüneceğinin önizlemesidir
-                    </p>
                 </div>
             )}
 

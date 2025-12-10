@@ -681,13 +681,15 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                 )}
             </div>
 
-            <button
-                className={"btn btn-success"}
-                onClick={handleSaveAnswer}
-                disabled={isUploading || !audioAnswer}
-            >
-                KAYDET
-            </button>
+            {!isPreview && (
+                <button
+                    className={"btn btn-success"}
+                    onClick={handleSaveAnswer}
+                    disabled={isUploading || !audioAnswer}
+                >
+                    KAYDET
+                </button>
+            )}
 
             {isSubmitted && audioAnswer && (
                 <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded">
@@ -702,14 +704,6 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                             Değerlendirme tamamlandığında sonuçları görebileceksiniz.
                         </p>
                     )}
-                </div>
-            )}
-
-            {isPreview && (
-                <div className="mt-4 p-3 bg-gray-100 border border-gray-300 rounded">
-                    <p className="text-gray-600 text-sm italic">
-                        👁️ Önizleme Modu - Bu sorunun nasıl görüneceğinin önizlemesidir
-                    </p>
                 </div>
             )}
 

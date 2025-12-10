@@ -10,6 +10,7 @@ interface TrueFalseQuestionProps {
     initialAnswer?: boolean | null;
     isSubmitted?: boolean;
     showCorrectAnswer?: boolean;
+    showLearnerEvaluation?: boolean;
     questionId: string;
 }
 
@@ -20,6 +21,7 @@ const TrueFalseQuestion: React.FC<TrueFalseQuestionProps> = ({
                                                                  initialAnswer = null,
                                                                  isSubmitted = false,
                                                                  showCorrectAnswer = false,
+                                                                 showLearnerEvaluation = false,
                                                                  questionId
                                                              }) => {
     const [selectedAnswer, setSelectedAnswer] = useState<boolean | null>(initialAnswer);
@@ -29,39 +31,64 @@ const TrueFalseQuestion: React.FC<TrueFalseQuestionProps> = ({
     }, [initialAnswer]);
 
     const handleAnswerSelect = (answer: boolean) => {
-        if (isSubmitted && !isPreview) return; // Prevent changes after submission
+        // isPreview true ise değişiklik yapılmasın
+        if (isPreview || (isSubmitted && !isPreview)) return;
 
         const newSelection = selectedAnswer === answer ? null : answer;
         setSelectedAnswer(newSelection);
 
-        if (onAnswerChange) {
+        if (onAnswerChange && !isPreview) {
             onAnswerChange(questionId, template, newSelection ? newSelection+'' : 'false', EQuestionType.TRUE_FALSE, EMediaType.TEXT, false);
         }
     };
 
     const getOptionStyle = (optionValue: boolean) => {
-        const baseStyle = "p-4 border rounded-lg cursor-pointer transition-all duration-200 flex items-center space-x-3 ";
+        const baseStyle = "p-4 border rounded-lg transition-all duration-200 flex items-center space-x-3 ";
+        const cursorStyle = isPreview ? "cursor-default " : "cursor-pointer ";
+
+        // Doğru cevabı bul
+        const correctAnswer = template.correctAnswer ?? template.options?.correctAnswer;
+
+        // showLearnerEvaluation: Öğrencinin cevabı ile doğru cevabı karşılaştır
+        if (showLearnerEvaluation && correctAnswer !== undefined) {
+            const isCorrect = correctAnswer === optionValue;
+            const isSelected = selectedAnswer === optionValue;
+
+            if (isSelected && isCorrect) {
+                // Öğrenci doğru cevabı seçmiş: Yeşil
+                return baseStyle + cursorStyle + "border-green-500 bg-green-50 text-green-800";
+            } else if (isSelected && !isCorrect) {
+                // Öğrenci yanlış cevabı seçmiş: Kırmızı
+                return baseStyle + cursorStyle + "border-red-500 bg-red-50 text-red-800";
+            } else if (!isSelected && isCorrect) {
+                // Öğrenci seçmemiş ama doğru cevap: Mavi
+                return baseStyle + cursorStyle + "border-blue-500 bg-blue-50 text-blue-800";
+            } else {
+                // Diğer seçenekler: Gri
+                return baseStyle + cursorStyle + "border-gray-300 bg-gray-50 opacity-60";
+            }
+        }
 
         if (isPreview) {
-            return baseStyle + "border-gray-300 hover:border-blue-400 hover:bg-blue-50";
+            return baseStyle + cursorStyle + "border-gray-300 hover:border-blue-400 hover:bg-blue-50";
         }
 
         if (isSubmitted && showCorrectAnswer) {
-            const isCorrect = template.correctAnswer === optionValue;
+            const isCorrect = correctAnswer === optionValue;
             if (isCorrect) {
-                return baseStyle + "border-green-500 bg-green-50 text-green-800";
+                return baseStyle + cursorStyle + "border-green-500 bg-green-50 text-green-800";
             }
             if (selectedAnswer === optionValue && !isCorrect) {
-                return baseStyle + "border-red-500 bg-red-50 text-red-800";
+                return baseStyle + cursorStyle + "border-red-500 bg-red-50 text-red-800";
             }
-            return baseStyle + "border-gray-300 bg-gray-50 opacity-60";
+            return baseStyle + cursorStyle + "border-gray-300 bg-gray-50 opacity-60";
         }
 
         if (selectedAnswer === optionValue) {
-            return baseStyle + "border-blue-500 bg-blue-50 text-blue-800";
+            return baseStyle + cursorStyle + "border-blue-500 bg-blue-50 text-blue-800";
         }
 
-        return baseStyle + "border-gray-300 hover:border-blue-400 hover:bg-blue-50";
+        return baseStyle + cursorStyle + "border-gray-300 hover:border-blue-400 hover:bg-blue-50";
     };
 
     const getOptionText = (optionValue: boolean) => {
@@ -259,15 +286,6 @@ const TrueFalseQuestion: React.FC<TrueFalseQuestionProps> = ({
                             {selectedAnswer === template.correctAnswer ? '✓ Doğru' : '✗ Yanlış'}
                         </div>
                     </div>
-                </div>
-            )}
-
-            {/* Preview Mode Indicator */}
-            {isPreview && (
-                <div className="mt-4 p-3 bg-gray-100 border border-gray-300 rounded">
-                    <p className="text-gray-600 text-sm italic">
-                        👁️ Önizleme Modu - Bu sorunun nasıl görüneceğinin önizlemesidir
-                    </p>
                 </div>
             )}
 

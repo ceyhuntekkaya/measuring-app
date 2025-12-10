@@ -412,7 +412,9 @@ const OrderingQuestion: React.FC<OrderingQuestionProps> = ({
                     );
                 })}
             </div>
-            <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
+            {!isPreview && (
+                <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
+            )}
             {/* Overall Explanation */}
             {isSubmitted && showCorrectAnswer && template.explanation && (
                 <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
@@ -455,15 +457,6 @@ const OrderingQuestion: React.FC<OrderingQuestionProps> = ({
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
-
-            {/* Preview Mode Indicator */}
-            {isPreview && (
-                <div className="mt-4 p-3 bg-gray-100 border border-gray-300 rounded">
-                    <p className="text-gray-600 text-sm italic">
-                        👁️ Önizleme Modu - Bu sorunun nasıl görüneceğinin önizlemesidir
-                    </p>
                 </div>
             )}
 
