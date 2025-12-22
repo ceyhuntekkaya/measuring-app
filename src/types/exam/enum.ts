@@ -196,21 +196,6 @@ export type ObjectType =
     | 'QUESTION_PART'
     | 'UPLOADED_FILE';
 
-export type EQuestionType2 =
-    | 'MULTIPLE_CHOICE'
-    | 'TRUE_FALSE'
-    | 'FILL_IN_THE_BLANKS'
-    | 'SHORT_ANSWER'
-    | 'MATCHING'
-    | 'ESSAY'
-    | 'ORDERING'
-    | 'MULTIPLE_RESPONSE'
-    | 'HOT_SPOT'
-    | 'DRAG_AND_DROP'
-    | 'AUDIO_RESPONSE'
-    | 'VIDEO_RESPONSE'
-    | 'IMAGE_RESPONSE';
-
 
 export enum EQuestionType {
     MULTIPLE_CHOICE = "MULTIPLE_CHOICE",
