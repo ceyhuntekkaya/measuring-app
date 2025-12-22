@@ -80,7 +80,7 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
                     choices: choices
                 },
                 correctOptionIndex: correctIndex,
-                explanation: value.explanation || '',
+                explanation: '', // UI'dan kaldırıldı, her zaman boş string
                 shuffleOptions: value.shuffleOptions || false
             });
         }
@@ -117,7 +117,7 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
             question: updatedData.question,
             options: updatedData.options,
             correctOptionIndex: updatedData.correctOptionIndex,
-            explanation: updatedData.explanation,
+            explanation: '', // UI'dan kaldırıldı, her zaman boş string
             shuffleOptions: updatedData.shuffleOptions
         });
     };
@@ -169,7 +169,7 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
             question: updatedData.question,
             options: updatedData.options,
             correctOptionIndex: updatedData.correctOptionIndex,
-            explanation: updatedData.explanation,
+            explanation: '', // UI'dan kaldırıldı, her zaman boş string
             shuffleOptions: updatedData.shuffleOptions
         });
     };
@@ -340,8 +340,8 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
                 )}
             </div>
 
-            {/* Açıklama */}
-            <div className="space-y-2">
+            {/* Açıklama - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
+            {/* <div className="space-y-2">
                 <Label htmlFor="explanation">Açıklama</Label>
                 <Textarea
                     id="explanation"
@@ -350,7 +350,7 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
                     className="min-h-[100px]"
                     placeholder="Soru açıklaması (opsiyonel)"
                 />
-            </div>
+            </div> */}
 
             {/* Seçenekleri Karıştır */}
             <div className="space-y-2">

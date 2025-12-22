@@ -51,14 +51,14 @@ const VideoResponseTemplateForm = forwardRef<VideoResponseTemplateFormHandle, Vi
 
     const [formData, setFormData] = useState<VideoResponseTemplateFormData>({
         prompt: '',
-        videoPromptUrl: '',
+        videoPromptUrl: '', // UI'dan kaldırıldı, her zaman boş string
         maxRecordingDuration: 300,
         minRecordingDuration: 30,
-        gradingCriteria: [],
+        gradingCriteria: [], // UI'dan kaldırıldı, her zaman boş array
         rubric: '',
-        requiresManualGrading: true,
-        allowedFormats: 'mp4,webm,mov',
-        allowScreenRecording: false
+        requiresManualGrading: true, // UI'dan kaldırıldı, her zaman true
+        allowedFormats: 'mp4,webm,mov', // UI'dan kaldırıldı, her zaman sabit değer
+        allowScreenRecording: true // UI'dan kaldırıldı, her zaman true
     });
 
     const [errors, setErrors] = useState<VideoResponseTemplateFormErrors>({});
@@ -68,14 +68,14 @@ const VideoResponseTemplateForm = forwardRef<VideoResponseTemplateFormHandle, Vi
         if (value) {
             setFormData({
                 prompt: value.prompt || '',
-                videoPromptUrl: value.videoPromptUrl || '',
+                videoPromptUrl: '', // UI'dan kaldırıldı, her zaman boş string
                 maxRecordingDuration: value.maxRecordingDuration || 300,
                 minRecordingDuration: value.minRecordingDuration || 30,
-                gradingCriteria: value.gradingCriteria || [],
+                gradingCriteria: [], // UI'dan kaldırıldı, her zaman boş array
                 rubric: value.rubric || '',
-                requiresManualGrading: value.requiresManualGrading ?? true,
-                allowedFormats: value.allowedFormats || 'mp4,webm,mov',
-                allowScreenRecording: value.allowScreenRecording ?? false
+                requiresManualGrading: true, // UI'dan kaldırıldı, her zaman true
+                allowedFormats: 'mp4,webm,mov', // UI'dan kaldırıldı, her zaman sabit değer
+                allowScreenRecording: true // UI'dan kaldırıldı, her zaman true
             });
         }
     }, []);
@@ -138,9 +138,7 @@ const VideoResponseTemplateForm = forwardRef<VideoResponseTemplateFormHandle, Vi
             newErrors.minRecordingDuration = 'Minimum süre maksimum süreden küçük olmalıdır';
         }
 
-        if (formData.gradingCriteria.length === 0) {
-            newErrors.gradingCriteria = 'En az bir değerlendirme kriteri eklenmelidir';
-        }
+        // gradingCriteria kontrolü kaldırıldı - UI'dan kaldırıldı, her zaman boş array
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -152,7 +150,14 @@ const VideoResponseTemplateForm = forwardRef<VideoResponseTemplateFormHandle, Vi
     useEffect(() => {
         // İlk render'da boş form için onChange tetikleme
         if (formData.prompt) {
-            onChange(formData);
+            onChange({
+                ...formData,
+                videoPromptUrl: '', // UI'dan kaldırıldı, her zaman boş string
+                allowedFormats: 'mp4,webm,mov', // UI'dan kaldırıldı, her zaman sabit değer
+                requiresManualGrading: true, // UI'dan kaldırıldı, her zaman true
+                allowScreenRecording: true, // UI'dan kaldırıldı, her zaman true
+                gradingCriteria: [] // UI'dan kaldırıldı, her zaman boş array
+            });
         }
     }, [formData]); // onChange ve value bağımlılığı yok - sonsuz döngü önlendi
 
@@ -187,8 +192,8 @@ const VideoResponseTemplateForm = forwardRef<VideoResponseTemplateFormHandle, Vi
                             )}
                         </div>
 
-                        {/* Video Prompt URL */}
-                        <div className="col-span-2 space-y-2">
+                        {/* Video Prompt URL - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
+                        {/* <div className="col-span-2 space-y-2">
                             <Label htmlFor="videoPromptUrl">Video Prompt URL</Label>
                             <Input
                                 id="videoPromptUrl"
@@ -196,7 +201,7 @@ const VideoResponseTemplateForm = forwardRef<VideoResponseTemplateFormHandle, Vi
                                 onChange={(e) => handleChange('videoPromptUrl', e.target.value)}
                                 placeholder="Örnek video URL'si (opsiyonel)"
                             />
-                        </div>
+                        </div> */}
 
                         {/* Maksimum Kayıt Süresi */}
                         <div className="space-y-2">
@@ -240,8 +245,8 @@ const VideoResponseTemplateForm = forwardRef<VideoResponseTemplateFormHandle, Vi
                             )}
                         </div>
 
-                        {/* İzin Verilen Formatlar */}
-                        <div className="space-y-2">
+                        {/* İzin Verilen Formatlar - YORUM SATIRI: UI'dan kaldırıldı, değeri "mp4,webm,mov" */}
+                        {/* <div className="space-y-2">
                             <Label htmlFor="allowedFormats">İzin Verilen Formatlar</Label>
                             <Input
                                 id="allowedFormats"
@@ -250,10 +255,10 @@ const VideoResponseTemplateForm = forwardRef<VideoResponseTemplateFormHandle, Vi
                                 placeholder="mp4,webm,mov"
                             />
                             <p className="text-sm text-gray-600">Virgülle ayırarak birden fazla format girebilirsiniz</p>
-                        </div>
+                        </div> */}
 
-                        {/* Checkbox'lar */}
-                        <div className="space-y-4">
+                        {/* Checkbox'lar - YORUM SATIRI: UI'dan kaldırıldı, değerleri sabit */}
+                        {/* <div className="space-y-4">
                             <div className="flex items-center space-x-2">
                                 <Checkbox
                                     id="requiresManualGrading"
@@ -271,14 +276,13 @@ const VideoResponseTemplateForm = forwardRef<VideoResponseTemplateFormHandle, Vi
                                 />
                                 <Label htmlFor="allowScreenRecording">Ekran Kaydına İzin Ver</Label>
                             </div>
-                        </div>
+                        </div> */}
                     </div>
 
-                    {/* Değerlendirme Kriterleri */}
-                    <div className="space-y-4">
+                    {/* Değerlendirme Kriterleri - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş array gönderiliyor */}
+                    {/* <div className="space-y-4">
                         <Label>Değerlendirme Kriterleri *</Label>
 
-                        {/* Kriter Ekleme */}
                         <div className="flex gap-2">
                             <Input
                                 value={criteriaInput}
@@ -298,7 +302,6 @@ const VideoResponseTemplateForm = forwardRef<VideoResponseTemplateFormHandle, Vi
                             </Button>
                         </div>
 
-                        {/* Mevcut Kriterler */}
                         {formData.gradingCriteria.length > 0 && (
                             <div className="space-y-2">
                                 {formData.gradingCriteria.map((criteria, index) => (
@@ -326,7 +329,7 @@ const VideoResponseTemplateForm = forwardRef<VideoResponseTemplateFormHandle, Vi
                                 <AlertDescription>{errors.gradingCriteria}</AlertDescription>
                             </Alert>
                         )}
-                    </div>
+                    </div> */}
 
                     {/* Rubrik */}
                     <div className="space-y-2">

@@ -47,7 +47,7 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
             acceptableAnswers: [],
             caseSensitive: false,
             exactMatch: false,
-            placeholder: ''
+            placeholder: '' // UI'dan kaldırıldı, her zaman boş string
         },
         maxCharacters: 500,
         minCharacters: 1,
@@ -61,11 +61,13 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
         if (value) {
             setFormData({
                 question: value.question || '',
-                options: value.options || {
-                    acceptableAnswers: [],
-                    caseSensitive: false,
-                    exactMatch: false,
-                    placeholder: ''
+                options: {
+                    ...(value.options || {
+                        acceptableAnswers: [],
+                        caseSensitive: false,
+                        exactMatch: false
+                    }),
+                    placeholder: '' // UI'dan kaldırıldı, her zaman boş string
                 },
                 maxCharacters: value.maxCharacters || 500,
                 minCharacters: value.minCharacters || 1,
@@ -85,7 +87,10 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
         // Her zaman onChange'i çağır, validation sadece submit için
         onChange({
             question: updatedData.question,
-            options: updatedData.options,
+            options: {
+                ...updatedData.options,
+                placeholder: '' // UI'dan kaldırıldı, her zaman boş string
+            },
             maxCharacters: updatedData.maxCharacters,
             minCharacters: updatedData.minCharacters,
             rubric: updatedData.rubric,
@@ -97,7 +102,11 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
         field: K,
         value: ShortAnswerOptions[K]
     ) => {
-        const updatedOptions = { ...formData.options, [field]: value };
+        const updatedOptions = { 
+            ...formData.options, 
+            [field]: value,
+            placeholder: '' // UI'dan kaldırıldı, her zaman boş string
+        };
         handleChange('options', updatedOptions);
     };
 
@@ -214,8 +223,8 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
                 </div>
             </div>
 
-            {/* Placeholder */}
-            <div className="space-y-2">
+            {/* Placeholder - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
+            {/* <div className="space-y-2">
                 <Label htmlFor="placeholder">Placeholder Metni</Label>
                 <Input
                     id="placeholder"
@@ -223,7 +232,7 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
                     onChange={(e) => updateOptions('placeholder', e.target.value)}
                     placeholder="Cevap alanında görünecek placeholder metni"
                 />
-            </div>
+            </div> */}
 
             {/* Ayarlar */}
             <div className="grid grid-cols-3 gap-4">
@@ -315,17 +324,19 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
                 ))}
             </div>
 
-            {/* Değerlendirme Rubriği */}
-            <div className="space-y-2">
-                <Label htmlFor="rubric">Değerlendirme Rubriği</Label>
-                <Textarea
-                    id="rubric"
-                    value={formData.rubric}
-                    onChange={(e) => handleChange('rubric', e.target.value)}
-                    className="min-h-[120px]"
-                    placeholder="Manuel değerlendirme için rubrik kriterleri (opsiyonel)"
-                />
-            </div>
+            {/* Değerlendirme Rubriği - Sadece Manuel Değerlendirme seçili ise görünür */}
+            {formData.requiresManualGrading && (
+                <div className="space-y-2">
+                    <Label htmlFor="rubric">Değerlendirme Rubriği</Label>
+                    <Textarea
+                        id="rubric"
+                        value={formData.rubric}
+                        onChange={(e) => handleChange('rubric', e.target.value)}
+                        className="min-h-[120px]"
+                        placeholder="Manuel değerlendirme için rubrik kriterleri (opsiyonel)"
+                    />
+                </div>
+            )}
         </div>
     );
 });

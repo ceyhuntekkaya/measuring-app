@@ -39,7 +39,7 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
         options: null,
         allowMultipleItemsPerZone: false,
         shuffleDraggableItems: true,
-        explanation: ''
+        explanation: '' // UI'dan kaldırıldı, her zaman boş string
     });
 
     const [draggableItems, setDraggableItems] = useState<DraggableItem[]>([]);
@@ -54,7 +54,7 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
                 options: value.options || null,
                 allowMultipleItemsPerZone: value.allowMultipleItemsPerZone || false,
                 shuffleDraggableItems: value.shuffleDraggableItems ?? true,
-                explanation: value.explanation || ''
+                explanation: '' // UI'dan kaldırıldı, her zaman boş string
             });
 
             // Parse options to get draggable items and drop zones
@@ -92,7 +92,7 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
                 options: dragAndDropOptions,
                 allowMultipleItemsPerZone: formData.allowMultipleItemsPerZone,
                 shuffleDraggableItems: formData.shuffleDraggableItems,
-                explanation: formData.explanation
+                explanation: '' // UI'dan kaldırıldı, her zaman boş string
             };
 
             onChange(templateData);
@@ -422,8 +422,8 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
                         )}
                     </div>
 
-                    {/* Açıklama */}
-                    <div className="space-y-2">
+                    {/* Açıklama - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
+                    {/* <div className="space-y-2">
                         <Label htmlFor="explanation">Açıklama</Label>
                         <Textarea
                             id="explanation"
@@ -432,7 +432,7 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
                             className="min-h-[100px]"
                             placeholder="Doğru cevap açıklaması"
                         />
-                    </div>
+                    </div> */}
 
                     {/* KAYDET BUTONU KALDIRILDI - Parent component'te olacak */}
                 </div>

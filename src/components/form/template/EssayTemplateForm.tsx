@@ -46,12 +46,12 @@ const EssayTemplateForm = forwardRef<EssayTemplateFormHandle, EssayTemplateFormP
                                                                                        }, ref) => {
     const [formData, setFormData] = useState<EssayTemplateFormData>({
         prompt: '',
-        gradingCriteria: [],
+        gradingCriteria: [], // UI'dan kaldırıldı, her zaman boş array
         minWords: 50,
         maxWords: 1000,
-        requiredTopics: [],
+        requiredTopics: [], // UI'dan kaldırıldı, her zaman boş array
         rubric: '',
-        requiresManualGrading: true
+        requiresManualGrading: true // UI'dan kaldırıldı, her zaman true
     });
 
     const [errors, setErrors] = useState<EssayTemplateFormErrors>({});
@@ -63,12 +63,12 @@ const EssayTemplateForm = forwardRef<EssayTemplateFormHandle, EssayTemplateFormP
         if (value) {
             setFormData({
                 prompt: value.prompt || '',
-                gradingCriteria: value.gradingCriteria || [],
+                gradingCriteria: [], // UI'dan kaldırıldı, her zaman boş array
                 minWords: value.minWords || 50,
                 maxWords: value.maxWords || 1000,
-                requiredTopics: value.requiredTopics || [],
+                requiredTopics: [], // UI'dan kaldırıldı, her zaman boş array
                 rubric: value.rubric || '',
-                requiresManualGrading: value.requiresManualGrading ?? true
+                requiresManualGrading: true // UI'dan kaldırıldı, her zaman true
             });
         }
     }, []);
@@ -76,16 +76,16 @@ const EssayTemplateForm = forwardRef<EssayTemplateFormHandle, EssayTemplateFormP
     // Form data değiştiğinde parent'a bildir (Anlık güncelleme)
     useEffect(() => {
         // İlk render'da boş form için onChange tetikleme
-        if (formData.prompt || formData.gradingCriteria.length > 0) {
+        if (formData.prompt) {
             const templateData: EssayTemplateDto = {
                 ...value,
                 prompt: formData.prompt,
-                gradingCriteria: formData.gradingCriteria,
+                gradingCriteria: [], // UI'dan kaldırıldı, her zaman boş array
                 minWords: formData.minWords,
                 maxWords: formData.maxWords,
-                requiredTopics: formData.requiredTopics,
+                requiredTopics: [], // UI'dan kaldırıldı, her zaman boş array
                 rubric: formData.rubric,
-                requiresManualGrading: formData.requiresManualGrading
+                requiresManualGrading: true // UI'dan kaldırıldı, her zaman true
             };
             onChange(templateData);
         }
@@ -248,8 +248,8 @@ const EssayTemplateForm = forwardRef<EssayTemplateFormHandle, EssayTemplateFormP
                         </div>
                     </div>
 
-                    {/* Manuel Değerlendirme */}
-                    <div className="space-y-2">
+                    {/* Manuel Değerlendirme - YORUM SATIRI: UI'dan kaldırıldı, her zaman true gönderiliyor */}
+                    {/* <div className="space-y-2">
                         <div className="flex items-center space-x-2">
                             <Checkbox
                                 id="requiresManualGrading"
@@ -261,10 +261,10 @@ const EssayTemplateForm = forwardRef<EssayTemplateFormHandle, EssayTemplateFormP
                         <p className="text-sm text-gray-600">
                             Bu seçenek işaretlendiğinde, kompozisyon otomatik değil manuel olarak değerlendirilecektir.
                         </p>
-                    </div>
+                    </div> */}
 
-                    {/* Değerlendirme Kriterleri */}
-                    <div className="space-y-4">
+                    {/* Değerlendirme Kriterleri - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş array gönderiliyor */}
+                    {/* <div className="space-y-4">
                         <Label>Değerlendirme Kriterleri</Label>
 
                         <div className="flex gap-2">
@@ -307,10 +307,10 @@ const EssayTemplateForm = forwardRef<EssayTemplateFormHandle, EssayTemplateFormP
                                 ))}
                             </div>
                         )}
-                    </div>
+                    </div> */}
 
-                    {/* Gerekli Konular */}
-                    <div className="space-y-4">
+                    {/* Gerekli Konular - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş array gönderiliyor */}
+                    {/* <div className="space-y-4">
                         <Label>Gerekli Konular</Label>
 
                         <div className="flex gap-2">
@@ -353,7 +353,7 @@ const EssayTemplateForm = forwardRef<EssayTemplateFormHandle, EssayTemplateFormP
                                 ))}
                             </div>
                         )}
-                    </div>
+                    </div> */}
 
                     {/* Değerlendirme Rubriği */}
                     <div className="space-y-2">

@@ -56,7 +56,7 @@ const MatchingTemplateForm = forwardRef<MatchingTemplateFormHandle, MatchingTemp
                 instructions: value.instructions || '',
                 options: value.options || {pairs: [], distractors: []},
                 shuffleItems: value.shuffleItems ?? true,
-                explanation: value.explanation || ''
+                explanation: '' // UI'dan kaldırıldı, her zaman boş string
             });
         }
     }, []);
@@ -70,7 +70,7 @@ const MatchingTemplateForm = forwardRef<MatchingTemplateFormHandle, MatchingTemp
                 instructions: formData.instructions,
                 options: formData.options,
                 shuffleItems: formData.shuffleItems,
-                explanation: formData.explanation
+                explanation: '' // UI'dan kaldırıldı, her zaman boş string
             };
             onChange(templateData);
         }
@@ -341,8 +341,8 @@ const MatchingTemplateForm = forwardRef<MatchingTemplateFormHandle, MatchingTemp
                         </p>
                     </div>
 
-                    {/* Açıklama */}
-                    <div className="space-y-2">
+                    {/* Açıklama - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
+                    {/* <div className="space-y-2">
                         <Label htmlFor="explanation">Açıklama</Label>
                         <Textarea
                             id="explanation"
@@ -351,7 +351,7 @@ const MatchingTemplateForm = forwardRef<MatchingTemplateFormHandle, MatchingTemp
                             className="min-h-[100px]"
                             placeholder="Soru açıklaması (opsiyonel)"
                         />
-                    </div>
+                    </div> */}
 
                     {/* KAYDET BUTONU KALDIRILDI - Parent component'te olacak */}
                 </div>

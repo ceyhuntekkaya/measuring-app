@@ -49,13 +49,13 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
         question: '',
         options: {
             choices: [],
-            selectionInstruction: ''
+            selectionInstruction: 'Doğru olan tüm seçenekleri işaretleyiniz.' // UI'dan kaldırıldı, her zaman sabit değer
         },
         correctOptionIndices: [],
         minSelections: 1,
         maxSelections: undefined,
         shuffleOptions: true,
-        explanation: ''
+        explanation: '' // UI'dan kaldırıldı, her zaman boş string
     });
 
     const [errors, setErrors] = useState<MultipleResponseTemplateFormErrors>({});
@@ -76,15 +76,15 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
             
             setFormData({
                 question: value.question || '',
-                options: value.options || {
-                    choices: [],
-                    selectionInstruction: ''
+                options: {
+                    ...(value.options || { choices: [] }),
+                    selectionInstruction: 'Doğru olan tüm seçenekleri işaretleyiniz.' // UI'dan kaldırıldı, her zaman sabit değer
                 },
                 correctOptionIndices: correctIndices,
                 minSelections: value.minSelections,
                 maxSelections: value.maxSelections,
                 shuffleOptions: value.shuffleOptions ?? true,
-                explanation: value.explanation || ''
+                explanation: '' // UI'dan kaldırıldı, her zaman boş string
             });
         }
     }, []);
@@ -96,12 +96,15 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
             const templateData: MultipleResponseTemplateDto = {
                 ...value,
                 question: formData.question.trim(),
-                options: formData.options,
+                options: {
+                    ...formData.options,
+                    selectionInstruction: 'Doğru olan tüm seçenekleri işaretleyiniz.' // UI'dan kaldırıldı, her zaman sabit değer
+                },
                 correctOptionIndices: formData.correctOptionIndices,
                 minSelections: formData.minSelections,
                 maxSelections: formData.maxSelections,
                 shuffleOptions: formData.shuffleOptions,
-                explanation: formData.explanation.trim()
+                explanation: '' // UI'dan kaldırıldı, her zaman boş string
             };
             onChange(templateData);
         }
@@ -261,8 +264,8 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
                         )}
                     </div>
 
-                    {/* Seçim Talimatı */}
-                    <div className="space-y-2">
+                    {/* Seçim Talimatı - YORUM SATIRI: UI'dan kaldırıldı, her zaman "Doğru olan tüm seçenekleri işaretleyiniz." gönderiliyor */}
+                    {/* <div className="space-y-2">
                         <Label htmlFor="selectionInstruction">Seçim Talimatı</Label>
                         <Input
                             id="selectionInstruction"
@@ -273,7 +276,7 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
                             })}
                             placeholder="Örn: Doğru olan tüm seçenekleri işaretleyiniz"
                         />
-                    </div>
+                    </div> */}
 
                     <div className="grid grid-cols-3 gap-4">
                         {/* Minimum Seçim */}
@@ -397,8 +400,8 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
                         )}
                     </div>
 
-                    {/* Açıklama */}
-                    <div className="space-y-2">
+                    {/* Açıklama - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
+                    {/* <div className="space-y-2">
                         <Label htmlFor="explanation">Açıklama</Label>
                         <Textarea
                             id="explanation"
@@ -407,7 +410,7 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
                             className="min-h-[100px]"
                             placeholder="Cevap açıklaması giriniz (opsiyonel)"
                         />
-                    </div>
+                    </div> */}
 
                     {/* KAYDET BUTONU KALDIRILDI - Parent component'te olacak */}
                 </div>

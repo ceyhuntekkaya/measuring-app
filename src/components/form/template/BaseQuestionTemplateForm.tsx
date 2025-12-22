@@ -578,8 +578,8 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
                     </div>*/}
                 </div>
 
-                {/* Açıklama */}
-                <div className="space-y-2">
+                {/* Açıklama - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
+                {/* <div className="space-y-2">
                     <Label htmlFor="description">Açıklama</Label>
                     <Textarea
                         id="description"
@@ -588,10 +588,10 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
                         className="min-h-[100px]"
                         placeholder="Soru hakkında açıklama giriniz (opsiyonel)"
                     />
-                </div>
+                </div> */}
 
-                {/* Talimatlar */}
-                <div className="space-y-2">
+                {/* Talimatlar - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
+                {/* <div className="space-y-2">
                     <Label htmlFor="instructions">Talimatlar</Label>
                     <Textarea
                         id="instructions"
@@ -600,14 +600,14 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
                         className="min-h-[100px]"
                         placeholder="Soru çözüm talimatlarını giriniz (opsiyonel)"
                     />
-                </div>
+                </div> */}
 
-                {/* Etiketler */}
-                <div className="space-y-4">
+                {/* Etiketler - YORUM SATIRI: UI'dan kaldırıldı */}
+                {/* <div className="space-y-4">
                     <Label>Etiketler</Label>
 
                     {/* Etiket Ekleme */}
-                    <div className="flex gap-2">
+                    {/* <div className="flex gap-2">
                         <Input
                             value={tagInput}
                             onChange={(e) => setTagInput(e.target.value)}
@@ -624,10 +624,10 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
                             <Plus className="w-4 h-4 mr-2"/>
                             Ekle
                         </Button>
-                    </div>
+                    </div> */}
 
                     {/* Mevcut Etiketler */}
-                    {formData.tags.length > 0 && (
+                    {/* {formData.tags.length > 0 && (
                         <div className="flex flex-wrap gap-2">
                             {formData.tags.map((tag, index) => (
                                 <div
@@ -648,7 +648,7 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
                             ))}
                         </div>
                     )}
-                </div>
+                </div> */}
 
                 {/* Template-Specific Form */}
                 <div className="mt-6">

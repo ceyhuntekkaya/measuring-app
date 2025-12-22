@@ -59,7 +59,7 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
                 options: value.options || {blanks: []},
                 caseSensitive: value.caseSensitive || false,
                 exactMatch: value.exactMatch || false,
-                explanation: value.explanation || ''
+                explanation: '' // UI'dan kaldırıldı, her zaman boş string
             });
         }
     }, []);
@@ -74,7 +74,7 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
                 options: formData.options,
                 caseSensitive: formData.caseSensitive,
                 exactMatch: formData.exactMatch,
-                explanation: formData.explanation
+                explanation: '' // UI'dan kaldırıldı, her zaman boş string gönderiliyor
             };
             onChange(templateData);
         }
@@ -368,8 +368,8 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
                         )}
                     </div>
 
-                    {/* Açıklama */}
-                    <div className="space-y-2">
+                    {/* Açıklama - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
+                    {/* <div className="space-y-2">
                         <Label htmlFor="explanation">Açıklama</Label>
                         <Textarea
                             id="explanation"
@@ -378,7 +378,7 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
                             className="min-h-[100px]"
                             placeholder="Soru açıklaması (opsiyonel)"
                         />
-                    </div>
+                    </div> */}
 
                     {/* KAYDET BUTONU KALDIRILDI - Parent component'te olacak */}
                 </div>

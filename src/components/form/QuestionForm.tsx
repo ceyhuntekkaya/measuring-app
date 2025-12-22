@@ -321,12 +321,13 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                 ...baseFormData.templateData, // Template-specific field'ları koru (correctOptionIndex, correctOptionIndices, vb.)
                 // Base template fields (eğer baseFormData'da varsa override et)
                 ...(baseFormData.title && { title: baseFormData.title }),
-                ...(baseFormData.description && { description: baseFormData.description }),
+                // Açıklama ve Talimatlar her zaman boş string olarak gönderiliyor (UI'dan kaldırıldı)
+                description: '', // UI'dan kaldırıldı, her zaman boş string
                 ...(baseFormData.subject && { subject: baseFormData.subject }),
                 ...(baseFormData.difficulty && { difficulty: baseFormData.difficulty }),
                 ...(baseFormData.points !== undefined && { points: baseFormData.points }),
                 ...(baseFormData.timeLimit !== undefined && { timeLimit: baseFormData.timeLimit }),
-                ...(baseFormData.instructions && { instructions: baseFormData.instructions }),
+                instructions: '', // UI'dan kaldırıldı, her zaman boş string
                 ...(baseFormData.tags && { tags: baseFormData.tags }),
                 ...(baseFormData.isActive !== undefined && { isActive: baseFormData.isActive }),
                 questionType: baseFormData.questionType as EQuestionType,

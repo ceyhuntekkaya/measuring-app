@@ -38,13 +38,13 @@ const AudioResponseTemplateForm = forwardRef<AudioResponseTemplateFormHandle, Au
                                                                                                                }, ref) => {
     const [formData, setFormData] = useState<AudioResponseTemplateDto>({
         prompt: '',
-        audioPromptUrl: '',
+        audioPromptUrl: '', // UI'dan kaldırıldı, her zaman boş string
         maxRecordingDuration: 300,
         minRecordingDuration: 10,
-        gradingCriteria: [],
+        gradingCriteria: [], // UI'dan kaldırıldı, her zaman boş array
         rubric: '',
-        requiresManualGrading: true,
-        allowedFormats: 'mp3,wav,m4a'
+        requiresManualGrading: true, // UI'dan kaldırıldı, her zaman true
+        allowedFormats: 'mp3,wav,m4a' // UI'dan kaldırıldı, her zaman sabit değer
     });
 
     const [criteriaInput, setCriteriaInput] = useState('');
@@ -55,13 +55,13 @@ const AudioResponseTemplateForm = forwardRef<AudioResponseTemplateFormHandle, Au
         if (value) {
             setFormData({
                 prompt: value.prompt || '',
-                audioPromptUrl: value.audioPromptUrl || '',
+                audioPromptUrl: '', // UI'dan kaldırıldı, her zaman boş string
                 maxRecordingDuration: value.maxRecordingDuration || 300,
                 minRecordingDuration: value.minRecordingDuration || 10,
-                gradingCriteria: value.gradingCriteria || [],
+                gradingCriteria: [], // UI'dan kaldırıldı, her zaman boş array
                 rubric: value.rubric || '',
-                requiresManualGrading: value.requiresManualGrading ?? true,
-                allowedFormats: value.allowedFormats || 'mp3,wav,m4a'
+                requiresManualGrading: true, // UI'dan kaldırıldı, her zaman true
+                allowedFormats: 'mp3,wav,m4a' // UI'dan kaldırıldı, her zaman sabit değer
             });
         }
     }, []);
@@ -69,17 +69,17 @@ const AudioResponseTemplateForm = forwardRef<AudioResponseTemplateFormHandle, Au
     // Form data değiştiğinde parent'a bildir (Anlık güncelleme)
     useEffect(() => {
         // İlk render'da boş form için onChange tetikleme
-        if (formData.prompt || (formData.gradingCriteria ?? []).length > 0) {
+        if (formData.prompt) {
             const templateData: AudioResponseTemplateDto = {
                 ...value,
                 prompt: formData.prompt,
-                audioPromptUrl: formData.audioPromptUrl,
+                audioPromptUrl: '', // UI'dan kaldırıldı, her zaman boş string
                 maxRecordingDuration: formData.maxRecordingDuration,
                 minRecordingDuration: formData.minRecordingDuration,
-                gradingCriteria: formData.gradingCriteria,
+                gradingCriteria: [], // UI'dan kaldırıldı, her zaman boş array
                 rubric: formData.rubric,
-                requiresManualGrading: formData.requiresManualGrading,
-                allowedFormats: formData.allowedFormats
+                requiresManualGrading: true, // UI'dan kaldırıldı, her zaman true
+                allowedFormats: 'mp3,wav,m4a' // UI'dan kaldırıldı, her zaman sabit değer
             };
             onChange(templateData);
         }
@@ -182,8 +182,8 @@ const AudioResponseTemplateForm = forwardRef<AudioResponseTemplateFormHandle, Au
                         )}
                     </div>
 
-                    {/* Ses Prompt URL */}
-                    <div className="space-y-2">
+                    {/* Ses Prompt URL - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
+                    {/* <div className="space-y-2">
                         <Label htmlFor="audioPromptUrl">Ses Prompt URL</Label>
                         <Input
                             id="audioPromptUrl"
@@ -212,7 +212,7 @@ const AudioResponseTemplateForm = forwardRef<AudioResponseTemplateFormHandle, Au
                         }
 
 
-                    </div>
+                    </div> */}
 
                     {/* Kayıt Süreleri */}
                     <div className="grid grid-cols-2 gap-4">
@@ -257,8 +257,8 @@ const AudioResponseTemplateForm = forwardRef<AudioResponseTemplateFormHandle, Au
                         </div>
                     </div>
 
-                    {/* İzin Verilen Formatlar */}
-                    <div className="space-y-2">
+                    {/* İzin Verilen Formatlar - YORUM SATIRI: UI'dan kaldırıldı, değeri "mp3,wav,m4a" */}
+                    {/* <div className="space-y-2">
                         <Label htmlFor="allowedFormats">İzin Verilen Formatlar</Label>
                         <Input
                             id="allowedFormats"
@@ -269,13 +269,12 @@ const AudioResponseTemplateForm = forwardRef<AudioResponseTemplateFormHandle, Au
                         <p className="text-sm text-gray-600">
                             Desteklenen formatları virgülle ayırarak yazınız (örn: mp3,wav,m4a)
                         </p>
-                    </div>
+                    </div> */}
 
-                    {/* Değerlendirme Kriterleri */}
-                    <div className="space-y-4">
+                    {/* Değerlendirme Kriterleri - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş array gönderiliyor */}
+                    {/* <div className="space-y-4">
                         <Label>Değerlendirme Kriterleri</Label>
 
-                        {/* Kriter Ekleme */}
                         <div className="flex gap-2">
                             <Input
                                 value={criteriaInput}
@@ -295,7 +294,6 @@ const AudioResponseTemplateForm = forwardRef<AudioResponseTemplateFormHandle, Au
                             </Button>
                         </div>
 
-                        {/* Mevcut Kriterler */}
                         {formData.gradingCriteria && formData.gradingCriteria.length > 0 && (
                             <div className="space-y-2">
                                 {formData.gradingCriteria.map((criteria, index) => (
@@ -316,7 +314,7 @@ const AudioResponseTemplateForm = forwardRef<AudioResponseTemplateFormHandle, Au
                                 ))}
                             </div>
                         )}
-                    </div>
+                    </div> */}
 
                     {/* Rubrik */}
                     <div className="space-y-2">
@@ -330,8 +328,8 @@ const AudioResponseTemplateForm = forwardRef<AudioResponseTemplateFormHandle, Au
                         />
                     </div>
 
-                    {/* Manuel Değerlendirme */}
-                    <div className="space-y-2">
+                    {/* Manuel Değerlendirme - YORUM SATIRI: UI'dan kaldırıldı, her zaman true gönderiliyor */}
+                    {/* <div className="space-y-2">
                         <div className="flex items-center space-x-2">
                             <Checkbox
                                 id="requiresManualGrading"
@@ -343,7 +341,7 @@ const AudioResponseTemplateForm = forwardRef<AudioResponseTemplateFormHandle, Au
                         <p className="text-sm text-gray-600">
                             Bu seçenek işaretlendiğinde, ses yanıtları otomatik değil manuel olarak değerlendirilecektir.
                         </p>
-                    </div>
+                    </div> */}
 
                     {/* KAYDET BUTONU KALDIRILDI - Parent component'te olacak */}
                 </div>
