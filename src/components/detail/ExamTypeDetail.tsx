@@ -2,6 +2,7 @@ import React from 'react';
 import { ExamTypeDto } from '@/types/exam/examTemplates';
 import { EExamType } from '@/types/exam/enum';
 import {Button} from "@/components/ui/button";
+import { examTypeConverter } from '@/utils/enum-converter';
 
 interface ExamTypeDetailProps {
     selectedExamType: ExamTypeDto | null;
@@ -30,17 +31,6 @@ const ExamTypeDetail: React.FC<ExamTypeDetailProps> = ({ selectedExamType, onEdi
         if (remainingSeconds > 0) result += `${remainingSeconds} saniye`;
 
         return result.trim() || '0 saniye';
-    };
-
-    const getExamTypeLabel = (examType?: EExamType) => {
-        const typeLabels = {
-            CERTIFICATE: 'Sertifika',
-            COURSE_EXAM: 'Kurs Sınavı',
-            LEVEL_DETERMINATION: 'Seviye Belirleme',
-            PRACTICE: 'Pratik',
-            DEGREE: 'Derece'
-        };
-        return examType ? typeLabels[examType] || examType : 'Belirtilmedi';
     };
 
     return (
@@ -113,7 +103,7 @@ const ExamTypeDetail: React.FC<ExamTypeDetailProps> = ({ selectedExamType, onEdi
                     <div className="p-4 bg-gray-50 rounded-lg">
                         <div className="text-sm font-medium text-gray-500">Sınav Türü</div>
                         <div className="text-lg font-semibold text-gray-900">
-                            {getExamTypeLabel(selectedExamType.examType)}
+                            {examTypeConverter(selectedExamType.examType)}
                         </div>
                     </div>
 

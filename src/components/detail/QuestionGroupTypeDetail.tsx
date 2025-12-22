@@ -2,6 +2,7 @@ import React from 'react';
 import { QuestionGroupTypeDto } from '@/types/exam/examTemplates';
 import { EQuestionGroupTemplateLevel, EQuestionGroupType, EApprovalStatus, EExamType } from '@/types/exam/enum';
 import {Button} from "@/components/ui/button";
+import { examTypeConverter } from '@/utils/enum-converter';
 
 interface QuestionGroupTypeDetailProps {
     selectedType: QuestionGroupTypeDto | null;
@@ -65,17 +66,6 @@ const QuestionGroupTypeDetail: React.FC<QuestionGroupTypeDetailProps> = ({ selec
             default:
                 return 'bg-gray-100 text-gray-800 border-gray-200';
         }
-    };
-
-    const getExamTypeLabel = (examType?: EExamType) => {
-        const typeLabels = {
-            CERTIFICATE: 'Sertifika',
-            COURSE_EXAM: 'Kurs Sınavı',
-            LEVEL_DETERMINATION: 'Seviye Belirleme',
-            PRACTICE: 'Pratik',
-            DEGREE: 'Derece'
-        };
-        return examType ? typeLabels[examType] || examType : 'Belirtilmedi';
     };
 
     const getApprovalProgress = () => {
@@ -301,7 +291,7 @@ const QuestionGroupTypeDetail: React.FC<QuestionGroupTypeDetailProps> = ({ selec
                                         <div>
                                             <div className="text-xs text-purple-500">Tür</div>
                                             <div className="text-purple-900 font-semibold">
-                                                {getExamTypeLabel(selectedType.examSection.examType.examType)}
+                                                {examTypeConverter(selectedType.examSection.examType.examType)}
                                             </div>
                                         </div>
                                     </div>

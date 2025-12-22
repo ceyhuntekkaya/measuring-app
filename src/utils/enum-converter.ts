@@ -1,6 +1,7 @@
 import {EExamType, EStatus} from "@/types/exam/enum";
 
-export const examTypeConverter = (examType: EExamType) => {
+export const examTypeConverter = (examType?: EExamType) => {
+    if (!examType) return 'Belirtilmedi';
 
     switch (examType) {
         case EExamType.CERTIFICATE:
@@ -14,7 +15,7 @@ export const examTypeConverter = (examType: EExamType) => {
         case EExamType.DEGREE:
             return 'DİPLOMA'
         default:
-            return ''
+            return examType || 'Belirtilmedi'
     }
 }
 
