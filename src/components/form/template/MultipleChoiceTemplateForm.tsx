@@ -270,7 +270,8 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
                             </div>
                         </div>
 
-                        <div className="col-span-2">
+                        {/* Medya Tipi - YORUM SATIRI: UI'dan kaldırıldı, default TEXT olarak ayarlanıyor */}
+                        {/* <div className="col-span-2">
                             <Label>Medya Tipi</Label>
                             <Select
                                 onValueChange={(value) => updateChoice(index, 'mediaType', value as EMediaType)}
@@ -289,9 +290,9 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
                                     </SelectGroup>
                                 </SelectContent>
                             </Select>
-                        </div>
+                        </div> */}
 
-                        <div className="col-span-3">
+                        <div className="col-span-10">
                             <Label>Seçenek Metni</Label>
                             <Textarea
                                 value={choice.text || ''}
@@ -301,16 +302,18 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
                             />
                         </div>
 
-                        <div className="col-span-2">
+                        {/* Medya URL - YORUM SATIRI: UI'dan kaldırıldı, belki sonra tekrar gösterilebilir */}
+                        {/* <div className="col-span-2">
                             <Label>Medya URL</Label>
                             <Input
                                 value={choice.mediaUrl || ''}
                                 onChange={(e) => updateChoice(index, 'mediaUrl', e.target.value)}
                                 placeholder="Medya URL (opsiyonel)"
                             />
-                        </div>
+                        </div> */}
 
-                        <div className="col-span-3">
+                        {/* Geri Bildirim - YORUM SATIRI: UI'dan kaldırıldı, belki sonra tekrar gösterilebilir */}
+                        {/* <div className="col-span-3">
                             <Label>Geri Bildirim</Label>
                             <Textarea
                                 value={choice.feedback || ''}
@@ -318,7 +321,7 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
                                 placeholder="Geri bildirim metni (opsiyonel)"
                                 className="min-h-[60px]"
                             />
-                        </div>
+                        </div> */}
 
                         <div className="col-span-1">
                             <Button

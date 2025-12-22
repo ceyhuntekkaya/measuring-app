@@ -651,7 +651,7 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
                 </div> */}
 
                 {/* Template-Specific Form */}
-                <div className="mt-6">
+                <div className="mt-1">
                     {renderTemplateSpecificForm()}
                 </div>
 

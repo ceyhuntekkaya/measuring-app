@@ -139,7 +139,7 @@ const ShortAnswerQuestion: React.FC<ShortAnswerQuestionProps> = ({
 
             {/* Question Text */}
             {template.question && (
-                <div className="mb-6">
+                <div className="mb-1">
                     <p className="text-gray-800 text-base leading-relaxed">{template.question}</p>
                 </div>
             )}

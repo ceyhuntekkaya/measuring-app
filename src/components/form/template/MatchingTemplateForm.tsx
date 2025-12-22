@@ -225,11 +225,12 @@ const MatchingTemplateForm = forwardRef<MatchingTemplateFormHandle, MatchingTemp
                                             onChange={(e) => updatePair(index, 'leftText', e.target.value)}
                                             placeholder="Sol taraf metni"
                                         />
-                                        <Input
+                                        {/* Sol taraf medya URL - YORUM SATIRI: UI'dan kaldırıldı, belki sonra tekrar gösterilebilir */}
+                                        {/* <Input
                                             value={pair.leftMediaUrl || ''}
                                             onChange={(e) => updatePair(index, 'leftMediaUrl', e.target.value)}
                                             placeholder="Sol taraf medya URL (opsiyonel)"
-                                        />
+                                        /> */}
                                     </div>
 
                                     {/* Sağ Taraf */}
@@ -240,15 +241,17 @@ const MatchingTemplateForm = forwardRef<MatchingTemplateFormHandle, MatchingTemp
                                             onChange={(e) => updatePair(index, 'rightText', e.target.value)}
                                             placeholder="Sağ taraf metni"
                                         />
-                                        <Input
+                                        {/* Sağ taraf medya URL - YORUM SATIRI: UI'dan kaldırıldı, belki sonra tekrar gösterilebilir */}
+                                        {/* <Input
                                             value={pair.rightMediaUrl || ''}
                                             onChange={(e) => updatePair(index, 'rightMediaUrl', e.target.value)}
                                             placeholder="Sağ taraf medya URL (opsiyonel)"
-                                        />
+                                        /> */}
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-12 gap-2 items-center">
+                                {/* Geri Bildirim - YORUM SATIRI: UI'dan kaldırıldı, belki sonra tekrar gösterilebilir */}
+                                {/* <div className="grid grid-cols-12 gap-2 items-center">
                                     <div className="col-span-10">
                                         <Label>Geri Bildirim</Label>
                                         <Input
@@ -269,6 +272,17 @@ const MatchingTemplateForm = forwardRef<MatchingTemplateFormHandle, MatchingTemp
                                             <Trash2 className="w-4 h-4"/>
                                         </Button>
                                     </div>
+                                </div> */}
+
+                                <div className="flex justify-end">
+                                    <Button
+                                        type="button"
+                                        onClick={() => removePair(index)}
+                                        variant="primary"
+                                        size="sm"
+                                    >
+                                        <Trash2 className="w-4 h-4"/>
+                                    </Button>
                                 </div>
                             </div>
                         ))}

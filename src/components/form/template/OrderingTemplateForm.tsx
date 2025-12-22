@@ -279,7 +279,7 @@ const OrderingTemplateForm = forwardRef<OrderingTemplateFormHandle, OrderingTemp
                                     />
                                 </div>
 
-                                <div className="col-span-4">
+                                <div className="col-span-10">
                                     <Label>Metin *</Label>
                                     <Textarea
                                         value={item.text || ''}
@@ -289,23 +289,25 @@ const OrderingTemplateForm = forwardRef<OrderingTemplateFormHandle, OrderingTemp
                                     />
                                 </div>
 
-                                <div className="col-span-3">
+                                {/* Medya URL - YORUM SATIRI: UI'dan kaldırıldı, belki sonra tekrar gösterilebilir */}
+                                {/* <div className="col-span-3">
                                     <Label>Medya URL</Label>
                                     <Input
                                         value={item.mediaUrl || ''}
                                         onChange={(e) => updateItem(index, 'mediaUrl', e.target.value)}
                                         placeholder="Medya URL (opsiyonel)"
                                     />
-                                </div>
+                                </div> */}
 
-                                <div className="col-span-3">
+                                {/* Geri Bildirim - YORUM SATIRI: UI'dan kaldırıldı, belki sonra tekrar gösterilebilir */}
+                                {/* <div className="col-span-3">
                                     <Label>Geri Bildirim</Label>
                                     <Input
                                         value={item.feedback || ''}
                                         onChange={(e) => updateItem(index, 'feedback', e.target.value)}
                                         placeholder="Geri bildirim (opsiyonel)"
                                     />
-                                </div>
+                                </div> */}
 
                                 <div className="col-span-1 flex flex-col gap-1">
                                     <Button

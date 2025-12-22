@@ -51,6 +51,9 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
 
     const [errors, setErrors] = useState<FillInTheBlanksTemplateFormErrors>({});
 
+    // Silinen boşlukların verilerini geçici olarak sakla (taşıma işlemleri için)
+    const temporaryBlanksRef = useRef<Map<string, BlankAnswer>>(new Map());
+
     // Value değiştiğinde form data'yı güncelle (Update modu için)
     useEffect(() => {
         if (value) {
@@ -121,6 +124,27 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
         // Silinen boşlukları bul
         const removedBlankIds = currentBlankIds.filter(id => !blankIdsInText.includes(id));
 
+        // Silinen boşlukları geçici state'e kaydet (taşıma işlemleri için)
+        removedBlankIds.forEach(removedId => {
+            const removedBlank = currentBlanks.find(blank => {
+                const id = blank.blankId || '';
+                const formattedId = id.startsWith('[') && id.endsWith(']') ? id : `[${id}]`;
+                return formattedId === removedId;
+            });
+            if (removedBlank) {
+                // Sadece veri içeren boşlukları kaydet (boş olanları kaydetme)
+                const hasData = removedBlank.acceptableAnswers && 
+                               removedBlank.acceptableAnswers.length > 0 && 
+                               removedBlank.acceptableAnswers.some(ans => ans.trim() !== '');
+                if (hasData) {
+                    temporaryBlanksRef.current.set(removedId, {
+                        ...removedBlank,
+                        blankId: removedId
+                    });
+                }
+            }
+        });
+
         // Eğer değişiklik yoksa mevcut boşlukları döndür
         if (newBlankIds.length === 0 && removedBlankIds.length === 0 && 
             blankIdsInText.length === currentBlankIds.length) {
@@ -146,8 +170,22 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
                 };
             });
 
-        // Yeni boşlukları ekle
+        // Yeni boşlukları ekle - eğer geçici state'te varsa geri yükle
         const addedBlanks: BlankAnswer[] = newBlankIds.map(blankId => {
+            // Geçici state'te bu ID var mı kontrol et
+            const temporaryBlank = temporaryBlanksRef.current.get(blankId);
+            if (temporaryBlank) {
+                // Geçici state'ten geri yükle ve geçici state'ten sil
+                temporaryBlanksRef.current.delete(blankId);
+                return {
+                    ...temporaryBlank,
+                    blankId: blankId,
+                    caseSensitive: caseSensitive, // Güncel ayarları uygula
+                    exactMatch: exactMatch, // Güncel ayarları uygula
+                    feedback: '' // Feedback'i sıfırla
+                };
+            }
+            // Geçici state'te yoksa yeni boşluk oluştur
             return {
                 blankId: blankId,
                 acceptableAnswers: [''],

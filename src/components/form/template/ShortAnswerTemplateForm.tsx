@@ -94,7 +94,7 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
             maxCharacters: updatedData.maxCharacters,
             minCharacters: updatedData.minCharacters,
             rubric: updatedData.rubric,
-            requiresManualGrading: updatedData.requiresManualGrading
+            requiresManualGrading: false // UI'dan kaldırıldı, her zaman false olarak gönderiliyor
         });
     };
 
@@ -235,7 +235,7 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
             </div> */}
 
             {/* Ayarlar */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center space-x-2">
                     <Checkbox
                         id="caseSensitive"
@@ -254,14 +254,15 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
                     <Label htmlFor="exactMatch">Tam Eşleşme Gerekli</Label>
                 </div>
 
-                <div className="flex items-center space-x-2">
+                {/* Manuel Değerlendirme - YORUM SATIRI: UI'dan kaldırıldı, değeri her zaman false olarak gönderiliyor */}
+                {/* <div className="flex items-center space-x-2">
                     <Checkbox
                         id="requiresManualGrading"
                         checked={formData.requiresManualGrading}
                         onChange={(checked) => handleChange('requiresManualGrading', !!checked)}
                     />
                     <Label htmlFor="requiresManualGrading">Manuel Değerlendirme</Label>
-                </div>
+                </div> */}
             </div>
 
             {/* Kabul Edilebilir Cevaplar */}
@@ -281,7 +282,7 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
 
                 {formData.options.acceptableAnswers?.map((answer, index) => (
                     <div key={index} className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg">
-                        <div className="col-span-5">
+                        <div className="col-span-9">
                             <Label>Cevap Metni</Label>
                             <Input
                                 value={answer.answer || ''}
@@ -301,14 +302,15 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
                             />
                         </div>
 
-                        <div className="col-span-4">
+                        {/* Geri Bildirim - YORUM SATIRI: UI'dan kaldırıldı, belki sonra tekrar gösterilebilir */}
+                        {/* <div className="col-span-4">
                             <Label>Geri Bildirim</Label>
                             <Input
                                 value={answer.feedback || ''}
                                 onChange={(e) => updateAcceptableAnswer(index, 'feedback', e.target.value)}
                                 placeholder="Geri bildirim (opsiyonel)"
                             />
-                        </div>
+                        </div> */}
 
                         <div className="col-span-1">
                             <Button
