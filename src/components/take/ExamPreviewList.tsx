@@ -210,7 +210,9 @@ const ExamPreviewList: React.FC<ExamPreviewListProps> = ({ exam }) => {
         const orderB = b.examSection?.orderNumber ?? 0;
         if (orderA !== orderB) return orderA - orderB;
         // Aynı section içinde orderNumber'a göre sırala
-        return (a.orderNumber ?? 0) - (b.orderNumber ?? 0);
+        const groupOrderA = a.questionGroupType?.orderNumber ?? 0;
+        const groupOrderB = b.questionGroupType?.orderNumber ?? 0;
+        return groupOrderA - groupOrderB;
     });
 
     return (

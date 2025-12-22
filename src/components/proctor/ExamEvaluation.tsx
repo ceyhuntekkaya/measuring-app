@@ -3,7 +3,7 @@ import {ApplicationDto, QuestionId} from "@/types/management/brand";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Column, RecordType} from "@/types/ui/table";
 import {statusConverter} from "@/utils/enum-converter";
-import {EStatus, EQuestionType, EMediaType} from "@/types/exam/enum";
+import {EStatus, EQuestionType} from "@/types/exam/enum";
 import DynamicTable from "@/components/ui/dynamic-table";
 import {useApplication} from "@/hooks/exam/use-application";
 import {useQuestion} from "@/hooks/exam/use-question";
@@ -363,9 +363,6 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
             const type = selectedEvaluation.question.questionType as EQuestionType;
             const template = selectedEvaluation.question.questionTemplate as QuestionTemplateType;
             const initialAnswer = getInitialAnswer();
-
-            // Boş bir onAnswerChange fonksiyonu (değişiklik yapılmasın)
-            const emptyOnAnswerChange = () => {};
 
             switch (type) {
                 case 'MULTIPLE_CHOICE':

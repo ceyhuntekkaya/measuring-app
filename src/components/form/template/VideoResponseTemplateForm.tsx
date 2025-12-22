@@ -3,14 +3,10 @@
 import React, {forwardRef, useEffect, useImperativeHandle, useState} from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import Checkbox from "@/components/ui/checkbox";
 import { NumberInput } from "@/components/ui/number-input";
 import {VideoResponseTemplateDto} from "@/types/exam/questionTemplates";
-import { Trash2, Plus } from "lucide-react";
 
 interface VideoResponseTemplateFormData {
     prompt?: string;
@@ -62,7 +58,6 @@ const VideoResponseTemplateForm = forwardRef<VideoResponseTemplateFormHandle, Vi
     });
 
     const [errors, setErrors] = useState<VideoResponseTemplateFormErrors>({});
-    const [criteriaInput, setCriteriaInput] = useState('');
 
     useEffect(() => {
         if (value) {
@@ -90,29 +85,7 @@ const VideoResponseTemplateForm = forwardRef<VideoResponseTemplateFormHandle, Vi
         }));
     };
 
-    const addCriteria = () => {
-        if (criteriaInput.trim() && !formData.gradingCriteria.includes(criteriaInput.trim())) {
-            setFormData(prev => ({
-                ...prev,
-                gradingCriteria: [...prev.gradingCriteria, criteriaInput.trim()]
-            }));
-            setCriteriaInput('');
-        }
-    };
 
-    const removeCriteria = (index: number) => {
-        setFormData(prev => ({
-            ...prev,
-            gradingCriteria: prev.gradingCriteria.filter((_, i) => i !== index)
-        }));
-    };
-
-    const handleCriteriaInputKeyPress = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            addCriteria();
-        }
-    };
 
     const validateForm = (): boolean => {
         const newErrors: VideoResponseTemplateFormErrors = {};

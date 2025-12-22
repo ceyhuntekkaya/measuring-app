@@ -6,10 +6,11 @@ import Link from 'next/link';
 import { findMenuItemByPath, MenuItem } from '@/config/routes';
 
 interface PageHeaderProps {
+    title?: string;
     actions?: React.ReactNode;
 }
 
-export default function PageHeader({ actions }: PageHeaderProps) {
+export default function PageHeader({ title, actions }: PageHeaderProps) {
     const pathname = usePathname();
     const router = useRouter();
     const currentPage = findMenuItemByPath(pathname);
@@ -44,7 +45,7 @@ export default function PageHeader({ actions }: PageHeaderProps) {
 
                 <div>
                     <h1 className="text-2xl font-semibold text-gray-900">
-                        {currentPage?.title || ''}
+                        {title || currentPage?.title || ''}
                     </h1>
 
                     <div className="flex items-center mt-1 text-sm text-gray-500">

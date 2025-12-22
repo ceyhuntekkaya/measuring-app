@@ -2,10 +2,6 @@
 
 import React, {useEffect, useState, useRef, forwardRef, useImperativeHandle, useCallback} from 'react';
 import {Alert, AlertDescription} from "@/components/ui/alert";
-import {Button} from "@/components/ui/button";
-import {Label} from "@/components/ui/label";
-import {Input} from "@/components/ui/input";
-import {Textarea} from "@/components/ui/textarea";
 import {
     MultipleChoiceTemplateDto,
     TrueFalseTemplateDto,
@@ -21,7 +17,6 @@ import {
     VideoResponseTemplateDto,
     ImageResponseTemplateDto
 } from "@/types/exam/questionTemplates";
-import {Trash2, Plus} from "lucide-react";
 
 // Import template form components
 import MultipleChoiceTemplateForm, {MultipleChoiceTemplateFormHandle} from './MultipleChoiceTemplateForm';
@@ -82,7 +77,6 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
 
     const [formData, setFormData] = useState<BaseQuestionTemplateFormData>(value);
     const [errors, setErrors] = useState<BaseQuestionTemplateFormErrors>({});
-    const [tagInput, setTagInput] = useState('');
 
     // Template validation ref - her template'in validate fonksiyonunu tutar
     // Union type: Tüm template handle'ları
@@ -122,23 +116,6 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
         }
     }, [formData]);
 
-    const handleChange = <T extends keyof BaseQuestionTemplateFormData>(
-        name: T,
-        newValue: BaseQuestionTemplateFormData[T]
-    ) => {
-        setFormData(prev => ({
-            ...prev,
-            [name]: newValue
-        }));
-
-        // Hata varsa temizle
-        if (errors[name as keyof BaseQuestionTemplateFormErrors]) {
-            setErrors(prev => ({
-                ...prev,
-                [name]: undefined
-            }));
-        }
-    };
     /*
         // Template-specific data değişikliklerini handle et
         const handleTemplateDataChange = (templateData: MultipleChoiceTemplateDto | TrueFalseTemplateDto |
@@ -174,24 +151,6 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
     }, []);
 
 
-    // Tag yönetimi
-    const addTag = () => {
-        if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
-            handleChange('tags', [...formData.tags, tagInput.trim()]);
-            setTagInput('');
-        }
-    };
-
-    const removeTag = (index: number) => {
-        handleChange('tags', formData.tags.filter((_, i) => i !== index));
-    };
-
-    const handleTagInputKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            addTag();
-        }
-    };
 
     // Base form validation
     const validateBaseForm = (): boolean => {

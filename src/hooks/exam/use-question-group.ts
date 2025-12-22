@@ -6,7 +6,7 @@ import {
     QuestionGroupValidation,
 } from '@/types/exam/examResponses';
 import { showNotification } from '@/lib/notification';
-import {QuestionGroupDto} from "@/types/exam/examEntities";
+import {QuestionGroupApprovalResponse, QuestionGroupDto} from "@/types/exam/examEntities";
 import {CreateQuestionGroupRequest, CreateQuestionGroupHeaderRequest} from "@/types/exam/examRequests";
 import { questionGroupService } from "@/services/api/exam/question-grup-service";
 
@@ -19,6 +19,7 @@ interface UseQuestionGroupReturn {
     groupStatistics: QuestionGroupStatistics | null;
     groupsSummary: QuestionGroupsSummary | null;
     groupValidation: QuestionGroupValidation | null;
+    questionGroupApprovals: QuestionGroupApprovalResponse[];
     loading: boolean;
     error: Error | null;
     createQuestionGroup: (createRequest: CreateQuestionGroupRequest) => Promise<void>;
@@ -37,10 +38,12 @@ interface UseQuestionGroupReturn {
     bulkCreateQuestionGroups: (createRequests: CreateQuestionGroupRequest[]) => Promise<void>;
     clearQuestionGroupData: () => void;
     getAllQuestionGroup: () => Promise<void>;
+    getQuestionGroupApprovals: (questionGroupId: string) => Promise<void>;
 }
 
 export const useQuestionGroup = (): UseQuestionGroupReturn => {
     const [questionGroups, setQuestionGroups] = useState<QuestionGroupDto[]>([]);
+    const [questionGroupApprovals, setQuestionGroupApprovals] = useState<QuestionGroupApprovalResponse[]>([]);
     const [selectedQuestionGroup, setSelectedQuestionGroup] = useState<QuestionGroupDto | null>(null);
     const [groupsByExamSection, setGroupsByExamSection] = useState<QuestionGroupDto[]>([]);
     const [groupsByExamType, setGroupsByExamType] = useState<QuestionGroupDto[]>([]);
@@ -51,6 +54,24 @@ export const useQuestionGroup = (): UseQuestionGroupReturn => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
 
+
+    const getQuestionGroupApprovals = useCallback(async (questionGroupId: string) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await questionGroupService.getQuestionGroupApprovals(questionGroupId);
+            if (response.data && response.success) {
+                setQuestionGroupApprovals(response.data);
+            } else {
+                throw new Error(response.message);
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err : new Error('An error occurred'));
+            showNotification.error('Soru grubu onayları alınırken bir hata oluştu!');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
     const createQuestionGroup = useCallback(async (createRequest: CreateQuestionGroupRequest) => {
         try {
             setLoading(true);
@@ -373,6 +394,8 @@ export const useQuestionGroup = (): UseQuestionGroupReturn => {
         validateQuestionGroup,
         bulkCreateQuestionGroups,
         clearQuestionGroupData,
-        getAllQuestionGroup
+        getAllQuestionGroup,
+        getQuestionGroupApprovals,
+        questionGroupApprovals
     };
 };

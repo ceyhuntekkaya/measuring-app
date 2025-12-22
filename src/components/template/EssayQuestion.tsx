@@ -10,6 +10,7 @@ interface EssayQuestionProps {
     initialAnswer?: EssayAnswerData | null;
     isSubmitted?: boolean;
     questionId: string;
+    showCorrectAnswer?: boolean;
 }
 
 interface EssayAnswerData {
@@ -25,7 +26,8 @@ const EssayQuestion: React.FC<EssayQuestionProps> = ({
                                                          onAnswerChange,
                                                          initialAnswer = null,
                                                          isSubmitted = false,
-                                                         questionId
+                                                         questionId,
+                                                         showCorrectAnswer = false
                                                      }) => {
     const [essayText, setEssayText] = useState<string>(initialAnswer?.text || '');
     const [wordCount, setWordCount] = useState<number>(0);
@@ -33,6 +35,8 @@ const EssayQuestion: React.FC<EssayQuestionProps> = ({
     const [isFocused, setIsFocused] = useState<boolean>(false);
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    console.log(showCorrectAnswer)
 
     useEffect(() => {
         if (initialAnswer) {

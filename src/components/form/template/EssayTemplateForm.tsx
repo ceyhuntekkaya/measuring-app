@@ -3,14 +3,10 @@
 import React, { useEffect, useState, useImperativeHandle, forwardRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { NumberInput } from "@/components/ui/number-input";
 import { EssayTemplateDto } from "@/types/exam/questionTemplates";
-import { Trash2, Plus } from "lucide-react";
-import Checkbox from "@/components/ui/checkbox";
 
 interface EssayTemplateFormData {
     prompt: string;
@@ -55,8 +51,6 @@ const EssayTemplateForm = forwardRef<EssayTemplateFormHandle, EssayTemplateFormP
     });
 
     const [errors, setErrors] = useState<EssayTemplateFormErrors>({});
-    const [criteriaInput, setCriteriaInput] = useState('');
-    const [topicInput, setTopicInput] = useState('');
 
     // Value değiştiğinde form data'yı güncelle (Update modu için)
     useEffect(() => {
@@ -109,53 +103,7 @@ const EssayTemplateForm = forwardRef<EssayTemplateFormHandle, EssayTemplateFormP
         }
     };
 
-    const addCriteria = () => {
-        if (criteriaInput.trim() && !formData.gradingCriteria.includes(criteriaInput.trim())) {
-            setFormData(prev => ({
-                ...prev,
-                gradingCriteria: [...prev.gradingCriteria, criteriaInput.trim()]
-            }));
-            setCriteriaInput('');
-        }
-    };
 
-    const removeCriteria = (index: number) => {
-        setFormData(prev => ({
-            ...prev,
-            gradingCriteria: prev.gradingCriteria.filter((_, i) => i !== index)
-        }));
-    };
-
-    const addTopic = () => {
-        if (topicInput.trim() && !formData.requiredTopics.includes(topicInput.trim())) {
-            setFormData(prev => ({
-                ...prev,
-                requiredTopics: [...prev.requiredTopics, topicInput.trim()]
-            }));
-            setTopicInput('');
-        }
-    };
-
-    const removeTopic = (index: number) => {
-        setFormData(prev => ({
-            ...prev,
-            requiredTopics: prev.requiredTopics.filter((_, i) => i !== index)
-        }));
-    };
-
-    const handleCriteriaKeyPress = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            addCriteria();
-        }
-    };
-
-    const handleTopicKeyPress = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            addTopic();
-        }
-    };
 
     // Validation fonksiyonu - parent tarafından çağrılacak
     const validateForm = (): boolean => {

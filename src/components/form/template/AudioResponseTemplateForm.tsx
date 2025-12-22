@@ -3,16 +3,10 @@
 import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { NumberInput } from "@/components/ui/number-input";
 import { AudioResponseTemplateDto } from "@/types/exam/questionTemplates";
-import { Trash2, Plus } from "lucide-react";
-import Checkbox from "@/components/ui/checkbox";
-import {FileUpload} from "@/components/ui/file-upload";
-import FilePreview from "@/components/ui/file-preview";
 
 interface AudioResponseTemplateFormProps {
     value?: AudioResponseTemplateDto | null;
@@ -47,7 +41,6 @@ const AudioResponseTemplateForm = forwardRef<AudioResponseTemplateFormHandle, Au
         allowedFormats: 'mp3,wav,m4a' // UI'dan kaldırıldı, her zaman sabit değer
     });
 
-    const [criteriaInput, setCriteriaInput] = useState('');
     const [errors, setErrors] = useState<AudioResponseTemplateFormErrors>({});
 
     // Value değiştiğinde form data'yı güncelle (Update modu için)
@@ -103,29 +96,6 @@ const AudioResponseTemplateForm = forwardRef<AudioResponseTemplateFormHandle, Au
         }
     };
 
-    const addCriteria = () => {
-        if (criteriaInput.trim() && !formData.gradingCriteria?.includes(criteriaInput.trim())) {
-            setFormData(prev => ({
-                ...prev,
-                gradingCriteria: [...(prev.gradingCriteria || []), criteriaInput.trim()]
-            }));
-            setCriteriaInput('');
-        }
-    };
-
-    const removeCriteria = (index: number) => {
-        setFormData(prev => ({
-            ...prev,
-            gradingCriteria: prev.gradingCriteria?.filter((_, i) => i !== index) || []
-        }));
-    };
-
-    const handleCriteriaInputKeyPress = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            addCriteria();
-        }
-    };
 
     // Validation fonksiyonu - parent tarafından çağrılacak
     const validateForm = (): boolean => {

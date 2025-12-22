@@ -1,8 +1,8 @@
 import React from 'react';
 import { QuestionGroupDto } from '@/types/exam/examEntities';
-import { EApprovalStatus, EExamType, EQuestionGroupType, EMediaType, EQuestionType } from '@/types/exam/enum';
+import { EQuestionGroupType, EMediaType, EQuestionType } from '@/types/exam/enum';
 import {Button} from "@/components/ui/button";
-import { examTypeConverter } from '@/utils/enum-converter';
+import { examTypeConverter, approvalStatusConverter, getApprovalStatusColor } from '@/utils/enum-converter';
 
 interface QuestionGroupDetailProps {
     selectedQuestionGroup: QuestionGroupDto | null;
@@ -33,33 +33,6 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
         return result.trim() || '0 saniye';
     };
 
-    const getApprovalStatusLabel = (status?: EApprovalStatus) => {
-        const statusLabels = {
-            PENDING: 'Beklemede',
-            APPROVED: 'Onaylandı',
-            REJECTED: 'Reddedildi',
-            CANCELLED: 'İptal Edildi',
-            EXPIRED: 'Süresi Doldu'
-        };
-        return status ? statusLabels[status] || status : 'Belirtilmedi';
-    };
-
-    const getApprovalStatusColor = (status?: EApprovalStatus) => {
-        switch (status) {
-            case 'APPROVED':
-                return 'bg-green-100 text-green-800 border-green-200';
-            case 'PENDING':
-                return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-            case 'REJECTED':
-                return 'bg-red-100 text-red-800 border-red-200';
-            case 'CANCELLED':
-                return 'bg-gray-100 text-gray-800 border-gray-200';
-            case 'EXPIRED':
-                return 'bg-orange-100 text-orange-800 border-orange-200';
-            default:
-                return 'bg-gray-100 text-gray-800 border-gray-200';
-        }
-    };
 
     const getGroupTypeLabel = (groupType?: EQuestionGroupType) => {
         const typeLabels = {
@@ -145,7 +118,7 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
                         </h1>
                         <div className="flex items-center space-x-4">
               <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getApprovalStatusColor(selectedQuestionGroup.approvalStatus)}`}>
-                {getApprovalStatusLabel(selectedQuestionGroup.approvalStatus)}
+                {approvalStatusConverter(selectedQuestionGroup.approvalStatus)}
               </span>
                             <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                                 selectedQuestionGroup.status === 'ACTIVE'
@@ -207,7 +180,7 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
                         <div>
                             <div className="text-sm font-medium text-gray-500">Mevcut Onay Durumu</div>
                             <div className={`text-lg font-semibold px-3 py-1 rounded-full inline-block border ${getApprovalStatusColor(selectedQuestionGroup.approvalStatus)}`}>
-                                {getApprovalStatusLabel(selectedQuestionGroup.approvalStatus)}
+                                {approvalStatusConverter(selectedQuestionGroup.approvalStatus)}
                             </div>
                         </div>
                         {selectedQuestionGroup.approvalCompletedDate && (
@@ -385,7 +358,7 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
 
                                     <div className="text-right">
                                         <div className={`px-2 py-1 rounded text-xs font-medium ${getApprovalStatusColor(question.approvalStatus)}`}>
-                                            {getApprovalStatusLabel(question.approvalStatus)}
+                                            {approvalStatusConverter(question.approvalStatus)}
                                         </div>
                                         {question.currentApprovalCount && question.requiredApprovalCount && (
                                             <div className="text-xs text-gray-500 mt-1">
@@ -433,7 +406,7 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
 
                                     <div className="text-right">
                                         <div className={`px-2 py-1 rounded text-xs font-medium ${getApprovalStatusColor(header.approvalStatus)}`}>
-                                            {getApprovalStatusLabel(header.approvalStatus)}
+                                            {approvalStatusConverter(header.approvalStatus)}
                                         </div>
                                         {header.currentApprovalCount && header.requiredApprovalCount && (
                                             <div className="text-xs text-gray-500 mt-1">

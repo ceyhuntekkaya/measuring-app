@@ -6,7 +6,6 @@ import PageHeader from "@/components/layout/page-header";
 import LoadingComp from "@/components/ui/loading-comp";
 import ExamSessionDetail from "@/components/detail/ExamSessionDetail";
 import {useExamSession} from "@/hooks/exam/use-exam-session";
-import {showNotification} from "@/lib/notification";
 import { AdminWebSocketProvider } from '@/components/websocket/AdminWebSocketProvider';
 import {ESessionState} from "@/types/exam/enum";
 
@@ -22,7 +21,6 @@ export default function CandidateDetailPage() {
         getExamSessionById,
         getExamSessionStatistics,
         deleteExamSession,
-        updateSessionStatus,
         clearSessionData,
         setExamSessionBeginAt,
         setExamSessionEndAt,

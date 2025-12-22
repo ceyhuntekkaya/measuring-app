@@ -4,11 +4,9 @@ import React, {forwardRef, useEffect, useImperativeHandle, useState} from 'react
 import {Alert, AlertDescription} from "@/components/ui/alert";
 import {Button} from "@/components/ui/button";
 import {Label} from "@/components/ui/label";
-import {Input} from "@/components/ui/input";
 import {Textarea} from "@/components/ui/textarea";
 import Checkbox from "@/components/ui/checkbox";
 import {MultipleChoiceTemplateDto, MultipleChoiceOptions, ChoiceOption} from "@/types/exam/questionTemplates";
-import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {Trash2, Plus} from "lucide-react";
 import {EMediaType} from "@/types/exam/enum";
 

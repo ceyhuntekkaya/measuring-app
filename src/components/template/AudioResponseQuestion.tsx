@@ -13,6 +13,7 @@ interface AudioResponseQuestionProps {
     initialAnswer?: AudioAnswerData | null;
     isSubmitted?: boolean;
     questionId: string;
+    showCorrectAnswer?: boolean;
 }
 
 interface AudioAnswerData {
@@ -30,10 +31,13 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                                                                          onAnswerChange,
                                                                          initialAnswer = null,
                                                                          questionId,
-                                                                         isSubmitted = false
+                                                                         isSubmitted = false,
+                                                                         showCorrectAnswer = false
                                                                      }) => {
     const [audioAnswer, setAudioAnswer] = useState<AudioAnswerData | null>(initialAnswer);
 
+
+    console.log(showCorrectAnswer)
     const [audioAnswerPath, setAudioAnswerPath] = useState<string>('');
     const [isRecording, setIsRecording] = useState<boolean>(false);
     const [isPaused, setIsPaused] = useState<boolean>(false);

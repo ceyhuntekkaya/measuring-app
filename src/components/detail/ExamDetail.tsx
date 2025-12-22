@@ -8,6 +8,7 @@ import {Clock, FileText, Hash, CheckCircle, XCircle, Building, BookOpen, Users, 
 import {ExamDto} from '@/types/exam/examEntities';
 import { formatDate } from '@/utils/date-formater';
 import LoadingComp from "@/components/ui/loading-comp";
+import { approvalStatusConverter, getApprovalStatusColor } from '@/utils/enum-converter';
 
 interface ExamDetailProps {
     exam: ExamDto;
@@ -320,14 +321,9 @@ const ExamDetail: React.FC<ExamDetailProps> = ({
                                                         {qg.approvalStatus && (
                                                             <div className="mt-1">
                                                                 <Badge
-                                                                    className={qg.approvalStatus === 'APPROVED'
-                                                                        ? 'bg-green-100 text-green-800'
-                                                                        : qg.approvalStatus === 'PENDING'
-                                                                            ? 'bg-yellow-100 text-yellow-800'
-                                                                            : 'bg-red-100 text-red-800'}
+                                                                    className={getApprovalStatusColor(qg.approvalStatus)}
                                                                 >
-                                                                    {qg.approvalStatus === 'APPROVED' ? 'Onaylandı' :
-                                                                        qg.approvalStatus === 'PENDING' ? 'Bekliyor' : 'Reddedildi'}
+                                                                    {approvalStatusConverter(qg.approvalStatus)}
                                                                 </Badge>
                                                             </div>
                                                         )}

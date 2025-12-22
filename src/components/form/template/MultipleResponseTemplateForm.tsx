@@ -5,10 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import Checkbox from "@/components/ui/checkbox";
-import { NumberInput } from "@/components/ui/number-input";
 import { MultipleResponseTemplateDto, MultipleResponseOptions, ResponseOption } from "@/types/exam/questionTemplates";
 import { Trash2, Plus } from "lucide-react";
 

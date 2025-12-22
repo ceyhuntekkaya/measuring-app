@@ -1,6 +1,5 @@
 import React from 'react';
 import { ExamSectionDto } from '@/types/exam/examTemplates';
-import { EExamType } from '@/types/exam/enum';
 import {Button} from "@/components/ui/button";
 import { examTypeConverter } from '@/utils/enum-converter';
 

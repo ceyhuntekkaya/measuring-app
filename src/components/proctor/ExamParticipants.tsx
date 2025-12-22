@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Clock, MessageCircle, Pause, CheckCircle, Play, XCircle} from 'lucide-react';
+import {Clock, MessageCircle, CheckCircle, Play, XCircle} from 'lucide-react';
 import {ChatWindow} from "@/components/proctor/ChatWindow";
 import {ApplicationDto} from "@/types/management/brand";
 import {ESessionState} from "@/types/exam/enum";
@@ -8,10 +8,8 @@ import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import {useApplication} from "@/hooks/exam/use-application";
 import {ESessionState as ESessionStateEnum} from "@/types/exam/enum";
 
-const ParticipantCard = ({participant, onFreeze, onComplete, onChat, isOnline, onStart, onStop, onFinish}: {
+const ParticipantCard = ({participant, onChat, isOnline, onStart, onStop, onFinish}: {
     participant: ApplicationDto;
-    onFreeze: (id: string) => void;
-    onComplete: (id: string) => void;
     onChat: (participant: ApplicationDto) => void;
     isOnline: boolean;
     onStart?: (id: string) => void;
@@ -129,7 +127,7 @@ const ParticipantCard = ({participant, onFreeze, onComplete, onChat, isOnline, o
 
                 <div className="flex items-center gap-2">
                     {/* Başlat/Durdur butonu - isFinish false ise görünür */}
-                    {!((participant as any).isFinish === true) && (
+                    {!((participant as ApplicationDto & { isFinish?: boolean }).isFinish === true) && (
                         <>
                             {onStart && !participant.startedAt && (
                                 <button
@@ -155,14 +153,14 @@ const ParticipantCard = ({participant, onFreeze, onComplete, onChat, isOnline, o
                     {onFinish && (
                         <button
                             onClick={() => onFinish(participant.id || '')}
-                            disabled={(participant as any).isFinish === true}
+                            disabled={(participant as ApplicationDto & { isFinish?: boolean }).isFinish === true}
                             className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm ${
-                                (participant as any).isFinish === true
+                                (participant as ApplicationDto & { isFinish?: boolean }).isFinish === true
                                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                     : 'bg-red-500 hover:bg-red-600 text-white'
                             }`}
                         >
-                            {(participant as any).isFinish === true ? (
+                            {(participant as ApplicationDto & { isFinish?: boolean }).isFinish === true ? (
                                 <>
                                     <CheckCircle className="w-4 h-4"/>
                                     OTURUM SONLANDI
@@ -199,7 +197,7 @@ interface ExamTypeFormProps {
 const ExamParticipants: React.FC<ExamTypeFormProps> = ({ candidates }) => {
     const [chatParticipant, setChatParticipant] = useState<ApplicationDto | null>(null);
     const { isOnline ,onlineUsers} = useOnlineStatus();
-    const {setApplicationStartedAt, setApplicationEndedAt, updateApplicationSessionState, loading} = useApplication();
+    const {setApplicationStartedAt, setApplicationEndedAt, updateApplicationSessionState} = useApplication();
 
 
 
@@ -246,14 +244,6 @@ const ExamParticipants: React.FC<ExamTypeFormProps> = ({ candidates }) => {
         }
     };
 
-    const handleFreeze = (id: string) => {
-        console.log('Donduruldu:', id);
-    };
-
-    const handleComplete = (id: string) => {
-        console.log('Bitirildi:', id);
-    };
-
     const handleChat = (participant: ApplicationDto) => {
         setChatParticipant(participant);
     };
@@ -267,8 +257,6 @@ const ExamParticipants: React.FC<ExamTypeFormProps> = ({ candidates }) => {
                         <ParticipantCard
                             key={participant.id}
                             participant={participant}
-                            onFreeze={handleFreeze}
-                            onComplete={handleComplete}
                             onChat={handleChat}
                             isOnline={isOnline(participant.username || '')}
                             onStart={handleStart}

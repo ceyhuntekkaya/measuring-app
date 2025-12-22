@@ -4,6 +4,7 @@ import {ExamSectionDto, ExamTypeDto, QuestionGroupTypeDto} from "@/types/exam/ex
 import {
     EApplicationUpdateState,
     EApprovalStatus,
+    EApprovalType,
     ECurriculumLevel, EDifficulty,
     EExamCategory,
     EExamType,
@@ -89,6 +90,24 @@ export type QuestionDto = DatabaseObjectDto & {
     requiredApprovalCount?: number;
     approvalCompletedDate?: string;
 }
+
+
+export type QuestionGroupApprovalResponse = DatabaseObjectDto & {
+    objectApprovalId?: string;
+    objectType?: string;
+    objectId?: string;
+    approverId?: string;
+    approverName?: string;
+    approverLastName?: string;
+    approvalStatus?: EApprovalStatus;
+    approvalType?: EApprovalType;  
+    comment?:  string;
+    createdAt?: Date;
+    approvalNumber?: number
+   
+}
+
+
 
 export type QuestionGroupDto = DatabaseObjectDto & {
     name?: string;

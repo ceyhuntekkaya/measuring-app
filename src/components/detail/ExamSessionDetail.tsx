@@ -7,7 +7,7 @@ import {Badge} from "@/components/ui/badge";
 import {
     Clock, User, Hash, CheckCircle, XCircle,
     Users, Calendar, Activity, Info,
-    BookOpen, UserCheck, Play, Pause, Edit, Trash2, Copy
+    BookOpen, UserCheck, Play, Edit, Trash2, Copy
 } from 'lucide-react';
 import {ExamSessionDto} from '@/types/exam/examEntities';
 import {formatDate} from '@/utils/date-formater';
@@ -45,7 +45,6 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                                                                  onEdit,
                                                                  onDelete,
                                                                  onStart,
-                                                                 onPause,
                                                                  onStop,
                                                                  onFinish,
                                                                  onDuplicate,

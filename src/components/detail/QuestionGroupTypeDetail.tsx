@@ -1,8 +1,8 @@
 import React from 'react';
 import { QuestionGroupTypeDto } from '@/types/exam/examTemplates';
-import { EQuestionGroupTemplateLevel, EQuestionGroupType, EApprovalStatus, EExamType } from '@/types/exam/enum';
+import { EQuestionGroupTemplateLevel, EQuestionGroupType } from '@/types/exam/enum';
 import {Button} from "@/components/ui/button";
-import { examTypeConverter } from '@/utils/enum-converter';
+import { examTypeConverter, approvalStatusConverter, getApprovalStatusColor } from '@/utils/enum-converter';
 
 interface QuestionGroupTypeDetailProps {
     selectedType: QuestionGroupTypeDto | null;
@@ -40,33 +40,6 @@ const QuestionGroupTypeDetail: React.FC<QuestionGroupTypeDetailProps> = ({ selec
         return groupType ? typeLabels[groupType] || groupType : 'Belirtilmedi';
     };
 
-    const getApprovalStatusLabel = (status?: EApprovalStatus) => {
-        const statusLabels = {
-            PENDING: 'Beklemede',
-            APPROVED: 'Onaylandı',
-            REJECTED: 'Reddedildi',
-            CANCELLED: 'İptal Edildi',
-            EXPIRED: 'Süresi Doldu'
-        };
-        return status ? statusLabels[status] || status : 'Belirtilmedi';
-    };
-
-    const getApprovalStatusColor = (status?: EApprovalStatus) => {
-        switch (status) {
-            case 'APPROVED':
-                return 'bg-green-100 text-green-800 border-green-200';
-            case 'PENDING':
-                return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-            case 'REJECTED':
-                return 'bg-red-100 text-red-800 border-red-200';
-            case 'CANCELLED':
-                return 'bg-gray-100 text-gray-800 border-gray-200';
-            case 'EXPIRED':
-                return 'bg-orange-100 text-orange-800 border-orange-200';
-            default:
-                return 'bg-gray-100 text-gray-800 border-gray-200';
-        }
-    };
 
     const getApprovalProgress = () => {
         const current = selectedType.currentApprovalCount || 0;
@@ -108,7 +81,7 @@ const QuestionGroupTypeDetail: React.FC<QuestionGroupTypeDetailProps> = ({ selec
                         </h1>
                         <div className="flex items-center space-x-4">
               <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getApprovalStatusColor(selectedType.approvalStatus)}`}>
-                {getApprovalStatusLabel(selectedType.approvalStatus)}
+                {approvalStatusConverter(selectedType.approvalStatus)}
               </span>
                             {selectedType.orderNumber && (
                                 <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
@@ -200,7 +173,7 @@ const QuestionGroupTypeDetail: React.FC<QuestionGroupTypeDetailProps> = ({ selec
                         <div>
                             <div className="text-sm font-medium text-gray-500">Mevcut Onay Durumu</div>
                             <div className={`text-lg font-semibold px-3 py-1 rounded-full inline-block border ${getApprovalStatusColor(selectedType.approvalStatus)}`}>
-                                {getApprovalStatusLabel(selectedType.approvalStatus)}
+                                {approvalStatusConverter(selectedType.approvalStatus)}
                             </div>
                         </div>
                         {selectedType.approvalCompletedDate && (

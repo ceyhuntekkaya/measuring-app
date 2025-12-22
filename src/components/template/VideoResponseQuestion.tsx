@@ -13,6 +13,7 @@ interface VideoResponseQuestionProps {
     initialAnswer?: VideoAnswerData | null;
     isSubmitted?: boolean;
     questionId: string;
+    showCorrectAnswer?: boolean;
 }
 
 interface VideoAnswerData {
@@ -30,8 +31,10 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                                                                          onAnswerChange,
                                                                          initialAnswer = null,
                                                                          questionId,
-                                                                         isSubmitted = false
+                                                                         isSubmitted = false,
+                                                                         showCorrectAnswer = false
                                                                      }) => {
+    console.log(showCorrectAnswer)
     const [videoAnswer, setVideoAnswer] = useState<VideoAnswerData | null>(initialAnswer);
     const [videoAnswerPath, setVideoAnswerPath] = useState<string>('');
     const [isRecording, setIsRecording] = useState<boolean>(false);

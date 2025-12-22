@@ -13,6 +13,7 @@ interface ImageResponseQuestionProps {
     initialAnswer?: ImageAnswerData | null;
     isSubmitted?: boolean;
     questionId: string;
+    showCorrectAnswer?: boolean;
 }
 
 interface ImageAnswerData {
@@ -36,9 +37,12 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                                                                          onAnswerChange,
                                                                          initialAnswer = null,
                                                                          isSubmitted = false,
-                                                                         questionId
+                                                                         questionId,
+                                                                         showCorrectAnswer = false
                                                                      }) => {
     const [imageAnswer, setImageAnswer] = useState<ImageAnswerData | null>(initialAnswer);
+
+    console.log(showCorrectAnswer)
     const [isDrawing, setIsDrawing] = useState<boolean>(false);
     const [currentTool, setCurrentTool] = useState<'pen' | 'eraser'>('pen');
     const [currentColor, setCurrentColor] = useState<string>('#000000');
