@@ -1,13 +1,16 @@
 'use client';
 
 import {useParams, useRouter} from "next/navigation";
-import React, {useEffect} from "react";
+import React, {useEffect, useState} from "react";
 import {useQuestionGroup} from "@/hooks/exam/use-question-group";
 import PageHeader from "@/components/layout/page-header";
 import LoadingComp from "@/components/ui/loading-comp";
 import {QuestionGroupDto, QuestionDto, QuestionTemplateType} from '@/types/exam/examEntities';
-import {EQuestionType, EMediaType} from '@/types/exam/enum';
+import {EQuestionType, EMediaType, EApprovalStatus} from '@/types/exam/enum';
 import {getQuestionTypeLabel} from '@/utils/question-type-convert';
+import ModalPanel from "@/components/ui/ModalPanel";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {showNotification} from "@/lib/notification";
 import {
     AudioResponseTemplateDto,
     DragAndDropTemplateDto,
@@ -39,7 +42,7 @@ import OrderingQuestion from '@/components/template/OrderingQuestion';
 import FilePreview from '@/components/ui/file-preview';
 import {approvalStatusConverter} from "@/utils/enum-converter";
 import {formatDate} from "@/utils/date-formater";
-import {QuestionGroupApprovalResponse} from "@/types/exam/examEntities";
+import {QuestionGroupApprovalResponse, ApprovalStatusRequest} from "@/types/exam/examEntities";
 
 export default function ApprovalPreviewPage() {
     const params = useParams();
@@ -50,8 +53,15 @@ export default function ApprovalPreviewPage() {
         getQuestionGroupById,
         questionGroupApprovals,
         getQuestionGroupApprovals,
+        updateObjectApproval,
         loading
     } = useQuestionGroup();
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedApproval, setSelectedApproval] = useState<QuestionGroupApprovalResponse | null>(null);
+    const [approvalStatus, setApprovalStatus] = useState<EApprovalStatus | ''>('');
+    const [comment, setComment] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         if (groupId) {
@@ -59,6 +69,48 @@ export default function ApprovalPreviewPage() {
             getQuestionGroupApprovals(groupId);
         }
     }, [groupId]);
+
+    const handleButtonClick = (approval: QuestionGroupApprovalResponse) => {
+        setSelectedApproval(approval);
+        setApprovalStatus(approval.approvalStatus || EApprovalStatus.PENDING);
+        setComment(approval.comment || '');
+        setIsModalOpen(true);
+    };
+
+    const handleSave = async () => {
+        if (!selectedApproval?.objectApprovalId || !approvalStatus) {
+            showNotification.error('Lütfen onay durumunu seçin!');
+            return;
+        }
+
+        try {
+            setIsSaving(true);
+            const updateRequest: ApprovalStatusRequest = {
+                approvalStatus: approvalStatus as EApprovalStatus,
+                comment: comment || undefined,
+                questionGroupId: groupId
+            } as ApprovalStatusRequest;
+
+            await updateObjectApproval(selectedApproval.objectApprovalId, updateRequest);
+            
+            showNotification.success('Onay başarıyla güncellendi!');
+            setIsModalOpen(false);
+            // Verileri yeniden yükle
+            getQuestionGroupApprovals(groupId);
+        } catch (error) {
+            showNotification.error('Onay güncellenirken bir hata oluştu!');
+            console.error('Error updating approval:', error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setSelectedApproval(null);
+        setApprovalStatus('');
+        setComment('');
+    };
 
 
     const formatDuration = (seconds?: number) => {
@@ -354,25 +406,21 @@ export default function ApprovalPreviewPage() {
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 {questionApprovals.map((approval, index) => {
                                                     const buttonNumber = index + 1;
-                                                    const isDisabled = buttonNumber <= currentCount;
+                                                    const isDisabled = approval.approvalStatus !== EApprovalStatus.PENDING ;
                                                     const objectApprovalId = approval?.objectApprovalId;
                                                     
                                                     return (
                                                         <button
                                                             key={approval.objectApprovalId || index}
                                                             disabled={isDisabled}
-                                                            onClick={() => {
-                                                                if (objectApprovalId) {
-                                                                    alert(`objectApprovalId: ${objectApprovalId}`);
-                                                                }
-                                                            }}
+                                                            onClick={() => handleButtonClick(approval)}
                                                             className={`px-4 py-2 rounded-md font-medium text-sm transition-colors ${
                                                                 isDisabled
                                                                     ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
                                                                     : 'bg-blue-600 text-white hover:bg-blue-700'
                                                             }`}
                                                         >
-                                                            {approval.approvalNumber || index}. ONAY - {approval.approvalStatus || index}
+                                                            {approval.approvalNumber || index + 1}. ONAY - {approval.approvalStatus || 'PENDING'}
                                                         </button>
                                                     );
                                                 })}
@@ -445,6 +493,70 @@ export default function ApprovalPreviewPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Approval Update Modal */}
+            <ModalPanel
+                isOpen={isModalOpen}
+                onClose={handleCloseModal}
+                title="Onay Durumu Güncelle"
+                confirmText="Kaydet"
+                cancelText="İptal"
+                onConfirm={handleSave}
+                onCancel={handleCloseModal}
+                size="medium"
+            >
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Onay Durumu
+                        </label>
+                        <Select
+                            value={approvalStatus}
+                            onValueChange={(value) => setApprovalStatus(value as EApprovalStatus)}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Onay durumu seçin" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value={EApprovalStatus.PENDING}>
+                                    {approvalStatusConverter(EApprovalStatus.PENDING)}
+                                </SelectItem>
+                                <SelectItem value={EApprovalStatus.APPROVED}>
+                                    {approvalStatusConverter(EApprovalStatus.APPROVED)}
+                                </SelectItem>
+                                <SelectItem value={EApprovalStatus.REJECTED}>
+                                    {approvalStatusConverter(EApprovalStatus.REJECTED)}
+                                </SelectItem>
+                                <SelectItem value={EApprovalStatus.CANCELLED}>
+                                    {approvalStatusConverter(EApprovalStatus.CANCELLED)}
+                                </SelectItem>
+                                <SelectItem value={EApprovalStatus.EXPIRED}>
+                                    {approvalStatusConverter(EApprovalStatus.EXPIRED)}
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Yorum
+                        </label>
+                        <textarea
+                            value={comment}
+                            onChange={(e) => setComment(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            rows={4}
+                            placeholder="Yorum yazın (opsiyonel)"
+                        />
+                    </div>
+
+                    {isSaving && (
+                        <div className="text-sm text-gray-500 text-center">
+                            Kaydediliyor...
+                        </div>
+                    )}
+                </div>
+            </ModalPanel>
         </div>
     );
 }

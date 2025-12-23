@@ -107,6 +107,12 @@ export type QuestionGroupApprovalResponse = DatabaseObjectDto & {
    
 }
 
+export type ApprovalStatusRequest = DatabaseObjectDto & {
+    comment?: string;
+    approvalStatus: EApprovalStatus
+    questionGroupId?: string;
+}
+
 
 
 export type QuestionGroupDto = DatabaseObjectDto & {

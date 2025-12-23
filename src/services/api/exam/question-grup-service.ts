@@ -2,7 +2,7 @@
 import api from "@/services/api/base-api";
 import {ApiResponse} from "@/types/exam/examValidationAndAnalytics";
 import {CreateQuestionGroupHeaderRequest, CreateQuestionGroupRequest} from "@/types/exam/examRequests";
-import {QuestionGroupApprovalResponse, QuestionGroupDto, QuestionGroupHeaderDto} from "@/types/exam/examEntities";
+import {ApprovalStatusRequest, QuestionGroupApprovalResponse, QuestionGroupDto, QuestionGroupHeaderDto} from "@/types/exam/examEntities";
 import {QuestionGroupsSummary, QuestionGroupStatistics, QuestionGroupValidation} from "@/types/exam/examResponses";
 
 
@@ -103,6 +103,14 @@ class QuestionGroupService {
 
     async getAllQuestionGroup(): Promise<ApiResponse<QuestionGroupDto[]>> {
         const response = await api.get<ApiResponse<QuestionGroupDto[]>>(`${this.baseUrl}/`);
+        return response.data;
+    }
+
+
+
+
+    async updateObjectApproval(approvalId: string, updateRequest: ApprovalStatusRequest): Promise<ApiResponse<QuestionGroupApprovalResponse[]>> {
+        const response = await api.put<ApiResponse<QuestionGroupApprovalResponse[]>>(`${this.baseUrl}/approval/${approvalId}`, updateRequest);
         return response.data;
     }
 }

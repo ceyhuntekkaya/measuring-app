@@ -6,7 +6,7 @@ import {
     QuestionGroupValidation,
 } from '@/types/exam/examResponses';
 import { showNotification } from '@/lib/notification';
-import {QuestionGroupApprovalResponse, QuestionGroupDto} from "@/types/exam/examEntities";
+import {ApprovalStatusRequest, QuestionGroupApprovalResponse, QuestionGroupDto} from "@/types/exam/examEntities";
 import {CreateQuestionGroupRequest, CreateQuestionGroupHeaderRequest} from "@/types/exam/examRequests";
 import { questionGroupService } from "@/services/api/exam/question-grup-service";
 
@@ -39,6 +39,7 @@ interface UseQuestionGroupReturn {
     clearQuestionGroupData: () => void;
     getAllQuestionGroup: () => Promise<void>;
     getQuestionGroupApprovals: (questionGroupId: string) => Promise<void>;
+    updateObjectApproval: (approvalId: string, updateRequest: ApprovalStatusRequest) => Promise<void>;
 }
 
 export const useQuestionGroup = (): UseQuestionGroupReturn => {
@@ -53,6 +54,27 @@ export const useQuestionGroup = (): UseQuestionGroupReturn => {
     const [groupValidation, setGroupValidation] = useState<QuestionGroupValidation | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
+
+
+    const updateObjectApproval = useCallback(async (approvalId: string, updateRequest: ApprovalStatusRequest) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await questionGroupService.updateObjectApproval(approvalId, updateRequest);
+            if (response.data && response.success) {
+                setQuestionGroupApprovals(response.data);
+            } else {
+                throw new Error(response.message);
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err : new Error('An error occurred'));
+            showNotification.error('Soru grubu onayları alınırken bir hata oluştu!');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+
 
 
     const getQuestionGroupApprovals = useCallback(async (questionGroupId: string) => {
@@ -72,6 +94,9 @@ export const useQuestionGroup = (): UseQuestionGroupReturn => {
             setLoading(false);
         }
     }, []);
+
+
+
     const createQuestionGroup = useCallback(async (createRequest: CreateQuestionGroupRequest) => {
         try {
             setLoading(true);
@@ -396,6 +421,7 @@ export const useQuestionGroup = (): UseQuestionGroupReturn => {
         clearQuestionGroupData,
         getAllQuestionGroup,
         getQuestionGroupApprovals,
-        questionGroupApprovals
+        questionGroupApprovals,
+        updateObjectApproval
     };
 };

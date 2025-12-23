@@ -65,6 +65,14 @@ class ApprovalService {
         const response = await api.get<ApiResponse<ApprovalStatistics>>(`${this.baseUrl}/statistics`);
         return response.data;
     }
+
+    async updateApproval(objectApprovalId: string, approvalStatus: string, comment?: string): Promise<ApiResponse<ApprovalResult>> {
+        const response = await api.put<ApiResponse<ApprovalResult>>(`${this.baseUrl}/${objectApprovalId}`, {
+            approvalStatus,
+            comment
+        });
+        return response.data;
+    }
 }
 
 export const approvalService = new ApprovalService();
