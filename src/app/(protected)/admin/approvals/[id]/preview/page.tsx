@@ -305,15 +305,8 @@ export default function ApprovalPreviewPage() {
     return (
         <div className="space-y-6">
             <PageHeader/>
-            <div className="p-6">
-                <div className="mb-6">
-                    <button
-                        onClick={() => router.back()}
-                        className="mb-4 text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                        ← Geri Dön
-                    </button>
-                </div>
+            <div className="p-6 pt-0">
+       
 
                 <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
                     {/* Question Group Header */}
@@ -358,6 +351,69 @@ export default function ApprovalPreviewPage() {
                             </div>
                         </div>
                     </div>
+
+                    {/* Question Group Approval Row */}
+                    {(() => {
+                        // QuestionGroup için approval'ları filtrele ve createdAt'e göre sırala
+                        const groupApprovals = (questionGroupApprovals || [])
+                            .filter((approval: QuestionGroupApprovalResponse) => 
+                                approval.objectType === 'QUESTION_GROUP' && approval.objectId === selectedQuestionGroup.id
+                            )
+                            .sort((a, b) => {
+                                const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                                const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                                return dateA - dateB;
+                            });
+
+                        if (groupApprovals.length === 0) return null;
+
+                        return (
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mx-6 mt-4">
+                                <div className="flex items-center justify-between gap-4">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        {groupApprovals.map((approval, index) => {
+                                            const buttonNumber = index + 1;
+                                            const isDisabled = approval.approvalStatus !== EApprovalStatus.PENDING;
+                                            const objectApprovalId = approval?.objectApprovalId;
+                                            
+                                            return (
+                                                <button
+                                                    key={approval.objectApprovalId || index}
+                                                    disabled={isDisabled}
+                                                    onClick={() => handleButtonClick(approval)}
+                                                    className={`px-4 py-2 rounded-md font-medium text-sm transition-colors ${
+                                                        isDisabled
+                                                            ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                                                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                                                    }`}
+                                                >
+                                                    {approval.approvalNumber || index + 1}. ONAY - {approval.approvalStatus || 'PENDING'}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    <div className="flex items-center gap-4 text-sm">
+                                        {selectedQuestionGroup.approvalStatus && (
+                                            <div>
+                                                <span className="text-gray-500">Durum: </span>
+                                                <span className="font-medium">
+                                                    {approvalStatusConverter(selectedQuestionGroup.approvalStatus)}
+                                                </span>
+                                            </div>
+                                        )}
+                                        {selectedQuestionGroup.approvalCompletedDate && (
+                                            <div>
+                                                <span className="text-gray-500">Tamamlanma: </span>
+                                                <span className="font-medium">
+                                                    {formatDate(selectedQuestionGroup.approvalCompletedDate, 'dateTime')}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
 
                     {/* Question Group Headers */}
                     {selectedQuestionGroup.headers && selectedQuestionGroup.headers.length > 0 && (
