@@ -1,11 +1,11 @@
 'use client';
 
-import {useParams, useRouter} from "next/navigation";
+import {useParams} from "next/navigation";
 import React, {useEffect, useState} from "react";
 import {useQuestionGroup} from "@/hooks/exam/use-question-group";
 import PageHeader from "@/components/layout/page-header";
 import LoadingComp from "@/components/ui/loading-comp";
-import {QuestionGroupDto, QuestionDto, QuestionTemplateType} from '@/types/exam/examEntities';
+import {QuestionDto, QuestionTemplateType} from '@/types/exam/examEntities';
 import {EQuestionType, EMediaType, EApprovalStatus} from '@/types/exam/enum';
 import {getQuestionTypeLabel} from '@/utils/question-type-convert';
 import ModalPanel from "@/components/ui/ModalPanel";
@@ -47,7 +47,6 @@ import {QuestionGroupApprovalResponse, ApprovalStatusRequest} from "@/types/exam
 export default function ApprovalPreviewPage() {
     const params = useParams();
     const groupId = params.id as string;
-    const router = useRouter();
     const {
         selectedQuestionGroup,
         getQuestionGroupById,
@@ -372,10 +371,8 @@ export default function ApprovalPreviewPage() {
                                 <div className="flex items-center justify-between gap-4">
                                     <div className="flex items-center gap-2 flex-wrap">
                                         {groupApprovals.map((approval, index) => {
-                                            const buttonNumber = index + 1;
                                             const isDisabled = approval.approvalStatus !== EApprovalStatus.PENDING;
-                                            const objectApprovalId = approval?.objectApprovalId;
-                                            
+
                                             return (
                                                 <button
                                                     key={approval.objectApprovalId || index}
@@ -387,7 +384,7 @@ export default function ApprovalPreviewPage() {
                                                             : 'bg-blue-600 text-white hover:bg-blue-700'
                                                     }`}
                                                 >
-                                                    {approval.approvalNumber || index + 1}. ONAY - {approval.approvalStatus || 'PENDING'}
+                                                    {index + 1}. ONAY - {approval.approvalStatus || 'PENDING'}
                                                 </button>
                                             );
                                         })}
@@ -440,8 +437,7 @@ export default function ApprovalPreviewPage() {
                             </div>
                         ) : (
                             sortedQuestions.map((question: QuestionDto, questionIndex: number) => {
-                                const currentCount = question.currentApprovalCount || 0;
-                                
+
                                 // Bu soruya ait approval'ları filtrele ve createdAt'e göre sırala
                                 const questionApprovals = (questionGroupApprovals || [])
                                     .filter((approval: QuestionGroupApprovalResponse) => approval.objectId === question.id)
@@ -451,9 +447,6 @@ export default function ApprovalPreviewPage() {
                                         return dateA - dateB;
                                     });
                                 
-                                // Buton sayısı approval sayısı kadar olacak
-                                const approvalCount = questionApprovals.length;
-                                
                                 return (
                                 <div key={question.id || questionIndex} className="space-y-4">
                                     {/* Approval Row */}
@@ -461,10 +454,8 @@ export default function ApprovalPreviewPage() {
                                         <div className="flex items-center justify-between gap-4">
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 {questionApprovals.map((approval, index) => {
-                                                    const buttonNumber = index + 1;
                                                     const isDisabled = approval.approvalStatus !== EApprovalStatus.PENDING ;
-                                                    const objectApprovalId = approval?.objectApprovalId;
-                                                    
+
                                                     return (
                                                         <button
                                                             key={approval.objectApprovalId || index}
@@ -476,7 +467,7 @@ export default function ApprovalPreviewPage() {
                                                                     : 'bg-blue-600 text-white hover:bg-blue-700'
                                                             }`}
                                                         >
-                                                            {approval.approvalNumber || index + 1}. ONAY - {approval.approvalStatus || 'PENDING'}
+                                                            { index + 1}. ONAY - {approval.approvalStatus || 'PENDING'}
                                                         </button>
                                                     );
                                                 })}

@@ -6,7 +6,6 @@ import DynamicTable from "@/components/ui/dynamic-table";
 import {ActionButtons} from "@/components/ui/simple-dropdown";
 import {useRouter} from "next/navigation";
 import LoadingComp from "@/components/ui/loading-comp";
-import Link from "next/link";
 import {useQuestionGroup} from "@/hooks/exam/use-question-group";
 import {QuestionGroupDto} from "@/types/exam/examEntities";
 import {statusConverter, approvalStatusConverter} from "@/utils/enum-converter";
