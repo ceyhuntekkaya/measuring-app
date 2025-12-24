@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useMemo} from 'react';
 import {FillInTheBlanksTemplateDto} from '@/types/exam/questionTemplates';
 import {QuestionTemplateType} from "@/types/exam/examEntities";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
@@ -10,6 +10,7 @@ interface FillInTheBlanksQuestionProps {
     initialAnswer?: BlankAnswers;
     isSubmitted?: boolean;
     showCorrectAnswer?: boolean;
+    showLearnerEvaluation?: boolean;
     questionId: string;
 }
 
@@ -39,12 +40,35 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
                                                                              initialAnswer = {},
                                                                              isSubmitted = false,
                                                                              showCorrectAnswer = false,
+                                                                             showLearnerEvaluation = false,
                                                                              questionId
                                                                          }) => {
-    const [answers, setAnswers] = useState<BlankAnswers>(initialAnswer);
+    const [answers, setAnswers] = useState<BlankAnswers>(initialAnswer || {});
 
     const [blankResults, setBlankResults] = useState<BlankResult[]>([]);
 
+    // initialAnswer'ı stable hale getir (obje referansı değişmesin diye)
+    const stableInitialAnswer = useMemo(() => {
+        if (!initialAnswer || typeof initialAnswer !== 'object') {
+            return {};
+        }
+        return initialAnswer;
+    }, [questionId, JSON.stringify(initialAnswer)]);
+
+    // initialAnswer değiştiğinde state'i güncelle (soru değiştiğinde veya eski cevap yüklendiğinde)
+    useEffect(() => {
+        if (stableInitialAnswer && typeof stableInitialAnswer === 'object') {
+            // initialAnswer'ı kontrol et ve güncelle
+            const hasValidData = Object.keys(stableInitialAnswer).length > 0;
+            if (hasValidData) {
+                setAnswers(stableInitialAnswer);
+            } else {
+                setAnswers({});
+            }
+        } else {
+            setAnswers({});
+        }
+    }, [questionId, stableInitialAnswer]);
 
     useEffect(() => {
         if (isSubmitted && showCorrectAnswer) {
@@ -54,13 +78,15 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
 
 
     const handleInputChange = (blankId: string, value: string): void => {
-        if (isSubmitted && !isPreview) return;
+        // isPreview true ise değişiklik yapılmasın
+        if (isPreview || (isSubmitted && !isPreview)) return;
 
         //const propName = "blank_"+blankId;
-        const newAnswers = {...answers, [blankId]: value};
+        const currentAnswers = answers || {};
+        const newAnswers = {...currentAnswers, [blankId]: value};
         setAnswers(newAnswers);
 
-        if (onAnswerChange) {
+        if (onAnswerChange && !isPreview) {
             //   onAnswerChange(questionId, template, newAnswers ? JSON.stringify(newAnswers) : '', EQuestionType.TRUE_FALSE, EMediaType.TEXT, false);
         }
     };
@@ -70,6 +96,9 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
             function convertToBlankAnswers(
                 answer: Record<string, string>
             ): SingleBlankAnswer[] {
+                if (!answer || typeof answer !== 'object') {
+                    return [];
+                }
                 return Object.entries(answer).map(([index, answerValue]) => {
                     const blankIndex = parseInt(index) - 1; // "1" -> index 0, "2" -> index 1
 
@@ -87,8 +116,9 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
                 });
             }
 
-            const converted = convertToBlankAnswers(answers);
-            onAnswerChange(questionId, template, answers ? JSON.stringify(converted) : '', EQuestionType.TRUE_FALSE, EMediaType.TEXT, false);
+            const currentAnswers = answers || {};
+            const converted = convertToBlankAnswers(currentAnswers);
+            onAnswerChange(questionId, template, currentAnswers ? JSON.stringify(converted) : '', EQuestionType.TRUE_FALSE, EMediaType.TEXT, false);
         }
     }
 
@@ -96,9 +126,10 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
     const evaluateAnswers = (): void => {
         if (!template.options?.blanks) return;
 
+        const currentAnswers = answers || {};
         const results: BlankResult[] = template.options.blanks.map(blank => {
             const blankId = blank.blankId || '';
-            const userAnswer = answers[blankId] || '';
+            const userAnswer = currentAnswers[blankId] || '';
             const acceptableAnswers = blank.acceptableAnswers || [];
 
             // Determine case sensitivity
@@ -157,9 +188,10 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
         const regex = /\[blank_([^\]]+)\]/g;
         let lastIndex = 0;
         let match: RegExpExecArray | null;
+        let blankIndex = 0; // Template'deki blank'ların sırasını takip et
 
         while ((match = regex.exec(template.textWithBlanks)) !== null) {
-            const blankId = match[1];
+            const matchedId = match[1]; // Regex'ten yakalanan değer (örneğin "1", "2" veya "blank_1765265652017")
             const matchIndex = match.index;
 
             // Add text before the blank
@@ -172,9 +204,30 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
                 );
             }
 
+            // Gerçek blankId'yi bul
+            let actualBlankId: string;
+            
+            // Eğer matchedId zaten "blank_" ile başlıyorsa (örneğin "blank_1765265652017"), direkt kullan
+            if (matchedId.startsWith('blank_')) {
+                actualBlankId = matchedId;
+            } else {
+                // Eğer matchedId bir sayı ise (örneğin "1", "2"), template.options.blanks array'inden gerçek blankId'yi al
+                const numericIndex = parseInt(matchedId, 10);
+                if (!isNaN(numericIndex) && template.options?.blanks && template.options.blanks[numericIndex - 1]) {
+                    // Index 1-based ise (1, 2, 3...), 0-based'e çevir (0, 1, 2...)
+                    actualBlankId = template.options.blanks[numericIndex - 1].blankId || matchedId;
+                } else if (template.options?.blanks && template.options.blanks[blankIndex]) {
+                    // Eğer parse edilemezse, blankIndex kullan (sırayla)
+                    actualBlankId = template.options.blanks[blankIndex].blankId || matchedId;
+                } else {
+                    // Fallback: matchedId'yi kullan
+                    actualBlankId = matchedId;
+                }
+            }
             // Add the blank input
-            parts.push(renderBlankInput(blankId));
+            parts.push(renderBlankInput(actualBlankId));
 
+            blankIndex++; // Bir sonraki blank için index'i artır
             lastIndex = regex.lastIndex;
         }
 
@@ -192,10 +245,36 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
     };
 
     const renderBlankInput = (blankId: string): React.ReactNode => {
-        const userAnswer = answers[blankId] || '';
+        const currentAnswers = answers || {};
+        const userAnswer = currentAnswers[blankId] || '';
         const result = blankResults.find(r => r.blankId === blankId);
         const getInputStyle = (): string => {
             const baseStyle = "inline-block mx-1 px-3 py-1 border-b-2 outline-none transition-all duration-200 ";
+
+            // showLearnerEvaluation: Öğrencinin cevabı ile doğru cevabı karşılaştır
+            if (showLearnerEvaluation) {
+                const blank = template.options?.blanks?.find(b => b.blankId === blankId);
+                if (blank && blank.acceptableAnswers && blank.acceptableAnswers.length > 0) {
+                    const isCorrect = blank.acceptableAnswers.some(acceptable => {
+                        if (blank.caseSensitive) {
+                            return acceptable === userAnswer;
+                        } else {
+                            return acceptable.toLowerCase() === userAnswer.toLowerCase();
+                        }
+                    });
+
+                    if (userAnswer && isCorrect) {
+                        // Öğrenci doğru cevabı vermiş: Yeşil
+                        return baseStyle + "border-green-500 bg-green-50 text-green-800";
+                    } else if (userAnswer && !isCorrect) {
+                        // Öğrenci yanlış cevabı vermiş: Kırmızı
+                        return baseStyle + "border-red-500 bg-red-50 text-red-800";
+                    } else if (!userAnswer) {
+                        // Öğrenci cevap vermemiş ama doğru cevap var: Mavi (placeholder gibi)
+                        return baseStyle + "border-blue-500 bg-blue-50 text-blue-600 italic";
+                    }
+                }
+            }
 
             if (isSubmitted && showCorrectAnswer && result) {
                 if (result.isCorrect) {
@@ -225,7 +304,7 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
                     onChange={(e) => {
                         handleInputChange(blankId, e.target.value)
                     }}
-                    disabled={isSubmitted && !isPreview}
+                    disabled={isPreview || (isSubmitted && !isPreview)}
                     className={getInputStyle()}
                     style={{width: getInputWidth(), minWidth: '100px'}}
                     placeholder="..."
@@ -335,7 +414,11 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
 
     const getProgressInfo = (): { filled: number; total: number } => {
         const total = template.options?.blanks?.length || 0;
-        const filled = Object.values(answers).filter(answer => answer.trim() !== '').length;
+        // answers null veya undefined olabilir, kontrol et
+        if (!answers || typeof answers !== 'object') {
+            return {filled: 0, total};
+        }
+        const filled = Object.values(answers).filter(answer => answer && typeof answer === 'string' && answer.trim() !== '').length;
         return {filled, total};
     };
 
@@ -415,7 +498,9 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
                     {parseTextWithBlanks()}
                 </div>
             </div>
-            <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
+            {!isPreview && (
+                <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
+            )}
             {/* Blank Feedback (for incorrect answers) */}
             {renderBlankFeedback()}
 
@@ -495,15 +580,6 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
-
-            {/* Preview Mode Indicator */}
-            {isPreview && (
-                <div className="mt-4 p-3 bg-gray-100 border border-gray-300 rounded">
-                    <p className="text-gray-600 text-sm italic">
-                        👁️ Önizleme Modu - Bu sorunun nasıl görüneceğinin önizlemesidir
-                    </p>
                 </div>
             )}
 

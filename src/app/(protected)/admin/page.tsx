@@ -140,7 +140,6 @@ export default function AdminPage() {
     const router = useRouter();
 
     const handleCardClick = (link: string) => {
-        console.log(`${link} butonu tıklandı`);
         router.push(link);
     };
 

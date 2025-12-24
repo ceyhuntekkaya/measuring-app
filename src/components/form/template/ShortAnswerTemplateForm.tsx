@@ -47,7 +47,7 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
             acceptableAnswers: [],
             caseSensitive: false,
             exactMatch: false,
-            placeholder: ''
+            placeholder: '' // UI'dan kaldırıldı, her zaman boş string
         },
         maxCharacters: 500,
         minCharacters: 1,
@@ -61,11 +61,13 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
         if (value) {
             setFormData({
                 question: value.question || '',
-                options: value.options || {
-                    acceptableAnswers: [],
-                    caseSensitive: false,
-                    exactMatch: false,
-                    placeholder: ''
+                options: {
+                    ...(value.options || {
+                        acceptableAnswers: [],
+                        caseSensitive: false,
+                        exactMatch: false
+                    }),
+                    placeholder: '' // UI'dan kaldırıldı, her zaman boş string
                 },
                 maxCharacters: value.maxCharacters || 500,
                 minCharacters: value.minCharacters || 1,
@@ -82,23 +84,29 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
         const updatedData = { ...formData, [field]: newValue };
         setFormData(updatedData);
 
-        if (validateForm()) {
-            onChange({
-                question: updatedData.question,
-                options: updatedData.options,
-                maxCharacters: updatedData.maxCharacters,
-                minCharacters: updatedData.minCharacters,
-                rubric: updatedData.rubric,
-                requiresManualGrading: updatedData.requiresManualGrading
-            });
-        }
+        // Her zaman onChange'i çağır, validation sadece submit için
+        onChange({
+            question: updatedData.question,
+            options: {
+                ...updatedData.options,
+                placeholder: '' // UI'dan kaldırıldı, her zaman boş string
+            },
+            maxCharacters: updatedData.maxCharacters,
+            minCharacters: updatedData.minCharacters,
+            rubric: updatedData.rubric,
+            requiresManualGrading: false // UI'dan kaldırıldı, her zaman false olarak gönderiliyor
+        });
     };
 
     const updateOptions = <K extends keyof ShortAnswerOptions>(
         field: K,
         value: ShortAnswerOptions[K]
     ) => {
-        const updatedOptions = { ...formData.options, [field]: value };
+        const updatedOptions = { 
+            ...formData.options, 
+            [field]: value,
+            placeholder: '' // UI'dan kaldırıldı, her zaman boş string
+        };
         handleChange('options', updatedOptions);
     };
 
@@ -215,8 +223,8 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
                 </div>
             </div>
 
-            {/* Placeholder */}
-            <div className="space-y-2">
+            {/* Placeholder - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
+            {/* <div className="space-y-2">
                 <Label htmlFor="placeholder">Placeholder Metni</Label>
                 <Input
                     id="placeholder"
@@ -224,10 +232,10 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
                     onChange={(e) => updateOptions('placeholder', e.target.value)}
                     placeholder="Cevap alanında görünecek placeholder metni"
                 />
-            </div>
+            </div> */}
 
             {/* Ayarlar */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center space-x-2">
                     <Checkbox
                         id="caseSensitive"
@@ -246,14 +254,15 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
                     <Label htmlFor="exactMatch">Tam Eşleşme Gerekli</Label>
                 </div>
 
-                <div className="flex items-center space-x-2">
+                {/* Manuel Değerlendirme - YORUM SATIRI: UI'dan kaldırıldı, değeri her zaman false olarak gönderiliyor */}
+                {/* <div className="flex items-center space-x-2">
                     <Checkbox
                         id="requiresManualGrading"
                         checked={formData.requiresManualGrading}
                         onChange={(checked) => handleChange('requiresManualGrading', !!checked)}
                     />
                     <Label htmlFor="requiresManualGrading">Manuel Değerlendirme</Label>
-                </div>
+                </div> */}
             </div>
 
             {/* Kabul Edilebilir Cevaplar */}
@@ -273,7 +282,7 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
 
                 {formData.options.acceptableAnswers?.map((answer, index) => (
                     <div key={index} className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg">
-                        <div className="col-span-5">
+                        <div className="col-span-9">
                             <Label>Cevap Metni</Label>
                             <Input
                                 value={answer.answer || ''}
@@ -293,14 +302,15 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
                             />
                         </div>
 
-                        <div className="col-span-4">
+                        {/* Geri Bildirim - YORUM SATIRI: UI'dan kaldırıldı, belki sonra tekrar gösterilebilir */}
+                        {/* <div className="col-span-4">
                             <Label>Geri Bildirim</Label>
                             <Input
                                 value={answer.feedback || ''}
                                 onChange={(e) => updateAcceptableAnswer(index, 'feedback', e.target.value)}
                                 placeholder="Geri bildirim (opsiyonel)"
                             />
-                        </div>
+                        </div> */}
 
                         <div className="col-span-1">
                             <Button
@@ -316,17 +326,19 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
                 ))}
             </div>
 
-            {/* Değerlendirme Rubriği */}
-            <div className="space-y-2">
-                <Label htmlFor="rubric">Değerlendirme Rubriği</Label>
-                <Textarea
-                    id="rubric"
-                    value={formData.rubric}
-                    onChange={(e) => handleChange('rubric', e.target.value)}
-                    className="min-h-[120px]"
-                    placeholder="Manuel değerlendirme için rubrik kriterleri (opsiyonel)"
-                />
-            </div>
+            {/* Değerlendirme Rubriği - Sadece Manuel Değerlendirme seçili ise görünür */}
+            {formData.requiresManualGrading && (
+                <div className="space-y-2">
+                    <Label htmlFor="rubric">Değerlendirme Rubriği</Label>
+                    <Textarea
+                        id="rubric"
+                        value={formData.rubric}
+                        onChange={(e) => handleChange('rubric', e.target.value)}
+                        className="min-h-[120px]"
+                        placeholder="Manuel değerlendirme için rubrik kriterleri (opsiyonel)"
+                    />
+                </div>
+            )}
         </div>
     );
 });

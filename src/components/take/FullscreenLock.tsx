@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 
 // Tarayıcı API tipleri için interface'ler
 interface DocumentWithFullscreen extends Document {
@@ -18,9 +18,28 @@ const FullscreenLock: React.FC<{ children: React.ReactNode }> = ({ children }) =
     const [showWarning, setShowWarning] = useState(true); // Başlangıçta uyarı göster
     const containerRef = useRef<HTMLDivElement>(null);
     const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const lastWindowSizeRef = useRef({ width: window.innerWidth, height: window.innerHeight });
 
-    // Tam ekran durumunu kontrol et
-    const checkFullscreen = () => {
+    const checkDevTools = (): boolean => {
+        const currentWidth = window.innerWidth;
+        const currentHeight = window.innerHeight;
+        const lastSize = lastWindowSizeRef.current;
+        
+        const widthDiff = Math.abs(currentWidth - lastSize.width);
+        const heightDiff = Math.abs(currentHeight - lastSize.height);
+        
+        if (widthDiff > 50 || heightDiff > 50) {
+            lastWindowSizeRef.current = { width: currentWidth, height: currentHeight };
+        }
+        
+        const heightDiff2 = window.outerHeight - window.innerHeight;
+        const widthDiff2 = window.outerWidth - window.innerWidth;
+        
+        return heightDiff2 > 100 || widthDiff2 > 100;
+    };
+
+    const checkAllConditions = useCallback(() => {
         const doc = document as DocumentWithFullscreen;
         const isFull = !!(
             doc.fullscreenElement ||
@@ -30,7 +49,11 @@ const FullscreenLock: React.FC<{ children: React.ReactNode }> = ({ children }) =
         );
         setIsFullscreen(isFull);
 
-        if (!isFull) {
+        const isPageHidden = document.hidden;
+        const hasFocus = document.hasFocus();
+        const devToolsOpen = checkDevTools();
+
+        if (!isFull || isPageHidden || !hasFocus || devToolsOpen) {
             setShowWarning(true);
         } else {
             setShowWarning(false);
@@ -38,9 +61,9 @@ const FullscreenLock: React.FC<{ children: React.ReactNode }> = ({ children }) =
                 clearTimeout(warningTimeoutRef.current);
             }
         }
-    };
+    }, []);
 
-    // Tam ekran isteği
+
     const requestFullscreen = async () => {
         try {
             const elem = containerRef.current as ElementWithFullscreen | null;
@@ -60,7 +83,6 @@ const FullscreenLock: React.FC<{ children: React.ReactNode }> = ({ children }) =
         }
     };
 
-    // Tam ekrandan çık
     const exitFullscreen = async () => {
         try {
             if (document.exitFullscreen) {
@@ -78,7 +100,8 @@ const FullscreenLock: React.FC<{ children: React.ReactNode }> = ({ children }) =
     };
 
     useEffect(() => {
-        // Fullscreen değişikliklerini dinle
+        checkAllConditions();
+
         const events = [
             'fullscreenchange',
             'webkitfullscreenchange',
@@ -87,31 +110,53 @@ const FullscreenLock: React.FC<{ children: React.ReactNode }> = ({ children }) =
         ] as const;
 
         events.forEach(event => {
-            document.addEventListener(event, checkFullscreen);
+            document.addEventListener(event, checkAllConditions);
         });
 
-        // Sayfa görünürlüğünü kontrol et (başka sekmeye geçildiğinde)
         const handleVisibilityChange = () => {
-            if (document.hidden) {
-                setShowWarning(true);
-            } else {
-                checkFullscreen();
-            }
+            checkAllConditions();
         };
 
         document.addEventListener('visibilitychange', handleVisibilityChange);
 
-        // Cleanup
+        const handleWindowBlur = () => {
+            setShowWarning(true);
+        };
+
+        const handleWindowFocus = () => {
+            checkAllConditions();
+        };
+
+        window.addEventListener('blur', handleWindowBlur);
+        window.addEventListener('focus', handleWindowFocus);
+
+        const handleResize = () => {
+            lastWindowSizeRef.current = { width: window.innerWidth, height: window.innerHeight };
+            checkAllConditions();
+        };
+
+        window.addEventListener('resize', handleResize);
+
+        checkIntervalRef.current = setInterval(() => {
+            checkAllConditions();
+        }, 500);
+
         return () => {
             events.forEach(event => {
-                document.removeEventListener(event, checkFullscreen);
+                document.removeEventListener(event, checkAllConditions);
             });
             document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('blur', handleWindowBlur);
+            window.removeEventListener('focus', handleWindowFocus);
+            window.removeEventListener('resize', handleResize);
             if (warningTimeoutRef.current) {
                 clearTimeout(warningTimeoutRef.current);
             }
+            if (checkIntervalRef.current) {
+                clearInterval(checkIntervalRef.current);
+            }
         };
-    }, []);
+    }, [checkAllConditions]);
 
     return (
         <div ref={containerRef} className="relative w-screen h-screen bg-gray-900">

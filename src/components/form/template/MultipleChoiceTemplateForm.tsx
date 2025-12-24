@@ -4,11 +4,9 @@ import React, {forwardRef, useEffect, useImperativeHandle, useState} from 'react
 import {Alert, AlertDescription} from "@/components/ui/alert";
 import {Button} from "@/components/ui/button";
 import {Label} from "@/components/ui/label";
-import {Input} from "@/components/ui/input";
 import {Textarea} from "@/components/ui/textarea";
 import Checkbox from "@/components/ui/checkbox";
 import {MultipleChoiceTemplateDto, MultipleChoiceOptions, ChoiceOption} from "@/types/exam/questionTemplates";
-import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {Trash2, Plus} from "lucide-react";
 import {EMediaType} from "@/types/exam/enum";
 
@@ -55,11 +53,32 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
 
     useEffect(() => {
         if (value) {
+            // Eğer correctOptionIndex yoksa veya null ise, choices array'indeki isCorrect: true olan seçeneğin index'ini bul
+            let correctIndex = value.correctOptionIndex ?? null;
+            if (correctIndex === null || correctIndex === undefined) {
+                // choices array'indeki isCorrect: true olan seçeneğin index'ini bul
+                const correctChoiceIndex = value.options?.choices?.findIndex(choice => choice.isCorrect === true);
+                if (correctChoiceIndex !== undefined && correctChoiceIndex !== -1) {
+                    correctIndex = correctChoiceIndex;
+                } else {
+                    correctIndex = 0; // Varsayılan olarak ilk seçeneği seç
+                }
+            }
+            
+            // choices array'indeki isCorrect değerlerini correctOptionIndex'e göre ayarla
+            const choices = value.options?.choices?.map((choice, i) => ({
+                ...choice,
+                isCorrect: i === correctIndex
+            })) || [];
+            
             setFormData({
                 question: value.question || '',
-                options: value.options || {choices: []},
-                correctOptionIndex: value.correctOptionIndex || 0,
-                explanation: value.explanation || '',
+                options: {
+                    ...(value.options || {}),
+                    choices: choices
+                },
+                correctOptionIndex: correctIndex,
+                explanation: '', // UI'dan kaldırıldı, her zaman boş string
                 shuffleOptions: value.shuffleOptions || false
             });
         }
@@ -69,18 +88,36 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
         field: T,
         newValue: MultipleChoiceTemplateFormData[T]
     ) => {
-        const updatedData = {...formData, [field]: newValue};
+        let updatedData = {...formData, [field]: newValue};
+
+        // Eğer correctOptionIndex değiştiyse, choices array'indeki isCorrect değerlerini de güncelle
+        if (field === 'correctOptionIndex') {
+            const updatedChoices = updatedData.options.choices?.map((choice, i) => ({
+                ...choice,
+                isCorrect: i === newValue
+            })) || [];
+            
+            updatedData = {
+                ...updatedData,
+                options: {
+                    ...updatedData.options,
+                    choices: updatedChoices
+                }
+            };
+        }
+
         setFormData(updatedData);
 
-        if (validateForm()) {
-            onChange({
-                question: updatedData.question,
-                options: updatedData.options,
-                correctOptionIndex: updatedData.correctOptionIndex,
-                explanation: updatedData.explanation,
-                shuffleOptions: updatedData.shuffleOptions
-            });
-        }
+        // Her zaman onChange'i çağır, validation sadece submit için
+        // ÖNEMLİ: value'dan gelen id ve diğer base field'ları koru (update modu için gerekli)
+        onChange({
+            ...(value || {}), // id ve diğer base field'ları koru (value null ise boş obje)
+            question: updatedData.question,
+            options: updatedData.options,
+            correctOptionIndex: updatedData.correctOptionIndex,
+            explanation: '', // UI'dan kaldırıldı, her zaman boş string
+            shuffleOptions: updatedData.shuffleOptions
+        });
     };
 
     const addChoice = () => {
@@ -94,17 +131,45 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
         };
 
         const updatedChoices = [...(formData.options.choices || []), newChoice];
-        handleChange('options', {...formData.options, choices: updatedChoices});
+        const updatedOptions = {...formData.options, choices: updatedChoices};
+        handleChange('options', updatedOptions);
     };
 
     const removeChoice = (index: number) => {
         const updatedChoices = formData.options.choices?.filter((_, i) => i !== index) || [];
-        handleChange('options', {...formData.options, choices: updatedChoices});
-
+        
         // Doğru cevap index'i ayarla
+        let newCorrectIndex = formData.correctOptionIndex;
         if (formData.correctOptionIndex >= updatedChoices.length) {
-            handleChange('correctOptionIndex', Math.max(0, updatedChoices.length - 1));
+            newCorrectIndex = Math.max(0, updatedChoices.length - 1);
+        } else if (formData.correctOptionIndex > index) {
+            // Silinen seçenek doğru seçeneğin önündeyse, index'i bir azalt
+            newCorrectIndex = formData.correctOptionIndex - 1;
         }
+        
+        // isCorrect değerlerini güncelle
+        const choicesWithCorrect = updatedChoices.map((choice, i) => ({
+            ...choice,
+            isCorrect: i === newCorrectIndex
+        }));
+        
+        const updatedOptions = {...formData.options, choices: choicesWithCorrect};
+        const updatedData = {
+            ...formData,
+            options: updatedOptions,
+            correctOptionIndex: newCorrectIndex
+        };
+        setFormData(updatedData);
+        
+        // ÖNEMLİ: value'dan gelen id ve diğer base field'ları koru (update modu için gerekli)
+        onChange({
+            ...(value || {}), // id ve diğer base field'ları koru (value null ise boş obje)
+            question: updatedData.question,
+            options: updatedData.options,
+            correctOptionIndex: updatedData.correctOptionIndex,
+            explanation: '', // UI'dan kaldırıldı, her zaman boş string
+            shuffleOptions: updatedData.shuffleOptions
+        });
     };
 
     const updateChoice = <K extends keyof ChoiceOption>(
@@ -203,7 +268,8 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
                             </div>
                         </div>
 
-                        <div className="col-span-2">
+                        {/* Medya Tipi - YORUM SATIRI: UI'dan kaldırıldı, default TEXT olarak ayarlanıyor */}
+                        {/* <div className="col-span-2">
                             <Label>Medya Tipi</Label>
                             <Select
                                 onValueChange={(value) => updateChoice(index, 'mediaType', value as EMediaType)}
@@ -222,9 +288,9 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
                                     </SelectGroup>
                                 </SelectContent>
                             </Select>
-                        </div>
+                        </div> */}
 
-                        <div className="col-span-3">
+                        <div className="col-span-10">
                             <Label>Seçenek Metni</Label>
                             <Textarea
                                 value={choice.text || ''}
@@ -234,16 +300,18 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
                             />
                         </div>
 
-                        <div className="col-span-2">
+                        {/* Medya URL - YORUM SATIRI: UI'dan kaldırıldı, belki sonra tekrar gösterilebilir */}
+                        {/* <div className="col-span-2">
                             <Label>Medya URL</Label>
                             <Input
                                 value={choice.mediaUrl || ''}
                                 onChange={(e) => updateChoice(index, 'mediaUrl', e.target.value)}
                                 placeholder="Medya URL (opsiyonel)"
                             />
-                        </div>
+                        </div> */}
 
-                        <div className="col-span-3">
+                        {/* Geri Bildirim - YORUM SATIRI: UI'dan kaldırıldı, belki sonra tekrar gösterilebilir */}
+                        {/* <div className="col-span-3">
                             <Label>Geri Bildirim</Label>
                             <Textarea
                                 value={choice.feedback || ''}
@@ -251,7 +319,7 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
                                 placeholder="Geri bildirim metni (opsiyonel)"
                                 className="min-h-[60px]"
                             />
-                        </div>
+                        </div> */}
 
                         <div className="col-span-1">
                             <Button
@@ -273,8 +341,8 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
                 )}
             </div>
 
-            {/* Açıklama */}
-            <div className="space-y-2">
+            {/* Açıklama - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
+            {/* <div className="space-y-2">
                 <Label htmlFor="explanation">Açıklama</Label>
                 <Textarea
                     id="explanation"
@@ -283,7 +351,7 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
                     className="min-h-[100px]"
                     placeholder="Soru açıklaması (opsiyonel)"
                 />
-            </div>
+            </div> */}
 
             {/* Seçenekleri Karıştır */}
             <div className="space-y-2">

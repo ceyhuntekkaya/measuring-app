@@ -15,7 +15,11 @@ export default function RootLayout({
 
 
     return (
-        <html lang="en">
+        <html lang="tr" translate="no">
+            <head>
+        <meta name="google" content="notranslate" />
+        <meta httpEquiv="content-language" content="tr" />
+      </head>
         <body className={inter.className}>
         <LanguageProvider>
             <Providers>

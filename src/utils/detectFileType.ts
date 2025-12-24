@@ -152,19 +152,3 @@ export async function detectFileTypeFromHeaders(url: string): Promise<FileTypeRe
         return detectFileType(url);
     }
 }
-
-// Kullanım örnekleri:
-/*
-const result1 = detectFileType('https://example.com/image.jpg');
-console.log(result1); // { type: 'image', extension: 'jpg', mimeType: 'image/jpeg' }
-
-const result2 = detectFileType('https://example.com/video.mp4');
-console.log(result2); // { type: 'video', extension: 'mp4', mimeType: 'video/mp4' }
-
-const result3 = detectFileType('https://example.com/document.pdf');
-console.log(result3); // { type: 'pdf', extension: 'pdf', mimeType: 'application/pdf' }
-
-// Asenkron kullanım:
-const result4 = await detectFileTypeFromHeaders('https://example.com/file');
-console.log(result4);
-*/

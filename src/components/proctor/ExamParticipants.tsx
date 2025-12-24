@@ -1,17 +1,20 @@
 import React, {useEffect, useState} from 'react';
-import {Clock, MessageCircle, Pause, CheckCircle} from 'lucide-react';
+import {Clock, MessageCircle, CheckCircle, Play, XCircle} from 'lucide-react';
 import {ChatWindow} from "@/components/proctor/ChatWindow";
 import {ApplicationDto} from "@/types/management/brand";
 import {ESessionState} from "@/types/exam/enum";
 import OnlineStatusIndicator from '@/components/admin/OnlineStatusIndicator';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import {useApplication} from "@/hooks/exam/use-application";
+import {ESessionState as ESessionStateEnum} from "@/types/exam/enum";
 
-const ParticipantCard = ({participant, onFreeze, onComplete, onChat, isOnline}: {
+const ParticipantCard = ({participant, onChat, isOnline, onStart, onStop, onFinish}: {
     participant: ApplicationDto;
-    onFreeze: (id: string) => void;
-    onComplete: (id: string) => void;
     onChat: (participant: ApplicationDto) => void;
     isOnline: boolean;
+    onStart?: (id: string) => void;
+    onStop?: (id: string) => void;
+    onFinish?: (id: string) => void;
 }) => {
 
     const getBorderColor = () => {
@@ -97,7 +100,7 @@ const ParticipantCard = ({participant, onFreeze, onComplete, onChat, isOnline}: 
 
                             <div className="text-sm">
                                 <div className="text-gray-500">Süre</div>
-                                <div className="font-medium">participant.duration</div>
+                                <div className="font-medium">{participant.duration as string || ''}</div>
                             </div>
 
                             {participant.sessionState === ESessionState.IN_PROGRESS && (
@@ -123,23 +126,52 @@ const ParticipantCard = ({participant, onFreeze, onComplete, onChat, isOnline}: 
                 </div>
 
                 <div className="flex items-center gap-2">
-                    {participant.sessionState === ESessionState.IN_PROGRESS && (
+                    {/* Başlat/Durdur butonu - isFinish false ise görünür */}
+                    {!((participant as ApplicationDto & { isFinish?: boolean }).isFinish === true) && (
                         <>
-                            <button
-                                onClick={() => onFreeze(participant.candidateId || '')}
-                                className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg flex items-center gap-2 transition-colors text-sm"
-                            >
-                                <Pause className="w-4 h-4"/>
-                                Dondur
-                            </button>
-                            <button
-                                onClick={() => onComplete(participant.candidateId || '')}
-                                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg flex items-center gap-2 transition-colors text-sm"
-                            >
-                                <CheckCircle className="w-4 h-4"/>
-                                Bitir
-                            </button>
+                            {onStart && !participant.startedAt && (
+                                <button
+                                    onClick={() => onStart(participant.id || '')}
+                                    className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg flex items-center gap-2 transition-colors text-sm"
+                                >
+                                    <Play className="w-4 h-4"/>
+                                    Başlat
+                                </button>
+                            )}
+                            {onStop && participant.startedAt && !participant.endedAt && (
+                                <button
+                                    onClick={() => onStop(participant.id || '')}
+                                    className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg flex items-center gap-2 transition-colors text-sm"
+                                >
+                                    <XCircle className="w-4 h-4"/>
+                                    Durdur
+                                </button>
+                            )}
                         </>
+                    )}
+                    {/* OTURUMU SONLANDIR butonu */}
+                    {onFinish && (
+                        <button
+                            onClick={() => onFinish(participant.id || '')}
+                            disabled={(participant as ApplicationDto & { isFinish?: boolean }).isFinish === true}
+                            className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm ${
+                                (participant as ApplicationDto & { isFinish?: boolean }).isFinish === true
+                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    : 'bg-red-500 hover:bg-red-600 text-white'
+                            }`}
+                        >
+                            {(participant as ApplicationDto & { isFinish?: boolean }).isFinish === true ? (
+                                <>
+                                    <CheckCircle className="w-4 h-4"/>
+                                    OTURUM SONLANDI
+                                </>
+                            ) : (
+                                <>
+                                    <XCircle className="w-4 h-4"/>
+                                    OTURUMU SONLANDIR
+                                </>
+                            )}
+                        </button>
                     )}
 
                     {/* Chat butonu sadece online ise göster */}
@@ -165,6 +197,7 @@ interface ExamTypeFormProps {
 const ExamParticipants: React.FC<ExamTypeFormProps> = ({ candidates }) => {
     const [chatParticipant, setChatParticipant] = useState<ApplicationDto | null>(null);
     const { isOnline ,onlineUsers} = useOnlineStatus();
+    const {setApplicationStartedAt, setApplicationEndedAt, updateApplicationSessionState} = useApplication();
 
 
 
@@ -181,12 +214,34 @@ const ExamParticipants: React.FC<ExamTypeFormProps> = ({ candidates }) => {
     }, [candidates, onlineUsers]);
 
 
-    const handleFreeze = (id: string) => {
-        console.log('Donduruldu:', id);
+    const handleStart = async (id: string) => {
+        try {
+            await setApplicationStartedAt(id);
+            await updateApplicationSessionState(id, ESessionStateEnum.IN_PROGRESS);
+        } catch (err) {
+            console.error('Error starting application:', err);
+        }
     };
 
-    const handleComplete = (id: string) => {
-        console.log('Bitirildi:', id);
+    const handleStop = async (id: string) => {
+        try {
+            await setApplicationEndedAt(id);
+        } catch (err) {
+            console.error('Error stopping application:', err);
+        }
+    };
+
+    const handleFinish = async (id: string) => {
+        if (window.confirm('Bu başvuruyu sonlandırmak istediğinize emin misiniz? Bu işlem geri alınamaz.')) {
+            try {
+                // Application için isFinish endpoint'i yok gibi görünüyor, 
+                // bu yüzden sessionState'i FINISHED yapıyoruz
+                await updateApplicationSessionState(id, ESessionStateEnum.FINISHED);
+                await setApplicationEndedAt(id);
+            } catch (err) {
+                console.error('Error finishing application:', err);
+            }
+        }
     };
 
     const handleChat = (participant: ApplicationDto) => {
@@ -202,10 +257,11 @@ const ExamParticipants: React.FC<ExamTypeFormProps> = ({ candidates }) => {
                         <ParticipantCard
                             key={participant.id}
                             participant={participant}
-                            onFreeze={handleFreeze}
-                            onComplete={handleComplete}
                             onChat={handleChat}
                             isOnline={isOnline(participant.username || '')}
+                            onStart={handleStart}
+                            onStop={handleStop}
+                            onFinish={handleFinish}
                         />
                     ))}
                 </div>

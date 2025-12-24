@@ -9,8 +9,9 @@ import {
     UpdateStatusRequest,
 } from '@/types/exam/examResponses';
 import { showNotification } from '@/lib/notification';
-import {ExamSessionDto} from "@/types/exam/examEntities";
+import {ExamSessionDto, UpdateExamSessionStateRequest} from "@/types/exam/examEntities";
 import {examSessionService} from "@/services/api/exam/exam-session-service";
+import {ESessionState} from "@/types/exam/enum";
 
 interface UseExamSessionReturn {
     examSessions: ExamSessionListResponse | null;
@@ -41,6 +42,10 @@ interface UseExamSessionReturn {
     getSessionApplications: (id: string, status?: string, page?: number, size?: number) => Promise<void>;
     updateSessionStatus: (id: string, statusRequest: UpdateStatusRequest) => Promise<void>;
     clearSessionData: () => void;
+    setExamSessionBeginAt: (sessionId: string) => Promise<void>;
+    setExamSessionEndAt: (sessionId: string) => Promise<void>;
+    setExamSessionIsFinish: (sessionId: string) => Promise<void>;
+    updateExamSessionSessionState: (sessionId: string, sessionState: ESessionState) => Promise<void>;
 }
 
 export const useExamSession = (): UseExamSessionReturn => {
@@ -350,6 +355,91 @@ export const useExamSession = (): UseExamSessionReturn => {
         }
     }, []);
 
+    const setExamSessionBeginAt = useCallback(async (sessionId: string) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await examSessionService.setExamSessionBeginAt(sessionId);
+            if (response.data && response.success) {
+                setSelectedExamSession(response.data);
+                showNotification.success('Oturum başlangıç zamanı kaydedildi!');
+            } else {
+                throw new Error(response.message);
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err : new Error('An error occurred'));
+            showNotification.error('Başlangıç zamanı kaydedilirken bir hata oluştu!');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const setExamSessionEndAt = useCallback(async (sessionId: string) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await examSessionService.setExamSessionEndAt(sessionId);
+            if (response.data && response.success) {
+                setSelectedExamSession(response.data);
+                showNotification.success('Oturum bitiş zamanı kaydedildi!');
+            } else {
+                throw new Error(response.message);
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err : new Error('An error occurred'));
+            showNotification.error('Bitiş zamanı kaydedilirken bir hata oluştu!');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const setExamSessionIsFinish = useCallback(async (sessionId: string) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await examSessionService.setExamSessionIsFinish(sessionId);
+            if (response.data && response.success) {
+                setSelectedExamSession(response.data);
+                showNotification.success('Oturum sonlandırıldı!');
+            } else {
+                throw new Error(response.message);
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err : new Error('An error occurred'));
+            showNotification.error('Oturum sonlandırılırken bir hata oluştu!');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const updateExamSessionSessionState = useCallback(async (sessionId: string, sessionState: ESessionState) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const updateRequest: UpdateExamSessionStateRequest = {
+                examSessionId: sessionId,
+                sessionState
+            };
+            const response = await examSessionService.updateExamSessionSessionState(sessionId, updateRequest);
+            if (response.data && response.success) {
+                setSelectedExamSession(response.data);
+                const stateMessage = sessionState === ESessionState.IN_PROGRESS 
+                    ? 'Oturum durumu "Devam Ediyor" olarak güncellendi!' 
+                    : sessionState === ESessionState.FINISHED 
+                        ? 'Oturum durumu "Tamamlandı" olarak güncellendi!'
+                        : 'Oturum durumu güncellendi!';
+                showNotification.success(stateMessage);
+            } else {
+                throw new Error(response.message);
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err : new Error('An error occurred'));
+            showNotification.error('Oturum durumu güncellenirken bir hata oluştu!');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
     const clearSessionData = useCallback(() => {
         setExamSessions(null);
         setSelectedExamSession(null);
@@ -391,6 +481,10 @@ export const useExamSession = (): UseExamSessionReturn => {
         getSessionDashboard,
         getSessionApplications,
         updateSessionStatus,
-        clearSessionData
+        clearSessionData,
+        setExamSessionBeginAt,
+        setExamSessionEndAt,
+        setExamSessionIsFinish,
+        updateExamSessionSessionState
     };
 };

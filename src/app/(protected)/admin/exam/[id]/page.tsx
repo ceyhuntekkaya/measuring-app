@@ -1,23 +1,15 @@
 'use client';
-import React, {useContext, useEffect} from "react";
+import React, {useEffect} from "react";
 import PageHeader from "@/components/layout/page-header";
 import {ActionButtons} from "@/components/ui/simple-dropdown";
-import {DataContext} from "@/contexts/data-context";
-import { useExamContext } from '@/contexts/ExamContext';
 import {useParams} from "next/navigation";
 import {useExam} from "@/hooks/exam/use-exam";
 import LoadingComp from "@/components/ui/loading-comp";
-import ExamApplicationScreen from "@/components/take/ExamApplicationScreen";
+import ExamPreviewList from "@/components/take/ExamPreviewList";
 
-export default function ExamTypePage() {
+export default function ExamPreviewPage() {
     const params = useParams();
     const examId = params.id as string;
-    const context = useContext(DataContext);
-    const { state, setExam, setStep } = useExamContext();
-    if (!context) {
-        throw new Error("DataContext must be used within a DataContext.Provider");
-    }
-
 
     const {
         selectedExam,
@@ -26,53 +18,41 @@ export default function ExamTypePage() {
     } = useExam();
 
     useEffect(() => {
-        getExamById(examId)
-        setStep('section-selection')
+        if (examId) {
+            getExamById(examId);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [examId]);
 
-    useEffect(() => {
-        if(selectedExam){
-            setExam(selectedExam)
-        }
-    }, [selectedExam]);
-
-
-
-
-
-
     if (loading) {
+        return <LoadingComp/>;
+    }
+
+    if (!selectedExam) {
         return (
-            <LoadingComp/>
+            <div className="space-y-6">
+                <PageHeader/>
+                <div className="p-6 pt-1">
+                    <div className="text-center py-12 text-gray-500">
+                        <p className="text-lg">Sınav bulunamadı.</p>
+                    </div>
+                </div>
+            </div>
         );
     }
 
-
-
-    const renderContent = () => {
-        switch (state.currentStep) {
-
-            case 'section-selection' :
-                return null // <ExamSectionsList sections={getUniqueSortedExamSections()} onSectionSelect={onSectionSelect}/>;
-            case 'exam-taking' :
-                return <ExamApplicationScreen questionGroups={selectedExam?.questionGroups || []} onExitExam={()=>{}} />;
-            default:
-                return <p>Bilinmeyen durum</p>;
-        }
-    };
-
-
-
-
     return (
         <div className="space-y-6">
-            <PageHeader actions={
-                <ActionButtons
-                    addButtonText="Yeni Sınav Tipi Tanımla"
-                />
-            }/>
+            <PageHeader 
+                title={`Sınav Önizleme: ${selectedExam.name || 'İsimsiz Sınav'}`}
+                actions={
+                    <ActionButtons
+                        addButtonText="Yeni Sınav Tipi Tanımla"
+                    />
+                }
+            />
             <div className="p-6 pt-1">
-                {renderContent()}
+                <ExamPreviewList exam={selectedExam} />
             </div>
         </div>
     );

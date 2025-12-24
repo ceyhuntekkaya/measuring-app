@@ -1,36 +1,15 @@
 import React from 'react';
 import {ExamSectionDto} from "@/types/exam/examTemplates";
-import {useExamApplicationContext} from "@/contexts/ExamApplicationContext";
-import {useApplication} from "@/hooks/exam/use-application";
-import {ESessionState} from "@/types/exam/enum";
 
-interface ExamSectionsListProps {
+interface SimpleSectionListProps {
     sections: ExamSectionDto[];
     onSectionSelect?: (section: ExamSectionDto) => void;
 }
 
-const ExamSectionsList: React.FC<ExamSectionsListProps> = ({
-                                                               sections,
-                                                               onSectionSelect
-                                                           }) => {
-    const {candidate, application} = useExamApplicationContext();
-    const {setApplicationEndedAt, updateApplicationSessionState, loading} = useApplication();
-
-    const handleCompleteExam = async () => {
-        if (!application?.id) {
-            return;
-        }
-
-        if (window.confirm('Sınavı tamamlamak istediğinize emin misiniz? Bu işlem geri alınamaz.')) {
-            try {
-                await setApplicationEndedAt(application.id);
-                await updateApplicationSessionState(application.id, ESessionState.FINISHED);
-            } catch (error) {
-                console.error('Sınav tamamlanırken hata oluştu:', error);
-            }
-        }
-    };
-
+const SimpleSectionList: React.FC<SimpleSectionListProps> = ({
+    sections,
+    onSectionSelect
+}) => {
     // orderNumber'a göre sırala
     const sortedSections = [...sections].sort((a, b) => {
         const orderA = a.orderNumber ?? 0;
@@ -38,13 +17,9 @@ const ExamSectionsList: React.FC<ExamSectionsListProps> = ({
         return orderA - orderB;
     });
 
-    // Kullanıcı adı soyadı
-    const userName = candidate ? `${candidate.name || ''} ${candidate.lastName || ''}`.trim() : '';
-    const greeting = userName ? `Merhaba, ${userName}` : 'Sınav Bölümleri';
-
     return (
         <div className="w-full mx-auto p-6 pt-4 bg-white">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">{greeting}</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Sınav Bölümleri</h2>
 
             <div className="space-y-3">
                 {sortedSections.map((section, index) => (
@@ -52,18 +27,18 @@ const ExamSectionsList: React.FC<ExamSectionsListProps> = ({
                         key={section.id || index}
                         onClick={() => onSectionSelect?.(section)}
                         className={`
-              bg-white rounded-lg border-2 border-gray-200 p-5 
-              transition-all duration-200
-              ${onSectionSelect ? 'cursor-pointer hover:border-blue-500 hover:shadow-lg hover:scale-[1.02]' : ''}
-            `}
+                            bg-white rounded-lg border-2 border-gray-200 p-5 
+                            transition-all duration-200
+                            ${onSectionSelect ? 'cursor-pointer hover:border-blue-500 hover:shadow-lg hover:scale-[1.02]' : ''}
+                        `}
                     >
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 {/* Order Number Badge */}
                                 <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <span className="text-blue-700 font-bold text-lg">
-                    {section.orderNumber ?? '-'}
-                  </span>
+                                    <span className="text-blue-700 font-bold text-lg">
+                                        {section.orderNumber ?? '-'}
+                                    </span>
                                 </div>
 
                                 {/* Section Name */}
@@ -107,19 +82,9 @@ const ExamSectionsList: React.FC<ExamSectionsListProps> = ({
                     </div>
                 )}
             </div>
-
-            {/* Sınavı Tamamla Butonu */}
-            <div className="mt-8 flex justify-center">
-                <button
-                    onClick={handleCompleteExam}
-                    disabled={loading || !application?.id}
-                    className="px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-lg transition-all transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none"
-                >
-                    {loading ? 'İşleniyor...' : 'Sınavı Tamamla'}
-                </button>
-            </div>
         </div>
     );
 };
 
-export default ExamSectionsList;
+export default SimpleSectionList;
+

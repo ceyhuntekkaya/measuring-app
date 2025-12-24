@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useMemo} from 'react';
+import React, {useState, useEffect, useMemo, useCallback} from 'react';
 import {MultipleResponseTemplateDto, ResponseOption} from '@/types/exam/questionTemplates';
 import {QuestionTemplateType} from "@/types/exam/examEntities";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
@@ -10,6 +10,7 @@ interface MultipleResponseQuestionProps {
     initialAnswer?: string[];
     isSubmitted?: boolean;
     showCorrectAnswer?: boolean;
+    showLearnerEvaluation?: boolean;
     questionId: string;
 }
 
@@ -29,20 +30,45 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
                                                                                initialAnswer = [],
                                                                                isSubmitted = false,
                                                                                questionId,
-                                                                               showCorrectAnswer = false
+                                                                               showCorrectAnswer = false,
+                                                                               showLearnerEvaluation = false
                                                                            }) => {
-    const [selectedOptions, setSelectedOptions] = useState<string[]>(initialAnswer);
+    const [selectedOptions, setSelectedOptions] = useState<string[]>(initialAnswer || []);
     const [shuffledOptions, setShuffledOptions] = useState<ResponseOption[]>([]);
     const [optionResults, setOptionResults] = useState<OptionResult[]>([]);
 
 
+    // initialAnswer içindeki text'leri option ID'lerine çevir
+    const convertTextsToIds = useCallback((texts: string[]): string[] => {
+        if (!template.options?.choices || !texts || texts.length === 0) {
+            return [];
+        }
+        
+        const optionIds: string[] = [];
+        texts.forEach(text => {
+            // Option text'ine göre ID bul
+            const option = template.options?.choices?.find(opt => opt.text === text);
+            if (option && option.id) {
+                optionIds.push(option.id);
+            } else {
+                // Eğer text bulunamazsa, direkt text'i ID olarak kullan (fallback)
+                // Belki de backend'den zaten ID geliyor
+                optionIds.push(text);
+            }
+        });
+        return optionIds;
+    }, [template.options?.choices]);
 
-
-
-    const stableInitialAnswer = useMemo(() => initialAnswer, [JSON.stringify(initialAnswer)]);
+    const stableInitialAnswer = useMemo(() => {
+        if (!initialAnswer || initialAnswer.length === 0) {
+            return [];
+        }
+        // Text'leri ID'lere çevir
+        return convertTextsToIds(initialAnswer);
+    }, [initialAnswer?.join(','), convertTextsToIds]);
 
     useEffect(() => {
-        setSelectedOptions(stableInitialAnswer);
+        setSelectedOptions(stableInitialAnswer || []);
     }, [stableInitialAnswer]);
 
     useEffect(() => {
@@ -69,7 +95,8 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
     };
 
     const handleOptionToggle = (optionId: string): void => {
-        if (isSubmitted && !isPreview) return;
+        // isPreview true ise değişiklik yapılmasın
+        if (isPreview || (isSubmitted && !isPreview)) return;
 
         const isSelected = selectedOptions.includes(optionId);
         let newSelectedOptions: string[];
@@ -88,8 +115,6 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
         }
 
         setSelectedOptions(newSelectedOptions);
-
-
     };
 
     const handleSaveAnswer =()=>{
@@ -120,37 +145,77 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
     };
 
     const getOptionStyle = (optionId: string): string => {
-        const baseStyle = "p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ";
+        const baseStyle = "p-4 border-2 rounded-lg transition-all duration-200 ";
+        const cursorStyle = isPreview ? "cursor-default " : "cursor-pointer ";
         const isSelected = selectedOptions.includes(optionId);
+
+        // Doğru seçenekleri bul
+        const getCorrectOptionIds = (): string[] => {
+            const correctIds: string[] = [];
+            if (template.correctOptionIndices && template.correctOptionIndices.length > 0 && shuffledOptions.length > 0) {
+                template.correctOptionIndices.forEach(index => {
+                    if (shuffledOptions[index]?.id) {
+                        correctIds.push(shuffledOptions[index].id!);
+                    }
+                });
+            }
+            // Alternatif: choices içinde isCorrect: true olanları bul
+            shuffledOptions.forEach(option => {
+                if (option.isCorrect === true && option.id && !correctIds.includes(option.id)) {
+                    correctIds.push(option.id);
+                }
+            });
+            return correctIds;
+        };
+
+        // showLearnerEvaluation: Öğrencinin cevabı ile doğru cevabı karşılaştır
+        if (showLearnerEvaluation) {
+            const correctOptionIds = getCorrectOptionIds();
+            const isCorrect = correctOptionIds.includes(optionId);
+
+            if (isSelected && isCorrect) {
+                // Öğrenci doğru seçeneği seçmiş: Yeşil
+                return baseStyle + cursorStyle + "border-green-500 bg-green-50 text-green-800";
+            } else if (isSelected && !isCorrect) {
+                // Öğrenci yanlış seçeneği seçmiş: Kırmızı
+                return baseStyle + cursorStyle + "border-red-500 bg-red-50 text-red-800";
+            } else if (!isSelected && isCorrect) {
+                // Öğrenci seçmemiş ama doğru seçenek: Mavi
+                return baseStyle + cursorStyle + "border-blue-500 bg-blue-50 text-blue-800";
+            } else {
+                // Diğer seçenekler: Gri
+                return baseStyle + cursorStyle + "border-gray-300 bg-gray-50 opacity-60";
+            }
+        }
 
         if (isPreview) {
             if (isSelected) {
-                return baseStyle + "border-blue-500 bg-blue-50";
+                return baseStyle + cursorStyle + "border-blue-500 bg-blue-50";
             }
-            return baseStyle + "border-gray-300 bg-white hover:border-blue-400 hover:bg-blue-50";
+            return baseStyle + cursorStyle + "border-gray-300 bg-white hover:border-blue-400 hover:bg-blue-50";
         }
 
         if (isSubmitted && showCorrectAnswer) {
             const result = optionResults.find(r => r.id === optionId);
-            if (!result) return baseStyle + "border-gray-300 bg-white";
+            if (!result) return baseStyle + cursorStyle + "border-gray-300 bg-white";
 
             if (result.shouldBeSelected && result.isSelected) {
                 // Correct selection
-                return baseStyle + "border-green-500 bg-green-50";
+                return baseStyle + cursorStyle + "border-green-500 bg-green-50";
             } else if (result.shouldBeSelected && !result.isSelected) {
                 // Missed correct answer
-                return baseStyle + "border-yellow-500 bg-yellow-50";
+                return baseStyle + cursorStyle + "border-yellow-500 bg-yellow-50";
             } else if (!result.shouldBeSelected && result.isSelected) {
                 // Wrong selection
-                return baseStyle + "border-red-500 bg-red-50";
+                return baseStyle + cursorStyle + "border-red-500 bg-red-50";
             } else {
                 // Correct rejection
-                return baseStyle + "border-gray-300 bg-gray-50 opacity-60";
+                return baseStyle + cursorStyle + "border-gray-300 bg-gray-50 opacity-60";
             }
         }
 
         if (isSelected) {
-            return baseStyle + "border-blue-500 bg-blue-50";
+            return baseStyle + cursorStyle + "border-blue-500 bg-blue-50";
         }
 
         return baseStyle + "border-gray-300 bg-white hover:border-blue-400 hover:bg-blue-50";
@@ -464,7 +529,9 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
                     </div>
                 ))}
             </div>
-            <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
+            {!isPreview && (
+                <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
+            )}
             {/* Overall Explanation */}
             {isSubmitted && showCorrectAnswer && template.explanation && (
                 <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
@@ -560,15 +627,6 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
-
-            {/* Preview Mode Indicator */}
-            {isPreview && (
-                <div className="mt-4 p-3 bg-gray-100 border border-gray-300 rounded">
-                    <p className="text-gray-600 text-sm italic">
-                        👁️ Önizleme Modu - Bu sorunun nasıl görüneceğinin önizlemesidir
-                    </p>
                 </div>
             )}
 

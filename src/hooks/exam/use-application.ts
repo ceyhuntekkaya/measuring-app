@@ -8,11 +8,13 @@ import {
     BulkCreateApplicationRequest,
     ApplicationStatistics,
     ExamSessionApplicationsSummary,
-    ApplicationSearchParams
+    ApplicationSearchParams,
+    UpdateSessionStateRequest
 } from '@/types/management/brand';
 import { showNotification } from '@/lib/notification';
 import {applicationService} from "@/services/api/management/appication-service";
 import {EvaluationDto, UpdateApplicationState} from "@/types/exam/examEntities";
+import {ESessionState} from "@/types/exam/enum";
 
 interface UseApplicationReturn {
     applications: ApplicationDto[] | null;
@@ -45,6 +47,9 @@ interface UseApplicationReturn {
     updateApplicationState: (applicationId: string, updateApplicationState: UpdateApplicationState) => Promise<void>;
     getApplicationEvaluationsBySession: (sessionId: string) => Promise<void>;
     sessionEvaluations: EvaluationDto[] | null;
+    setApplicationStartedAt: (applicationId: string) => Promise<void>;
+    setApplicationEndedAt: (applicationId: string) => Promise<void>;
+    updateApplicationSessionState: (applicationId: string, sessionState: ESessionState) => Promise<void>;
 }
 
 export const useApplication = (): UseApplicationReturn => {
@@ -439,6 +444,72 @@ export const useApplication = (): UseApplicationReturn => {
         }
     }, []);
 
+    const setApplicationStartedAt = useCallback(async (applicationId: string) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await applicationService.setApplicationStartedAt(applicationId);
+            if (response.data && response.success) {
+                setSelectedApplication(response.data);
+                showNotification.success('Sınav başlangıç zamanı kaydedildi!');
+            } else {
+                throw new Error(response.message);
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err : new Error('An error occurred'));
+            showNotification.error('Başlangıç zamanı kaydedilirken bir hata oluştu!');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const setApplicationEndedAt = useCallback(async (applicationId: string) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await applicationService.setApplicationEndedAt(applicationId);
+            if (response.data && response.success) {
+                setSelectedApplication(response.data);
+                showNotification.success('Sınav bitiş zamanı kaydedildi!');
+            } else {
+                throw new Error(response.message);
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err : new Error('An error occurred'));
+            showNotification.error('Bitiş zamanı kaydedilirken bir hata oluştu!');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const updateApplicationSessionState = useCallback(async (applicationId: string, sessionState: ESessionState) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const updateRequest: UpdateSessionStateRequest = {
+                applicationId,
+                sessionState
+            };
+            const response = await applicationService.updateApplicationSessionState(applicationId, updateRequest);
+            if (response.data && response.success) {
+                setSelectedApplication(response.data);
+                const stateMessage = sessionState === ESessionState.IN_PROGRESS 
+                    ? 'Sınav durumu "Devam Ediyor" olarak güncellendi!' 
+                    : sessionState === ESessionState.FINISHED 
+                        ? 'Sınav durumu "Tamamlandı" olarak güncellendi!'
+                        : 'Sınav durumu güncellendi!';
+                showNotification.success(stateMessage);
+            } else {
+                throw new Error(response.message);
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err : new Error('An error occurred'));
+            showNotification.error('Sınav durumu güncellenirken bir hata oluştu!');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
     const clearApplicationData = useCallback(() => {
         setApplications(null);
         setSelectedApplication(null);
@@ -480,6 +551,9 @@ export const useApplication = (): UseApplicationReturn => {
         clearApplicationData,
         updateApplicationState,
         getApplicationEvaluationsBySession,
-        sessionEvaluations
+        sessionEvaluations,
+        setApplicationStartedAt,
+        setApplicationEndedAt,
+        updateApplicationSessionState
     };
 };

@@ -3,14 +3,10 @@
 import React, { useEffect, useState, useImperativeHandle, forwardRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import Checkbox from "@/components/ui/checkbox";
 import { NumberInput } from "@/components/ui/number-input";
 import { ImageResponseTemplateDto } from "@/types/exam/questionTemplates";
-import { Trash2, Plus } from "lucide-react";
 
 interface ImageResponseTemplateFormData {
     prompt?: string;
@@ -48,32 +44,31 @@ const ImageResponseTemplateForm = forwardRef<ImageResponseTemplateFormHandle, Im
                                                                                                                }, ref) => {
     const [formData, setFormData] = useState<ImageResponseTemplateFormData>({
         prompt: '',
-        referenceImageUrl: '',
+        referenceImageUrl: '', // UI'dan kaldırıldı, her zaman boş string
         maxFileSize: 5,
-        gradingCriteria: [],
+        gradingCriteria: [], // UI'dan kaldırıldı, her zaman boş array
         rubric: '',
-        requiresManualGrading: true,
-        allowedFormats: 'jpg,jpeg,png,gif,bmp',
-        requiresDrawing: false,
-        allowsUpload: true
+        requiresManualGrading: true, // UI'dan kaldırıldı, her zaman true
+        allowedFormats: 'jpg,jpeg,png,gif,bmp', // UI'dan kaldırıldı, her zaman sabit değer
+        requiresDrawing: false, // UI'dan kaldırıldı, her zaman false
+        allowsUpload: true // UI'dan kaldırıldı, her zaman true
     });
 
     const [errors, setErrors] = useState<ImageResponseTemplateFormErrors>({});
-    const [criteriaInput, setCriteriaInput] = useState('');
 
     // Value değiştiğinde form data'yı güncelle (Update modu için)
     useEffect(() => {
         if (value) {
             setFormData({
                 prompt: value.prompt || '',
-                referenceImageUrl: value.referenceImageUrl || '',
+                referenceImageUrl: '', // UI'dan kaldırıldı, her zaman boş string
                 maxFileSize: value.maxFileSize || 5,
-                gradingCriteria: value.gradingCriteria || [],
+                gradingCriteria: [], // UI'dan kaldırıldı, her zaman boş array
                 rubric: value.rubric || '',
-                requiresManualGrading: value.requiresManualGrading ?? true,
-                allowedFormats: value.allowedFormats || 'jpg,jpeg,png,gif,bmp',
-                requiresDrawing: value.requiresDrawing ?? false,
-                allowsUpload: value.allowsUpload ?? true
+                requiresManualGrading: true, // UI'dan kaldırıldı, her zaman true
+                allowedFormats: 'jpg,jpeg,png,gif,bmp', // UI'dan kaldırıldı, her zaman sabit değer
+                requiresDrawing: false, // UI'dan kaldırıldı, her zaman false
+                allowsUpload: true // UI'dan kaldırıldı, her zaman true
             });
         }
     }, []);
@@ -81,18 +76,18 @@ const ImageResponseTemplateForm = forwardRef<ImageResponseTemplateFormHandle, Im
     // Form data değiştiğinde parent'a bildir (Anlık güncelleme)
     useEffect(() => {
         // İlk render'da boş form için onChange tetikleme
-        if (formData.prompt || formData.gradingCriteria.length > 0) {
+        if (formData.prompt) {
             const templateData: ImageResponseTemplateDto = {
                 ...value,
                 prompt: formData.prompt,
-                referenceImageUrl: formData.referenceImageUrl,
+                referenceImageUrl: '', // UI'dan kaldırıldı, her zaman boş string
                 maxFileSize: formData.maxFileSize,
-                gradingCriteria: formData.gradingCriteria,
+                gradingCriteria: [], // UI'dan kaldırıldı, her zaman boş array
                 rubric: formData.rubric,
-                requiresManualGrading: formData.requiresManualGrading,
-                allowedFormats: formData.allowedFormats,
-                requiresDrawing: formData.requiresDrawing,
-                allowsUpload: formData.allowsUpload
+                requiresManualGrading: true, // UI'dan kaldırıldı, her zaman true
+                allowedFormats: 'jpg,jpeg,png,gif,bmp', // UI'dan kaldırıldı, her zaman sabit değer
+                requiresDrawing: false, // UI'dan kaldırıldı, her zaman false
+                allowsUpload: true // UI'dan kaldırıldı, her zaman true
             };
             onChange(templateData);
         }
@@ -116,29 +111,7 @@ const ImageResponseTemplateForm = forwardRef<ImageResponseTemplateFormHandle, Im
         }
     };
 
-    const addCriteria = () => {
-        if (criteriaInput.trim() && !formData.gradingCriteria.includes(criteriaInput.trim())) {
-            setFormData(prev => ({
-                ...prev,
-                gradingCriteria: [...prev.gradingCriteria, criteriaInput.trim()]
-            }));
-            setCriteriaInput('');
-        }
-    };
 
-    const removeCriteria = (index: number) => {
-        setFormData(prev => ({
-            ...prev,
-            gradingCriteria: prev.gradingCriteria.filter((_, i) => i !== index)
-        }));
-    };
-
-    const handleCriteriaInputKeyPress = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            addCriteria();
-        }
-    };
 
     // Validation fonksiyonu - parent tarafından çağrılacak
     const validateForm = (): boolean => {
@@ -152,13 +125,11 @@ const ImageResponseTemplateForm = forwardRef<ImageResponseTemplateFormHandle, Im
 
         if (formData.maxFileSize !== undefined && formData.maxFileSize <= 0) {
             newErrors.maxFileSize = 'Maksimum dosya boyutu 0\'dan büyük olmalıdır';
-        } else if (formData.maxFileSize !== undefined && formData.maxFileSize > 50) {
+        } else         if (formData.maxFileSize !== undefined && formData.maxFileSize > 50) {
             newErrors.maxFileSize = 'Maksimum dosya boyutu 50 MB\'dan büyük olamaz';
         }
 
-        if (formData.gradingCriteria.length === 0) {
-            newErrors.gradingCriteria = 'En az bir değerlendirme kriteri eklenmelidir';
-        }
+        // gradingCriteria kontrolü kaldırıldı - UI'dan kaldırıldı, her zaman boş array
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -195,8 +166,8 @@ const ImageResponseTemplateForm = forwardRef<ImageResponseTemplateFormHandle, Im
                             )}
                         </div>
 
-                        {/* Referans Resim URL */}
-                        <div className="col-span-2 space-y-2">
+                        {/* Referans Resim URL - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
+                        {/* <div className="col-span-2 space-y-2">
                             <Label htmlFor="referenceImageUrl">Referans Resim URL</Label>
                             <Input
                                 id="referenceImageUrl"
@@ -204,7 +175,7 @@ const ImageResponseTemplateForm = forwardRef<ImageResponseTemplateFormHandle, Im
                                 onChange={(e) => handleChange('referenceImageUrl', e.target.value)}
                                 placeholder="Örnek resim URL'si (opsiyonel)"
                             />
-                        </div>
+                        </div> */}
 
                         {/* Maksimum Dosya Boyutu */}
                         <div className="space-y-2">
@@ -227,8 +198,8 @@ const ImageResponseTemplateForm = forwardRef<ImageResponseTemplateFormHandle, Im
                             )}
                         </div>
 
-                        {/* İzin Verilen Formatlar */}
-                        <div className="space-y-2">
+                        {/* İzin Verilen Formatlar - YORUM SATIRI: UI'dan kaldırıldı, değeri "jpg,jpeg,png,gif,bmp" */}
+                        {/* <div className="space-y-2">
                             <Label htmlFor="allowedFormats">İzin Verilen Formatlar</Label>
                             <Input
                                 id="allowedFormats"
@@ -237,10 +208,10 @@ const ImageResponseTemplateForm = forwardRef<ImageResponseTemplateFormHandle, Im
                                 placeholder="jpg,jpeg,png,gif,bmp"
                             />
                             <p className="text-sm text-gray-600">Virgülle ayırarak birden fazla format girebilirsiniz</p>
-                        </div>
+                        </div> */}
 
-                        {/* Checkbox'lar */}
-                        <div className="col-span-2 grid grid-cols-2 gap-4">
+                        {/* Checkbox'lar - YORUM SATIRI: UI'dan kaldırıldı, değerleri sabit */}
+                        {/* <div className="col-span-2 grid grid-cols-2 gap-4">
                             <div className="space-y-4">
                                 <div className="flex items-center space-x-2">
                                     <Checkbox
@@ -271,14 +242,13 @@ const ImageResponseTemplateForm = forwardRef<ImageResponseTemplateFormHandle, Im
                                     <Label htmlFor="allowsUpload">Dosya Yüklemeye İzin Ver</Label>
                                 </div>
                             </div>
-                        </div>
+                        </div> */}
                     </div>
 
-                    {/* Değerlendirme Kriterleri */}
-                    <div className="space-y-4">
+                    {/* Değerlendirme Kriterleri - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş array gönderiliyor */}
+                    {/* <div className="space-y-4">
                         <Label>Değerlendirme Kriterleri *</Label>
 
-                        {/* Kriter Ekleme */}
                         <div className="flex gap-2">
                             <Input
                                 value={criteriaInput}
@@ -298,7 +268,6 @@ const ImageResponseTemplateForm = forwardRef<ImageResponseTemplateFormHandle, Im
                             </Button>
                         </div>
 
-                        {/* Mevcut Kriterler */}
                         {formData.gradingCriteria.length > 0 && (
                             <div className="space-y-2">
                                 {formData.gradingCriteria.map((criteria, index) => (
@@ -326,7 +295,7 @@ const ImageResponseTemplateForm = forwardRef<ImageResponseTemplateFormHandle, Im
                                 <AlertDescription>{errors.gradingCriteria}</AlertDescription>
                             </Alert>
                         )}
-                    </div>
+                    </div> */}
 
                     {/* Rubrik */}
                     <div className="space-y-2">

@@ -2,6 +2,6 @@
 
 import ExamLoginPage from "@/components/auth/exam-login";
 
-export default function LoginPage() {
+export default function ExamLogin() {
     return <ExamLoginPage />;
 }

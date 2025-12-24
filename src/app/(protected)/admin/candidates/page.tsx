@@ -120,8 +120,6 @@ export default function CandidatePage() {
 
     const handleAssignApplications = async (selectedExam: ExamDto | null) => {
 
-        // ceyhun
-
 
         if (!selectedExamSession || selectedCandidates.length === 0) return;
 
@@ -250,7 +248,7 @@ export default function CandidatePage() {
             render: (value, record) => (
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
-                    onClick={() => router.push(`/admin/candidates/${record.id}`)}
+
                 >
                     {
                         (record as CandidateDto).application?.code ?

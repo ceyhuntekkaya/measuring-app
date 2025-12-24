@@ -16,7 +16,6 @@ interface ExamApplicationContextType {
     evaluations: EvaluationDto[] | null;
     examSections: ExamSectionDto[];
     candidate: CandidateDto | null;
-    addStudentAnswer: (questionId: string, answer: string) => void;
     updateApplicationStateStatus: (state: EApplicationUpdateState) => void;
     getExamData: (examId: string) => void;
 }
@@ -55,17 +54,9 @@ export function ExamApplicationProvider({children}: { children: ReactNode }) {
         if (authEvaluations) setEvaluations(authEvaluations)
     }, []);
 
-
-    const addStudentAnswer = (questionId: string, answer: string) => {
-        console.log(questionId);
-        console.log(answer);
-    };
-
-
     const getExamData = (examId: string, ) => {
         getExamById(examId)
     };
-
 
     function getUniqueSortedExamSections(): ExamSectionDto[] {
         if (!selectedExam || !selectedExam.questionGroups || selectedExam.questionGroups.length === 0) {
@@ -168,7 +159,6 @@ export function ExamApplicationProvider({children}: { children: ReactNode }) {
         application,
         evaluations,
         candidate,
-        addStudentAnswer,
         updateApplicationStateStatus,
         examSections,
         getExamData

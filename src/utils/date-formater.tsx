@@ -103,29 +103,3 @@ export const formatDate = (
         return '';
     }
 };
-
-// Kullanım örnekleri:
-/*
-const date = new Date();
-// veya
-const date = '2024-01-03';
-
-console.log(formatDate(date));                    // 03.01.2024
-console.log(formatDate(date, 'trFull'));          // 3 Ocak 2024 Çarşamba
-console.log(formatDate(date, 'trMedium'));        // 3 Oca 2024
-console.log(formatDate(date, 'us'));              // 01/03/2024
-console.log(formatDate(date, 'iso'));             // 2024-01-03
-console.log(formatDate(date, 'time'));            // 14:30
-console.log(formatDate(date, 'timeWithSeconds')); // 14:30:45
-console.log(formatDate(date, 'dateTime'));        // 03.01.2024 14:30
-
-// Özel format kullanımı
-console.log(formatDate(date, 'custom', {
-    custom: true,
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    locale: 'tr-TR'
-})); // Çarşamba, 3 Ocak 2024
-*/

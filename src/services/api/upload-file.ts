@@ -3,12 +3,6 @@ import {UploadedFileDto} from "@/types/exam/miscDtos";
 
 const API_URL = siteConfig.api.invokeUrl;
 
-export enum EApprovalStatus {
-    PENDING = 'PENDING',
-    APPROVED = 'APPROVED',
-    REJECTED = 'REJECTED'
-}
-
 export type DatabaseObjectDto = {
     id?: string;
     createdAt?: string;

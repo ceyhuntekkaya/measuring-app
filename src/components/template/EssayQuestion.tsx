@@ -9,8 +9,8 @@ interface EssayQuestionProps {
     onAnswerChange?: (questionId:string, template: QuestionTemplateType, selectedOption: string, type: EQuestionType, mediaType: EMediaType, isEmptyAnswer: boolean) => void;
     initialAnswer?: EssayAnswerData | null;
     isSubmitted?: boolean;
-    showCorrectAnswer?: boolean;
     questionId: string;
+    showCorrectAnswer?: boolean;
 }
 
 interface EssayAnswerData {
@@ -37,6 +37,7 @@ const EssayQuestion: React.FC<EssayQuestionProps> = ({
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     console.log(showCorrectAnswer)
+
     useEffect(() => {
         if (initialAnswer) {
             setEssayText(initialAnswer.text);
@@ -350,7 +351,9 @@ const EssayQuestion: React.FC<EssayQuestionProps> = ({
                 />
 
             </div>
-            <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
+            {!isPreview && (
+                <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
+            )}
             {/* Writing Tips */}
             {!isSubmitted && essayText.length === 0 && (
                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -394,15 +397,6 @@ const EssayQuestion: React.FC<EssayQuestionProps> = ({
                             )}
                         </div>
                     </div>
-                </div>
-            )}
-
-            {/* Preview Mode Indicator */}
-            {isPreview && (
-                <div className="mt-4 p-3 bg-gray-100 border border-gray-300 rounded">
-                    <p className="text-gray-600 text-sm italic">
-                        👁️ Önizleme Modu - Bu sorunun nasıl görüneceğinin önizlemesidir
-                    </p>
                 </div>
             )}
 

@@ -4,6 +4,7 @@ import {QuestionTemplateType} from "@/types/exam/examEntities";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
 import {UploadedFileDto} from "@/types/exam/miscDtos";
 import {uploadAudioFile} from "@/services/api/upload-file";
+import siteConfig from "@/config/config.json";
 
 interface AudioResponseQuestionProps {
     template: AudioResponseTemplateDto;
@@ -11,8 +12,8 @@ interface AudioResponseQuestionProps {
     onAnswerChange?: (questionId:string, template: QuestionTemplateType, selectedOption: string, type: EQuestionType, mediaType: EMediaType, isEmptyAnswer: boolean) => void;
     initialAnswer?: AudioAnswerData | null;
     isSubmitted?: boolean;
-    showCorrectAnswer?: boolean;
     questionId: string;
+    showCorrectAnswer?: boolean;
 }
 
 interface AudioAnswerData {
@@ -35,11 +36,12 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                                                                      }) => {
     const [audioAnswer, setAudioAnswer] = useState<AudioAnswerData | null>(initialAnswer);
 
+
+    console.log(showCorrectAnswer)
     const [audioAnswerPath, setAudioAnswerPath] = useState<string>('');
     const [isRecording, setIsRecording] = useState<boolean>(false);
     const [isPaused, setIsPaused] = useState<boolean>(false);
     const [recordingTime, setRecordingTime] = useState<number>(0);
-    const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
     const [error, setError] = useState<string>('');
     const [audioLevel, setAudioLevel] = useState<number>(0);
     const [uploadProgress, setUploadProgress] = useState<number>(0);
@@ -52,12 +54,45 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
     const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const animationFrameRef = useRef<number | null>(null);
 
-    console.log("ceyhun: ",mediaStream )
-    console.log("ceyhun: ",showCorrectAnswer )
+    const API_URL = siteConfig.api.invokeUrl + "/upload/serve";
+
+
+
 
     useEffect(() => {
-        setAudioAnswer(initialAnswer);
-    }, [initialAnswer]);
+        if (!initialAnswer) {
+            setAudioAnswer(null);
+            setAudioAnswerPath('');
+            return;
+        }
+
+        // Eğer initialAnswer'da uploadedFileData varsa, path'i set et ve audioAnswer'ı güncelle
+        if (initialAnswer.uploadedFileData?.path) {
+            const path = initialAnswer.uploadedFileData.path;
+            setAudioAnswerPath(path);
+            // audioAnswer state'ini de güncelle ki audio element render edilsin
+            setAudioAnswer({
+                ...initialAnswer,
+                audioUrl: `${API_URL}/${path}`, // URL'i oluştur
+                uploadedFileData: initialAnswer.uploadedFileData
+            });
+        } else if (typeof initialAnswer === 'object' && 'path' in initialAnswer) {
+            // Eğer initialAnswer direkt path içeriyorsa (string olarak gelebilir)
+            const answerWithPath = initialAnswer as { path?: string } & AudioAnswerData;
+            const path = answerWithPath.path || '';
+            setAudioAnswerPath(path);
+            if (path) {
+                setAudioAnswer({
+                    ...answerWithPath,
+                    audioUrl: `${API_URL}/${path}`
+                });
+            } else {
+                setAudioAnswer(initialAnswer);
+            }
+        } else {
+            setAudioAnswer(initialAnswer);
+        }
+    }, [initialAnswer, API_URL]);
 
     // Cleanup ONLY on unmount - EMPTY dependency array!
     useEffect(() => {
@@ -150,12 +185,14 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
 
             if (uploadedFiles && uploadedFiles.length > 0) {
                 const uploadedFile = uploadedFiles[0];
+                const filePath = uploadedFile.path || '';
 
-                setAudioAnswerPath(uploadedFile.path || '--')
-                const url = URL.createObjectURL(audioBlob);
+                setAudioAnswerPath(filePath);
+                // Yeni kayıt için audioUrl'i API URL formatında oluştur
+                const audioUrl = filePath ? `${API_URL}/${filePath}` : URL.createObjectURL(audioBlob);
 
                 return {
-                    audioUrl: url,
+                    audioUrl: audioUrl,
                     audioBlob: audioBlob,
                     duration: duration,
                     recordedAt: new Date().toISOString(),
@@ -180,7 +217,6 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
         try {
             setError('');
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            setMediaStream(stream);
 
             setupAudioAnalyser(stream);
 
@@ -204,24 +240,47 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
 
             mediaRecorder.onstop = async () => {
                 const blob = new Blob(recordedChunksRef.current, { type: 'audio/webm' });
-                const finalDuration = recordingTime;
+                
+                // Gerçek ses dosyasının süresini al
+                const getActualDuration = (): Promise<number> => {
+                    return new Promise((resolve) => {
+                        const url = URL.createObjectURL(blob);
+                        const audio = new Audio(url);
+                        audio.addEventListener('loadedmetadata', () => {
+                            const actualDuration = Math.round(audio.duration);
+                            URL.revokeObjectURL(url);
+                            resolve(actualDuration || recordingTime); // Fallback olarak recordingTime kullan
+                        });
+                        audio.addEventListener('error', () => {
+                            URL.revokeObjectURL(url);
+                            resolve(recordingTime); // Hata durumunda recordingTime kullan
+                        });
+                    });
+                };
+
+                const finalDuration = await getActualDuration();
 
                 try {
                     // Upload audio and get the result
                     const newAudioData = await handleUploadAudio(blob, finalDuration);
-                    setAudioAnswer(newAudioData);
-
-                    // Call onAnswerChange if upload was successful
+                    
+                    // Upload başarılı olduğunda otomatik olarak kaydet
                     if (onAnswerChange && newAudioData.uploadedFileData) {
+                        const filePath = newAudioData.uploadedFileData.path || '';
+                        setAudioAnswerPath(filePath);
+                        // Otomatik kaydetme işlemi
                         onAnswerChange(
                             questionId,
                             template,
-                            newAudioData.uploadedFileData.path  || '',
+                            filePath,
                             EQuestionType.AUDIO_RESPONSE,
                             EMediaType.AUDIO,
                             false
                         );
                     }
+                    
+                    // State'i en son güncelle ki yeni ses görünsün
+                    setAudioAnswer(newAudioData);
                 } catch (err) {
                     console.error('Upload failed:', err);
                     // Even if upload fails, keep the local audio
@@ -237,7 +296,6 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
 
                 // Cleanup
                 stream.getTracks().forEach(track => track.stop());
-                setMediaStream(null);
                 setAudioLevel(0);
 
                 if (animationFrameRef.current) {
@@ -371,12 +429,14 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
     const isValidDuration = (): boolean => {
         if (!audioAnswer?.duration) return false;
 
-        const duration = audioAnswer.duration;
+        const duration = Math.round(audioAnswer.duration); // Saniye cinsinden, yuvarlanmış
 
+        // Min kontrolü: duration >= minRecordingDuration olmalı
         if (template.minRecordingDuration && duration < template.minRecordingDuration) {
             return false;
         }
 
+        // Max kontrolü: duration <= maxRecordingDuration olmalı
         if (template.maxRecordingDuration && duration > template.maxRecordingDuration) {
             return false;
         }
@@ -418,8 +478,10 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
     return (
         <div className="space-y-6">
             {template.title && template.title !== "NOT_SET" && (
-                <div className="mb-4">
-                    <h3 className="text-lg font-semibold text-gray-800">{template.title}</h3>
+                <div className="mb-4">{
+                    //  <h3 className="text-lg font-semibold text-gray-800">{template.title}</h3>
+                }
+                   
                     {template.description && (
                         <p className="text-gray-600 mt-1">{template.description}</p>
                     )}
@@ -432,13 +494,7 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                 </div>
             )}
 
-            {template.audioPromptUrl && (
-                <div className="mb-6">
-                    <audio src={template.audioPromptUrl} controls className="w-full">
-                        Tarayıcınız ses oynatmayı desteklemiyor.
-                    </audio>
-                </div>
-            )}
+
 
             {getDurationInfo() && (
                 <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
@@ -497,7 +553,7 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                     </div>
                 )}
 
-                {audioAnswer?.audioUrl && !isRecording && (
+                {(audioAnswer?.audioUrl || audioAnswerPath) && !isRecording && audioAnswer && (
                     <div className="mb-6">
                         <div className="bg-white p-4 rounded-lg border-2 border-green-500">
                             <div className="flex items-center justify-between mb-3">
@@ -509,14 +565,22 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                                             ✓ Yüklendi
                                         </span>
                                     )}
-                                    {!isValidDuration() && (
+                                    {audioAnswer.duration && !isValidDuration() && (
                                         <span className="ml-2 text-red-600 font-semibold">
-                                            ⚠️ Süre gereksinimlerini karşılamıyor
+                                            ⚠️ Süre gereksinimlerini karşılamıyor (Min: {template.minRecordingDuration || 0}s, Max: {template.maxRecordingDuration || '∞'}s, Mevcut: {Math.round(audioAnswer.duration)}s)
                                         </span>
                                     )}
                                 </div>
                             </div>
-                            <audio src={audioAnswer.audioUrl} controls className="w-full">
+                            <audio key={`${audioAnswer.audioUrl || ''}-${audioAnswerPath || ''}-${audioAnswer.uploadedFileData?.path || ''}`}
+                                src={
+                                    audioAnswerPath 
+                                        ? `${API_URL}/${audioAnswerPath}` 
+                                        : audioAnswer.audioUrl || ''
+                                } 
+                                controls 
+                                className="w-full"
+                            >
                                 Tarayıcınız ses oynatmayı desteklemiyor.
                             </audio>
                         </div>
@@ -621,13 +685,15 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                 )}
             </div>
 
-            <button
-                className={"btn btn-success"}
-                onClick={handleSaveAnswer}
-                disabled={isUploading || !audioAnswer}
-            >
-                KAYDET
-            </button>
+            {!isPreview && (
+                <button
+                    className={"btn btn-success"}
+                    onClick={handleSaveAnswer}
+                    disabled={isUploading || !audioAnswer}
+                >
+                    KAYDET
+                </button>
+            )}
 
             {isSubmitted && audioAnswer && (
                 <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded">
@@ -642,14 +708,6 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                             Değerlendirme tamamlandığında sonuçları görebileceksiniz.
                         </p>
                     )}
-                </div>
-            )}
-
-            {isPreview && (
-                <div className="mt-4 p-3 bg-gray-100 border border-gray-300 rounded">
-                    <p className="text-gray-600 text-sm italic">
-                        👁️ Önizleme Modu - Bu sorunun nasıl görüneceğinin önizlemesidir
-                    </p>
                 </div>
             )}
 

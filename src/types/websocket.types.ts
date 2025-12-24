@@ -27,6 +27,13 @@ export interface PresencePayload {
     username: string;
     status: 'ONLINE' | 'OFFLINE';
     timestamp: string;
+    initial?: boolean; // Backend'den presence-sync mesajlarında true olarak gelir
+}
+
+// Presence sync payload (array of presence data)
+export interface PresenceSyncPayload {
+    users: PresencePayload[]; // Birden fazla kullanıcıyı içerebilir
+    initial: boolean; // İlk sync mesajı mı?
 }
 
 // Role Types

@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ImageResponseTemplateDto } from '@/types/exam/questionTemplates';
 import {QuestionTemplateType} from "@/types/exam/examEntities";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
+import {UploadedFileDto} from "@/types/exam/miscDtos";
+import {uploadFile} from "@/services/api/upload-file";
+import siteConfig from "@/config/config.json";
 
 interface ImageResponseQuestionProps {
     template: ImageResponseTemplateDto;
@@ -9,8 +12,8 @@ interface ImageResponseQuestionProps {
     onAnswerChange?: (questionId:string, template: QuestionTemplateType, selectedOption: string, type: EQuestionType, mediaType: EMediaType, isEmptyAnswer: boolean) => void;
     initialAnswer?: ImageAnswerData | null;
     isSubmitted?: boolean;
-    showCorrectAnswer?: boolean;
     questionId: string;
+    showCorrectAnswer?: boolean;
 }
 
 interface ImageAnswerData {
@@ -20,6 +23,7 @@ interface ImageAnswerData {
     fileSize?: number;
     uploadedAt?: string;
     isDrawing?: boolean;
+    uploadedFileData?: UploadedFileDto; // Upload sonucu
 }
 
 interface Point {
@@ -37,22 +41,55 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                                                                          showCorrectAnswer = false
                                                                      }) => {
     const [imageAnswer, setImageAnswer] = useState<ImageAnswerData | null>(initialAnswer);
+
+    console.log(showCorrectAnswer)
     const [isDrawing, setIsDrawing] = useState<boolean>(false);
     const [currentTool, setCurrentTool] = useState<'pen' | 'eraser'>('pen');
     const [currentColor, setCurrentColor] = useState<string>('#000000');
     const [lineWidth, setLineWidth] = useState<number>(2);
     const [error, setError] = useState<string>('');
     const [isDragging, setIsDragging] = useState<boolean>(false);
+    const [isUploading, setIsUploading] = useState<boolean>(false);
+    const [uploadProgress, setUploadProgress] = useState<number>(0);
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const lastPositionRef = useRef<Point | null>(null);
 
-    console.log(showCorrectAnswer)
+    const API_URL = siteConfig.api.invokeUrl + "/upload/serve";
 
     useEffect(() => {
-        setImageAnswer(initialAnswer);
+        if (!initialAnswer) {
+            setImageAnswer(null);
+            return;
+        }
 
+        // Eğer initialAnswer'da uploadedFileData varsa, imageUrl'i API URL formatında oluştur
+        if (initialAnswer.uploadedFileData?.path) {
+            const path = initialAnswer.uploadedFileData.path;
+            const imageUrl = `${API_URL}/${path}`;
+            setImageAnswer({
+                ...initialAnswer,
+                imageUrl: imageUrl, // API URL formatında
+                uploadedFileData: initialAnswer.uploadedFileData
+            });
+        } else if (typeof initialAnswer === 'object' && 'path' in initialAnswer) {
+            // Eğer initialAnswer direkt path içeriyorsa
+            const answerWithPath = initialAnswer as { path?: string } & ImageAnswerData;
+            const path = answerWithPath.path || '';
+            if (path) {
+                setImageAnswer({
+                    ...answerWithPath,
+                    imageUrl: `${API_URL}/${path}`
+                });
+            } else {
+                setImageAnswer(initialAnswer);
+            }
+        } else {
+            setImageAnswer(initialAnswer);
+        }
+
+        // Canvas'a çizim için image yükle
         if (initialAnswer?.imageUrl && template.requiresDrawing && canvasRef.current) {
             const canvas = canvasRef.current;
             const ctx = canvas.getContext('2d');
@@ -61,10 +98,12 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                 img.onload = () => {
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                 };
+                // imageUrl API URL formatında olabilir, CORS için crossOrigin ekle
+                img.crossOrigin = 'anonymous';
                 img.src = initialAnswer.imageUrl;
             }
         }
-    }, [initialAnswer, template.requiresDrawing]);
+    }, [initialAnswer, template.requiresDrawing, API_URL]);
 
     useEffect(() => {
         if (template.requiresDrawing && canvasRef.current) {
@@ -77,7 +116,77 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
         }
     }, [template.requiresDrawing]);
 
-    const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    const handleUploadImage = async (imageFile: File): Promise<ImageAnswerData> => {
+        // Eğer questionId yoksa veya preview modundaysa upload yapma
+        if (!questionId || isPreview) {
+            const url = URL.createObjectURL(imageFile);
+            return {
+                imageUrl: url,
+                imageBlob: imageFile,
+                fileName: imageFile.name,
+                fileSize: imageFile.size,
+                uploadedAt: new Date().toISOString(),
+                isDrawing: false
+            };
+        }
+
+        setIsUploading(true);
+        setUploadProgress(0);
+        setError('');
+
+        try {
+            const uploadedFiles = await uploadFile(
+                imageFile,
+                questionId,
+                'IMAGE_RESPONSE',
+                {
+                    onProgress: (progress) => {
+                        setUploadProgress(progress);
+                    },
+                    onError: (errorMsg) => {
+                        setError(errorMsg);
+                    }
+                }
+            );
+
+            setIsUploading(false);
+
+            if (uploadedFiles && uploadedFiles.length > 0) {
+                const uploadedFile = uploadedFiles[0];
+                const filePath = uploadedFile.path || '';
+                // Yeni kayıt için imageUrl'i API URL formatında oluştur
+                const imageUrl = filePath ? `${API_URL}/${filePath}` : URL.createObjectURL(imageFile);
+
+                return {
+                    imageUrl: imageUrl,
+                    imageBlob: imageFile,
+                    fileName: uploadedFile.fileName || imageFile.name,
+                    fileSize: imageFile.size,
+                    uploadedAt: new Date().toISOString(),
+                    isDrawing: false,
+                    uploadedFileData: uploadedFile
+                };
+            } else {
+                throw new Error('Upload başarısız: Dosya yüklenemedi');
+            }
+        } catch (err) {
+            setIsUploading(false);
+            const errorMsg = err instanceof Error ? err.message : 'Resim yüklenirken bir hata oluştu';
+            setError(errorMsg);
+            // Hata olsa bile local image'i göster
+            const url = URL.createObjectURL(imageFile);
+            return {
+                imageUrl: url,
+                imageBlob: imageFile,
+                fileName: imageFile.name,
+                fileSize: imageFile.size,
+                uploadedAt: new Date().toISOString(),
+                isDrawing: false
+            };
+        }
+    };
+
+    const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
         if (isSubmitted && !isPreview) return;
 
         const file = event.target.files?.[0];
@@ -102,34 +211,52 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
         }
 
         // Validate file size
-        if (template.maxFileSize && file.size > template.maxFileSize) {
-            const maxSizeMB = (template.maxFileSize / (1024 * 1024)).toFixed(2);
+        if (template.maxFileSize && file.size > template.maxFileSize *  (1024 * 1024)) {
+            const maxSizeMB = (template.maxFileSize ).toFixed(2);
             setError(`Dosya boyutu çok büyük. Maksimum boyut: ${maxSizeMB} MB`);
             return;
         }
 
-        // Create image URL
-        const imageUrl = URL.createObjectURL(file);
+        try {
+            // Upload image and get the result
+            const newImageData = await handleUploadImage(file);
 
-        const newImageData: ImageAnswerData = {
-            imageUrl,
-            imageBlob: file,
-            fileName: file.name,
-            fileSize: file.size,
-            uploadedAt: new Date().toISOString(),
-            isDrawing: false
-        };
-
-        setImageAnswer(newImageData);
-
-        if (onAnswerChange) {
-           // onAnswerChange(newImageData);
+            // Upload başarılı olduğunda otomatik olarak kaydet
+            if (onAnswerChange && newImageData.uploadedFileData) {
+                const filePath = newImageData.uploadedFileData.path || '';
+                // Otomatik kaydetme işlemi
+                onAnswerChange(
+                    questionId,
+                    template,
+                    filePath,
+                    EQuestionType.IMAGE_RESPONSE,
+                    EMediaType.IMAGE,
+                    false
+                );
+            }
+            
+            // State'i en son güncelle ki yeni görsel görünsün
+            setImageAnswer(newImageData);
+        } catch (err) {
+            console.error('Image upload failed:', err);
+            // Hata olsa bile local image'i göster
+            const url = URL.createObjectURL(file);
+            setImageAnswer({
+                imageUrl: url,
+                imageBlob: file,
+                fileName: file.name,
+                fileSize: file.size,
+                uploadedAt: new Date().toISOString(),
+                isDrawing: false
+            });
         }
     };
 
-    const handleSaveAnswer =()=>{
-        if (onAnswerChange) {
-            onAnswerChange(questionId, template, imageAnswer && imageAnswer.imageUrl ? imageAnswer.imageUrl  : '', EQuestionType.IMAGE_RESPONSE, EMediaType.IMAGE, false);
+    const handleSaveAnswer = () => {
+        if (onAnswerChange && imageAnswer) {
+            // Eğer resim zaten upload edilmişse, path'i gönder
+            const filePath = imageAnswer.uploadedFileData?.path || imageAnswer.imageUrl || '';
+            onAnswerChange(questionId, template, filePath, EQuestionType.IMAGE_RESPONSE, EMediaType.IMAGE, false);
         }
     }
 
@@ -563,9 +690,17 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                                     </button>
                                 )}
                             </div>
+                            {
+
+                            }
 
                             <img
-                                src={imageAnswer.imageUrl}
+                                key={`${imageAnswer.imageUrl || ''}-${imageAnswer.uploadedFileData?.path || ''}`}
+                                src={
+                                    imageAnswer.uploadedFileData?.path
+                                        ? `${API_URL}/${imageAnswer.uploadedFileData.path}`
+                                        : imageAnswer.imageUrl || ''
+                                }
                                 alt="Yüklenen görsel"
                                 className="max-w-full h-auto rounded border border-gray-200"
                                 style={{ maxHeight: '600px' }}
@@ -574,7 +709,26 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                     )}
                 </div>
             )}
-            <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
+            {/* Upload Progress */}
+            {isUploading && (
+                <div className="mt-4">
+                    <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-gray-600">Yükleniyor...</span>
+                        <span className="text-sm text-gray-600">{uploadProgress}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div
+                            className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                            style={{ width: `${uploadProgress}%` }}
+                        />
+                    </div>
+                </div>
+            )}
+            
+            {/* KAYDET butonu - sadece upload başarısız olursa veya manuel kaydetme gerekiyorsa göster */}
+            {!isPreview && imageAnswer && !isUploading && !imageAnswer.uploadedFileData && (
+                <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
+            )}
             {/* Submission Status */}
             {isSubmitted && imageAnswer && (
                 <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded">
@@ -591,15 +745,6 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                             Değerlendirme tamamlandığında sonuçları görebileceksiniz.
                         </p>
                     )}
-                </div>
-            )}
-
-            {/* Preview Mode Indicator */}
-            {isPreview && (
-                <div className="mt-4 p-3 bg-gray-100 border border-gray-300 rounded">
-                    <p className="text-gray-600 text-sm italic">
-                        👁️ Önizleme Modu - Bu sorunun nasıl görüneceğinin önizlemesidir
-                    </p>
                 </div>
             )}
 

@@ -32,7 +32,6 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
         const checkAuth = async () => {
             try {
                 const token = localStorage.getItem('accessToken');
-                console.log('AuthContext - Token check:', !!token);
                 if (token) {
 
                     const cookieToken = document.cookie.split(';').find(c => c.trim().startsWith('accessToken='));
@@ -64,12 +63,12 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
 
                         currentPath !== '/about' &&
                         currentPath !== '/exam' &&
+                        !currentPath.startsWith('/exam') &&
 
                         currentPath !== '/' &&
                         !currentPath.startsWith('/_next') &&
                         !currentPath.startsWith('/api/')
                     ) {
-                        console.log('AuthContext - No token, redirecting to login from client');
                         router.replace('/login');
                     }
                 }
@@ -88,7 +87,6 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
                     !currentPath.startsWith('/_next') &&
                     !currentPath.startsWith('/api/')
                 ) {
-                    console.log('AuthContext - Auth error, redirecting to login');
                     router.replace('/login');
                 }
             } finally {

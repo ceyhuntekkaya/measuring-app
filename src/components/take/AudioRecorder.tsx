@@ -1,6 +1,6 @@
 "use client";
-import React, {useState, useRef} from 'react';
-import {Mic, Square, Play, Pause} from 'lucide-react';
+import React, {useState, useRef, useEffect} from 'react';
+import {Mic} from 'lucide-react';
 import siteConfig from "@/config/config.json";
 import {useExamApplicationContext} from "@/contexts/ExamApplicationContext";
 import {EApplicationUpdateState} from "@/types/exam/enum";
@@ -9,21 +9,17 @@ import {showNotification} from "@/lib/notification";
 const API_URL = siteConfig.api.invokeUrl;
 
 interface AudioRecorderProps {
-    applicationId:string;
+    applicationId: string;
 
 }
 
 const AudioRecorder: React.FC<AudioRecorderProps> = ({applicationId}) => {
 
-
     const {updateApplicationStateStatus} = useExamApplicationContext();
-
     const [isRecording, setIsRecording] = useState(false);
-    const [isPaused, setIsPaused] = useState(false);
     const [audioURL, setAudioURL] = useState('');
     const [recordingTime, setRecordingTime] = useState(0);
     const [isUploading, setIsUploading] = useState(false);
-
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -67,34 +63,6 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({applicationId}) => {
         }
     };
 
-    const stopRecording = () => {
-        if (mediaRecorderRef.current && isRecording) {
-            mediaRecorderRef.current.stop();
-            setIsRecording(false);
-            setIsPaused(false);
-
-            if (timerRef.current) {
-                clearInterval(timerRef.current);
-            }
-        }
-    };
-
-    const pauseRecording = () => {
-        if (mediaRecorderRef.current && isRecording) {
-            if (isPaused) {
-                mediaRecorderRef.current.resume();
-                timerRef.current = setInterval(() => {
-                    setRecordingTime(prev => prev + 1);
-                }, 1000);
-            } else {
-                mediaRecorderRef.current.pause();
-                if (timerRef.current) {
-                    clearInterval(timerRef.current);
-                }
-            }
-            setIsPaused(!isPaused);
-        }
-    };
 
     const uploadAudio = async () => {
         if (!audioBlobRef.current) {
@@ -117,8 +85,8 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({applicationId}) => {
             xhr.addEventListener('load', () => {
                 if (xhr.status === 200) {
                     try {
-                        const response = JSON.parse(xhr.responseText);
-                        console.log(response);
+                        JSON.parse(xhr.responseText);
+                        //console.log(response);
                         showNotification.success('Ses kaydı başarıyla yüklendi!');
                         updateApplicationStateStatus(EApplicationUpdateState.VOICE)
 
@@ -138,7 +106,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({applicationId}) => {
             });
 
             //xhr.open('POST', `${API_URL}/upload/entity/exam`);
-            xhr.open('POST', `${API_URL}/upload/` + applicationId + "/voiceControl" );
+            xhr.open('POST', `${API_URL}/upload/` + applicationId + "/voiceControl");
 
             const token = localStorage.getItem('accessToken');
             if (token) {
@@ -154,6 +122,20 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({applicationId}) => {
         }
     };
 
+    // 12. saniyede otomatik durdur
+    useEffect(() => {
+        if (recordingTime >= 12 && isRecording && mediaRecorderRef.current) {
+            // Timer'ı temizle
+            if (timerRef.current) {
+                clearInterval(timerRef.current);
+                timerRef.current = null;
+            }
+            // Kaydı durdur
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+        }
+    }, [recordingTime, isRecording]);
+
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
@@ -161,14 +143,33 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({applicationId}) => {
     };
 
     return (
-        <div
-            className="flex flex-col items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50 p-4">
-            <div className="bg-white rounded-2xl shadow-xl p-8 w-full">
+        <>
+            <style>{`
+                @keyframes scale-pulse {
+                    0%, 100% {
+                        transform: scale(1);
+                    }
+                    50% {
+                        transform: scale(1.15);
+                    }
+                }
+            `}</style>
+            <div
+                className="flex flex-col items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50 p-4">
+                <div className="bg-white rounded-2xl shadow-xl p-8 w-full">
                 <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-                    Ses Kaydedici
+                    Aşağıdaki metni sesli olarak okuyunuz. Kayıt süresi 10 saniyedir.
                 </h2>
 
-                <div className="flex flex-col items-center space-y-6">
+                <h5>
+                   TÖMER en büyük kültürel miraslarımızdan olan
+                    Türkiye Türkçesinin dünyanın dört bir yanına tanıtılması, yaygınlaştırılması
+                    ve dilimiz benliğinin muhafaza edilerek çağdaş öğrenim yöntem ve yaklaşımları doğrultusunda
+                    yabancılara öğretilmesi amacıyla Ankara Üniversitesi tarafından 7 Mart 1984
+                    yılında kurulmuştur.
+                </h5>
+
+                <div className="flex flex-col items-center space-y-0">
                     {/* Kayıt süresi */}
                     {isRecording && (
                         <div className="text-4xl font-mono text-purple-600 font-bold">
@@ -178,41 +179,33 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({applicationId}) => {
 
                     {/* Kontrol butonları */}
                     <div className="flex gap-4">
-                        {!isRecording ? (
-                            <button
-                                onClick={startRecording}
-                                className="bg-red-500 hover:bg-red-600 text-white rounded-full p-6 transition-all transform hover:scale-105 shadow-lg"
-                            >
-                                <Mic size={32}/>
-                            </button>
-                        ) : (
-                            <>
-                                <button
-                                    onClick={pauseRecording}
-                                    className="bg-yellow-500 hover:bg-yellow-600 text-white rounded-full p-6 transition-all transform hover:scale-105 shadow-lg"
-                                >
-                                    {isPaused ? <Play size={32}/> : <Pause size={32}/>}
-                                </button>
-                                <button
-                                    onClick={stopRecording}
-                                    className="bg-gray-700 hover:bg-gray-800 text-white rounded-full p-6 transition-all transform hover:scale-105 shadow-lg"
-                                >
-                                    <Square size={32}/>
-                                </button>
-                            </>
-                        )}
+                        <button
+                            onClick={!isRecording && !audioURL ? startRecording : undefined}
+                            disabled={isRecording}
+                            className={`${
+                                isRecording 
+                                    ? 'bg-red-500 cursor-not-allowed' 
+                                    : audioURL
+                                    ? 'bg-blue-500 cursor-default'
+                                    : 'bg-blue-500 hover:bg-blue-600 cursor-pointer'
+                            } text-white rounded-full p-6 transition-all transform hover:scale-105 shadow-lg`}
+                        >
+                            <Mic 
+                                size={32} 
+                                style={{
+                                    animation: isRecording ? 'scale-pulse 0.8s ease-in-out infinite' : 'none'
+                                }}
+                            />
+                        </button>
                     </div>
 
                     {/* Durum mesajı */}
                     <div className="text-center">
-                        {isRecording && !isPaused && (
-                            <p className="text-red-500 font-semibold flex items-center gap-2">
+                        {isRecording && (
+                            <p className="text-red-500 font-semibold flex items-center gap-2 justify-center">
                                 <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
-                                Kayıt devam ediyor...
+                                Kayıt devam ediyor... (Otomatik olarak 12. saniyede duracak)
                             </p>
-                        )}
-                        {isRecording && isPaused && (
-                            <p className="text-yellow-600 font-semibold">Kayıt duraklatıldı</p>
                         )}
                         {!isRecording && !audioURL && (
                             <p className="text-gray-500">Kayda başlamak için butona tıklayın</p>
@@ -240,26 +233,24 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({applicationId}) => {
                                 </div>
                             ) : (
                                 // 10 saniye ve ÜZERI ise bu görünür:
-                                <button
-                                    className="btn btn-success"
-                                    onClick={uploadAudio}
-                                    disabled={isUploading}
-                                >
-                                    {isUploading ? 'YÜKLENIYOR...' : 'KAYDEDİLEN SESİ ONAYLA VE GÖNDER'}
-                                </button>
+                                <div className="mt-4 flex justify-center">
+                                    <button
+                                        className="btn btn-success"
+                                        onClick={uploadAudio}
+                                        disabled={isUploading}
+                                    >
+                                        {isUploading ? 'YÜKLENIYOR...' : 'KAYDEDİLEN SESİ ONAYLA VE GÖNDER'}
+                                    </button>
+                                </div>
                             )}
                         </div>
                     )}
 
 
-
-
-
-
-
                 </div>
             </div>
         </div>
+        </>
     );
 }
 

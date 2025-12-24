@@ -114,8 +114,8 @@ const PassportPhotoCamera: React.FC<PassportPhotoCameraProps> = ({applicationId,
             xhr.addEventListener('load', () => {
                 if (xhr.status === 200) {
                     try {
-                        const response = JSON.parse(xhr.responseText);
-                        console.log(response)
+                        JSON.parse(xhr.responseText);
+                        //console.log(response)
                         showNotification.success('Fotğraf kaydı başarıyla yüklendi!');
                         updateApplicationStateStatus(updateState)
                         // Örneğin: onUploadComplete(response);

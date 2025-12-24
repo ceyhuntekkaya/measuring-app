@@ -39,7 +39,7 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
         options: null,
         allowMultipleItemsPerZone: false,
         shuffleDraggableItems: true,
-        explanation: ''
+        explanation: '' // UI'dan kaldırıldı, her zaman boş string
     });
 
     const [draggableItems, setDraggableItems] = useState<DraggableItem[]>([]);
@@ -54,7 +54,7 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
                 options: value.options || null,
                 allowMultipleItemsPerZone: value.allowMultipleItemsPerZone || false,
                 shuffleDraggableItems: value.shuffleDraggableItems ?? true,
-                explanation: value.explanation || ''
+                explanation: '' // UI'dan kaldırıldı, her zaman boş string
             });
 
             // Parse options to get draggable items and drop zones
@@ -92,7 +92,7 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
                 options: dragAndDropOptions,
                 allowMultipleItemsPerZone: formData.allowMultipleItemsPerZone,
                 shuffleDraggableItems: formData.shuffleDraggableItems,
-                explanation: formData.explanation
+                explanation: '' // UI'dan kaldırıldı, her zaman boş string
             };
 
             onChange(templateData);
@@ -280,7 +280,7 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
 
                         {draggableItems.map((item, index) => (
                             <div key={item.id} className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg">
-                                <div className="col-span-3">
+                                <div className="col-span-8">
                                     <Label>Metin *</Label>
                                     <Input
                                         value={item.text || ''}
@@ -289,23 +289,25 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
                                     />
                                 </div>
 
-                                <div className="col-span-3">
+                                {/* Medya URL - YORUM SATIRI: UI'dan kaldırıldı, belki sonra tekrar gösterilebilir */}
+                                {/* <div className="col-span-3">
                                     <Label>Medya URL</Label>
                                     <Input
                                         value={item.mediaUrl || ''}
                                         onChange={(e) => updateDraggableItem(index, 'mediaUrl', e.target.value)}
                                         placeholder="Medya URL (opsiyonel)"
                                     />
-                                </div>
+                                </div> */}
 
-                                <div className="col-span-2">
+                                {/* Medya Tipi - YORUM SATIRI: UI'dan kaldırıldı, belki sonra tekrar gösterilebilir */}
+                                {/* <div className="col-span-2">
                                     <Label>Medya Tipi</Label>
                                     <Input
                                         value={item.mediaType || ''}
                                         onChange={(e) => updateDraggableItem(index, 'mediaType', e.target.value)}
                                         placeholder="image, video, audio"
                                     />
-                                </div>
+                                </div> */}
 
                                 <div className="col-span-3">
                                     <Label>Doğru Bölgeler</Label>
@@ -317,7 +319,7 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
                                                         checked={item.correctZones?.includes(zone.id || '') || false}
                                                         onChange={(checked) => updateCorrectZones(index, zone.id || '', !!checked)}
                                                     />
-                                                    <span className="text-xs">{zone.label || zone.id}</span>
+                                                    <span className="text-xs">{zone.label || ''}</span>
                                                 </div>
                                             ))
                                         ) : (
@@ -363,7 +365,7 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
 
                         {dropZones.map((zone, index) => (
                             <div key={zone.id} className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg">
-                                <div className="col-span-3">
+                                <div className="col-span-4">
                                     <Label>Etiket *</Label>
                                     <Input
                                         value={zone.label || ''}
@@ -372,7 +374,7 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
                                     />
                                 </div>
 
-                                <div className="col-span-2">
+                                <div className="col-span-3">
                                     <Label>Maksimum Öğe</Label>
                                     <NumberInput
                                         inputType={"number"}
@@ -383,7 +385,7 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
                                     />
                                 </div>
 
-                                <div className="col-span-2">
+                                <div className="col-span-4">
                                     <Label>Pozisyon</Label>
                                     <Input
                                         value={zone.position || ''}
@@ -392,7 +394,8 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
                                     />
                                 </div>
 
-                                <div className="col-span-4">
+                                {/* Geri Bildirim - YORUM SATIRI: UI'dan kaldırıldı, belki sonra tekrar gösterilebilir */}
+                                {/* <div className="col-span-4">
                                     <Label>Geri Bildirim</Label>
                                     <Textarea
                                         value={zone.feedback || ''}
@@ -400,7 +403,7 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
                                         placeholder="Bölge geri bildirimi"
                                         className="min-h-[60px]"
                                     />
-                                </div>
+                                </div> */}
 
                                 <div className="col-span-1">
                                     <Button
@@ -422,8 +425,8 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
                         )}
                     </div>
 
-                    {/* Açıklama */}
-                    <div className="space-y-2">
+                    {/* Açıklama - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
+                    {/* <div className="space-y-2">
                         <Label htmlFor="explanation">Açıklama</Label>
                         <Textarea
                             id="explanation"
@@ -432,7 +435,7 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
                             className="min-h-[100px]"
                             placeholder="Doğru cevap açıklaması"
                         />
-                    </div>
+                    </div> */}
 
                     {/* KAYDET BUTONU KALDIRILDI - Parent component'te olacak */}
                 </div>

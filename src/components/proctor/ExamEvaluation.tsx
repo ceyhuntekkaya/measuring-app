@@ -3,11 +3,11 @@ import {ApplicationDto, QuestionId} from "@/types/management/brand";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Column, RecordType} from "@/types/ui/table";
 import {statusConverter} from "@/utils/enum-converter";
-import {EStatus} from "@/types/exam/enum";
+import {EStatus, EQuestionType} from "@/types/exam/enum";
 import DynamicTable from "@/components/ui/dynamic-table";
 import {useApplication} from "@/hooks/exam/use-application";
 import {useQuestion} from "@/hooks/exam/use-question";
-import {EvaluationDto, EvaluationGroup, EvaluationGroupData, QuestionDto} from "@/types/exam/examEntities";
+import {EvaluationDto, EvaluationGroup, EvaluationGroupData, QuestionDto, QuestionTemplateType} from "@/types/exam/examEntities";
 import {EEvaluationStatus} from "@/types/auth";
 import {Label} from "@/components/ui/label";
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
@@ -16,9 +16,31 @@ import {
     EssayTemplateDto,
     ImageResponseTemplateDto,
     ShortAnswerTemplateDto,
-    VideoResponseTemplateDto
+    VideoResponseTemplateDto,
+    MultipleChoiceTemplateDto,
+    TrueFalseTemplateDto,
+    FillInTheBlanksTemplateDto,
+    MatchingTemplateDto,
+    OrderingTemplateDto,
+    MultipleResponseTemplateDto,
+    HotSpotTemplateDto,
+    DragAndDropTemplateDto
 } from "@/types/exam/questionTemplates";
 import {useExamResult} from "@/hooks/exam/use-exam-result";
+import {UploadedFileDto} from "@/types/exam/miscDtos";
+import MultipleChoiceQuestion from "@/components/template/MultipleChoiceQuestion";
+import TrueFalseQuestion from "@/components/template/TrueFalseQuestion";
+import FillInTheBlanksQuestion from "@/components/template/FillInTheBlanksQuestion";
+import ShortAnswerQuestion from "@/components/template/ShortAnswerQuestion";
+import EssayQuestion from "@/components/template/EssayQuestion";
+import MatchingQuestion from "@/components/template/MatchingQuestion";
+import OrderingQuestion from "@/components/template/OrderingQuestion";
+import MultipleResponseQuestion from "@/components/template/MultipleResponseQuestion";
+import HotSpotQuestion from "@/components/template/HotSpotQuestion";
+import DragAndDropQuestion from "@/components/template/DragAndDropQuestion";
+import AudioResponseQuestion from "@/components/template/AudioResponseQuestion";
+import VideoResponseQuestion from "@/components/template/VideoResponseQuestion";
+import ImageResponseQuestion from "@/components/template/ImageResponseQuestion";
 
 import siteConfig from "@/config/config.json";
 
@@ -35,7 +57,7 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
     const [allQuestionIdList, setAllQuestionIdList] = useState<QuestionId[] | null>(null);
     const [selectedApplication, setSelectedApplication] = useState<string | null>(null);
     const [selectedEvaluation, setSelectedEvaluation] = useState<EvaluationGroupData | null>(null);
-    const [filterType, setFilterType] = useState<EEvaluationStatus | 'ALL'>('PENDING');
+    const [filterType, setFilterType] = useState<EEvaluationStatus | 'ALL'>('ALL');
 
     const [applicationQuestionDataWithEvaluation, setApplicationQuestionDataWithEvaluation] = useState<EvaluationGroup | null>(null);
     const [filteredApplicationQuestionDataWithEvaluation, setFilteredApplicationQuestionDataWithEvaluation] = useState<EvaluationGroupData[] | null>(null);
@@ -115,7 +137,7 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
                 application: application
             };
 
-            setFilterType('PENDING')
+            setFilterType('ALL')
 
             setApplicationQuestionDataWithEvaluation(evaluationGroup);
         }
@@ -125,7 +147,7 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
         return (
             <>
                 {
-                    filteredApplicationQuestionDataWithEvaluation && filteredApplicationQuestionDataWithEvaluation.length > 0 &&
+                    filteredApplicationQuestionDataWithEvaluation  &&
 
                     <div>
                         <Label htmlFor="examType">Sınav Durumu Seçin:</Label>
@@ -139,20 +161,23 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
                             <SelectContent>
                                 <SelectGroup>
 
+                                    <SelectItem value={'ALL'}>
+                                        TÜMÜ
+                                    </SelectItem>
                                     <SelectItem value={'NOT_STARTED'}>
-                                        NOT_STARTED
+                                        BAŞLANMAMIŞ
                                     </SelectItem>
                                     <SelectItem value={'EVALUATED'}>
-                                        EVALUATED
+                                        DEĞERLENDİRİLMİŞ
                                     </SelectItem>
                                     <SelectItem value={'PENDING'}>
-                                        PENDING
+                                        BEKLEMEDE
                                     </SelectItem>
                                     <SelectItem value={'CANCELLED'}>
-                                        CANCELLED
+                                        İPTAL EDİLMİŞ
                                     </SelectItem>
                                     <SelectItem value={'FINISHED'}>
-                                        FINISHED
+                                        BİTMİŞ
                                     </SelectItem>
                                 </SelectGroup>
                             </SelectContent>
@@ -175,6 +200,12 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
         const [description, setDescription] = useState<string>('');
         const [score, setScore] = useState<number>(0);
 
+        useEffect(() => {
+            if (selectedEvaluation) {
+                setDescription(selectedEvaluation.evaluation.description || '');
+                setScore(selectedEvaluation.evaluation.score || 0);
+            }
+        }, [selectedEvaluation]);
 
         const handleSave = () => {
             if (selectedEvaluation) {
@@ -188,6 +219,298 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
 
         const handleCancel = () => {
             setSelectedEvaluation(null);
+        };
+
+        // Evaluation'dan initialAnswer'ı parse et
+        const getInitialAnswer = (): unknown => {
+            if (!selectedEvaluation || !selectedEvaluation.evaluation.answer || typeof selectedEvaluation.evaluation.answer !== 'string') {
+                return null;
+            }
+
+            const answerString = selectedEvaluation.evaluation.answer;
+            const type = selectedEvaluation.question.questionType as EQuestionType;
+
+            try {
+                if (type === 'TRUE_FALSE') {
+                    if (answerString === 'true' || answerString === 'TRUE') return true;
+                    if (answerString === 'false' || answerString === 'FALSE') return false;
+                    return null;
+                }
+
+                if (answerString.startsWith('{') || answerString.startsWith('[')) {
+                    const parsed = JSON.parse(answerString);
+
+                    if (type === 'MULTIPLE_CHOICE') {
+                        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+                            if ('optionId' in parsed && typeof parsed.optionId === 'string') {
+                                return parsed.optionId;
+                            }
+                            const values = Object.values(parsed);
+                            if (values.length === 1 && typeof values[0] === 'string') {
+                                return values[0];
+                            }
+                            return null;
+                        }
+                        if (typeof parsed === 'string') {
+                            return parsed;
+                        }
+                        return null;
+                    }
+
+                    if (type === 'ESSAY' && typeof parsed === 'string') {
+                        const text = parsed;
+                        return {
+                            text: text,
+                            wordCount: text.trim().split(/\s+/).filter(word => word.length > 0).length,
+                            characterCount: text.replace(/\s/g, '').length
+                        };
+                    }
+                    if (type === 'MULTIPLE_RESPONSE' && Array.isArray(parsed)) {
+                        const optionsArray = parsed.map(item => String(item)).filter(item => item.length > 0);
+                        return optionsArray;
+                    }
+
+                    if (type === 'FILL_IN_THE_BLANKS') {
+                        if (Array.isArray(parsed)) {
+                            const blankAnswers: { [blankId: string]: string } = {};
+                            parsed.forEach((item: { blankId?: string; answer?: string }) => {
+                                if (item.blankId && item.answer !== undefined) {
+                                    blankAnswers[item.blankId] = item.answer;
+                                }
+                            });
+                            return blankAnswers;
+                        }
+                        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+                            const blankAnswers: { [blankId: string]: string } = {};
+                            Object.entries(parsed).forEach(([key, value]) => {
+                                if (typeof value === 'string') {
+                                    blankAnswers[key] = value;
+                                }
+                            });
+                            return blankAnswers;
+                        }
+                        return null;
+                    }
+                    return parsed;
+                }
+
+                if (type === 'MULTIPLE_CHOICE') {
+                    if (!answerString || answerString.trim() === '') {
+                        return null;
+                    }
+                    return answerString;
+                }
+                if (type === 'ESSAY') {
+                    const text = answerString;
+                    return {
+                        text: text,
+                        wordCount: text.trim().split(/\s+/).filter(word => word.length > 0).length,
+                        characterCount: text.replace(/\s/g, '').length
+                    };
+                }
+                if (type === 'FILL_IN_THE_BLANKS') {
+                    return null;
+                }
+                if (type === 'AUDIO_RESPONSE' || type === 'VIDEO_RESPONSE' || type === 'IMAGE_RESPONSE') {
+                    if (answerString && answerString.trim() !== '') {
+                        return {
+                            uploadedFileData: {
+                                path: answerString.trim()
+                            }
+                        };
+                    }
+                    return null;
+                }
+                if (type === 'MULTIPLE_RESPONSE') {
+                    if (!answerString || answerString.trim() === '') {
+                        return [];
+                    }
+                    const optionsArray = answerString.split(',').map(option => option.trim()).filter(option => option.length > 0);
+                    return optionsArray;
+                }
+                return answerString;
+            } catch (e) {
+                console.log('Parse error:', e);
+                if (type === 'ESSAY') {
+                    const text = answerString;
+                    return {
+                        text: text,
+                        wordCount: text.trim().split(/\s+/).filter(word => word.length > 0).length,
+                        characterCount: text.replace(/\s/g, '').length
+                    };
+                }
+                if (type === 'MULTIPLE_CHOICE') {
+                    return answerString || null;
+                }
+                if (type === 'MULTIPLE_RESPONSE') {
+                    if (!answerString || answerString.trim() === '') {
+                        return [];
+                    }
+                    const optionsArray = answerString.split(',').map(option => option.trim()).filter(option => option.length > 0);
+                    return optionsArray;
+                }
+                return answerString;
+            }
+        };
+
+        // Soruyu template'ine göre render et
+        const renderQuestion = () => {
+            if (!selectedEvaluation || !selectedEvaluation.question.questionType || !selectedEvaluation.question.questionTemplate) {
+                return null;
+            }
+
+            const questionId = selectedEvaluation.question.id;
+            const type = selectedEvaluation.question.questionType as EQuestionType;
+            const template = selectedEvaluation.question.questionTemplate as QuestionTemplateType;
+            const initialAnswer = getInitialAnswer();
+
+            switch (type) {
+                case 'MULTIPLE_CHOICE':
+                    return <MultipleChoiceQuestion 
+                        key={questionId}
+                        template={template as MultipleChoiceTemplateDto}
+                        isPreview={true}
+                        isSubmitted={true}
+                        showLearnerEvaluation={true}
+                        questionId={questionId}
+                        initialAnswer={initialAnswer as string | null}
+                    />;
+                case 'TRUE_FALSE':
+                    return <TrueFalseQuestion 
+                        key={questionId}
+                        template={template as TrueFalseTemplateDto}
+                        isPreview={true}
+                        isSubmitted={true}
+                        showLearnerEvaluation={true}
+                        questionId={questionId}
+                        initialAnswer={initialAnswer as boolean | null}
+                    />;
+                case 'FILL_IN_THE_BLANKS':
+                    return <FillInTheBlanksQuestion 
+                        key={questionId}
+                        template={template as FillInTheBlanksTemplateDto}
+                        isPreview={true}
+                        isSubmitted={true}
+                        showLearnerEvaluation={true}
+                        questionId={questionId}
+                        initialAnswer={initialAnswer as { [blankId: string]: string } | undefined}
+                    />;
+                case 'SHORT_ANSWER':
+                    return <ShortAnswerQuestion 
+                        key={questionId}
+                        template={template as ShortAnswerTemplateDto}
+                        isPreview={true}
+                        isSubmitted={true}
+                        questionId={questionId}
+                        initialAnswer={initialAnswer as string || ''}
+                    />;
+                case 'ESSAY':
+                    return <EssayQuestion 
+                        key={questionId}
+                        template={template as EssayTemplateDto}
+                        isPreview={true}
+                        isSubmitted={true}
+                        questionId={questionId}
+                        initialAnswer={initialAnswer as { text: string; wordCount: number; characterCount: number } | null}
+                    />;
+                case 'MULTIPLE_RESPONSE':
+                    return <MultipleResponseQuestion 
+                        key={questionId}
+                        template={template as MultipleResponseTemplateDto}
+                        isPreview={true}
+                        isSubmitted={true}
+                        showLearnerEvaluation={true}
+                        questionId={questionId}
+                        initialAnswer={initialAnswer as string[]}
+                    />;
+                case 'MATCHING':
+                    return <MatchingQuestion 
+                        key={questionId}
+                        template={template as MatchingTemplateDto}
+                        isPreview={true}
+                        isSubmitted={true}
+                        questionId={questionId}
+                        initialAnswer={initialAnswer as { [leftId: string]: string } | undefined}
+                    />;
+                case 'ORDERING':
+                    return <OrderingQuestion 
+                        key={questionId}
+                        template={template as OrderingTemplateDto}
+                        isPreview={true}
+                        isSubmitted={true}
+                        questionId={questionId}
+                        initialAnswer={initialAnswer as string[] | null | undefined}
+                    />;
+                case 'HOT_SPOT':
+                    return <HotSpotQuestion 
+                        key={questionId}
+                        template={template as HotSpotTemplateDto}
+                        isPreview={true}
+                        isSubmitted={true}
+                        questionId={questionId}
+                        initialAnswer={initialAnswer as string[]}
+                    />;
+                case 'DRAG_AND_DROP':
+                    return <DragAndDropQuestion 
+                        key={questionId}
+                        template={template as DragAndDropTemplateDto}
+                        isPreview={true}
+                        isSubmitted={true}
+                        questionId={questionId}
+                        initialAnswer={initialAnswer as { [zoneId: string]: string[] } | undefined}
+                    />;
+                case 'AUDIO_RESPONSE':
+                    return <AudioResponseQuestion 
+                        key={questionId}
+                        template={template as AudioResponseTemplateDto}
+                        isPreview={true}
+                        isSubmitted={true}
+                        questionId={questionId}
+                        initialAnswer={(initialAnswer as unknown) as {
+                            audioUrl?: string;
+                            audioBlob?: Blob;
+                            duration?: number;
+                            recordedAt?: string;
+                            fileName?: string;
+                            uploadedFileData?: UploadedFileDto
+                        } | null}
+                    />;
+                case 'VIDEO_RESPONSE':
+                    return <VideoResponseQuestion 
+                        key={questionId}
+                        template={template as VideoResponseTemplateDto}
+                        isPreview={true}
+                        isSubmitted={true}
+                        questionId={questionId}
+                        initialAnswer={(initialAnswer as unknown) as {
+                            videoUrl?: string;
+                            videoBlob?: Blob;
+                            duration?: number;
+                            recordedAt?: string;
+                            fileName?: string;
+                            uploadedFileData?: UploadedFileDto
+                        } | null}
+                    />;
+                case 'IMAGE_RESPONSE':
+                    return <ImageResponseQuestion 
+                        key={questionId}
+                        template={template as ImageResponseTemplateDto}
+                        isPreview={true}
+                        isSubmitted={true}
+                        questionId={questionId}
+                        initialAnswer={(initialAnswer as unknown) as {
+                            imageUrl?: string;
+                            imageBlob?: Blob;
+                            fileName?: string;
+                            fileSize?: number;
+                            uploadedAt?: string;
+                            isDrawing?: boolean;
+                            uploadedFileData?: UploadedFileDto
+                        } | null}
+                    />;
+                default:
+                    return <div className="p-4 bg-gray-50 rounded-lg">Soru tipi desteklenmiyor: {type}</div>;
+            }
         };
 
         const renderAnswer = () => {
@@ -282,6 +605,22 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
                                         placeholder="Puan girin..."
                                     />
                                 </div>
+
+                                {/* Butonlar - Puan bölümünün altında */}
+                                <div className="flex justify-end gap-4 pt-4">
+                                    <button
+                                        onClick={handleCancel}
+                                        className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                                    >
+                                        İptal
+                                    </button>
+                                    <button
+                                        onClick={handleSave}
+                                        className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                                    >
+                                        Kaydet
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -330,21 +669,76 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
                         </div>
                     </div>
 
-                    {/* Butonlar */}
-                    <div className="flex justify-end gap-4 mt-6">
-                        <button
-                            onClick={handleCancel}
-                            className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
-                        >
-                            İptal
-                        </button>
-                        <button
-                            onClick={handleSave}
-                            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                        >
-                            Kaydet
-                        </button>
-                    </div>
+                    {/* Soru ve Öğrenci Cevabı - Alt Row */}
+                    {selectedEvaluation && (
+                        <div className="mt-6 pt-6 border-t border-gray-200">
+                            <h3 className="font-semibold text-lg mb-4">Soru ve Öğrenci Cevabı</h3>
+                            <div className="p-4 bg-gray-50 rounded-lg">
+                                {renderQuestion()}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Önceki ve Sonraki Soru Butonları */}
+                    {selectedEvaluation && filteredApplicationQuestionDataWithEvaluation && (
+                        <div className="flex justify-between items-center gap-4 mt-6 pt-6 border-t border-gray-200">
+                            <button
+                                onClick={() => {
+                                    const currentIndex = filteredApplicationQuestionDataWithEvaluation.findIndex(
+                                        item => item.evaluation.id === selectedEvaluation.evaluation.id
+                                    );
+                                    if (currentIndex > 0) {
+                                        setSelectedEvaluation(filteredApplicationQuestionDataWithEvaluation[currentIndex - 1]);
+                                    }
+                                }}
+                                disabled={
+                                    !filteredApplicationQuestionDataWithEvaluation ||
+                                    filteredApplicationQuestionDataWithEvaluation.findIndex(
+                                        item => item.evaluation.id === selectedEvaluation.evaluation.id
+                                    ) === 0
+                                }
+                                className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                </svg>
+                                Önceki Soru
+                            </button>
+                            
+                            <div className="text-sm text-gray-600">
+                                {filteredApplicationQuestionDataWithEvaluation && selectedEvaluation && (
+                                    <span>
+                                        {filteredApplicationQuestionDataWithEvaluation.findIndex(
+                                            item => item.evaluation.id === selectedEvaluation.evaluation.id
+                                        ) + 1} / {filteredApplicationQuestionDataWithEvaluation.length}
+                                    </span>
+                                )}
+                            </div>
+
+                            <button
+                                onClick={() => {
+                                    const currentIndex = filteredApplicationQuestionDataWithEvaluation.findIndex(
+                                        item => item.evaluation.id === selectedEvaluation.evaluation.id
+                                    );
+                                    if (currentIndex < filteredApplicationQuestionDataWithEvaluation.length - 1) {
+                                        setSelectedEvaluation(filteredApplicationQuestionDataWithEvaluation[currentIndex + 1]);
+                                    }
+                                }}
+                                disabled={
+                                    !filteredApplicationQuestionDataWithEvaluation ||
+                                    filteredApplicationQuestionDataWithEvaluation.findIndex(
+                                        item => item.evaluation.id === selectedEvaluation.evaluation.id
+                                    ) === filteredApplicationQuestionDataWithEvaluation.length - 1
+                                }
+                                className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                            >
+                                Sonraki Soru
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         );

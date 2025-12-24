@@ -44,7 +44,7 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
                                                                questionId,
                                                                showCorrectAnswer = false
                                                            }) => {
-    const [matches, setMatches] = useState<MatchingAnswers>(initialAnswer);
+    const [matches, setMatches] = useState<MatchingAnswers>(initialAnswer || {});
     const [rightItems, setRightItems] = useState<RightItem[]>([]);
     const [draggedRightId, setDraggedRightId] = useState<string | null>(null);
     const [dragOverLeftId, setDragOverLeftId] = useState<string | null>(null);
@@ -53,7 +53,7 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
     const stableInitialAnswer = useMemo(() => initialAnswer, [JSON.stringify(initialAnswer)]);
 
     useEffect(() => {
-        setMatches(stableInitialAnswer);
+        setMatches(stableInitialAnswer || {});
     }, [stableInitialAnswer]);
 
     useEffect(() => {
@@ -107,7 +107,8 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
     const handleMatch = (leftId: string, rightId: string): void => {
         if (isSubmitted && !isPreview) return;
 
-        const newMatches = { ...matches };
+        const currentMatches = matches || {};
+        const newMatches = { ...currentMatches };
 
         // If same right item is already matched to this left item, remove the match
         if (newMatches[leftId] === rightId) {
@@ -169,9 +170,10 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
     const evaluateMatches = (): void => {
         if (!template.options?.pairs) return;
 
+        const currentMatches = matches || {};
         const results: MatchingResult[] = template.options.pairs.map(pair => {
             const leftId = pair.leftId || '';
-            const rightId = matches[leftId] || '';
+            const rightId = currentMatches[leftId] || '';
             const correctRightId = pair.rightId || '';
             const isCorrect = rightId === correctRightId;
 
@@ -198,7 +200,8 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
     };
 
     const isRightItemUsed = (rightId: string): boolean => {
-        return Object.values(matches).includes(rightId);
+        const currentMatches = matches || {};
+        return Object.values(currentMatches).includes(rightId);
     };
 
     const getLeftItemStyle = (leftId: string): string => {
@@ -219,7 +222,8 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
             return baseStyle + "border-blue-500 bg-blue-50 border-dashed";
         }
 
-        if (matches[leftId]) {
+        const currentMatches = matches || {};
+        if (currentMatches[leftId]) {
             return baseStyle + "border-blue-500 bg-blue-50";
         }
 
@@ -292,7 +296,8 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
     };
 
     const renderMatchedItem = (leftId: string): React.ReactNode => {
-        const rightId = matches[leftId];
+        const currentMatches = matches || {};
+        const rightId = currentMatches[leftId];
         if (!rightId) return null;
 
         const rightItem = getRightItemById(rightId);
@@ -348,7 +353,8 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
     const renderDropdownSelector = (leftId: string): React.ReactNode => {
         if (isSubmitted && !isPreview) return null;
 
-        const currentMatch = matches[leftId];
+        const currentMatches = matches || {};
+        const currentMatch = currentMatches[leftId];
 
         return (
             <select
@@ -365,7 +371,7 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
                     <option
                         key={item.id}
                         value={item.id}
-                        disabled={isRightItemUsed(item.id) && matches[leftId] !== item.id}
+                        disabled={isRightItemUsed(item.id) && currentMatches[leftId] !== item.id}
                     >
                         {item.text} {item.isDistractor ? '(Çeldirici)' : ''}
                     </option>
@@ -409,7 +415,8 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
 
     const getProgressInfo = (): { matched: number; total: number } => {
         const total = template.options?.pairs?.length || 0;
-        const matched = Object.keys(matches).length;
+        const currentMatches = matches || {};
+        const matched = Object.keys(currentMatches).length;
         return { matched, total };
     };
 
@@ -511,10 +518,16 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
                                     {pair.leftMediaUrl && renderMedia(pair.leftMediaUrl)}
 
                                     {/* Matched Item Display */}
-                                    {matches[pair.leftId || ''] && renderMatchedItem(pair.leftId || '')}
+                                    {(() => {
+                                        const currentMatches = matches || {};
+                                        return currentMatches[pair.leftId || ''] && renderMatchedItem(pair.leftId || '');
+                                    })()}
 
                                     {/* Dropdown Selector */}
-                                    {!matches[pair.leftId || ''] && renderDropdownSelector(pair.leftId || '')}
+                                    {(() => {
+                                        const currentMatches = matches || {};
+                                        return !currentMatches[pair.leftId || ''] && renderDropdownSelector(pair.leftId || '');
+                                    })()}
 
                                     {/* Correct Answer Display */}
                                     {renderCorrectAnswer(pair.leftId || '')}
@@ -572,7 +585,9 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
                     </div>
                 </div>
             </div>
-            <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
+            {!isPreview && (
+                <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
+            )}
             {/* Overall Explanation */}
             {isSubmitted && showCorrectAnswer && template.explanation && (
                 <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
@@ -644,15 +659,6 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
-
-            {/* Preview Mode Indicator */}
-            {isPreview && (
-                <div className="mt-4 p-3 bg-gray-100 border border-gray-300 rounded">
-                    <p className="text-gray-600 text-sm italic">
-                        👁️ Önizleme Modu - Bu sorunun nasıl görüneceğinin önizlemesidir
-                    </p>
                 </div>
             )}
 

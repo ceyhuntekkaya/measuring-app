@@ -79,6 +79,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
         options: []
     });
 
+
     const [baseFormData, setBaseFormData] = useState<BaseQuestionTemplateFormData>({
         title: '',
         description: '',
@@ -131,6 +132,12 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 
             // Eğer question template varsa baseFormData'yı doldur
             if (question.questionTemplate) {
+                // ÖNEMLİ: questionTemplate'in id'sini koru (update modu için gerekli)
+                const templateDataWithId = {
+                    ...question.questionTemplate,
+                    id: question.questionTemplate.id // id'yi açıkça koru
+                };
+                
                 setBaseFormData({
                     title: question.questionTemplate.title || '',
                     description: question.questionTemplate.description || '',
@@ -142,7 +149,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                     tags: question.questionTemplate.tags || [],
                     isActive: question.questionTemplate.isActive ?? true,
                     questionType: question.questionType || '',
-                    templateData: question.questionTemplate
+                    templateData: templateDataWithId // id'yi içeren template data
                 });
             }
         }
@@ -307,19 +314,25 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 
         if (baseFormData.templateData && baseFormData.questionType) {
             // BaseFormData ile templateData'yı birleştir
+            // ÖNEMLİ: templateData içindeki tüm field'ları koru (id, correctOptionIndex, correctOptionIndices, vb.)
+            const templateId = baseFormData.templateData.id; // id'yi önce sakla
+            
             questionTemplate = {
-                ...baseFormData.templateData,
-                // Base template fields
-                title: baseFormData.title,
-                description: baseFormData.description,
-                subject: baseFormData.subject,
-                difficulty: baseFormData.difficulty,
-                points: baseFormData.points,
-                timeLimit: baseFormData.timeLimit,
-                instructions: baseFormData.instructions,
-                tags: baseFormData.tags,
-                isActive: baseFormData.isActive,
-                questionType: baseFormData.questionType as EQuestionType
+                ...baseFormData.templateData, // Template-specific field'ları koru (correctOptionIndex, correctOptionIndices, vb.)
+                // Base template fields (eğer baseFormData'da varsa override et)
+                ...(baseFormData.title && { title: baseFormData.title }),
+                // Açıklama ve Talimatlar her zaman boş string olarak gönderiliyor (UI'dan kaldırıldı)
+                description: '', // UI'dan kaldırıldı, her zaman boş string
+                ...(baseFormData.subject && { subject: baseFormData.subject }),
+                ...(baseFormData.difficulty && { difficulty: baseFormData.difficulty }),
+                ...(baseFormData.points !== undefined && { points: baseFormData.points }),
+                ...(baseFormData.timeLimit !== undefined && { timeLimit: baseFormData.timeLimit }),
+                instructions: '', // UI'dan kaldırıldı, her zaman boş string
+                ...(baseFormData.tags && { tags: baseFormData.tags }),
+                ...(baseFormData.isActive !== undefined && { isActive: baseFormData.isActive }),
+                questionType: baseFormData.questionType as EQuestionType,
+                // ÖNEMLİ: id'yi en son ekle ki override edilmesin (update modu için gerekli)
+                ...(templateId && { id: templateId })
             } as QuestionTemplateType;
         }
 
@@ -349,13 +362,6 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
         // 2. BaseTemplate validation (BaseQuestionTemplateForm + Template Form)
         // BaseQuestionTemplateForm kendi içinde template validation'ını da çağırıyor
         const isBaseTemplateFormValid = baseTemplateValidateRef.current?.validate() ?? false;
-
-        const isBaseTemplateFormValidData = baseTemplateValidateRef.current?.getErrors() ;
-
-
-        console.log(isBaseTemplateFormValid)
-        console.log(isBaseTemplateFormValidData)
-
 
         if (!isBaseTemplateFormValid) {
             setErrors(prev => ({

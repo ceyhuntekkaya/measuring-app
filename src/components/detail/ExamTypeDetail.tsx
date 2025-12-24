@@ -1,7 +1,7 @@
 import React from 'react';
 import { ExamTypeDto } from '@/types/exam/examTemplates';
-import { EExamType } from '@/types/exam/enum';
 import {Button} from "@/components/ui/button";
+import { examTypeConverter, approvalStatusConverter, getApprovalStatusColor } from '@/utils/enum-converter';
 
 interface ExamTypeDetailProps {
     selectedExamType: ExamTypeDto | null;
@@ -30,17 +30,6 @@ const ExamTypeDetail: React.FC<ExamTypeDetailProps> = ({ selectedExamType, onEdi
         if (remainingSeconds > 0) result += `${remainingSeconds} saniye`;
 
         return result.trim() || '0 saniye';
-    };
-
-    const getExamTypeLabel = (examType?: EExamType) => {
-        const typeLabels = {
-            CERTIFICATE: 'Sertifika',
-            COURSE_EXAM: 'Kurs Sınavı',
-            LEVEL_DETERMINATION: 'Seviye Belirleme',
-            PRACTICE: 'Pratik',
-            DEGREE: 'Derece'
-        };
-        return examType ? typeLabels[examType] || examType : 'Belirtilmedi';
     };
 
     return (
@@ -113,7 +102,7 @@ const ExamTypeDetail: React.FC<ExamTypeDetailProps> = ({ selectedExamType, onEdi
                     <div className="p-4 bg-gray-50 rounded-lg">
                         <div className="text-sm font-medium text-gray-500">Sınav Türü</div>
                         <div className="text-lg font-semibold text-gray-900">
-                            {getExamTypeLabel(selectedExamType.examType)}
+                            {examTypeConverter(selectedExamType.examType)}
                         </div>
                     </div>
 
@@ -198,14 +187,8 @@ const ExamTypeDetail: React.FC<ExamTypeDetailProps> = ({ selectedExamType, onEdi
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <div className={`px-2 py-1 rounded text-xs font-medium ${
-                                        groupType.approvalStatus === 'APPROVED'
-                                            ? 'bg-green-100 text-green-800'
-                                            : groupType.approvalStatus === 'PENDING'
-                                                ? 'bg-yellow-100 text-yellow-800'
-                                                : 'bg-red-100 text-red-800'
-                                    }`}>
-                                        {groupType.approvalStatus}
+                                    <div className={`px-2 py-1 rounded text-xs font-medium ${getApprovalStatusColor(groupType.approvalStatus)}`}>
+                                        {approvalStatusConverter(groupType.approvalStatus)}
                                     </div>
                                     {groupType.currentApprovalCount && groupType.requiredApprovalCount && (
                                         <div className="text-xs text-gray-500 mt-1">

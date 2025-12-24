@@ -36,15 +36,12 @@ const HotSpotQuestion: React.FC<HotSpotQuestionProps> = ({
                                                          }) => {
     const [selectedSpots, setSelectedSpots] = useState<string[]>(initialAnswer);
     const [imageLoaded, setImageLoaded] = useState<boolean>(false);
-    const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
     const [hoveredSpotId, setHoveredSpotId] = useState<string | null>(null);
     const [spotResults, setSpotResults] = useState<HotSpotResult[]>([]);
 
     const imageRef = useRef<HTMLImageElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
-
-    console.log(imageDimensions)
     const stableInitialAnswer = useMemo(() => initialAnswer, [JSON.stringify(initialAnswer)]);
 
     useEffect(() => {
@@ -59,10 +56,6 @@ const HotSpotQuestion: React.FC<HotSpotQuestionProps> = ({
 
     const handleImageLoad = (): void => {
         if (imageRef.current) {
-            setImageDimensions({
-                width: imageRef.current.offsetWidth,
-                height: imageRef.current.offsetHeight
-            });
             setImageLoaded(true);
         }
     };
@@ -119,15 +112,14 @@ const HotSpotQuestion: React.FC<HotSpotQuestionProps> = ({
         setSpotResults(results);
     };
 
-    const parseCoordinates = (coordinates: string, shape: string): number[] => {
-        console.log(shape)
+    const parseCoordinates = (coordinates: string): number[] => {
         return coordinates.split(',').map(coord => parseFloat(coord.trim()));
     };
 
     const isPointInShape = (point: Point, spot: HotSpotArea, imageWidth: number, imageHeight: number): boolean => {
         if (!spot.coordinates || !spot.shape) return false;
 
-        const coords = parseCoordinates(spot.coordinates, spot.shape);
+        const coords = parseCoordinates(spot.coordinates);
 
         switch (spot.shape.toLowerCase()) {
             case 'circle': {
@@ -207,7 +199,7 @@ const HotSpotQuestion: React.FC<HotSpotQuestionProps> = ({
     const renderHotSpotOverlay = (spot: HotSpotArea): React.ReactNode => {
         if (!spot.coordinates || !spot.shape || !spot.id) return null;
 
-        const coords = parseCoordinates(spot.coordinates, spot.shape);
+        const coords = parseCoordinates(spot.coordinates);
         const isSelected = selectedSpots.includes(spot.id);
         const isHovered = hoveredSpotId === spot.id;
         const result = spotResults.find(r => r.id === spot.id);
@@ -354,7 +346,7 @@ const HotSpotQuestion: React.FC<HotSpotQuestionProps> = ({
                         {missedSpots.map(spot => {
                             if (!spot.coordinates || !spot.shape || !spot.id) return null;
 
-                            const coords = parseCoordinates(spot.coordinates, spot.shape);
+                            const coords = parseCoordinates(spot.coordinates);
                             let element: React.ReactNode = null;
 
                             switch (spot.shape.toLowerCase()) {
@@ -576,7 +568,9 @@ const HotSpotQuestion: React.FC<HotSpotQuestionProps> = ({
                     </div>
                 </div>
             )}
-            <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
+            {!isPreview && (
+                <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
+            )}
             {/* Feedback for Selected Spots */}
             {isSubmitted && showCorrectAnswer && spotResults.length > 0 && (
                 <div className="space-y-3">
@@ -697,15 +691,6 @@ const HotSpotQuestion: React.FC<HotSpotQuestionProps> = ({
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
-
-            {/* Preview Mode Indicator */}
-            {isPreview && (
-                <div className="mt-4 p-3 bg-gray-100 border border-gray-300 rounded">
-                    <p className="text-gray-600 text-sm italic">
-                        👁️ Önizleme Modu - Bu sorunun nasıl görüneceğinin önizlemesidir
-                    </p>
                 </div>
             )}
 

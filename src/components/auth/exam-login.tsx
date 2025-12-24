@@ -18,13 +18,10 @@ export default function ExamLoginPage() {
 
     const redirectTo = searchParams?.get('redirectTo') || '';
 
-
-
-
-
     const loginHandler = async (usernameData:string)=>{
         setError('');
         setIsLoggingIn(true);
+
 
         try {
             const success = await examLogin(usernameData);

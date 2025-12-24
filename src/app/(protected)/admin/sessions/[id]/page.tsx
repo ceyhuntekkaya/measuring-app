@@ -6,8 +6,8 @@ import PageHeader from "@/components/layout/page-header";
 import LoadingComp from "@/components/ui/loading-comp";
 import ExamSessionDetail from "@/components/detail/ExamSessionDetail";
 import {useExamSession} from "@/hooks/exam/use-exam-session";
-import {showNotification} from "@/lib/notification";
 import { AdminWebSocketProvider } from '@/components/websocket/AdminWebSocketProvider';
+import {ESessionState} from "@/types/exam/enum";
 
 export default function CandidateDetailPage() {
     const params = useParams();
@@ -21,8 +21,11 @@ export default function CandidateDetailPage() {
         getExamSessionById,
         getExamSessionStatistics,
         deleteExamSession,
-        updateSessionStatus,
         clearSessionData,
+        setExamSessionBeginAt,
+        setExamSessionEndAt,
+        setExamSessionIsFinish,
+        updateExamSessionSessionState,
     } = useExamSession();
 
     // Load exam session data on component mount
@@ -69,9 +72,9 @@ export default function CandidateDetailPage() {
         if (!sessionId) return;
 
         try {
-            await updateSessionStatus(sessionId, { newStatus: 'ACTIVE' });
+            await setExamSessionBeginAt(sessionId);
+            await updateExamSessionSessionState(sessionId, ESessionState.IN_PROGRESS);
             await loadExamSessionData(); // Refresh data
-            showNotification.success('Sınav oturumu başlatıldı!');
         } catch (err) {
             console.error('Error starting exam session:', err);
         }
@@ -81,9 +84,8 @@ export default function CandidateDetailPage() {
         if (!sessionId) return;
 
         try {
-            await updateSessionStatus(sessionId, { newStatus: 'PAUSED' });
+            await setExamSessionEndAt(sessionId);
             await loadExamSessionData(); // Refresh data
-            showNotification.success('Sınav oturumu duraklatıldı!');
         } catch (err) {
             console.error('Error pausing exam session:', err);
         }
@@ -93,11 +95,25 @@ export default function CandidateDetailPage() {
         if (!sessionId) return;
 
         try {
-            await updateSessionStatus(sessionId, { newStatus: 'COMPLETED' });
+            await setExamSessionEndAt(sessionId);
             await loadExamSessionData(); // Refresh data
-            showNotification.success('Sınav oturumu durduruldu!');
         } catch (err) {
             console.error('Error stopping exam session:', err);
+        }
+    };
+
+    const handleFinish = async () => {
+        if (!sessionId) return;
+
+        if (window.confirm('Oturumu sonlandırmak istediğinize emin misiniz? Bu işlem geri alınamaz.')) {
+            try {
+                await setExamSessionIsFinish(sessionId);
+                // Veriyi yenile - setExamSessionIsFinish zaten selectedExamSession'ı güncelliyor
+                // ama emin olmak için tekrar yüklüyoruz
+                await loadExamSessionData();
+            } catch (err) {
+                console.error('Error finishing exam session:', err);
+            }
         }
     };
 
@@ -145,6 +161,7 @@ export default function CandidateDetailPage() {
                         onStart={handleStart}
                         onPause={handlePause}
                         onStop={handleStop}
+                        onFinish={handleFinish}
                         onViewParticipants={handleViewParticipants}
                         onViewResults={handleViewResults}
                         onManageSupervisors={handleManageSupervisors}

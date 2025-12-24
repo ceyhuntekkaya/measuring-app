@@ -4,6 +4,7 @@ import {ExamSectionDto, ExamTypeDto, QuestionGroupTypeDto} from "@/types/exam/ex
 import {
     EApplicationUpdateState,
     EApprovalStatus,
+    EApprovalType,
     ECurriculumLevel, EDifficulty,
     EExamCategory,
     EExamType,
@@ -89,6 +90,30 @@ export type QuestionDto = DatabaseObjectDto & {
     requiredApprovalCount?: number;
     approvalCompletedDate?: string;
 }
+
+
+export type QuestionGroupApprovalResponse = DatabaseObjectDto & {
+    objectApprovalId?: string;
+    objectType?: string;
+    objectId?: string;
+    approverId?: string;
+    approverName?: string;
+    approverLastName?: string;
+    approvalStatus?: EApprovalStatus;
+    approvalType?: EApprovalType;  
+    comment?:  string;
+    createdAt?: Date;
+    approvalNumber?: number
+   
+}
+
+export type ApprovalStatusRequest = DatabaseObjectDto & {
+    comment?: string;
+    approvalStatus: EApprovalStatus
+    questionGroupId?: string;
+}
+
+
 
 export type QuestionGroupDto = DatabaseObjectDto & {
     name?: string;
@@ -235,12 +260,22 @@ export interface ExamSessionDto extends DatabaseObjectDto {
     beginAt: string
     endAt: string
     sessionState: ESessionState;
+    isLive:boolean;
+    isFinish: boolean;
 }
+
 
 export interface CreateExamSectionRequest {
     name: string;
     examTypeId: string;
     orderNumber: number;
+}
+
+
+
+export interface UpdateExamSessionStateRequest {
+    examSessionId: string;
+    sessionState: ESessionState;
 }
 
 
@@ -500,7 +535,6 @@ export interface ExamImportError {
 }
 
 
-//ceyhun
 export interface QuestionAnswerRequest {
     applicationId: string;
     questionId: string;

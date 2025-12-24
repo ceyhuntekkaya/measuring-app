@@ -8,10 +8,12 @@ import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
 import {Textarea} from "@/components/ui/textarea";
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import type {SelectValue as SelectValueType, SelectValues} from "@/components/ui/select";
 import {NumberInput} from "@/components/ui/number-input";
 import {ExamSessionFormData} from "@/types/exam/examResponses";
 import {ExamSessionDto} from "@/types/exam/examEntities";
 import {EExamType, EStatus} from "@/types/exam/enum";
+import {examTypeConverter} from "@/utils/enum-converter";
 import {BrandDto, BranchDto} from "@/types/management/brand";
 import {UserDto} from "@/types/auth";
 import {ExamTypeDto} from "@/types/exam/examTemplates";
@@ -232,20 +234,119 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
 
 
 
-    const formatDateTimeLocal = (date: Date | null): string => {
-        if (date == null) return '';
-        const d = (date instanceof Date) ? date : new Date(date);
+    // Tarih ve saat için ayrı state'ler
+    const [dateValue, setDateValue] = useState<string>('');
+    const [hourValue, setHourValue] = useState<string>('00');
+    const [minuteValue, setMinuteValue] = useState<string>('00');
 
-        if (isNaN(d.getTime())) return ''; // Geçersiz tarih kontrolü
+    // Date objesinden tarih ve saat değerlerini ayır
+    const getDateAndTimeFromDate = (date: Date | null): { date: string; hour: string; minute: string } => {
+        if (!date) return { date: '', hour: '00', minute: '00' };
+        
+        const d = date instanceof Date ? date : new Date(date);
+        if (isNaN(d.getTime())) return { date: '', hour: '00', minute: '00' };
 
-        return d.toISOString().slice(0, 16);
+        // Türkiye saat dilimine göre formatla
+        const formatter = new Intl.DateTimeFormat('tr-TR', {
+            timeZone: 'Europe/Istanbul',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false // 24 saat formatı
+        });
+        
+        const parts = formatter.formatToParts(d);
+        const year = parts.find(p => p.type === 'year')?.value || '';
+        const month = parts.find(p => p.type === 'month')?.value || '';
+        const day = parts.find(p => p.type === 'day')?.value || '';
+        const hour = parts.find(p => p.type === 'hour')?.value || '00';
+        const minute = parts.find(p => p.type === 'minute')?.value || '00';
+        
+        return {
+            date: `${year}-${month}-${day}`,
+            hour: hour,
+            minute: minute
+        };
     };
 
-    const parseDateTimeLocal = (value: string): Date | null => {
-        if (!value) return null;
-        const date = new Date(value);
-        return isNaN(date.getTime()) ? null : date;
+    // Tarih ve saat değerlerinden Date objesi oluştur
+    const createDateFromDateAndTime = (dateStr: string, hourStr: string, minuteStr: string): Date | null => {
+        if (!dateStr || !hourStr || !minuteStr) return null;
+        
+        const [year, month, day] = dateStr.split('-').map(Number);
+        const hours = parseInt(hourStr, 10);
+        const minutes = parseInt(minuteStr, 10);
+        
+        if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hours) || isNaN(minutes)) {
+            return null;
+        }
+        
+        // Türkiye saat dilimine göre Date oluştur
+        // YYYY-MM-DDTHH:mm:ss formatında string oluştur
+        const dateString = `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
+        
+        // Türkiye saat dilimi (UTC+3) için Date oluştur
+        // Date objesi UTC'de saklanır, bu yüzden Türkiye saatini UTC'ye çevir
+        const tempDate = new Date(dateString);
+        const localOffset = tempDate.getTimezoneOffset() * 60 * 1000; // Local timezone offset (dakika cinsinden)
+        const turkishOffset = 3 * 60 * 60 * 1000; // Türkiye UTC+3 (3 saat = 10800000 ms)
+        const utcTime = tempDate.getTime() - localOffset - turkishOffset;
+        
+        const turkishDate = new Date(utcTime);
+        
+        return isNaN(turkishDate.getTime()) ? null : turkishDate;
     };
+
+    // formData.startDate değiştiğinde dateValue, hourValue ve minuteValue'yu güncelle
+    useEffect(() => {
+        if (formData.startDate) {
+            const { date, hour, minute } = getDateAndTimeFromDate(formData.startDate);
+            setDateValue(date);
+            setHourValue(hour);
+            setMinuteValue(minute);
+        } else {
+            setDateValue('');
+            setHourValue('00');
+            setMinuteValue('00');
+        }
+    }, [formData.startDate]);
+
+    // Tarih değiştiğinde
+    const handleDateChange = (value: string) => {
+        setDateValue(value);
+        const newDate = createDateFromDateAndTime(value, hourValue, minuteValue);
+        if (newDate) {
+            handleChange('startDate', newDate);
+        }
+    };
+
+    // Saat değiştiğinde
+    const handleHourChange = (value: SelectValueType | SelectValues) => {
+        // SelectValue | SelectValues tipini handle et
+        const hourStr = Array.isArray(value) ? String(value[0]) : String(value);
+        setHourValue(hourStr);
+        const newDate = createDateFromDateAndTime(dateValue, hourStr, minuteValue);
+        if (newDate) {
+            handleChange('startDate', newDate);
+        }
+    };
+
+    // Dakika değiştiğinde
+    const handleMinuteChange = (value: SelectValueType | SelectValues) => {
+        // SelectValue | SelectValues tipini handle et
+        const minuteStr = Array.isArray(value) ? String(value[0]) : String(value);
+        setMinuteValue(minuteStr);
+        const newDate = createDateFromDateAndTime(dateValue, hourValue, minuteStr);
+        if (newDate) {
+            handleChange('startDate', newDate);
+        }
+    };
+
+    // Saat ve dakika seçenekleri oluştur (24 saat formatı)
+    const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+    const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
 
 
 
@@ -391,11 +492,11 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectGroup>
-                                        <SelectItem value="CERTIFICATE">Sertifika</SelectItem>
-                                        <SelectItem value="COURSE_EXAM">Kurs Sınavı</SelectItem>
-                                        <SelectItem value="LEVEL_DETERMINATION">Seviye Belirleme</SelectItem>
-                                        <SelectItem value="PRACTICE">Pratik</SelectItem>
-                                        <SelectItem value="DEGREE">Derece</SelectItem>
+                                        {Object.values(EExamType).map((examType) => (
+                                            <SelectItem key={examType} value={examType}>
+                                                {examTypeConverter(examType)}
+                                            </SelectItem>
+                                        ))}
                                     </SelectGroup>
                                 </SelectContent>
                             </Select>
@@ -409,13 +510,49 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
                         {/* Başlangıç Tarihi */}
                         <div className="space-y-2">
                             <Label htmlFor="startDate">Başlangıç Tarihi *</Label>
-                            <Input
-                                id="startDate"
-                                type="datetime-local"
-                                value={formatDateTimeLocal(formData.startDate)}
-                                onChange={(e) => handleChange('startDate', parseDateTimeLocal(e.target.value))}
-                                className={errors.startDate ? 'border-red-500' : ''}
-                            />
+                            <div className="flex gap-2 items-center">
+                                <Input
+                                    id="startDate"
+                                    type="date"
+                                    value={dateValue}
+                                    onChange={(e) => handleDateChange(e.target.value)}
+                                    className={errors.startDate ? 'border-red-500' : ''}
+                                    lang="tr"
+                                />
+                                <div className="flex items-center gap-1">
+                                    <Select
+                                        value={hourValue}
+                                        onValueChange={handleHourChange}
+                                    >
+                                        <SelectTrigger className={`w-20 ${errors.startDate ? 'border-red-500' : ''}`}>
+                                            <SelectValue placeholder="Saat" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {hours.map((hour) => (
+                                                <SelectItem key={hour} value={hour}>
+                                                    {hour}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <span className="text-gray-500">:</span>
+                                    <Select
+                                        value={minuteValue}
+                                        onValueChange={handleMinuteChange}
+                                    >
+                                        <SelectTrigger className={`w-20 ${errors.startDate ? 'border-red-500' : ''}`}>
+                                            <SelectValue placeholder="Dakika" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {minutes.map((minute) => (
+                                                <SelectItem key={minute} value={minute}>
+                                                    {minute}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
                             {errors.startDate && (
                                 <Alert variant="destructive">
                                     <AlertDescription>{errors.startDate}</AlertDescription>

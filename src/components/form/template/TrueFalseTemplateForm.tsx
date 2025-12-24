@@ -41,28 +41,36 @@ const TrueFalseTemplateForm = forwardRef<TrueFalseTemplateFormHandle, TrueFalseT
             correctAnswer: true,
             trueLabel: 'Doğru',
             falseLabel: 'Yanlış',
-            trueFeedback: '',
-            falseFeedback: ''
+            trueFeedback: '', // UI'dan kaldırıldı, her zaman boş string
+            falseFeedback: '' // UI'dan kaldırıldı, her zaman boş string
         },
         correctAnswer: true,
-        explanation: ''
+        explanation: '' // UI'dan kaldırıldı, her zaman boş string
     });
 
     const [errors, setErrors] = useState<TrueFalseTemplateFormErrors>({});
 
     useEffect(() => {
         if (value) {
+            // Eğer correctAnswer null veya undefined ise, options.correctAnswer değerini kullan
+            let correctAnswer = value.correctAnswer;
+            if (correctAnswer === null || correctAnswer === undefined) {
+                correctAnswer = value.options?.correctAnswer ?? true;
+            }
+            
             setFormData({
                 statement: value.statement || '',
-                options: value.options || {
-                    correctAnswer: true,
-                    trueLabel: 'Doğru',
-                    falseLabel: 'Yanlış',
-                    trueFeedback: '',
-                    falseFeedback: ''
+                options: {
+                    ...(value.options || {
+                        correctAnswer: true,
+                        trueLabel: 'Doğru',
+                        falseLabel: 'Yanlış'
+                    }),
+                    trueFeedback: '', // UI'dan kaldırıldı, her zaman boş string
+                    falseFeedback: '' // UI'dan kaldırıldı, her zaman boş string
                 },
-                correctAnswer: value.correctAnswer ?? true,
-                explanation: value.explanation || ''
+                correctAnswer: correctAnswer,
+                explanation: '' // UI'dan kaldırıldı, her zaman boş string
             });
         }
     }, []);
@@ -74,14 +82,19 @@ const TrueFalseTemplateForm = forwardRef<TrueFalseTemplateFormHandle, TrueFalseT
         const updatedData = { ...formData, [field]: newValue };
         setFormData(updatedData);
 
-        if (validateForm()) {
-            onChange({
-                statement: updatedData.statement,
-                options: updatedData.options,
-                correctAnswer: updatedData.correctAnswer,
-                explanation: updatedData.explanation
-            });
-        }
+        // Her zaman onChange'i çağır, validation sadece submit için
+        // ÖNEMLİ: value'dan gelen id ve diğer base field'ları koru (update modu için gerekli)
+        onChange({
+            ...(value || {}), // id ve diğer base field'ları koru (value null ise boş obje)
+            statement: updatedData.statement,
+            options: {
+                ...updatedData.options,
+                trueFeedback: '', // UI'dan kaldırıldı, her zaman boş string
+                falseFeedback: '' // UI'dan kaldırıldı, her zaman boş string
+            },
+            correctAnswer: updatedData.correctAnswer,
+            explanation: '' // UI'dan kaldırıldı, her zaman boş string
+        });
     };
 
     const updateOptions = <K extends keyof TrueFalseOptions>(
@@ -178,8 +191,8 @@ const TrueFalseTemplateForm = forwardRef<TrueFalseTemplateFormHandle, TrueFalseT
                 </div>
             </div>
 
-            {/* Geri Bildirimler */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* Geri Bildirimler - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
+            {/* <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="trueFeedback">Doğru Cevap Geri Bildirimi</Label>
                     <Textarea
@@ -201,10 +214,10 @@ const TrueFalseTemplateForm = forwardRef<TrueFalseTemplateFormHandle, TrueFalseT
                         placeholder="Yanlış cevap verildiğinde gösterilecek mesaj"
                     />
                 </div>
-            </div>
+            </div> */}
 
-            {/* Açıklama */}
-            <div className="space-y-2">
+            {/* Açıklama - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
+            {/* <div className="space-y-2">
                 <Label htmlFor="explanation">Açıklama</Label>
                 <Textarea
                     id="explanation"
@@ -213,7 +226,7 @@ const TrueFalseTemplateForm = forwardRef<TrueFalseTemplateFormHandle, TrueFalseT
                     className="min-h-[100px]"
                     placeholder="Soru açıklaması (opsiyonel)"
                 />
-            </div>
+            </div> */}
         </div>
     );
 });

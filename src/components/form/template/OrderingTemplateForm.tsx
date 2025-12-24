@@ -5,10 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import Checkbox from "@/components/ui/checkbox";
 import { NumberInput } from "@/components/ui/number-input";
 import {OrderingTemplateDto, OrderingOptions, OrderingItem} from "@/types/exam/questionTemplates";
 import { Trash2, Plus, ArrowUp, ArrowDown } from "lucide-react";
@@ -47,10 +44,10 @@ const OrderingTemplateForm = forwardRef<OrderingTemplateFormHandle, OrderingTemp
         instructions: '',
         options: {
             items: [],
-            orderingType: 'SEQUENTIAL'
+            orderingType: 'SEQUENTIAL' // UI'dan kaldırıldı, her zaman "SEQUENTIAL"
         },
-        shuffleItems: true,
-        explanation: ''
+        shuffleItems: true, // UI'dan kaldırıldı, her zaman true
+        explanation: '' // UI'dan kaldırıldı, her zaman boş string
     });
 
     const [errors, setErrors] = useState<OrderingTemplateFormErrors>({});
@@ -59,12 +56,12 @@ const OrderingTemplateForm = forwardRef<OrderingTemplateFormHandle, OrderingTemp
         if (value) {
             setFormData({
                 instructions: value.instructions || '',
-                options: value.options || {
-                    items: [],
-                    orderingType: 'SEQUENTIAL'
+                options: {
+                    ...(value.options || { items: [] }),
+                    orderingType: 'SEQUENTIAL' // UI'dan kaldırıldı, her zaman "SEQUENTIAL"
                 },
-                shuffleItems: value.shuffleItems ?? true,
-                explanation: value.explanation || ''
+                shuffleItems: true, // UI'dan kaldırıldı, her zaman true
+                explanation: '' // UI'dan kaldırıldı, her zaman boş string
             });
         }
     }, []);
@@ -168,13 +165,16 @@ const OrderingTemplateForm = forwardRef<OrderingTemplateFormHandle, OrderingTemp
 
     useEffect(() => {
         // İlk render'da boş form için onChange tetikleme
-        if (formData.instructions || formData.explanation) {
+        if (formData.instructions) {
             const templateData: OrderingTemplateDto = {
                 ...value,
                 instructions: formData.instructions.trim(),
-                options: formData.options,
-                shuffleItems: formData.shuffleItems,
-                explanation: formData.explanation.trim()
+                options: {
+                    ...formData.options,
+                    orderingType: 'SEQUENTIAL' // UI'dan kaldırıldı, her zaman "SEQUENTIAL"
+                },
+                shuffleItems: true, // UI'dan kaldırıldı, her zaman true
+                explanation: '' // UI'dan kaldırıldı, her zaman boş string
             };
             onChange(templateData);
         }
@@ -211,8 +211,8 @@ const OrderingTemplateForm = forwardRef<OrderingTemplateFormHandle, OrderingTemp
                         )}
                     </div>
 
-                    {/* Sıralama Tipi */}
-                    <div className="space-y-2">
+                    {/* Sıralama Tipi - YORUM SATIRI: UI'dan kaldırıldı, değeri "SEQUENTIAL" */}
+                    {/* <div className="space-y-2">
                         <Label htmlFor="orderingType">Sıralama Tipi</Label>
                         <Select
                             onValueChange={(value) => handleChange('options', {
@@ -233,10 +233,10 @@ const OrderingTemplateForm = forwardRef<OrderingTemplateFormHandle, OrderingTemp
                                 </SelectGroup>
                             </SelectContent>
                         </Select>
-                    </div>
+                    </div> */}
 
-                    {/* Öğeleri Karıştır */}
-                    <div className="space-y-2">
+                    {/* Öğeleri Karıştır - YORUM SATIRI: UI'dan kaldırıldı, değeri true */}
+                    {/* <div className="space-y-2">
                         <div className="flex items-center space-x-2">
                             <Checkbox
                                 id="shuffleItems"
@@ -245,7 +245,7 @@ const OrderingTemplateForm = forwardRef<OrderingTemplateFormHandle, OrderingTemp
                             />
                             <Label htmlFor="shuffleItems">Öğeleri Karıştır</Label>
                         </div>
-                    </div>
+                    </div> */}
 
                     {/* Sıralama Öğeleri */}
                     <div className="space-y-4">
@@ -276,7 +276,7 @@ const OrderingTemplateForm = forwardRef<OrderingTemplateFormHandle, OrderingTemp
                                     />
                                 </div>
 
-                                <div className="col-span-4">
+                                <div className="col-span-10">
                                     <Label>Metin *</Label>
                                     <Textarea
                                         value={item.text || ''}
@@ -286,23 +286,25 @@ const OrderingTemplateForm = forwardRef<OrderingTemplateFormHandle, OrderingTemp
                                     />
                                 </div>
 
-                                <div className="col-span-3">
+                                {/* Medya URL - YORUM SATIRI: UI'dan kaldırıldı, belki sonra tekrar gösterilebilir */}
+                                {/* <div className="col-span-3">
                                     <Label>Medya URL</Label>
                                     <Input
                                         value={item.mediaUrl || ''}
                                         onChange={(e) => updateItem(index, 'mediaUrl', e.target.value)}
                                         placeholder="Medya URL (opsiyonel)"
                                     />
-                                </div>
+                                </div> */}
 
-                                <div className="col-span-3">
+                                {/* Geri Bildirim - YORUM SATIRI: UI'dan kaldırıldı, belki sonra tekrar gösterilebilir */}
+                                {/* <div className="col-span-3">
                                     <Label>Geri Bildirim</Label>
                                     <Input
                                         value={item.feedback || ''}
                                         onChange={(e) => updateItem(index, 'feedback', e.target.value)}
                                         placeholder="Geri bildirim (opsiyonel)"
                                     />
-                                </div>
+                                </div> */}
 
                                 <div className="col-span-1 flex flex-col gap-1">
                                     <Button
@@ -342,8 +344,8 @@ const OrderingTemplateForm = forwardRef<OrderingTemplateFormHandle, OrderingTemp
                         )}
                     </div>
 
-                    {/* Açıklama */}
-                    <div className="space-y-2">
+                    {/* Açıklama - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
+                    {/* <div className="space-y-2">
                         <Label htmlFor="explanation">Açıklama</Label>
                         <Textarea
                             id="explanation"
@@ -352,7 +354,7 @@ const OrderingTemplateForm = forwardRef<OrderingTemplateFormHandle, OrderingTemp
                             className="min-h-[100px]"
                             placeholder="Sıralama açıklaması giriniz (opsiyonel)"
                         />
-                    </div>
+                    </div> */}
                 </div>
             </CardContent>
         </Card>

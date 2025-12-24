@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useEffect, useState, useImperativeHandle, forwardRef} from 'react';
+import React, {useEffect, useState, useImperativeHandle, forwardRef, useRef} from 'react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Alert, AlertDescription} from "@/components/ui/alert";
 import {Button} from "@/components/ui/button";
@@ -9,7 +9,7 @@ import {Input} from "@/components/ui/input";
 import {Textarea} from "@/components/ui/textarea";
 import {NumberInput} from "@/components/ui/number-input";
 import {FillInTheBlanksTemplateDto, FillInTheBlanksOptions, BlankAnswer} from "@/types/exam/questionTemplates";
-import {Trash2, Plus} from "lucide-react";
+import {Plus, Trash2} from "lucide-react";
 import Checkbox from "@/components/ui/checkbox";
 
 interface FillInTheBlanksTemplateFormData {
@@ -51,6 +51,9 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
 
     const [errors, setErrors] = useState<FillInTheBlanksTemplateFormErrors>({});
 
+    // Silinen boşlukların verilerini geçici olarak sakla (taşıma işlemleri için)
+    const temporaryBlanksRef = useRef<Map<string, BlankAnswer>>(new Map());
+
     // Value değiştiğinde form data'yı güncelle (Update modu için)
     useEffect(() => {
         if (value) {
@@ -59,35 +62,189 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
                 options: value.options || {blanks: []},
                 caseSensitive: value.caseSensitive || false,
                 exactMatch: value.exactMatch || false,
-                explanation: value.explanation || ''
+                explanation: '' // UI'dan kaldırıldı, her zaman boş string
             });
         }
     }, []);
 
+    // NOT: caseSensitive ve exactMatch güncellemeleri artık textWithBlanks useEffect'inde yapılıyor
+    // Bu useEffect'i kaldırdık çünkü sonsuz döngüye neden oluyordu
+
     // Form data değiştiğinde parent'a bildir (Anlık güncelleme)
+    // useRef ile son gönderilen değeri takip ederek gereksiz güncellemeleri önle
+    const lastSentRef = useRef<string>('');
+    
+    // handleChange'den sonra parent'a bildir
     useEffect(() => {
         // İlk render'da boş form için onChange tetikleme
         if (formData.textWithBlanks || (formData.options.blanks ?? []).length > 0) {
+            // Tüm boşlukların feedback'ini boş string yap ve ana şablon ayarlarını uygula
+            const blanksWithDefaults = formData.options.blanks?.map(blank => ({
+                ...blank,
+                caseSensitive: formData.caseSensitive,
+                exactMatch: formData.exactMatch,
+                feedback: ''
+            })) || [];
+
             const templateData: FillInTheBlanksTemplateDto = {
                 ...value,
                 textWithBlanks: formData.textWithBlanks,
-                options: formData.options,
+                options: {
+                    ...formData.options,
+                    blanks: blanksWithDefaults
+                },
                 caseSensitive: formData.caseSensitive,
                 exactMatch: formData.exactMatch,
-                explanation: formData.explanation
+                explanation: ''
             };
-            onChange(templateData);
+            
+            // Basit bir key oluştur (sonsuz döngüyü önlemek için)
+            const dataKey = `${formData.textWithBlanks}|${formData.caseSensitive}|${formData.exactMatch}|${blanksWithDefaults.length}`;
+            
+            if (dataKey !== lastSentRef.current) {
+                lastSentRef.current = dataKey;
+                onChange(templateData);
+            }
         }
-    }, [formData]); // onChange ve value bağımlılığı yok - sonsuz döngü önlendi
+    }, [formData.textWithBlanks, formData.caseSensitive, formData.exactMatch, formData.options.blanks?.length || 0]);
+
+    // Boşlukları güncelleme fonksiyonu
+    const updateBlanksFromText = (text: string, currentBlanks: BlankAnswer[], caseSensitive: boolean, exactMatch: boolean): BlankAnswer[] => {
+        const blankIdsInText = extractBlankIdsFromText(text);
+        
+        // Mevcut boşlukların ID'lerini al
+        const currentBlankIds = currentBlanks.map(blank => {
+            const id = blank.blankId || '';
+            return id.startsWith('[') && id.endsWith(']') ? id : `[${id}]`;
+        });
+
+        // Yeni eklenen boşlukları bul
+        const newBlankIds = blankIdsInText.filter(id => !currentBlankIds.includes(id));
+        
+        // Silinen boşlukları bul
+        const removedBlankIds = currentBlankIds.filter(id => !blankIdsInText.includes(id));
+
+        // Silinen boşlukları geçici state'e kaydet (taşıma işlemleri için)
+        removedBlankIds.forEach(removedId => {
+            const removedBlank = currentBlanks.find(blank => {
+                const id = blank.blankId || '';
+                const formattedId = id.startsWith('[') && id.endsWith(']') ? id : `[${id}]`;
+                return formattedId === removedId;
+            });
+            if (removedBlank) {
+                // Sadece veri içeren boşlukları kaydet (boş olanları kaydetme)
+                const hasData = removedBlank.acceptableAnswers && 
+                               removedBlank.acceptableAnswers.length > 0 && 
+                               removedBlank.acceptableAnswers.some(ans => ans.trim() !== '');
+                if (hasData) {
+                    temporaryBlanksRef.current.set(removedId, {
+                        ...removedBlank,
+                        blankId: removedId
+                    });
+                }
+            }
+        });
+
+        // Eğer değişiklik yoksa mevcut boşlukları döndür
+        if (newBlankIds.length === 0 && removedBlankIds.length === 0 && 
+            blankIdsInText.length === currentBlankIds.length) {
+            return currentBlanks;
+        }
+
+        // Mevcut boşlukları koru (metinde hala var olanlar) ve blankId'lerini formatla
+        const keptBlanks = currentBlanks
+            .filter(blank => {
+                const id = blank.blankId || '';
+                const formattedId = id.startsWith('[') && id.endsWith(']') ? id : `[${id}]`;
+                return blankIdsInText.includes(formattedId);
+            })
+            .map(blank => {
+                const id = blank.blankId || '';
+                const formattedId = id.startsWith('[') && id.endsWith(']') ? id : `[${id}]`;
+                return {
+                    ...blank,
+                    blankId: formattedId,
+                    caseSensitive: caseSensitive,
+                    exactMatch: exactMatch,
+                    feedback: ''
+                };
+            });
+
+        // Yeni boşlukları ekle - eğer geçici state'te varsa geri yükle
+        const addedBlanks: BlankAnswer[] = newBlankIds.map(blankId => {
+            // Geçici state'te bu ID var mı kontrol et
+            const temporaryBlank = temporaryBlanksRef.current.get(blankId);
+            if (temporaryBlank) {
+                // Geçici state'ten geri yükle ve geçici state'ten sil
+                temporaryBlanksRef.current.delete(blankId);
+                return {
+                    ...temporaryBlank,
+                    blankId: blankId,
+                    caseSensitive: caseSensitive, // Güncel ayarları uygula
+                    exactMatch: exactMatch, // Güncel ayarları uygula
+                    feedback: '' // Feedback'i sıfırla
+                };
+            }
+            // Geçici state'te yoksa yeni boşluk oluştur
+            return {
+                blankId: blankId,
+                acceptableAnswers: [''],
+                caseSensitive: caseSensitive,
+                exactMatch: exactMatch,
+                score: 1,
+                feedback: ''
+            };
+        });
+
+        // Tüm boşlukları birleştir ve sırala
+        const allBlanks = [...keptBlanks, ...addedBlanks];
+        
+        return allBlanks.sort((a, b) => {
+            const numA = parseInt((a.blankId || '').match(/blank_(\d+)/)?.[1] || '0');
+            const numB = parseInt((b.blankId || '').match(/blank_(\d+)/)?.[1] || '0');
+            return numA - numB;
+        });
+    };
 
     const handleChange = <T extends keyof FillInTheBlanksTemplateFormData>(
         field: T,
         newValue: FillInTheBlanksTemplateFormData[T]
     ) => {
-        setFormData(prev => ({
+        setFormData(prev => {
+            const updatedData = {
             ...prev,
             [field]: newValue
-        }));
+            };
+
+            // Eğer textWithBlanks değiştiyse, boşlukları güncelle
+            if (field === 'textWithBlanks') {
+                const updatedBlanks = updateBlanksFromText(
+                    newValue as string,
+                    prev.options.blanks || [],
+                    prev.caseSensitive,
+                    prev.exactMatch
+                );
+                updatedData.options = {
+                    ...prev.options,
+                    blanks: updatedBlanks
+                };
+            }
+            // Eğer caseSensitive veya exactMatch değiştiyse, tüm boşlukları güncelle
+            else if (field === 'caseSensitive' || field === 'exactMatch') {
+                const updatedBlanks = (prev.options.blanks || []).map(blank => ({
+                    ...blank,
+                    caseSensitive: field === 'caseSensitive' ? (newValue as boolean) : prev.caseSensitive,
+                    exactMatch: field === 'exactMatch' ? (newValue as boolean) : prev.exactMatch,
+                    feedback: ''
+                }));
+                updatedData.options = {
+                    ...prev.options,
+                    blanks: updatedBlanks
+                };
+            }
+
+            return updatedData;
+        });
 
         // Hata varsa temizle
         if (errors[field as keyof FillInTheBlanksTemplateFormErrors]) {
@@ -98,24 +255,33 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
         }
     };
 
-    const addBlank = () => {
-        const newBlank: BlankAnswer = {
-            blankId: `blank_${Date.now()}`,
-            acceptableAnswers: [''],
-            caseSensitive: false,
-            exactMatch: false,
-            score: 1,
-            feedback: ''
-        };
-
-        const updatedBlanks = [...(formData.options.blanks || []), newBlank];
-        handleChange('options', {...formData.options, blanks: updatedBlanks});
+    // Boşluklu metinden [blank_X] formatındaki boşluk ID'lerini çıkar (tekrarları kaldırarak)
+    const extractBlankIdsFromText = (text: string): string[] => {
+        const regex = /\[blank_\d+\]/g;
+        const matches = text.match(regex);
+        if (!matches) return [];
+        // Tekrarları kaldır ve sırala
+        const uniqueMatches = [...new Set(matches)];
+        // Numara sırasına göre sırala
+        return uniqueMatches.sort((a, b) => {
+            const numA = parseInt(a.match(/blank_(\d+)/)?.[1] || '0');
+            const numB = parseInt(b.match(/blank_(\d+)/)?.[1] || '0');
+            return numA - numB;
+        });
     };
 
-    const removeBlank = (index: number) => {
-        const updatedBlanks = formData.options.blanks?.filter((_, i) => i !== index) || [];
-        handleChange('options', {...formData.options, blanks: updatedBlanks});
+    // Boşluk ID'sinden görüntülenecek metni al ([blank_1] formatında)
+    const getBlankDisplayText = (blankId: string | undefined): string => {
+        if (!blankId) return '';
+        // Eğer zaten [blank_X] formatındaysa direkt döndür
+        if (blankId.startsWith('[') && blankId.endsWith(']')) {
+            return blankId;
+        }
+        // Değilse [blank_X] formatına çevir
+        return `[${blankId}]`;
     };
+
+    // NOT: Boşluk yönetimi artık handleChange içinde yapılıyor, useEffect kullanmıyoruz
 
     const updateBlank = <K extends keyof BlankAnswer>(
         index: number,
@@ -249,26 +415,21 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
                     <div className="space-y-4">
                         <div className="flex justify-between items-center">
                             <Label>Boşluk Tanımları *</Label>
-                            <Button
-                                type="button"
-                                onClick={addBlank}
-                                className="bg-green-600 hover:bg-green-700 text-white"
-                                size="sm"
-                            >
-                                <Plus className="w-4 h-4 mr-2"/>
-                                Boşluk Ekle
-                            </Button>
+                            <p className="text-sm text-gray-500">
+                                Metne [blank_1], [blank_2] gibi boşluklar ekleyerek otomatik olarak boşluk tanımları oluşturulur.
+                            </p>
                         </div>
 
                         {formData.options.blanks?.map((blank, blankIndex) => (
-                            <div key={blank.blankId || blankIndex} className="p-4 border rounded-lg space-y-4">
+                            <div key={`${blank.blankId || 'blank'}-${blankIndex}`} className="p-4 border rounded-lg space-y-4">
                                 <div className="grid grid-cols-12 gap-2 items-center">
                                     <div className="col-span-2">
-                                        <Label>Boşluk ID</Label>
+                                        <Label>Boşluk</Label>
                                         <Input
-                                            value={blank.blankId || ''}
-                                            onChange={(e) => updateBlank(blankIndex, 'blankId', e.target.value)}
-                                            placeholder="blank_1"
+                                            value={getBlankDisplayText(blank.blankId)}
+                                            disabled
+                                            placeholder="[blank_1]"
+                                            className="bg-gray-100 cursor-not-allowed"
                                         />
                                     </div>
 
@@ -283,44 +444,10 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
                                         />
                                     </div>
 
-                                    <div className="col-span-2">
-                                        <div className="flex items-center space-x-2">
-                                            <Checkbox
-                                                checked={blank.caseSensitive || false}
-                                                onChange={(checked) => updateBlank(blankIndex, 'caseSensitive', !!checked)}
-                                            />
-                                            <Label className="text-xs">Harf Duyarlı</Label>
-                                        </div>
-                                    </div>
-
-                                    <div className="col-span-2">
-                                        <div className="flex items-center space-x-2">
-                                            <Checkbox
-                                                checked={blank.exactMatch || false}
-                                                onChange={(checked) => updateBlank(blankIndex, 'exactMatch', !!checked)}
-                                            />
-                                            <Label className="text-xs">Tam Eşleşme</Label>
-                                        </div>
-                                    </div>
-
-                                    <div className="col-span-3">
-                                        <Label>Geri Bildirim</Label>
-                                        <Input
-                                            value={blank.feedback || ''}
-                                            onChange={(e) => updateBlank(blankIndex, 'feedback', e.target.value)}
-                                            placeholder="Geri bildirim (opsiyonel)"
-                                        />
-                                    </div>
-
-                                    <div className="col-span-1">
-                                        <Button
-                                            type="button"
-                                            onClick={() => removeBlank(blankIndex)}
-                                            variant="primary"
-                                            size="sm"
-                                        >
-                                            <Trash2 className="w-4 h-4"/>
-                                        </Button>
+                                    <div className="col-span-8 flex justify-end">
+                                        <p className="text-sm text-gray-500 self-center">
+                                            Boşluğu silmek için metinden [blank_X] ifadesini kaldırın.
+                                        </p>
                                     </div>
                                 </div>
 
@@ -340,7 +467,7 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
                                     </div>
 
                                     {blank.acceptableAnswers?.map((answer, answerIndex) => (
-                                        <div key={answerIndex} className="flex gap-2">
+                                        <div key={`${blank.blankId || 'blank'}-${blankIndex}-answer-${answerIndex}`} className="flex gap-2">
                                             <Input
                                                 value={answer}
                                                 onChange={(e) => updateAcceptableAnswer(blankIndex, answerIndex, e.target.value)}
@@ -368,8 +495,8 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
                         )}
                     </div>
 
-                    {/* Açıklama */}
-                    <div className="space-y-2">
+                    {/* Açıklama - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
+                    {/* <div className="space-y-2">
                         <Label htmlFor="explanation">Açıklama</Label>
                         <Textarea
                             id="explanation"
@@ -378,7 +505,7 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
                             className="min-h-[100px]"
                             placeholder="Soru açıklaması (opsiyonel)"
                         />
-                    </div>
+                    </div> */}
 
                     {/* KAYDET BUTONU KALDIRILDI - Parent component'te olacak */}
                 </div>

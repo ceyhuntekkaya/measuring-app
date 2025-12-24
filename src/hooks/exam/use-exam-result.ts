@@ -23,13 +23,13 @@ export const useExamResult = (): useExamResultReturn => {
             const response = await examService.saveAnswer(answer);
             if (response.data && response.success) {
                 setResult(response.data);
-                showNotification.success('Sınav başarıyla oluşturuldu!');
+                showNotification.success('Cevap başarıyla kaydedildi!');
             } else {
                 throw new Error(response.message);
             }
         } catch (err) {
             setError(err instanceof Error ? err : new Error('Bir hata oluştu'));
-            showNotification.error('Sınav oluşturulurken bir hata oluştu!');
+            showNotification.error('Cavap kaydedilirken bir hata oluştu!');
         }
     }, []);
 

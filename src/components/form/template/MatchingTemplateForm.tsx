@@ -56,7 +56,7 @@ const MatchingTemplateForm = forwardRef<MatchingTemplateFormHandle, MatchingTemp
                 instructions: value.instructions || '',
                 options: value.options || {pairs: [], distractors: []},
                 shuffleItems: value.shuffleItems ?? true,
-                explanation: value.explanation || ''
+                explanation: '' // UI'dan kaldırıldı, her zaman boş string
             });
         }
     }, []);
@@ -70,7 +70,7 @@ const MatchingTemplateForm = forwardRef<MatchingTemplateFormHandle, MatchingTemp
                 instructions: formData.instructions,
                 options: formData.options,
                 shuffleItems: formData.shuffleItems,
-                explanation: formData.explanation
+                explanation: '' // UI'dan kaldırıldı, her zaman boş string
             };
             onChange(templateData);
         }
@@ -225,11 +225,12 @@ const MatchingTemplateForm = forwardRef<MatchingTemplateFormHandle, MatchingTemp
                                             onChange={(e) => updatePair(index, 'leftText', e.target.value)}
                                             placeholder="Sol taraf metni"
                                         />
-                                        <Input
+                                        {/* Sol taraf medya URL - YORUM SATIRI: UI'dan kaldırıldı, belki sonra tekrar gösterilebilir */}
+                                        {/* <Input
                                             value={pair.leftMediaUrl || ''}
                                             onChange={(e) => updatePair(index, 'leftMediaUrl', e.target.value)}
                                             placeholder="Sol taraf medya URL (opsiyonel)"
-                                        />
+                                        /> */}
                                     </div>
 
                                     {/* Sağ Taraf */}
@@ -240,15 +241,17 @@ const MatchingTemplateForm = forwardRef<MatchingTemplateFormHandle, MatchingTemp
                                             onChange={(e) => updatePair(index, 'rightText', e.target.value)}
                                             placeholder="Sağ taraf metni"
                                         />
-                                        <Input
+                                        {/* Sağ taraf medya URL - YORUM SATIRI: UI'dan kaldırıldı, belki sonra tekrar gösterilebilir */}
+                                        {/* <Input
                                             value={pair.rightMediaUrl || ''}
                                             onChange={(e) => updatePair(index, 'rightMediaUrl', e.target.value)}
                                             placeholder="Sağ taraf medya URL (opsiyonel)"
-                                        />
+                                        /> */}
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-12 gap-2 items-center">
+                                {/* Geri Bildirim - YORUM SATIRI: UI'dan kaldırıldı, belki sonra tekrar gösterilebilir */}
+                                {/* <div className="grid grid-cols-12 gap-2 items-center">
                                     <div className="col-span-10">
                                         <Label>Geri Bildirim</Label>
                                         <Input
@@ -269,6 +272,17 @@ const MatchingTemplateForm = forwardRef<MatchingTemplateFormHandle, MatchingTemp
                                             <Trash2 className="w-4 h-4"/>
                                         </Button>
                                     </div>
+                                </div> */}
+
+                                <div className="flex justify-end">
+                                    <Button
+                                        type="button"
+                                        onClick={() => removePair(index)}
+                                        variant="primary"
+                                        size="sm"
+                                    >
+                                        <Trash2 className="w-4 h-4"/>
+                                    </Button>
                                 </div>
                             </div>
                         ))}
@@ -341,8 +355,8 @@ const MatchingTemplateForm = forwardRef<MatchingTemplateFormHandle, MatchingTemp
                         </p>
                     </div>
 
-                    {/* Açıklama */}
-                    <div className="space-y-2">
+                    {/* Açıklama - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
+                    {/* <div className="space-y-2">
                         <Label htmlFor="explanation">Açıklama</Label>
                         <Textarea
                             id="explanation"
@@ -351,7 +365,7 @@ const MatchingTemplateForm = forwardRef<MatchingTemplateFormHandle, MatchingTemp
                             className="min-h-[100px]"
                             placeholder="Soru açıklaması (opsiyonel)"
                         />
-                    </div>
+                    </div> */}
 
                     {/* KAYDET BUTONU KALDIRILDI - Parent component'te olacak */}
                 </div>

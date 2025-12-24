@@ -52,8 +52,6 @@ export const AdminWebSocketProvider: React.FC<AdminWebSocketProviderProps> = ({
 
     // Handle incoming messages
     const handleIncomingMessage = useCallback((message: WebSocketMessage) => {
-        console.log('📨 ADMIN received:', message.type, message); // 🔑 Tüm mesajı logla
-
         switch (message.type) {
             case MessageType.CHAT:
                 setChatMessages((prev) => [...prev, message as ChatMessage]);
@@ -64,8 +62,8 @@ export const AdminWebSocketProvider: React.FC<AdminWebSocketProviderProps> = ({
                 break;
 
             case MessageType.INFO:
-                console.log('ℹ️ INFO message payload:', message.payload); // 🔑 Payload'u logla
-                setInfoMessages((prev) => [...prev, message as InfoMessage]);
+                const infoMsg = message as InfoMessage;
+                setInfoMessages((prev) => [...prev, infoMsg]);
                 break;
 
             default:
@@ -118,7 +116,11 @@ export const AdminWebSocketProvider: React.FC<AdminWebSocketProviderProps> = ({
             sessionId &&
             !serviceRef.current.isConnected()
         ) {
-            console.log(`🔌 ADMIN connecting to session: ${sessionId}`);
+            console.log(`🔌 ADMIN connecting to session: ${sessionId}`, {
+                username,
+                hasToken: !!token,
+                sessionId
+            });
             serviceRef.current.connect(token, username, role, sessionId);
         }
 

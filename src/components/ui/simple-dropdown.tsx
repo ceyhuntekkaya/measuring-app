@@ -4,17 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Plus, MoreVertical, LucideIcon } from 'lucide-react';
 
 
-/*
-<ActionButtons
-    onAdd={() => console.log('Add clicked')}
-    addButtonText="Ürün Ekle"
-    dropdownActions={[
-        { text: "Excel Aktar", icon: Download, onClick: () => console.log('Export') },
-        { text: "Toplu Sil", icon: Trash, onClick: () => console.log('Delete') },
-        { text: "Ayarlar", icon: Settings, onClick: () => console.log('Settings') }
-    ]}
-/>
- */
 interface DropdownAction {
     text: string;
     icon: LucideIcon;

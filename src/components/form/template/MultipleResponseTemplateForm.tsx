@@ -5,10 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import Checkbox from "@/components/ui/checkbox";
-import { NumberInput } from "@/components/ui/number-input";
 import { MultipleResponseTemplateDto, MultipleResponseOptions, ResponseOption } from "@/types/exam/questionTemplates";
 import { Trash2, Plus } from "lucide-react";
 
@@ -49,13 +47,13 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
         question: '',
         options: {
             choices: [],
-            selectionInstruction: ''
+            selectionInstruction: 'Doğru olan tüm seçenekleri işaretleyiniz.' // UI'dan kaldırıldı, her zaman sabit değer
         },
         correctOptionIndices: [],
         minSelections: 1,
         maxSelections: undefined,
         shuffleOptions: true,
-        explanation: ''
+        explanation: '' // UI'dan kaldırıldı, her zaman boş string
     });
 
     const [errors, setErrors] = useState<MultipleResponseTemplateFormErrors>({});
@@ -63,17 +61,28 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
     // Value değiştiğinde form data'yı güncelle (Update modu için)
     useEffect(() => {
         if (value) {
+            // Eğer correctOptionIndices yoksa, choices array'indeki isCorrect değerlerine göre hesapla
+            let correctIndices: number[] = [];
+            if (value.correctOptionIndices && value.correctOptionIndices.length > 0) {
+                correctIndices = value.correctOptionIndices;
+            } else if (value.options?.choices) {
+                // choices array'indeki isCorrect: true olan seçeneklerin index'lerini bul
+                correctIndices = value.options.choices
+                    .map((choice, index) => choice.isCorrect ? index : -1)
+                    .filter(index => index !== -1);
+            }
+            
             setFormData({
                 question: value.question || '',
-                options: value.options || {
-                    choices: [],
-                    selectionInstruction: ''
+                options: {
+                    ...(value.options || { choices: [] }),
+                    selectionInstruction: 'Doğru olan tüm seçenekleri işaretleyiniz.' // UI'dan kaldırıldı, her zaman sabit değer
                 },
-                correctOptionIndices: value.correctOptionIndices || [],
+                correctOptionIndices: correctIndices,
                 minSelections: value.minSelections,
                 maxSelections: value.maxSelections,
                 shuffleOptions: value.shuffleOptions ?? true,
-                explanation: value.explanation || ''
+                explanation: '' // UI'dan kaldırıldı, her zaman boş string
             });
         }
     }, []);
@@ -82,15 +91,19 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
     useEffect(() => {
         // İlk render'da onChange'i tetikleme
         if (formData.question || (formData.options.choices ?? []).length > 0) {
+            const choicesCount = formData.options.choices?.length || 0;
             const templateData: MultipleResponseTemplateDto = {
                 ...value,
                 question: formData.question.trim(),
-                options: formData.options,
+                options: {
+                    ...formData.options,
+                    selectionInstruction: 'Doğru olan tüm seçenekleri işaretleyiniz.' // UI'dan kaldırıldı, her zaman sabit değer
+                },
                 correctOptionIndices: formData.correctOptionIndices,
-                minSelections: formData.minSelections,
-                maxSelections: formData.maxSelections,
+                minSelections: 1, // Minimum Seçim default 1
+                maxSelections: choicesCount > 0 ? choicesCount : formData.maxSelections, // Maksimum Seçim default seçenek sayısı
                 shuffleOptions: formData.shuffleOptions,
-                explanation: formData.explanation.trim()
+                explanation: '' // UI'dan kaldırıldı, her zaman boş string
             };
             onChange(templateData);
         }
@@ -250,8 +263,8 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
                         )}
                     </div>
 
-                    {/* Seçim Talimatı */}
-                    <div className="space-y-2">
+                    {/* Seçim Talimatı - YORUM SATIRI: UI'dan kaldırıldı, her zaman "Doğru olan tüm seçenekleri işaretleyiniz." gönderiliyor */}
+                    {/* <div className="space-y-2">
                         <Label htmlFor="selectionInstruction">Seçim Talimatı</Label>
                         <Input
                             id="selectionInstruction"
@@ -262,10 +275,10 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
                             })}
                             placeholder="Örn: Doğru olan tüm seçenekleri işaretleyiniz"
                         />
-                    </div>
+                    </div> */}
 
-                    <div className="grid grid-cols-3 gap-4">
-                        {/* Minimum Seçim */}
+                    {/* Minimum Seçim ve Maksimum Seçim - YORUM SATIRI: UI'dan kaldırıldı, default değerler API'ye gönderiliyor */}
+                    {/* <div className="grid grid-cols-3 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="minSelections">Minimum Seçim</Label>
                             <NumberInput
@@ -278,7 +291,6 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
                             />
                         </div>
 
-                        {/* Maksimum Seçim */}
                         <div className="space-y-2">
                             <Label htmlFor="maxSelections">Maksimum Seçim</Label>
                             <NumberInput
@@ -291,17 +303,17 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
                                 placeholder="Sınırsız için boş bırakın"
                             />
                         </div>
+                    </div> */}
 
-                        {/* Seçenekleri Karıştır */}
-                        <div className="space-y-2">
-                            <div className="flex items-center space-x-2 mt-6">
-                                <Checkbox
-                                    id="shuffleOptions"
-                                    checked={formData.shuffleOptions}
-                                    onChange={(checked) => handleChange('shuffleOptions', !!checked)}
-                                />
-                                <Label htmlFor="shuffleOptions">Seçenekleri Karıştır</Label>
-                            </div>
+                    {/* Seçenekleri Karıştır */}
+                    <div className="space-y-2">
+                        <div className="flex items-center space-x-2 mt-6">
+                            <Checkbox
+                                id="shuffleOptions"
+                                checked={formData.shuffleOptions}
+                                onChange={(checked) => handleChange('shuffleOptions', !!checked)}
+                            />
+                            <Label htmlFor="shuffleOptions">Seçenekleri Karıştır</Label>
                         </div>
                     </div>
 
@@ -338,7 +350,7 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
                                     </div>
                                 </div>
 
-                                <div className="col-span-4">
+                                <div className="col-span-10">
                                     <Label>Seçenek Metni *</Label>
                                     <Textarea
                                         value={choice.text || ''}
@@ -348,23 +360,25 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
                                     />
                                 </div>
 
-                                <div className="col-span-3">
+                                {/* Medya URL - YORUM SATIRI: UI'dan kaldırıldı, belki sonra tekrar gösterilebilir */}
+                                {/* <div className="col-span-3">
                                     <Label>Medya URL</Label>
                                     <Input
                                         value={choice.mediaUrl || ''}
                                         onChange={(e) => updateChoice(index, 'mediaUrl', e.target.value)}
                                         placeholder="Medya URL (opsiyonel)"
                                     />
-                                </div>
+                                </div> */}
 
-                                <div className="col-span-3">
+                                {/* Geri Bildirim - YORUM SATIRI: UI'dan kaldırıldı, belki sonra tekrar gösterilebilir */}
+                                {/* <div className="col-span-3">
                                     <Label>Geri Bildirim</Label>
                                     <Input
                                         value={choice.feedback || ''}
                                         onChange={(e) => updateChoice(index, 'feedback', e.target.value)}
                                         placeholder="Geri bildirim (opsiyonel)"
                                     />
-                                </div>
+                                </div> */}
 
                                 <div className="col-span-1">
                                     <Button
@@ -386,8 +400,8 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
                         )}
                     </div>
 
-                    {/* Açıklama */}
-                    <div className="space-y-2">
+                    {/* Açıklama - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
+                    {/* <div className="space-y-2">
                         <Label htmlFor="explanation">Açıklama</Label>
                         <Textarea
                             id="explanation"
@@ -396,7 +410,7 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
                             className="min-h-[100px]"
                             placeholder="Cevap açıklaması giriniz (opsiyonel)"
                         />
-                    </div>
+                    </div> */}
 
                     {/* KAYDET BUTONU KALDIRILDI - Parent component'te olacak */}
                 </div>

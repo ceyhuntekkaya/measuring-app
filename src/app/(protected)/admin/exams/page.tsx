@@ -53,8 +53,7 @@ export default function ExamPage() {
             render: (value, record) => (
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
-                    //onClick={() => router.push(`/admin/exam/${record.id}`)}
-                    onClick={() => console.log(`/admin/exam/${record.id}`)}
+                    onClick={() =>  router.push(`/admin/exam/${record.id}`)}
                 >
                     ÖN İZLEME
                 </div>

@@ -338,3 +338,18 @@ export interface CandidateSearchParams {
     email?: string;
 }
 
+
+
+
+export interface CancelApplicationRequest {
+    applicationId: string;
+    reasonForCancellation?: string;
+    cancelingUserId: string;
+}
+export interface UpdateSessionStateRequest {
+    applicationId: string;
+    sessionState: ESessionState;
+}
+
+
+

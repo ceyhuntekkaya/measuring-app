@@ -4,6 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { findMenuItemByPath, MenuItem } from '@/config/routes';
+import {useExamApplicationContext} from "@/contexts/ExamApplicationContext";
 
 interface PageHeaderProps {
     actions?: React.ReactNode;
@@ -13,6 +14,11 @@ export default function PageExamHeader({ actions }: PageHeaderProps) {
     const pathname = usePathname();
     const router = useRouter();
     const currentPage = findMenuItemByPath(pathname);
+    const {candidate} = useExamApplicationContext();
+
+    // Kullanıcı adı soyadı
+    const userName = candidate ? `${candidate.name || ''} ${candidate.lastName || ''}`.trim() : '';
+    const greeting = userName ? `Merhaba, ${userName}` : 'Merhaba';
 
     const getBreadcrumbs = (menuItem: MenuItem | null): MenuItem[] => {
         const breadcrumbs: MenuItem[] = [];
@@ -44,7 +50,7 @@ export default function PageExamHeader({ actions }: PageHeaderProps) {
 
                     <div>
                         <h1 className="text-2xl font-semibold text-gray-900">
-                          Merhaba Ceyhun
+                          {greeting}
                         </h1>
 
                         <div className="flex items-center mt-1 text-sm text-gray-500">

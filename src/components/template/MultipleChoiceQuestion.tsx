@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {MultipleChoiceTemplateDto, ChoiceOption} from '@/types/exam/questionTemplates';
 import {
     EMediaType, EQuestionType,
@@ -13,6 +13,7 @@ interface MultipleChoiceQuestionProps {
     initialAnswer?: string | null;
     isSubmitted?: boolean;
     showCorrectAnswer?: boolean;
+    showLearnerEvaluation?: boolean;
     questionId:string;
 }
 
@@ -23,10 +24,27 @@ const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
                                                                            initialAnswer = null,
                                                                            isSubmitted = false,
                                                                            showCorrectAnswer = false,
+                                                                           showLearnerEvaluation = false,
                                                                            questionId
                                                                        }) => {
     const [selectedOption, setSelectedOption] = useState<string | null>(initialAnswer);
     const [shuffledOptions, setShuffledOptions] = useState<ChoiceOption[]>([]);
+
+    // initialAnswer içindeki text'i option ID'sine çevir
+    const convertTextToId = useCallback((text: string | null): string | null => {
+        if (!text || !template.options?.choices) {
+            return text;
+        }
+        
+        // Option text'ine göre ID bul
+        const option = template.options.choices.find(opt => opt.text === text);
+        if (option && option.id) {
+            return option.id;
+        }
+        
+        // Eğer text bulunamazsa, direkt text'i ID olarak kullan (fallback - belki de backend'den zaten ID geliyor)
+        return text;
+    }, [template.options?.choices]);
 
     useEffect(() => {
         if (template.options?.choices) {
@@ -38,39 +56,82 @@ const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
         }
     }, [template, isPreview]);
 
+    // template.options.choices'i stable hale getir - sadece ID'leri kullan
+    /*
+    const choicesIds = useMemo(() => {
+        return template.options?.choices?.map(c => c.id).filter(Boolean).join(',') || '';
+    }, [template.options?.choices?.length]);
+
+     */
+
     useEffect(() => {
-        setSelectedOption(initialAnswer);
-    }, [initialAnswer]);
+        // initialAnswer text ise ID'ye çevir
+        const convertedId = convertTextToId(initialAnswer);
+        setSelectedOption(convertedId);
+    }, [initialAnswer, convertTextToId]);
 
     const handleOptionSelect = (optionId: string) => {
-        if (isSubmitted && !isPreview) return; // Prevent changes after submission
+        // isPreview true ise değişiklik yapılmasın
+        if (isPreview || (isSubmitted && !isPreview)) return;
 
         const newSelection = selectedOption === optionId ? null : optionId;
         setSelectedOption(newSelection);
-        if (onAnswerChange) {
+        if (onAnswerChange && !isPreview) {
             onAnswerChange(questionId, template, newSelection ? newSelection : '', EQuestionType.MULTIPLE_CHOICE, EMediaType.TEXT, false);
         }
     };
 
+    // Doğru cevabı bul
+    const getCorrectOptionId = (): string | null => {
+        if (template.correctOptionIndex !== undefined && template.correctOptionIndex !== null && shuffledOptions[template.correctOptionIndex]) {
+            return shuffledOptions[template.correctOptionIndex].id || null;
+        }
+        // Alternatif: choices içinde isCorrect: true olanı bul
+        const correctChoice = shuffledOptions.find(opt => opt.isCorrect === true);
+        return correctChoice?.id || null;
+    };
+
     const getOptionStyle = (option: ChoiceOption) => {
-        const baseStyle = "p-4 border rounded-lg cursor-pointer transition-all duration-200 ";
+        const baseStyle = "p-4 border rounded-lg transition-all duration-200 ";
+        const cursorStyle = isPreview ? "cursor-default " : "cursor-pointer ";
+
+        // showLearnerEvaluation: Öğrencinin cevabı ile doğru cevabı karşılaştır
+        if (showLearnerEvaluation) {
+            const correctOptionId = getCorrectOptionId();
+            const isCorrect = option.id === correctOptionId || option.isCorrect === true;
+            const isSelected = selectedOption === option.id;
+
+            if (isSelected && isCorrect) {
+                // Öğrenci doğru seçeneği seçmiş: Yeşil
+                return baseStyle + cursorStyle + "border-green-500 bg-green-50 text-green-800";
+            } else if (isSelected && !isCorrect) {
+                // Öğrenci yanlış seçeneği seçmiş: Kırmızı
+                return baseStyle + cursorStyle + "border-red-500 bg-red-50 text-red-800";
+            } else if (!isSelected && isCorrect) {
+                // Öğrenci seçmemiş ama doğru seçenek: Mavi
+                return baseStyle + cursorStyle + "border-blue-500 bg-blue-50 text-blue-800";
+            } else {
+                // Diğer seçenekler: Gri
+                return baseStyle + cursorStyle + "border-gray-300 bg-gray-50 opacity-60";
+            }
+        }
 
         if (isPreview) {
-            return baseStyle + "border-gray-300 hover:border-blue-400 hover:bg-blue-50";
+            return baseStyle + cursorStyle + "border-gray-300 hover:border-blue-400 hover:bg-blue-50";
         }
 
         if (isSubmitted && showCorrectAnswer) {
             if (option.isCorrect) {
-                return baseStyle + "border-green-500 bg-green-50 text-green-800";
+                return baseStyle + cursorStyle + "border-green-500 bg-green-50 text-green-800";
             }
             if (selectedOption === option.id && !option.isCorrect) {
-                return baseStyle + "border-red-500 bg-red-50 text-red-800";
+                return baseStyle + cursorStyle + "border-red-500 bg-red-50 text-red-800";
             }
-            return baseStyle + "border-gray-300 bg-gray-50 opacity-60";
+            return baseStyle + cursorStyle + "border-gray-300 bg-gray-50 opacity-60";
         }
 
         if (selectedOption === option.id) {
-            return baseStyle + "border-blue-500 bg-blue-50 text-blue-800";
+            return baseStyle + cursorStyle + "border-blue-500 bg-blue-50 text-blue-800";
         }
 
         return baseStyle + "border-gray-300 hover:border-blue-400 hover:bg-blue-50";
@@ -136,7 +197,7 @@ const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
 
             {/* Question Text */}
             {template.question && (
-                <div className="mb-6">
+                <div className="mb-1">
                     <p className="text-gray-800 text-base leading-relaxed">{template.question}</p>
                 </div>
             )}
@@ -217,15 +278,6 @@ const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
                 <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
                     <h4 className="font-semibold text-yellow-800 mb-2">Genel Açıklama:</h4>
                     <p className="text-yellow-700">{template.explanation}</p>
-                </div>
-            )}
-
-            {/* Preview Mode Indicator */}
-            {isPreview && (
-                <div className="mt-4 p-3 bg-gray-100 border border-gray-300 rounded">
-                    <p className="text-gray-600 text-sm italic">
-                        👁️ Önizleme Modu - Bu sorunun nasıl görüneceğinin önizlemesidir
-                    </p>
                 </div>
             )}
 

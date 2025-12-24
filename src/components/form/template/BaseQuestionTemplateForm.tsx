@@ -2,10 +2,6 @@
 
 import React, {useEffect, useState, useRef, forwardRef, useImperativeHandle, useCallback} from 'react';
 import {Alert, AlertDescription} from "@/components/ui/alert";
-import {Button} from "@/components/ui/button";
-import {Label} from "@/components/ui/label";
-import {Input} from "@/components/ui/input";
-import {Textarea} from "@/components/ui/textarea";
 import {
     MultipleChoiceTemplateDto,
     TrueFalseTemplateDto,
@@ -21,7 +17,6 @@ import {
     VideoResponseTemplateDto,
     ImageResponseTemplateDto
 } from "@/types/exam/questionTemplates";
-import {Trash2, Plus} from "lucide-react";
 
 // Import template form components
 import MultipleChoiceTemplateForm, {MultipleChoiceTemplateFormHandle} from './MultipleChoiceTemplateForm';
@@ -82,7 +77,6 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
 
     const [formData, setFormData] = useState<BaseQuestionTemplateFormData>(value);
     const [errors, setErrors] = useState<BaseQuestionTemplateFormErrors>({});
-    const [tagInput, setTagInput] = useState('');
 
     // Template validation ref - her template'in validate fonksiyonunu tutar
     // Union type: Tüm template handle'ları
@@ -122,23 +116,6 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
         }
     }, [formData]);
 
-    const handleChange = <T extends keyof BaseQuestionTemplateFormData>(
-        name: T,
-        newValue: BaseQuestionTemplateFormData[T]
-    ) => {
-        setFormData(prev => ({
-            ...prev,
-            [name]: newValue
-        }));
-
-        // Hata varsa temizle
-        if (errors[name as keyof BaseQuestionTemplateFormErrors]) {
-            setErrors(prev => ({
-                ...prev,
-                [name]: undefined
-            }));
-        }
-    };
     /*
         // Template-specific data değişikliklerini handle et
         const handleTemplateDataChange = (templateData: MultipleChoiceTemplateDto | TrueFalseTemplateDto |
@@ -158,31 +135,22 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
         FillInTheBlanksTemplateDto | ShortAnswerTemplateDto |
         MatchingTemplateDto | EssayTemplateDto | OrderingTemplateDto | MultipleResponseTemplateDto |
         HotSpotTemplateDto | DragAndDropTemplateDto | AudioResponseTemplateDto | VideoResponseTemplateDto | ImageResponseTemplateDto) => {
-        setFormData(prev => ({
-            ...prev,
-            templateData: templateData
-        }));
+        setFormData(prev => {
+            // ÖNEMLİ: Mevcut templateData'daki base field'ları koru (id, title, description, vb.)
+            // Sadece template-specific field'ları merge et
+            const mergedTemplateData = prev.templateData ? {
+                ...prev.templateData, // Mevcut base field'ları koru (id, title, description, subject, difficulty, points, timeLimit, instructions, tags, isActive, vb.)
+                ...templateData // Template-specific field'ları override et (question, options, correctOptionIndex, vb.)
+            } : templateData;
+            
+            return {
+                ...prev,
+                templateData: mergedTemplateData
+            };
+        });
     }, []);
 
 
-    // Tag yönetimi
-    const addTag = () => {
-        if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
-            handleChange('tags', [...formData.tags, tagInput.trim()]);
-            setTagInput('');
-        }
-    };
-
-    const removeTag = (index: number) => {
-        handleChange('tags', formData.tags.filter((_, i) => i !== index));
-    };
-
-    const handleTagInputKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            addTag();
-        }
-    };
 
     // Base form validation
     const validateBaseForm = (): boolean => {
@@ -569,8 +537,8 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
                     </div>*/}
                 </div>
 
-                {/* Açıklama */}
-                <div className="space-y-2">
+                {/* Açıklama - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
+                {/* <div className="space-y-2">
                     <Label htmlFor="description">Açıklama</Label>
                     <Textarea
                         id="description"
@@ -579,10 +547,10 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
                         className="min-h-[100px]"
                         placeholder="Soru hakkında açıklama giriniz (opsiyonel)"
                     />
-                </div>
+                </div> */}
 
-                {/* Talimatlar */}
-                <div className="space-y-2">
+                {/* Talimatlar - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
+                {/* <div className="space-y-2">
                     <Label htmlFor="instructions">Talimatlar</Label>
                     <Textarea
                         id="instructions"
@@ -591,14 +559,14 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
                         className="min-h-[100px]"
                         placeholder="Soru çözüm talimatlarını giriniz (opsiyonel)"
                     />
-                </div>
+                </div> */}
 
-                {/* Etiketler */}
-                <div className="space-y-4">
+                {/* Etiketler - YORUM SATIRI: UI'dan kaldırıldı */}
+                {/* <div className="space-y-4">
                     <Label>Etiketler</Label>
 
                     {/* Etiket Ekleme */}
-                    <div className="flex gap-2">
+                    {/* <div className="flex gap-2">
                         <Input
                             value={tagInput}
                             onChange={(e) => setTagInput(e.target.value)}
@@ -615,10 +583,10 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
                             <Plus className="w-4 h-4 mr-2"/>
                             Ekle
                         </Button>
-                    </div>
+                    </div> */}
 
                     {/* Mevcut Etiketler */}
-                    {formData.tags.length > 0 && (
+                    {/* {formData.tags.length > 0 && (
                         <div className="flex flex-wrap gap-2">
                             {formData.tags.map((tag, index) => (
                                 <div
@@ -639,10 +607,10 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
                             ))}
                         </div>
                     )}
-                </div>
+                </div> */}
 
                 {/* Template-Specific Form */}
-                <div className="mt-6">
+                <div className="mt-1">
                     {renderTemplateSpecificForm()}
                 </div>
 

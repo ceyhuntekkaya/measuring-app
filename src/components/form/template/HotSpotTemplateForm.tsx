@@ -73,7 +73,7 @@ const HotSpotTemplateForm = forwardRef<HotSpotTemplateFormHandle, HotSpotTemplat
                 },
                 maxSelections: value.maxSelections,
                 allowMultipleSpots: value.allowMultipleSpots ?? false,
-                explanation: value.explanation || ''
+                explanation: '' // UI'dan kaldırıldı, her zaman boş string
             });
         }
     }, []);
@@ -95,7 +95,7 @@ const HotSpotTemplateForm = forwardRef<HotSpotTemplateFormHandle, HotSpotTemplat
                 options: optionsWithImage,
                 maxSelections: formData.maxSelections,
                 allowMultipleSpots: formData.allowMultipleSpots,
-                explanation: formData.explanation
+                explanation: '' // UI'dan kaldırıldı, her zaman boş string
             };
 
             onChange(templateData);
@@ -407,8 +407,8 @@ const HotSpotTemplateForm = forwardRef<HotSpotTemplateFormHandle, HotSpotTemplat
                         </div>
                     </div>
 
-                    {/* Açıklama */}
-                    <div className="space-y-2">
+                    {/* Açıklama - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
+                    {/* <div className="space-y-2">
                         <Label htmlFor="explanation">Açıklama</Label>
                         <Textarea
                             id="explanation"
@@ -417,7 +417,7 @@ const HotSpotTemplateForm = forwardRef<HotSpotTemplateFormHandle, HotSpotTemplat
                             className="min-h-[100px]"
                             placeholder="Sıcak nokta açıklaması giriniz (opsiyonel)"
                         />
-                    </div>
+                    </div> */}
 
                     {/* KAYDET BUTONU KALDIRILDI - Parent component'te olacak */}
                 </div>
