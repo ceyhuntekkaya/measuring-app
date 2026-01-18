@@ -22,7 +22,7 @@ export default function UserDashboard() {
 
 
     // Bugünün tarihini kontrol et (saat bilgisi olmadan sadece gün)
-    const isToday = (date: Date | undefined) => {
+    const isToday = (date: string | Date | undefined) => {
         if (!date) return false;
         const today = new Date();
         const examDate = new Date(date);
@@ -33,7 +33,7 @@ export default function UserDashboard() {
         );
     };
 
-    const formatDate = (date: Date | undefined) => {
+    const formatDate = (date: string | Date | undefined) => {
         if (!date) return '';
         return new Date(date).toLocaleDateString('tr-TR', {
             day: 'numeric',

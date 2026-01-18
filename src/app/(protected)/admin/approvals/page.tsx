@@ -1,13 +1,13 @@
 'use client';
 import {Column, RecordType} from "@/types/ui/table";
-import React, {useEffect, useState, useMemo} from "react";
+import React, {useState, useMemo} from "react";
 import PageHeader from "@/components/layout/page-header";
 import DynamicTable from "@/components/ui/dynamic-table";
 import {ActionButtons} from "@/components/ui/simple-dropdown";
 import {useRouter} from "next/navigation";
 import LoadingComp from "@/components/ui/loading-comp";
-import {useQuestionGroup} from "@/hooks/exam/use-question-group";
-import {QuestionGroupDto} from "@/types/exam/examEntities";
+import {useGetAllQuestionGroups} from "@/api/generated/question-group-management/question-group-management";
+import type {QuestionGroupDto, QuestionDto} from "@/api/generated/model";
 import {statusConverter, approvalStatusConverter} from "@/utils/enum-converter";
 import {EStatus, EApprovalStatus} from "@/types/exam/enum";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
@@ -15,30 +15,20 @@ import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/c
 
 export default function ApprovalsPage() {
     const router = useRouter();
-    const {
-        questionGroups,
-        getAllQuestionGroup,
-        loading
-    } = useQuestionGroup();
-
-
-   
+    const {data, isLoading: loading} = useGetAllQuestionGroups({});
+    const questionGroups = (data as { data?: QuestionGroupDto[] })?.data || [];
     
     const [filterStatus, setFilterStatus] = useState<EApprovalStatus | 'ALL'>(EApprovalStatus.PENDING);
-
-    useEffect(() => {
-        getAllQuestionGroup();
-    }, []);
     
     // Filtrelenmiş soru grupları
     const filteredQuestionGroups = useMemo(() => {
-        if (!questionGroups) return [];
+        const groups = questionGroups || [];
         
         if (filterStatus === 'ALL') {
-            return questionGroups;
+            return groups;
         }
         
-        return questionGroups.filter(group => group.approvalStatus === filterStatus);
+        return groups.filter(group => group.approvalStatus === filterStatus);
     }, [questionGroups, filterStatus]);
 
     const columns: Column<RecordType>[] = [
@@ -91,14 +81,14 @@ export default function ApprovalsPage() {
             header: 'Sorular',
             render: (value, record) => {
                 const questionGroup = record as QuestionGroupDto;
-                const questions = questionGroup.questions || [];
+                const questions = (questionGroup.questions || []) as QuestionDto[];
                 
                 if (questions.length === 0) {
                     return <div className="text-gray-400">Soru yok</div>;
                 }
                 
                 // ApprovalStatus'e göre grupla
-                const statusCounts = questions.reduce((acc, question) => {
+                const statusCounts = questions.reduce((acc: Record<string, number>, question: QuestionDto) => {
                     const status = question.approvalStatus || 'PENDING';
                     acc[status] = (acc[status] || 0) + 1;
                     return acc;
@@ -188,7 +178,7 @@ export default function ApprovalsPage() {
                 </div>
                 {
                     filteredQuestionGroups &&
-                    <DynamicTable columns={columns} data={filteredQuestionGroups}/>
+                    <DynamicTable columns={columns} data={filteredQuestionGroups as RecordType[]}/>
                 }
 
             </div>

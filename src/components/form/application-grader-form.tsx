@@ -9,8 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { NumberInput } from "@/components/ui/number-input";
 import Checkbox from "@/components/ui/checkbox";
-import { CreateApplicationGraderRequest, UpdateApplicationGraderRequest, ApplicationGraderDto } from "@/types/management/brand";
-import { ApplicationDto } from "@/types/management/brand";
+import type { CreateApplicationGraderRequest, UpdateApplicationGraderRequest, ApplicationGraderDto, ApplicationDto } from "@/api/generated/model";
 
 // Basit user type'ı
 interface UserOption {
@@ -20,13 +19,6 @@ interface UserOption {
     email?: string;
 }
 
-interface ApplicationGraderFormData {
-    userId: string;
-    applicationId: string;
-    endEndDate: string;
-    orderNumber: number;
-    isReferee: boolean;
-}
 
 interface ApplicationGraderFormErrors {
     userId?: string;
@@ -54,10 +46,10 @@ const ApplicationGraderForm: React.FC<ApplicationGraderFormProps> = ({
                                                                          loading = false,
                                                                          mode = 'create'
                                                                      }) => {
-    const [formData, setFormData] = useState<ApplicationGraderFormData>({
+    const [formData, setFormData] = useState<CreateApplicationGraderRequest>({
         userId: '',
         applicationId: '',
-        endEndDate: '',
+        endEndDate: undefined,
         orderNumber: 1,
         isReferee: false
     });
@@ -69,7 +61,7 @@ const ApplicationGraderForm: React.FC<ApplicationGraderFormProps> = ({
             setFormData({
                 userId: grader.userId || '',
                 applicationId: grader.applicationId || '',
-                endEndDate: grader.endEndDate ? grader.endEndDate.split('T')[0] : '',
+                endEndDate: grader.endEndDate ? grader.endEndDate.split('T')[0] : undefined,
                 orderNumber: grader.orderNumber || 1,
                 isReferee: grader.isReferee || false
             });
@@ -80,7 +72,7 @@ const ApplicationGraderForm: React.FC<ApplicationGraderFormProps> = ({
     useEffect(() => {
         if (mode === 'create' && formData.applicationId && !grader) {
             const appGraders = existingGraders.filter(g => g.applicationId === formData.applicationId);
-            const maxOrder = appGraders.length > 0 ? Math.max(...appGraders.map(g => g.orderNumber)) : 0;
+            const maxOrder = appGraders.length > 0 ? Math.max(...appGraders.map(g => g.orderNumber || 0)) : 0;
             setFormData(prev => ({
                 ...prev,
                 orderNumber: maxOrder + 1
@@ -88,9 +80,9 @@ const ApplicationGraderForm: React.FC<ApplicationGraderFormProps> = ({
         }
     }, [formData.applicationId, existingGraders, mode, grader]);
 
-    const handleChange = <T extends keyof ApplicationGraderFormData>(
+    const handleChange = <T extends keyof CreateApplicationGraderRequest>(
         name: T,
-        value: ApplicationGraderFormData[T]
+        value: CreateApplicationGraderRequest[T]
     ) => {
         setFormData(prev => ({
             ...prev,
@@ -109,7 +101,7 @@ const ApplicationGraderForm: React.FC<ApplicationGraderFormProps> = ({
             newErrors.applicationId = 'Başvuru seçimi zorunludur';
         }
 
-        if (formData.orderNumber < 1) {
+        if (formData.orderNumber !== undefined && formData.orderNumber < 1) {
             newErrors.orderNumber = 'Sıra numarası 1\'den küçük olamaz';
         }
 
@@ -149,18 +141,17 @@ const ApplicationGraderForm: React.FC<ApplicationGraderFormProps> = ({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (validateForm()) {
-            const submitData: CreateApplicationGraderRequest | UpdateApplicationGraderRequest = {
-                userId: formData.userId,
-                orderNumber: formData.orderNumber,
-                isReferee: formData.isReferee,
-                endEndDate: formData.endEndDate || undefined
-            };
-
+            // Directly use formData - no manual mapping needed!
             if (mode === 'create') {
-                (submitData as CreateApplicationGraderRequest).applicationId = formData.applicationId;
+                onSubmit(formData as CreateApplicationGraderRequest);
+            } else {
+                const submitData: UpdateApplicationGraderRequest = {
+                    endEndDate: formData.endEndDate,
+                    orderNumber: formData.orderNumber,
+                    isReferee: formData.isReferee
+                };
+                onSubmit(submitData);
             }
-
-            onSubmit(submitData);
         }
     };
 
@@ -194,8 +185,8 @@ const ApplicationGraderForm: React.FC<ApplicationGraderFormProps> = ({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectGroup>
-                                        {users.map((user) => (
-                                            <SelectItem key={user.id} value={user.id}>
+                                        {users.filter(user => user.id).map((user) => (
+                                            <SelectItem key={user.id} value={user.id!}>
                                                 {user.name} {user.lastName}
                                                 {user.email && <span className="text-gray-500 ml-2">({user.email})</span>}
                                             </SelectItem>
@@ -238,15 +229,15 @@ const ApplicationGraderForm: React.FC<ApplicationGraderFormProps> = ({
                             <Label htmlFor="applicationId">Başvuru *</Label>
                             <Select
                                 onValueChange={(value) => handleChange('applicationId', value as string)}
-                                value={formData.applicationId}
+                                value={formData.applicationId || ''}
                             >
                                 <SelectTrigger className={errors.applicationId ? 'border-red-500' : ''}>
                                     <SelectValue placeholder="Başvuru seçin" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectGroup>
-                                        {completedApplications.map((app) => (
-                                            <SelectItem key={app.id} value={app.id}>
+                                        {completedApplications.filter(app => app.id).map((app) => (
+                                            <SelectItem key={app.id} value={app.id!}>
                                                 {app.name} - {app.candidateName} {app.candidateLastName}
                                                 <span className="text-gray-500 ml-2">({app.examSessionName})</span>
                                             </SelectItem>

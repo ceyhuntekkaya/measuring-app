@@ -8,8 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { NumberInput } from "@/components/ui/number-input";
-import { ExamSectionDto, ExamTypeDto } from "@/types/exam/examTemplates";
-import {EStatus} from "@/types/exam/enum";
+import type { ExamSectionDto, ExamTypeDto, CreateExamSectionRequest, UpdateExamSectionRequest } from "@/api/generated/model";
 
 
 
@@ -25,7 +24,7 @@ interface ExamSectionFormErrors {
 }
 
 interface ExamSectionFormProps {
-    onSubmit: (data: ExamSectionDto) => void;
+    onSubmit: (data: CreateExamSectionRequest | UpdateExamSectionRequest) => void;
     examSection?: ExamSectionDto | null;
     examTypes: ExamTypeDto[];
     loading?: boolean;
@@ -37,16 +36,10 @@ const ExamSectionForm: React.FC<ExamSectionFormProps> = ({
                                                              examTypes = [],
                                                              loading = false
                                                          }) => {
-    const [formData, setFormData] = useState<ExamSectionDto>({
+    const [formData, setFormData] = useState<CreateExamSectionRequest>({
         name: '',
-        examType: null,
-        orderNumber: 1,
-        id: '',
-        createdAt: null,
-        deletedAt: null,
-        status: EStatus.ACTIVE,
-        createdById: null,
-        deletedById: null
+        examTypeId: '',
+        orderNumber: 1
     });
 
 
@@ -56,23 +49,18 @@ const ExamSectionForm: React.FC<ExamSectionFormProps> = ({
 
     useEffect(() => {
         if (examSection) {
+            const examType = examSection.examType as ExamTypeDto | undefined;
             setFormData({
                 name: examSection.name || '',
-                examTypeId: examSection.examType || null,
-                orderNumber: examSection.orderNumber || 1,
-                id: examSection.id || '',
-                createdAt: examSection.createdAt || new Date(),
-                deletedAt: examSection.deletedAt || null,
-                status: examSection.status,
-                createdById: examSection.createdById || null,
-                deletedById: examSection.deletedById || null,
+                examTypeId: examType?.id || '',
+                orderNumber: examSection.orderNumber || 1
             });
         }
     }, [examSection]);
 
-    const handleChange = <T extends keyof ExamSectionDto>(
+    const handleChange = <T extends keyof CreateExamSectionRequest>(
         name: T,
-        value: ExamSectionDto[T]
+        value: CreateExamSectionRequest[T]
     ) => {
         setFormData(prev => ({
             ...prev,
@@ -83,7 +71,7 @@ const ExamSectionForm: React.FC<ExamSectionFormProps> = ({
     const validateForm = (): boolean => {
         const newErrors: ExamSectionFormErrors = {};
 
-        if (!formData.name) {
+        if (!formData.name || !formData.name.trim()) {
             newErrors.name = 'Sınav bölümü adı zorunludur';
         } else if (formData.name.trim().length < 3) {
             newErrors.name = 'Sınav bölümü adı en az 3 karakter olmalıdır';
@@ -105,7 +93,13 @@ const ExamSectionForm: React.FC<ExamSectionFormProps> = ({
 
     const handleSubmit = () => {
         if (validateForm()) {
-            onSubmit(formData);
+            // Directly use formData - no manual mapping needed!
+            const submitData: CreateExamSectionRequest | UpdateExamSectionRequest = {
+                name: formData.name?.trim(),
+                examTypeId: formData.examTypeId,
+                orderNumber: formData.orderNumber
+            };
+            onSubmit(submitData);
         }
     };
 
@@ -162,7 +156,7 @@ const ExamSectionForm: React.FC<ExamSectionFormProps> = ({
                         <Label htmlFor="examType">Sınav Tipi *</Label>
                         <Select
                             onValueChange={(value) => handleChange('examTypeId', value as string)}
-                            value={formData.examTypeId as string}
+                                value={formData.examTypeId || ''}
                         >
                             <SelectTrigger className={errors.examTypeId ? 'border-red-500' : ''}>
                                 <SelectValue placeholder="Sınav tipi seçin" />

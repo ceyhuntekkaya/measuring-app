@@ -6,15 +6,16 @@ import { Card, CardContent,  } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, X } from 'lucide-react';
 import LoadingComp from '@/components/ui/loading-comp';
-import {useBranch} from "@/hooks/exam/use-branch";
-import {ExamTypeDto} from "@/types/exam/examTemplates";
-import {ExamFormData, QuestionGroupDto} from "@/types/exam/examEntities";
-import {examTypeService} from "@/services/api/exam/exam-type-service";
-import {questionGroupService} from "@/services/api/exam/question-grup-service";
+import {useGetAllBranches} from "@/api/generated/branch-management/branch-management";
+import {useGetAllBrands} from "@/api/generated/brand-management/brand-management";
+import type {ExamTypeDto} from "@/api/generated/model";
+import { getAllExamTypes } from "@/api/generated/exam-type-management/exam-type-management";
+import type { ApiResponseExamTypeListResponse, ApiResponseListBrandDto, ApiResponseListBranchDto, ExamDto, QuestionGroupDto } from "@/api/generated/model";
 import ExamForm from "@/components/form/exam-form";
-import {useExam} from "@/hooks/exam/use-exam";
-import {useBrand} from "@/hooks/exam/use-brand";
-import {BranchDto} from "@/types/management/brand";
+import {useGetExamById} from "@/api/generated/exam-management/exam-management";
+import type { ApiResponseExamDto, CreateExamRequest, UpdateExamRequest } from "@/api/generated/model";
+import {useGetQuestionGroupsByExamType} from "@/api/generated/question-group-management/question-group-management";
+import type {BranchDto} from "@/api/generated/model";
 
 
 export default function ExamFormPage() {
@@ -23,32 +24,46 @@ export default function ExamFormPage() {
     const isEdit = Boolean(examId);
     const router = useRouter();
 
-    // Hooks
-    const {
-        selectedExam,
-        loading: examLoading,
-        createExam,
-        updateExam,
-        getExamById
-    } = useExam();
+    const { data, isLoading: examLoading } = useGetExamById(examId, {
+        query: { enabled: !!examId }
+    });
+    const selectedExam = (data as ApiResponseExamDto)?.data as ExamDto | undefined;
 
-    const {
-        brands,
-        loading: brandsLoading,
-        getAllBrands
-    } = useBrand();
+    const { data: brandsData, isLoading: brandsLoading } = useGetAllBrands();
+    const brands = (brandsData as ApiResponseListBrandDto)?.data || null;
 
-    const {
-        branches,
-        loading: branchesLoading,
-        getAllBranches,
-    } = useBranch();
+    const { data: branchesData, isLoading: branchesLoading } = useGetAllBranches();
+    const branches = (branchesData as ApiResponseListBranchDto)?.data || null;
+
+    const [selectedExamTypeId, setSelectedExamTypeId] = React.useState<string>('');
+    const { data: questionGroupsData, isLoading: questionGroupsLoading } = useGetQuestionGroupsByExamType(selectedExamTypeId, {
+        query: { enabled: !!selectedExamTypeId }
+    });
+    const questionGroups = (questionGroupsData as { data?: QuestionGroupDto[] })?.data || [];
+
+
+    
+    const getQuestionGroupsByExamType = React.useCallback((examTypeId: string) => {
+        setSelectedExamTypeId(examTypeId);
+    }, []);
 
     // Local state for form dependencies
     const [examTypes, setExamTypes] = useState<ExamTypeDto[]>([]);
-    const [questionGroups, setQuestionGroups] = useState<QuestionGroupDto[]>([]);
     const [filteredBranches, setFilteredBranches] = useState<BranchDto[]>([]);
     const [loadingDependencies, setLoadingDependencies] = useState(true);
+
+    // Load exam types
+    const loadExamTypes = React.useCallback(async () => {
+        try {
+            const response = await getAllExamTypes({});
+            const apiResponse = response as unknown as ApiResponseExamTypeListResponse;
+            if (apiResponse.success && apiResponse.data) {
+                setExamTypes(apiResponse.data.examTypes || []);
+            }
+        } catch (error) {
+            console.error('Error loading exam types:', error);
+        }
+    }, []);
 
     // Load initial data
     useEffect(() => {
@@ -58,16 +73,10 @@ export default function ExamFormPage() {
 
                 // Load all required data in parallel
                 await Promise.all([
-                    getAllBrands(),
-                    getAllBranches(),
-                    loadExamTypes(),
-                    loadQuestionGroups()
+                    loadExamTypes()
                 ]);
 
-                // If editing, load exam data
-                if (isEdit && examId) {
-                    await getExamById(examId);
-                }
+                // Exam data will be loaded automatically by useGetExamById
 
             } catch (error) {
                 console.error('Error loading initial data:', error);
@@ -77,42 +86,12 @@ export default function ExamFormPage() {
         };
 
         loadInitialData();
-    }, [examId, isEdit]);
-
-    // Load exam types
-    const loadExamTypes = async () => {
-        try {
-            const response = await examTypeService.getAllExamTypes();
-            if (response.success && response.data) {
-                setExamTypes(response.data.examTypes);
-            }
-        } catch (error) {
-            console.error('Error loading exam types:', error);
-        }
-    };
-
-    // Load question groups
-    const loadQuestionGroups = async (examTypeId?: string) => {
-        try {
-            let response;
-            if (examTypeId) {
-                response = await questionGroupService.getQuestionGroupsByExamType(examTypeId);
-            } else {
-                response = await questionGroupService.getAllQuestionGroup();
-            }
-
-            if (response.success && response.data) {
-                setQuestionGroups(response.data);
-            }
-        } catch (error) {
-            console.error('Error loading question groups:', error);
-        }
-    };
+    }, [examId, isEdit, loadExamTypes]);
 
     // Handle brand change
     const handleBrandChange = async (brandId: string) => {
         if (brandId && branches) {
-            const filtered = branches.filter(branch => branch.brandid === brandId);
+            const filtered = branches.filter(branch => branch.brandId === brandId);
             setFilteredBranches(filtered);
         } else {
             setFilteredBranches([]);
@@ -120,28 +99,16 @@ export default function ExamFormPage() {
     };
 
     // Handle exam type change
-    const handleExamTypeChange = async (examTypeId: string) => {
-        await loadQuestionGroups(examTypeId);
+    const handleExamTypeChange = (examTypeId: string) => {
+        getQuestionGroupsByExamType(examTypeId);
     };
 
-    // Handle form submission
-    const handleSubmit = async (formData: ExamFormData) => {
-        try {
-            if (isEdit && examId) {
-                await updateExam({ ...formData, id: examId });
-            } else {
-                await createExam(formData);
-            }
-
-            // Navigate back to exam list or detail page
-            if (isEdit) {
-                router.push(`/exams/${examId}`);
-            } else {
-                router.push('/exams');
-            }
-        } catch (error) {
-            console.error('Error submitting exam form:', error);
-        }
+    // Handle form submission - formData is already CreateExamRequest/UpdateExamRequest!
+    // Note: This page doesn't have mutations, it's just a detail page
+    const handleSubmit = async (_formData: CreateExamRequest | UpdateExamRequest) => {
+        // This page is read-only, handleSubmit shouldn't be called
+        console.warn(_formData);
+        console.warn('handleSubmit called on detail page');
     };
 
     // Handle cancel
@@ -154,7 +121,7 @@ export default function ExamFormPage() {
     };
 
     // Loading state
-    if (loadingDependencies || examLoading || brandsLoading || branchesLoading) {
+    if (loadingDependencies || examLoading || brandsLoading || branchesLoading || questionGroupsLoading) {
         return <LoadingComp />;
     }
 

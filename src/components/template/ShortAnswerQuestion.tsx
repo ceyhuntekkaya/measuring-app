@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ShortAnswerTemplateDto, AcceptableAnswer } from '@/types/exam/questionTemplates';
-import {QuestionTemplateType} from "@/types/exam/examEntities";
+import type { ShortAnswerTemplateDto, AcceptableAnswer } from '@/api/generated/model';
+import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
 
 interface ShortAnswerQuestionProps {

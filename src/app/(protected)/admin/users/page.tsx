@@ -1,25 +1,20 @@
 'use client';
 
 import PageHeader from "@/components/layout/page-header";
-import React, {useEffect} from "react";
+import React from "react";
 import {useRouter} from "next/navigation";
 import {Column, RecordType} from "@/types/ui/table";
 import LoadingComp from "@/components/ui/loading-comp";
 import {ActionButtons} from "@/components/ui/simple-dropdown";
 import DynamicTable from "@/components/ui/dynamic-table";
-import {useUser} from "@/hooks/use-user";
+import {useGetAllUsers} from "@/api/generated/user-management/user-management";
+import type {ApiResponseListUserDto} from "@/api/generated/model";
 
 export default function CandidatePage() {
     const router = useRouter();
-    const {
-        getAllUsers,
-        users,
-        loading
-    } = useUser();
-
-    useEffect(() => {
-        getAllUsers();
-    }, []);
+    const {data, isLoading: loading} = useGetAllUsers();
+    
+    const users = (data as unknown as ApiResponseListUserDto)?.data;
 
     const columns: Column<RecordType>[] = [
 
@@ -71,7 +66,7 @@ export default function CandidatePage() {
             <div className="p-6 pt-1">
                 {
                     users &&
-                    <DynamicTable columns={columns} data={users}/>
+                    <DynamicTable columns={columns} data={users as RecordType[]}/>
                 }
 
             </div>

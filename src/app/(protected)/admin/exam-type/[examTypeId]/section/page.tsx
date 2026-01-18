@@ -1,29 +1,26 @@
 'use client';
 import {Column, RecordType} from "@/types/ui/table";
-import React, {useEffect} from "react";
+import React from "react";
 import PageHeader from "@/components/layout/page-header";
 import DynamicTable from "@/components/ui/dynamic-table";
 import {ActionButtons} from "@/components/ui/simple-dropdown";
 import {useParams, useRouter} from "next/navigation";
 import LoadingComp from "@/components/ui/loading-comp";
 import Link from "next/link";
-import {useExamSection} from "@/hooks/exam/use-exam-section";
+import {useGetExamSectionsByExamType} from "@/api/generated/exam-section-management/exam-section-management";
 import {statusConverter} from "@/utils/enum-converter";
 import {EStatus} from "@/types/exam/enum";
+import type {ApiResponseListExamSectionDto} from "@/api/generated/model";
 
 export default function ExamSectionPage() {
     const router = useRouter();
     const params = useParams();
     const examTypeId = params.examTypeId as string;
-    const {
-        sectionsByExamType,
-        getExamSectionsByExamType,
-        loading
-    } = useExamSection();
-
-    useEffect(() => {
-        getExamSectionsByExamType(examTypeId);
-    }, []);
+    
+    const {data, isLoading: loading} = useGetExamSectionsByExamType(examTypeId, {
+        query: { enabled: !!examTypeId }
+    });
+    const sectionsByExamType = (data as unknown as ApiResponseListExamSectionDto)?.data || [];
 
     const columns: Column<RecordType>[] = [
 
@@ -86,7 +83,7 @@ export default function ExamSectionPage() {
             <div className="p-6 pt-1">
                 {
                     sectionsByExamType &&
-                    <DynamicTable columns={columns} data={sectionsByExamType}/>
+                    <DynamicTable columns={columns} data={sectionsByExamType as RecordType[]}/>
                 }
 
             </div>

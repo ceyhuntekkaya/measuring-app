@@ -5,7 +5,7 @@ import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
 import {Clock, User as UserIcon, Phone, Mail, MapPin, Globe, Calendar, IdCard, Key, CheckCircle, XCircle, Camera} from 'lucide-react';
-import {CandidateDto} from '@/types/management/brand';
+import type {CandidateDto} from '@/api/generated/model/candidateDto';
 import { formatDate } from '@/utils/date-formater';
 import LoadingComp from "@/components/ui/loading-comp";
 

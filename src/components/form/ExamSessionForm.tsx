@@ -10,13 +10,10 @@ import {Textarea} from "@/components/ui/textarea";
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import type {SelectValue as SelectValueType, SelectValues} from "@/components/ui/select";
 import {NumberInput} from "@/components/ui/number-input";
-import {ExamSessionFormData} from "@/types/exam/examResponses";
-import {ExamSessionDto} from "@/types/exam/examEntities";
-import {EExamType, EStatus} from "@/types/exam/enum";
+import type {ExamSessionDto, ExamTypeDto, BrandDto, BranchDto, CreateExamSessionRequest, UpdateExamSessionRequest} from "@/api/generated/model";
+import {EExamType} from "@/types/exam/enum";
 import {examTypeConverter} from "@/utils/enum-converter";
-import {BrandDto, BranchDto} from "@/types/management/brand";
-import {UserDto} from "@/types/auth";
-import {ExamTypeDto} from "@/types/exam/examTemplates";
+import type {UserDto} from "@/api/generated/model";
 
 
 interface ExamSessionFormErrors {
@@ -32,7 +29,7 @@ interface ExamSessionFormErrors {
 }
 
 interface ExamSessionFormProps {
-    onSubmit: (data: ExamSessionFormData) => void;
+    onSubmit: (data: CreateExamSessionRequest | UpdateExamSessionRequest) => void;
     examSession?: ExamSessionDto | null;
     loading?: boolean;
     brands: BrandDto[];
@@ -52,22 +49,16 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
                                                              supervisors = [],
                                                              onBrandChange
                                                          }) => {
-    const [formData, setFormData] = useState<ExamSessionFormData>({
+    const [formData, setFormData] = useState<CreateExamSessionRequest>({
         name: '',
         description: '',
         brandId: '',
         branchId: '',
         examTypeId: '',
-        examTemplate: null,
-        startDate: null,
+        examTemplate: undefined,
+        startDate: undefined,
         quota: 30,
-        supervisorIds: [],
-        id: '',
-        createdAt: new Date(),
-        deletedAt: null,
-        status: EStatus.ACTIVE,
-        createdById: '',
-        deletedById: ''
+        supervisorIds: []
     });
 
     const [errors, setErrors] = useState<ExamSessionFormErrors>({});
@@ -85,33 +76,24 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
             */
 
             setFormData({
-
-                id: examSession.id || '',
-                createdAt: examSession.createdAt || new Date(),
-                deletedAt: examSession.deletedAt || null,
-                status: examSession.status,
-                createdById: examSession.createdById || null,
-                deletedById: examSession.deletedById || null,
-
-
                 name: examSession.name || '',
                 description: examSession.description || '',
                 brandId: examSession.brand?.id || '',
                 branchId: examSession.branch?.id || '',
                 examTypeId: examSession.examType?.id || '',
-                examTemplate: examSession.examTemplate || '',
+                examTemplate: examSession.examTemplate as CreateExamSessionRequest['examTemplate'],
                 startDate: examSession.startDate,
                 quota: examSession.quota || 30,
-                supervisorIds: examSession.supervisors?.map(s => s.id) || []
+                supervisorIds: examSession.supervisors?.map(s => s.id).filter((id): id is string => !!id) || []
             });
         }
     }, [examSession]);
 
 
 
-    const handleChange = <T extends keyof ExamSessionFormData>(
+    const handleChange = <T extends keyof CreateExamSessionRequest>(
         name: T,
-        value: ExamSessionFormData[T]
+        value: CreateExamSessionRequest[T]
     ) => {
         setFormData(prev => ({
             ...prev,
@@ -128,7 +110,7 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
     const validateForm = (): boolean => {
         const newErrors: ExamSessionFormErrors = {};
 
-        if (!formData.name.trim()) {
+        if (!formData.name || !formData.name.trim()) {
             newErrors.name = 'Sınav oturumu adı zorunludur';
         } else if (formData.name.trim().length < 3) {
             newErrors.name = 'Sınav oturumu adı en az 3 karakter olmalıdır';
@@ -172,13 +154,13 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
         }
 
 
-        if (formData.quota <= 0) {
+        if (!formData.quota || formData.quota <= 0) {
             newErrors.quota = 'Kapasite 0\'dan büyük olmalıdır';
         } else if (formData.quota > 1000) {
             newErrors.quota = 'Kapasite 1000\'den fazla olamaz';
         }
 
-        if (formData.supervisorIds.length === 0) {
+        if (!formData.supervisorIds || formData.supervisorIds.length === 0) {
             newErrors.supervisorIds = 'En az bir gözetmen seçilmelidir';
         } else if (formData.supervisorIds.length > 10) {
             newErrors.supervisorIds = 'En fazla 10 gözetmen seçilebilir';
@@ -191,23 +173,17 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (validateForm()) {
-            const submitData = {
-                id: formData.id || '',
-                createdAt: formData.createdAt || new Date(),
-                deletedAt: formData.deletedAt || null,
-                status: formData.status,
-                createdById: formData.createdById || null,
-                deletedById: formData.deletedById || null,
-
-                name: formData.name.trim(),
-                description: formData.description.trim(),
-                brandId: formData.brandId,
-                branchId: formData.branchId,
-                examTypeId: formData.examTypeId,
-                examTemplate: formData.examTemplate as EExamType,
+            // Directly use formData - no manual mapping needed!
+            const submitData: CreateExamSessionRequest | UpdateExamSessionRequest = {
+                name: formData.name?.trim() || '',
+                description: formData.description?.trim(),
+                brandId: formData.brandId || '',
+                branchId: formData.branchId || '',
+                examTypeId: formData.examTypeId || '',
+                examTemplate: formData.examTemplate,
                 startDate: formData.startDate,
                 quota: formData.quota,
-                supervisorIds: formData.supervisorIds
+                supervisorIds: formData.supervisorIds || []
             };
 
             onSubmit(submitData);
@@ -217,16 +193,16 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
     const handleSupervisorToggle = (supervisorId: string) => {
         setFormData(prev => ({
             ...prev,
-            supervisorIds: prev.supervisorIds.includes(supervisorId)
-                ? prev.supervisorIds.filter(id => id !== supervisorId)
-                : [...prev.supervisorIds, supervisorId]
+            supervisorIds: (prev.supervisorIds || []).includes(supervisorId)
+                ? (prev.supervisorIds || []).filter(id => id !== supervisorId)
+                : [...(prev.supervisorIds || []), supervisorId]
         }));
     };
 
     const getSelectedSupervisorsText = () => {
-        if (formData.supervisorIds.length === 0) return 'Gözetmen seçin';
+        if (!formData.supervisorIds || formData.supervisorIds.length === 0) return 'Gözetmen seçin';
         if (formData.supervisorIds.length === 1) {
-            const supervisor = supervisors.find(s => s.id === formData.supervisorIds[0]);
+            const supervisor = supervisors.find(s => s.id === formData.supervisorIds?.[0]);
             return supervisor ? `${supervisor.name} ${supervisor.lastName}` : 'Gözetmen seçin';
         }
         return `${formData.supervisorIds.length} gözetmen seçildi`;
@@ -302,7 +278,8 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
     // formData.startDate değiştiğinde dateValue, hourValue ve minuteValue'yu güncelle
     useEffect(() => {
         if (formData.startDate) {
-            const { date, hour, minute } = getDateAndTimeFromDate(formData.startDate);
+            const startDate = typeof formData.startDate === 'string' ? new Date(formData.startDate) : formData.startDate;
+            const { date, hour, minute } = getDateAndTimeFromDate(startDate);
             setDateValue(date);
             setHourValue(hour);
             setMinuteValue(minute);
@@ -318,7 +295,7 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
         setDateValue(value);
         const newDate = createDateFromDateAndTime(value, hourValue, minuteValue);
         if (newDate) {
-            handleChange('startDate', newDate);
+            handleChange('startDate', newDate.toISOString());
         }
     };
 
@@ -329,7 +306,7 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
         setHourValue(hourStr);
         const newDate = createDateFromDateAndTime(dateValue, hourStr, minuteValue);
         if (newDate) {
-            handleChange('startDate', newDate);
+            handleChange('startDate', newDate.toISOString());
         }
     };
 
@@ -340,7 +317,7 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
         setMinuteValue(minuteStr);
         const newDate = createDateFromDateAndTime(dateValue, hourValue, minuteStr);
         if (newDate) {
-            handleChange('startDate', newDate);
+            handleChange('startDate', newDate.toISOString());
         }
     };
 
@@ -430,15 +407,15 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
                             <Label htmlFor="brandId">Marka *</Label>
                             <Select
                                 onValueChange={(value) => handleChange('brandId', value as string)}
-                                value={formData.brandId}
+                                value={formData.brandId || ''}
                             >
                                 <SelectTrigger className={errors.brandId ? 'border-red-500' : ''}>
                                     <SelectValue placeholder="Marka seçin"/>
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectGroup>
-                                        {brands.map((brand) => (
-                                            <SelectItem key={brand.id} value={brand.id}>
+                                        {brands.filter(b => b.id).map((brand) => (
+                                            <SelectItem key={brand.id} value={brand.id!}>
                                                 {brand.name}
                                             </SelectItem>
                                         ))}
@@ -457,7 +434,7 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
                             <Label htmlFor="branchId">Şube *</Label>
                             <Select
                                 onValueChange={(value) => handleChange('branchId', value as string)}
-                                value={formData.branchId}
+                                value={formData.branchId || ''}
                                 disabled={!formData.brandId}
                             >
                                 <SelectTrigger className={errors.branchId ? 'border-red-500' : ''}>
@@ -465,8 +442,8 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectGroup>
-                                        {branches.map((branch) => (
-                                            <SelectItem key={branch.id} value={branch.id}>
+                                        {branches.filter(b => b.id).map((branch) => (
+                                            <SelectItem key={branch.id} value={branch.id!}>
                                                 {branch.branchName}
                                             </SelectItem>
                                         ))}
@@ -485,7 +462,7 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
                             <Label htmlFor="examTemplate">Sınav Şablonu *</Label>
                             <Select
                                 onValueChange={(value) => handleChange('examTemplate', value as EExamType)}
-                                value={formData.examTemplate as string}
+                                value={(formData.examTemplate as string) || ''}
                             >
                                 <SelectTrigger className={errors.examTemplate ? 'border-red-500' : ''}>
                                     <SelectValue placeholder="Sınav şablonu seçin"/>
@@ -596,8 +573,8 @@ const ExamSessionForm: React.FC<ExamSessionFormProps> = ({
                                     <input
                                         type="checkbox"
                                         id={`supervisor-${supervisor.id}`}
-                                        checked={formData.supervisorIds.includes(supervisor.id)}
-                                        onChange={() => handleSupervisorToggle(supervisor.id)}
+                                        checked={(formData.supervisorIds || []).includes(supervisor.id || '')}
+                                        onChange={() => handleSupervisorToggle(supervisor.id || '')}
                                         className="rounded"
                                     />
                                     <Label

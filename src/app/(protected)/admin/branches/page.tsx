@@ -1,25 +1,21 @@
 'use client';
 
 import PageHeader from "@/components/layout/page-header";
-import React, {useEffect} from "react";
+import React from "react";
 import {useRouter} from "next/navigation";
 import {Column, RecordType} from "@/types/ui/table";
 import LoadingComp from "@/components/ui/loading-comp";
 import {ActionButtons} from "@/components/ui/simple-dropdown";
 import DynamicTable from "@/components/ui/dynamic-table";
-import {useBranch} from "@/hooks/exam/use-branch";
+import {useGetAllBranches} from "@/api/generated/branch-management/branch-management";
+import type { ApiResponseListBranchDto } from "@/api/generated/model";
 
 export default function BranchPage() {
     const router = useRouter();
-    const {
-        getAllBranches,
-        branches,
-        loading
-    } = useBranch();
-
-    useEffect(() => {
-        getAllBranches();
-    }, []);
+    const { data, isLoading, error } = useGetAllBranches();
+    
+    // Extract branches from API response
+    const branches = (data as unknown as ApiResponseListBranchDto)?.data || null;
 
     const columns: Column<RecordType>[] = [
 
@@ -67,9 +63,15 @@ export default function BranchPage() {
     };
 
 
-    if (loading) {
+    if (isLoading) {
+        return <LoadingComp/>;
+    }
+
+    if (error) {
         return (
-            <LoadingComp/>
+            <div className="p-6">
+                <p className="text-red-600">Şubeler yüklenirken bir hata oluştu.</p>
+            </div>
         );
     }
     return (
@@ -83,7 +85,7 @@ export default function BranchPage() {
             <div className="p-6 pt-1">
                 {
                     branches &&
-                    <DynamicTable columns={columns} data={branches}/>
+                    <DynamicTable columns={columns} data={branches as RecordType[]}/>
                 }
 
             </div>

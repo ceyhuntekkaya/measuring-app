@@ -5,7 +5,7 @@ import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
 import {Clock, Building, Globe, Mail, Phone, MapPin, FileText, Hash, CheckCircle, XCircle} from 'lucide-react';
-import {BrandDto} from '@/types/management/brand';
+import type {BrandDto} from '@/api/generated/model/brandDto';
 import { formatDate } from '@/utils/date-formater';
 import LoadingComp from "@/components/ui/loading-comp";
 
@@ -179,7 +179,7 @@ const BrandDetailPage: React.FC<BrandDetailProps> = ({
                                         <span>Oluşturulma Tarihi</span>
                                     </div>
                                     <p className="text-sm font-medium">
-                                        {formatDate(brand.createdAt)}
+                                        {formatDate(brand.createdAt || '')}
                                     </p>
                                 </div>
 

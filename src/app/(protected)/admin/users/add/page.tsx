@@ -1,27 +1,22 @@
 'use client';
 
 import PageHeader from "@/components/layout/page-header";
-import React, {useEffect} from "react";
-import {useUser} from "@/hooks/use-user";
+import React from "react";
+import {useCreateUser} from "@/api/generated/user-management/user-management";
 import UserForm from "@/components/form/user-form";
-import {useBrand} from "@/hooks/exam/use-brand";
+import {useGetAllBrands} from "@/api/generated/brand-management/brand-management";
+import type { ApiResponseListBrandDto, CreateUserRequest, UpdateUserRequest } from "@/api/generated/model";
 
 
 export default function CandidateAdd() {
-    const {
-        createUser,
-    } = useUser();
+    const createUserMutation = useCreateUser();
+    const createUser = async (data: CreateUserRequest | UpdateUserRequest): Promise<void> => {
+        await createUserMutation.mutateAsync({ data: data as CreateUserRequest });
+    };
 
 
-    const {
-        getAllBrands,
-        brands
-    } = useBrand();
-
-
-    useEffect(() => {
-        getAllBrands();
-    }, []);
+    const { data: brandsData } = useGetAllBrands();
+    const brands = (brandsData as unknown as ApiResponseListBrandDto)?.data || null;
 
 
     return (

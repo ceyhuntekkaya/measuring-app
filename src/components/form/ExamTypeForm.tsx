@@ -10,8 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { NumberInput } from "@/components/ui/number-input";
-import {ExamTypeDto} from "@/types/exam/examTemplates";
-import {EExamType, EStatus} from "@/types/exam/enum";
+import type {ExamTypeDto} from "@/api/generated/model";
+import {EExamType} from "@/types/exam/enum";
 import Checkbox from "@/components/ui/checkbox";
 import {examTypeConverter} from "@/utils/enum-converter";
 
@@ -42,7 +42,7 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
     const [formData, setFormData] = useState<ExamTypeDto>({
         name: '',
         examLevel: '',
-        examType: EExamType.CERTIFICATE,
+        examType: EExamType.CERTIFICATE as ExamTypeDto['examType'],
         infoScreen: '',
         description: '',
         isOrder: false,
@@ -52,14 +52,7 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
         screenRecordTime: 0,
         maximumScore: 100,
         durationInSeconds: 3600,
-        questionGroupTypes:[],
-
-        id: '',
-        createdAt: new Date(),
-        deletedAt: null,
-        status: EStatus.ACTIVE,
-        createdById: '',
-        deletedById: ''
+        questionGroupTypes: []
     });
 
 
@@ -72,7 +65,7 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
             setFormData({
                 name: examType.name || '',
                 examLevel: examType.examLevel || '',
-                examType: examType.examType || EExamType.CERTIFICATE,
+                examType: examType.examType || EExamType.CERTIFICATE as ExamTypeDto['examType'],
                 infoScreen: examType.infoScreen || '',
                 description: examType.description || '',
                 isOrder: examType.isOrder || false,
@@ -82,13 +75,7 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
                 screenRecordTime: examType.screenRecordTime || 0,
                 maximumScore: examType.maximumScore || 100,
                 durationInSeconds: examType.durationInSeconds || 3600,
-                questionGroupTypes: examType.questionGroupTypes || [],
-                id: examType.id,
-                createdAt: examType.createdAt,
-                deletedAt: examType.deletedAt || null,
-                status: examType.status,
-                createdById: examType.createdById,
-                deletedById: examType.deletedById
+                questionGroupTypes: examType.questionGroupTypes || []
             });
         }
     }, [examType]);
@@ -106,13 +93,13 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
     const validateForm = (): boolean => {
         const newErrors: ExamTypeFormErrors = {};
 
-        if (!formData.name.trim()) {
+        if (!formData.name || !formData.name.trim()) {
             newErrors.name = 'Sınav tipi adı zorunludur';
         } else if (formData.name.trim().length < 3) {
             newErrors.name = 'Sınav tipi adı en az 3 karakter olmalıdır';
         }
 
-        if (!formData.examLevel.trim()) {
+        if (!formData.examLevel || !formData.examLevel.trim()) {
             newErrors.examLevel = 'Sınav seviyesi zorunludur';
         }
 
@@ -120,29 +107,29 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
             newErrors.examType = 'Sınav tipi seçimi zorunludur';
         }
 
-        if (!formData.infoScreen.trim()) {
+        if (!formData.infoScreen || !formData.infoScreen.trim()) {
             newErrors.infoScreen = 'Bilgi ekranı zorunludur';
         }
 
-        if (!formData.description.trim()) {
+        if (!formData.description || !formData.description.trim()) {
             newErrors.description = 'Açıklama zorunludur';
         } else if (formData.description.trim().length < 10) {
             newErrors.description = 'Açıklama en az 10 karakter olmalıdır';
         }
 
-        if (formData.screenRecordTime < 0) {
+        if (formData.screenRecordTime !== undefined && formData.screenRecordTime < 0) {
             newErrors.screenRecordTime = 'Ekran kayıt süresi 0\'dan küçük olamaz';
         }
 
-        if (formData.maximumScore <= 0) {
+        if (formData.maximumScore !== undefined && formData.maximumScore <= 0) {
             newErrors.maximumScore = 'Maksimum puan 0\'dan büyük olmalıdır';
-        } else if (formData.maximumScore > 1000) {
+        } else if (formData.maximumScore !== undefined && formData.maximumScore > 1000) {
             newErrors.maximumScore = 'Maksimum puan 1000\'den büyük olamaz';
         }
 
-        if (formData.durationInSeconds <= 0) {
+        if (formData.durationInSeconds !== undefined && formData.durationInSeconds <= 0) {
             newErrors.durationInSeconds = 'Süre 0\'dan büyük olmalıdır';
-        } else if (formData.durationInSeconds > 86400) { // 24 saat
+        } else if (formData.durationInSeconds !== undefined && formData.durationInSeconds > 86400) { // 24 saat
             newErrors.durationInSeconds = 'Süre 24 saatten uzun olamaz';
         }
 
@@ -155,6 +142,7 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (validateForm()) {
+            // Directly use formData - ExamTypeDto is used directly by API
             onSubmit(formData);
         }
     };
@@ -208,7 +196,7 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
                             <Label htmlFor="examType">Sınav Tipi *</Label>
                             <Select
                                 onValueChange={(value) => handleChange('examType', value as EExamType)}
-                                value={formData.examType}
+                                value={(formData.examType || '') as string}
                             >
                                 <SelectTrigger className={errors.examType ? 'border-red-500' : ''}>
                                     <SelectValue placeholder="Sınav tipi seçin" />

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { EssayTemplateDto } from '@/types/exam/questionTemplates';
-import {QuestionTemplateType} from "@/types/exam/examEntities";
+import type { EssayTemplateDto } from '@/api/generated/model';
+import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
 
 interface EssayQuestionProps {

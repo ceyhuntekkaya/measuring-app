@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
@@ -9,12 +9,13 @@ import {
     Users, Calendar, Activity, Info,
     BookOpen, UserCheck, Play, Edit, Trash2, Copy
 } from 'lucide-react';
-import {ExamSessionDto} from '@/types/exam/examEntities';
+import type {ExamSessionDto} from '@/api/generated/model/examSessionDto';
+import type {ApplicationDto} from '@/api/generated/model/applicationDto';
 import {formatDate} from '@/utils/date-formater';
 import LoadingComp from "@/components/ui/loading-comp";
 import ExamParticipants from "@/components/proctor/ExamParticipants";
-import {useApplication} from "@/hooks/exam/use-application";
 import ExamEvaluationPanel from "@/components/proctor/ExamEvaluation";
+import {useGetApplicationsByExamSession} from "@/api/generated/application-management/application-management";
 
 interface ExamSessionDetailProps {
     examSession: ExamSessionDto;
@@ -55,16 +56,10 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                                                              }) => {
     const [activeTab, setActiveTab] = useState("general");
 
-    const {
-        getApplicationsByExamSession,
-        examSessionApplications,
-
-    } = useApplication();
-
-
-    useEffect(() => {
-        getApplicationsByExamSession(examSession.id)
-    }, []);
+    const {data: applicationsData} = useGetApplicationsByExamSession(examSession.id || '', {
+        query: { enabled: !!examSession.id }
+    });
+    const examSessionApplications = (applicationsData as unknown as { data?: ApplicationDto[] })?.data || [];
 
 
 
@@ -73,6 +68,9 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
     }
 
     const getSessionStatus = () => {
+        if (!examSession.startDate) {
+            return { status: 'UNKNOWN', text: 'Bilinmiyor', color: 'bg-gray-100 text-gray-800' };
+        }
         const now = new Date();
         const startDate = new Date(examSession.startDate);
 
@@ -85,6 +83,9 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
     };
 
     const getDaysUntilStart = () => {
+        if (!examSession.startDate) {
+            return 'Bilinmiyor';
+        }
         const now = new Date();
         const startDate = new Date(examSession.startDate);
         const diffTime = startDate.getTime() - now.getTime();
@@ -300,7 +301,7 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                                         </div>
                                         <div className="text-right">
                                             <p className="text-sm font-medium">
-                                                {formatDate(examSession.startDate.toString())}
+                                                {examSession.startDate ? formatDate(examSession.startDate.toString()) : 'Belirtilmedi'}
                                             </p>
                                             <p className="text-xs text-gray-500">
                                                 {getDaysUntilStart()}
@@ -603,7 +604,7 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                             console.log('ExamSession isFinish:', examSession.isFinish, 'Type:', typeof examSession.isFinish);
                             return examSession.isFinish;
                         })() ? (
-                            <ExamEvaluationPanel sessionId={examSession.id} candidates ={examSessionApplications ? examSessionApplications : []}/>
+                            <ExamEvaluationPanel sessionId={examSession.id || ''} candidates ={examSessionApplications ? examSessionApplications : []}/>
                         ) : (
                             <div className="flex items-center justify-center min-h-[400px]">
                                 <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl shadow-2xl border-4 border-yellow-400 p-8 max-w-2xl w-full mx-4">

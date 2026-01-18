@@ -19,7 +19,7 @@ export default function ChatPanel({ onClose }: ChatPanelProps) {
 
     const isConnected = status === ConnectionStatus.CONNECTED;
     const currentUsername = candidate?.username || '';
-    const senderName = `${candidate?.firstName || ''} ${candidate?.lastName || ''}`.trim() || 'Öğrenci';
+    const senderName = `${candidate?.name || ''} ${candidate?.lastName || ''}`.trim() || 'Öğrenci';
 
     // Auto-scroll to bottom when new messages arrive
     useEffect(() => {

@@ -5,7 +5,7 @@ import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
 import {Clock, FileText, User as UserIcon, BookOpen, Calendar, Play, CheckCircle, XCircle, Hash, Users, Award} from 'lucide-react';
-import {ApplicationDto} from '@/types/management/brand';
+import type {ApplicationDto} from '@/api/generated/model/applicationDto';
 import { formatDate } from '@/utils/date-formater';
 import LoadingComp from "@/components/ui/loading-comp";
 
@@ -322,7 +322,7 @@ const ApplicationDetailPage: React.FC<ApplicationDetailProps> = ({
                                             )}
                                         </div>
                                         <p className="font-medium">Tamamlanma Durumu</p>
-                                        <Badge className={getStatusColor(application.isCompleted, application.isEvaluated)}>
+                                        <Badge className={getStatusColor(application.isCompleted ?? false, application.isEvaluated ?? false)}>
                                             {application.isCompleted ? 'Tamamlandı' : application.startedAt ? 'Devam Ediyor' : 'Başlatılmamış'}
                                         </Badge>
                                     </div>
@@ -453,8 +453,8 @@ const ApplicationDetailPage: React.FC<ApplicationDetailProps> = ({
                                     <div className="space-y-3">
                                         <div className="flex items-center justify-between">
                                             <span className="font-medium">Genel Durum</span>
-                                            <Badge className={getStatusColor(application.isCompleted, application.isEvaluated)}>
-                                                {getStatusText(application.isCompleted, application.isEvaluated)}
+                                            <Badge className={getStatusColor(application.isCompleted ?? false, application.isEvaluated ?? false)}>
+                                                {getStatusText(application.isCompleted ?? false, application.isEvaluated ?? false)}
                                             </Badge>
                                         </div>
 

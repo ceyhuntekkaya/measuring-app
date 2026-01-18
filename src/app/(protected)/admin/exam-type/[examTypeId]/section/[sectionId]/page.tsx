@@ -1,27 +1,24 @@
 'use client';
 
 import {useParams, useRouter} from "next/navigation";
-import React, {useEffect} from "react";
-import {useExamSection} from "@/hooks/exam/use-exam-section";
+import React from "react";
+import {useGetExamSectionById, useDeleteExamSection} from "@/api/generated/exam-section-management/exam-section-management";
 import ExamSectionDetail from "@/components/detail/ExamSectionDetail";
 import PageHeader from "@/components/layout/page-header";
 import LoadingComp from "@/components/ui/loading-comp";
+import type {ApiResponseExamSectionDto, ExamTypeDto} from "@/api/generated/model";
 
 export default function ExamTypeDetailPage() {
     const params = useParams();
     const examSectionId = params.sectionId as string;
     const router = useRouter();
 
-    const {
-        selectedExamSection,
-        getExamSectionById,
-        deleteExamSection,
-        loading
-    } = useExamSection();
-
-    useEffect(() => {
-        getExamSectionById(examSectionId);
-    }, []);
+    const {data, isLoading: loading} = useGetExamSectionById(examSectionId, {
+        query: { enabled: !!examSectionId }
+    });
+    const selectedExamSection = (data as unknown as ApiResponseExamSectionDto)?.data || null;
+    
+    const deleteExamSectionMutation = useDeleteExamSection();
 
     if (loading) {
         return (
@@ -31,11 +28,17 @@ export default function ExamTypeDetailPage() {
 
 
     const handleEdit = () => {
-        router.push(`/admin/exam-type/${selectedExamSection?.examType?.id}/section/${selectedExamSection?.id}/edit`);
+        if (selectedExamSection?.examType && selectedExamSection.id) {
+            const examType = selectedExamSection.examType as ExamTypeDto;
+            if (examType.id) {
+                router.push(`/admin/exam-type/${examType.id}/section/${selectedExamSection.id}/edit`);
+            }
+        }
     };
     const handleDelete = () => {
-        if (selectedExamSection)
-            deleteExamSection(selectedExamSection.id);
+        if (selectedExamSection?.id) {
+            deleteExamSectionMutation.mutate({ id: selectedExamSection.id });
+        }
     };
 
 

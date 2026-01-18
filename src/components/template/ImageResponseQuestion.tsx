@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ImageResponseTemplateDto } from '@/types/exam/questionTemplates';
-import {QuestionTemplateType} from "@/types/exam/examEntities";
+import type { ImageResponseTemplateDto } from '@/api/generated/model';
+import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
-import {UploadedFileDto} from "@/types/exam/miscDtos";
+import type {UploadedFileDto} from "@/api/generated/model";
 import {uploadFile} from "@/services/api/upload-file";
 import siteConfig from "@/config/config.json";
 

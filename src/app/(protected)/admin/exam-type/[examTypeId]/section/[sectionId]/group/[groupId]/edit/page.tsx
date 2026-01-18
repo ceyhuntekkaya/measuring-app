@@ -1,10 +1,12 @@
 'use client';
-import React, {useEffect} from "react";
+import React from "react";
 import PageHeader from "@/components/layout/page-header";
 import {useParams} from "next/navigation";
-import {useQuestionGroupType} from "@/hooks/exam/use-question-group-type";
-import {useExamSection} from "@/hooks/exam/use-exam-section";
+import {useGetQuestionGroupTypeById, useUpdateQuestionGroupType} from "@/api/generated/question-group-type-management/question-group-type-management";
+import {useGetExamSectionsByExamType} from "@/api/generated/exam-section-management/exam-section-management";
 import QuestionGroupTypeForm from "@/components/form/QuestionGroupTypeForm";
+import type {ApiResponseListExamSectionDto, UpdateQuestionGroupTypeRequest, ApiResponseQuestionGroupTypeDto} from "@/api/generated/model";
+
 
 export default function QuestionGroupTypePage() {
 
@@ -12,21 +14,20 @@ export default function QuestionGroupTypePage() {
     const groupId = params.groupId as string;
     const examTypeId = params.examTypeId as string;
 
-    const {
-        createQuestionGroupType,
-        getQuestionGroupTypeById,
-        selectedType
-    } = useQuestionGroupType();
+    const {data: typeData} = useGetQuestionGroupTypeById(groupId, {
+        query: { enabled: !!groupId }
+    });
+    const selectedType = (typeData as unknown as ApiResponseQuestionGroupTypeDto)?.data;
+    
+    const updateQuestionGroupTypeMutation = useUpdateQuestionGroupType();
+    const createQuestionGroupType = async (data: UpdateQuestionGroupTypeRequest) => {
+        await updateQuestionGroupTypeMutation.mutateAsync({ id: groupId, data });
+    };
 
-    const {
-        examSections,
-        getExamSectionsByExamType
-    } = useExamSection();
-
-    useEffect(() => {
-        getExamSectionsByExamType(examTypeId);
-        getQuestionGroupTypeById(groupId);
-    }, []);
+    const {data: sectionsData} = useGetExamSectionsByExamType(examTypeId, {
+        query: { enabled: !!examTypeId }
+    });
+    const examSections = (sectionsData as unknown as ApiResponseListExamSectionDto)?.data || [];
 
 
 

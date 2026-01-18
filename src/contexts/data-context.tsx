@@ -1,8 +1,9 @@
 'use client';
 
-import {createContext, useState, useEffect, useContext} from 'react';
-import {Department, Permission, Role, UserDto} from '@/types/auth';
-import {useUser} from "@/hooks/use-user";
+import {createContext, useState, useContext} from 'react';
+import {Department, Permission, Role} from '@/types/auth';
+import type {UserDto} from '@/api/generated/model';
+import {useGetAllUsers} from "@/api/generated/user-management/user-management";
 
 
 const _permissions: Permission[] = [
@@ -38,28 +39,9 @@ export function DataProvider({children}: { children: React.ReactNode }) {
     const [departments, ] = useState(_departments);
     const [roles, ] = useState(_roles);
 
-
-
-    const {users, getAllUsers} = useUser();
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        const fetchAllData = async () => {
-            setLoading(true)
-            try {
-                await Promise.all([
-                    getAllUsers(),
-                ]);
-            } catch (err) {
-                setError("Veriler yüklenirken bir hata oluştu");
-                console.error("Veri yükleme hatası:", err);
-            }
-            setLoading(false)
-        };
-
-        fetchAllData();
-    }, []);
+    const {data, isLoading: loading} = useGetAllUsers({});
+    const users = (data as unknown as { data?: UserDto[] })?.data || null;
+    const [error] = useState<string | null>(null);
 
 
 

@@ -1,13 +1,30 @@
 import React, {useEffect, useState} from 'react';
-import {ApplicationDto, QuestionId} from "@/types/management/brand";
+
+// Custom type
+interface QuestionId {
+    questionId: string;
+}
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Column, RecordType} from "@/types/ui/table";
 import {statusConverter} from "@/utils/enum-converter";
 import {EStatus, EQuestionType} from "@/types/exam/enum";
 import DynamicTable from "@/components/ui/dynamic-table";
-import {useApplication} from "@/hooks/exam/use-application";
-import {useQuestion} from "@/hooks/exam/use-question";
-import {EvaluationDto, EvaluationGroup, EvaluationGroupData, QuestionDto, QuestionTemplateType} from "@/types/exam/examEntities";
+import {useGetApplicationEvaluationsBySession} from "@/api/generated/application-management/application-management";
+import {useGetAllQuestionByIdList} from "@/api/generated/question-management/question-management";
+import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
+import type {EvaluationDto, QuestionDto} from "@/api/generated/model";
+import type {ApplicationDto} from "@/api/generated/model";
+
+// Custom types for evaluation grouping
+export interface EvaluationGroupData extends RecordType {
+    question: QuestionDto;
+    evaluation: EvaluationDto;
+}
+
+export interface EvaluationGroup extends RecordType {
+    data: EvaluationGroupData[];
+    application: ApplicationDto;
+}
 import {EEvaluationStatus} from "@/types/auth";
 import {Label} from "@/components/ui/label";
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
@@ -25,9 +42,14 @@ import {
     MultipleResponseTemplateDto,
     HotSpotTemplateDto,
     DragAndDropTemplateDto
-} from "@/types/exam/questionTemplates";
-import {useExamResult} from "@/hooks/exam/use-exam-result";
-import {UploadedFileDto} from "@/types/exam/miscDtos";
+} from "@/api/generated/model";
+import {useSaveEvaluation} from "@/api/generated/question-result-management/question-result-management";
+import { useQueryClient } from "@tanstack/react-query";
+import { showNotification } from "@/lib/notification";
+import type {UploadedFileDto} from "@/api/generated/model";
+import { parseBlobResponse } from "@/utils/api-helpers/parse-blob-response";
+import type { ApiResponseListQuestionDto } from "@/api/generated/model";
+import type { QuestionIdListRequest } from "@/api/generated/model";
 import MultipleChoiceQuestion from "@/components/template/MultipleChoiceQuestion";
 import TrueFalseQuestion from "@/components/template/TrueFalseQuestion";
 import FillInTheBlanksQuestion from "@/components/template/FillInTheBlanksQuestion";
@@ -62,28 +84,61 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
     const [applicationQuestionDataWithEvaluation, setApplicationQuestionDataWithEvaluation] = useState<EvaluationGroup | null>(null);
     const [filteredApplicationQuestionDataWithEvaluation, setFilteredApplicationQuestionDataWithEvaluation] = useState<EvaluationGroupData[] | null>(null);
 
-    const {
-        sessionEvaluations,
-        getApplicationEvaluationsBySession,
-    } = useApplication();
+    const {data: evaluationsData} = useGetApplicationEvaluationsBySession(sessionId, {
+        query: { enabled: !!sessionId }
+    });
+    const sessionEvaluations = React.useMemo(() => {
+        return (evaluationsData as unknown as { data?: EvaluationDto[] })?.data || [];
+    }, [evaluationsData]);
+    
+    const getApplicationEvaluationsBySession = () => {
+        queryClient.invalidateQueries({ queryKey: [`/applications/session/evaluation/${sessionId}`] });
+    };
 
-    const {
-        getAllQuestionByIdList,
-        sessionQuestions,
-    } = useQuestion();
+    const [sessionQuestions, setSessionQuestions] = useState<QuestionDto[]>([]);
+    
+    const getAllQuestionByIdListMutation = useGetAllQuestionByIdList();
+    const getAllQuestionByIdList = async (ids: QuestionId[]) => {
+        try {
+            const questionIdListRequest: QuestionIdListRequest[] = ids
+                .filter(q => q.questionId)
+                .map(q => ({ questionId: q.questionId }));
+            
+            if (questionIdListRequest.length === 0) return;
+            
+            const result = await getAllQuestionByIdListMutation.mutateAsync({ data: questionIdListRequest });
+            if (result) {
+                const parsedResponse = await parseBlobResponse<ApiResponseListQuestionDto>(result);
+                if (parsedResponse?.data) {
+                    setSessionQuestions(parsedResponse.data);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching questions:', error);
+        }
+    };
 
-    const {
-        saveEvaluation
-    } = useExamResult();
+    const queryClient = useQueryClient();
+    const { mutate: saveEvaluation } = useSaveEvaluation({
+        mutation: {
+            onSuccess: () => {
+                showNotification.success('Değerlendirme başarıyla kaydedildi!');
+                getApplicationEvaluationsBySession();
+            },
+            onError: () => {
+                showNotification.error('Değerlendirme kaydedilirken bir hata oluştu!');
+            }
+        }
+    });
 
     useEffect(() => {
-        getApplicationEvaluationsBySession(sessionId)
+        getApplicationEvaluationsBySession();
     }, []);
 
     useEffect(() => {
         if (sessionEvaluations && sessionEvaluations.length > 0) {
             const uniqueQuestionIds = Array.from(
-                new Set(sessionEvaluations.map(evaluation => evaluation.questionId))
+                new Set(sessionEvaluations.map(evaluation => evaluation.questionId).filter((id): id is string => !!id))
             ).map(questionId => ({questionId}));
 
             setAllQuestionIdList(uniqueQuestionIds);
@@ -208,11 +263,12 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
         }, [selectedEvaluation]);
 
         const handleSave = () => {
-            if (selectedEvaluation) {
-                const data = {...selectedEvaluation.evaluation, score: score, description};
-                saveEvaluation(selectedEvaluation.evaluation.id, data).then(() =>
-                    getApplicationEvaluationsBySession(sessionId)
-                )
+            if (selectedEvaluation && selectedEvaluation.evaluation.id) {
+                const data: EvaluationDto = {
+                    score: score,
+                    description: description,
+                };
+                saveEvaluation({ id: selectedEvaluation.evaluation.id, data })
             }
 
         };
@@ -360,6 +416,10 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
             }
 
             const questionId = selectedEvaluation.question.id;
+            if (!questionId) {
+                return null;
+            }
+            
             const type = selectedEvaluation.question.questionType as EQuestionType;
             const template = selectedEvaluation.question.questionTemplate as QuestionTemplateType;
             const initialAnswer = getInitialAnswer();
@@ -786,8 +846,11 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => {
-                        setSelectedApplication((record as ApplicationDto).id)
-                        setSelectedEvaluation(null)
+                        const appId = (record as ApplicationDto).id;
+                        if (appId) {
+                            setSelectedApplication(appId);
+                            setSelectedEvaluation(null);
+                        }
                     }}
                 >
                     {(record as ApplicationDto).candidateName} {(record as ApplicationDto).candidateLastName}
@@ -802,8 +865,11 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => {
-                        setSelectedApplication((record as ApplicationDto).id)
-                        setSelectedEvaluation(null)
+                        const appId = (record as ApplicationDto).id;
+                        if (appId) {
+                            setSelectedApplication(appId);
+                            setSelectedEvaluation(null);
+                        }
                     }}
                 >
                     {value as string}
@@ -817,8 +883,11 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => {
-                        setSelectedApplication((record as ApplicationDto).id)
-                        setSelectedEvaluation(null)
+                        const appId = (record as ApplicationDto).id;
+                        if (appId) {
+                            setSelectedApplication(appId);
+                            setSelectedEvaluation(null);
+                        }
                     }}
                 >
                     {value as string}
@@ -836,8 +905,11 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
                     <div
                         className="font-medium cursor-pointer hover:text-blue-600"
                         onClick={() => {
-                            setSelectedApplication((record as ApplicationDto).id)
-                            setSelectedEvaluation(null)
+                            const appId = (record as ApplicationDto).id;
+                            if (appId) {
+                                setSelectedApplication(appId);
+                                setSelectedEvaluation(null);
+                            }
                         }}
                     >
                         {statusConverter(value as EStatus)}
@@ -912,7 +984,7 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
     return (
         <div className="grid grid-cols-1 gap-4 mb-8">
             {
-                candidates && candidates.length > 0 ? <DynamicTable columns={columns} data={candidates}/> :
+                candidates && candidates.length > 0 ? <DynamicTable columns={columns} data={candidates as RecordType[]}/> :
                     <EmptyCandidates/>
             }
 

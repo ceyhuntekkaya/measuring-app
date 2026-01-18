@@ -1,11 +1,12 @@
 'use client';
 
 import {useParams, useRouter} from "next/navigation";
-import React, {useEffect} from "react";
-import {useQuestionGroupType} from "@/hooks/exam/use-question-group-type";
+import React from "react";
+import {useGetQuestionGroupTypeById, useDeleteQuestionGroupType} from "@/api/generated/question-group-type-management/question-group-type-management";
 import QuestionGroupTypeDetail from "@/components/detail/QuestionGroupTypeDetail";
 import PageHeader from "@/components/layout/page-header";
 import LoadingComp from "@/components/ui/loading-comp";
+import type {ApiResponseQuestionGroupTypeDto, ExamTypeDto} from "@/api/generated/model";
 
 export default function QuestionGroupTypeDetailPage() {
     const params = useParams();
@@ -13,16 +14,12 @@ export default function QuestionGroupTypeDetailPage() {
 
     const router = useRouter();
 
-    const {
-        selectedType,
-        getQuestionGroupTypeById,
-        loading,
-        deleteQuestionGroupType,
-    } = useQuestionGroupType();
-
-    useEffect(() => {
-        getQuestionGroupTypeById(groupId);
-    }, []);
+    const {data, isLoading: loading} = useGetQuestionGroupTypeById(groupId, {
+        query: { enabled: !!groupId }
+    });
+    const selectedType = (data as unknown as ApiResponseQuestionGroupTypeDto)?.data || null;
+    
+    const deleteQuestionGroupTypeMutation = useDeleteQuestionGroupType();
 
     if (loading) {
         return (
@@ -32,14 +29,17 @@ export default function QuestionGroupTypeDetailPage() {
 
 
     const handleEdit = () => {
-        if(selectedType && selectedType.examSection && selectedType.examSection.examType){
-            router.push(`/admin/exam-type/${selectedType.examSection.examType.id}/section/${selectedType.examSection.id}/group/${groupId}/edit`);
+        if(selectedType?.examSection?.id && selectedType.examSection.examType){
+            const examType = selectedType.examSection.examType as ExamTypeDto;
+            if (examType.id) {
+                router.push(`/admin/exam-type/${examType.id}/section/${selectedType.examSection.id}/group/${groupId}/edit`);
+            }
         }
-
     };
     const handleDelete = () => {
-        if (selectedType)
-            deleteQuestionGroupType(selectedType.id);
+        if (selectedType?.id) {
+            deleteQuestionGroupTypeMutation.mutate({ id: selectedType.id });
+        }
     };
 
     return (

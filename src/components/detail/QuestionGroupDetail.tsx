@@ -1,6 +1,7 @@
 import React from 'react';
-import { QuestionGroupDto } from '@/types/exam/examEntities';
-import { EQuestionGroupType, EMediaType, EQuestionType } from '@/types/exam/enum';
+import type { QuestionGroupDto } from '@/api/generated/model/questionGroupDto';
+import type { QuestionDto } from '@/api/generated/model/questionDto';
+import { EQuestionGroupType, EMediaType, EQuestionType, EExamType } from '@/types/exam/enum';
 import {Button} from "@/components/ui/button";
 import { examTypeConverter, approvalStatusConverter, getApprovalStatusColor } from '@/utils/enum-converter';
 
@@ -241,7 +242,7 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
                                     <div>
                                         <div className="text-xs text-blue-500">Tür</div>
                                         <div className="text-blue-900 font-semibold text-sm">
-                                            {examTypeConverter(selectedQuestionGroup.examType.examType)}
+                                            {examTypeConverter(selectedQuestionGroup.examType.examType as EExamType)}
                                         </div>
                                     </div>
                                     <div>
@@ -294,7 +295,7 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
                                 <div>
                                     <div className="text-xs text-green-500">Tür</div>
                                     <div className="text-green-900 font-semibold">
-                                        {getGroupTypeLabel(selectedQuestionGroup.questionGroupType.groupType)}
+                                        {getGroupTypeLabel(selectedQuestionGroup.questionGroupType.groupType as EQuestionGroupType)}
                                     </div>
                                 </div>
                                 <div>
@@ -322,7 +323,7 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
                         Sorular ({selectedQuestionGroup.questions.length})
                     </h2>
                     <div className="space-y-3">
-                        {selectedQuestionGroup.questions.map((question, index) => (
+                        {(selectedQuestionGroup.questions as QuestionDto[]).map((question, index) => (
                             <div key={question.id || index} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
                                 <div className="flex items-start justify-between">
                                     <div className="flex-1">
@@ -333,7 +334,7 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
                                             <div>
                                                 <div className="font-medium text-gray-900">{question.name || `Soru ${index + 1}`}</div>
                                                 <div className="text-sm text-gray-500">
-                                                    {getQuestionTypeLabel(question.questionType)}
+                                                    {getQuestionTypeLabel(question.questionType as EQuestionType)}
                                                 </div>
                                             </div>
                                         </div>
@@ -390,7 +391,7 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
                                             </div>
                                             <div>
                                                 <div className="text-sm font-medium text-gray-500">
-                                                    {getMediaTypeLabel(header.mediaType)}
+                                                    {getMediaTypeLabel(header.mediaType as EMediaType)}
                                                 </div>
                                             </div>
                                         </div>

@@ -1,11 +1,12 @@
 'use client';
 
 import PageHeader from "@/components/layout/page-header";
-import React, {useEffect} from "react";
+import React from "react";
 import {useParams} from "next/navigation";
 import UserForm from "@/components/form/user-form";
-import {useUser} from "@/hooks/use-user";
-import {useBrand} from "@/hooks/exam/use-brand";
+import {useGetUserById, useUpdateUser} from "@/api/generated/user-management/user-management";
+import {useGetAllBrands} from "@/api/generated/brand-management/brand-management";
+import type { ApiResponseListBrandDto, UpdateUserRequest, ApiResponseUserDto } from "@/api/generated/model";
 
 
 export default function CandidateEdit() {
@@ -13,23 +14,18 @@ export default function CandidateEdit() {
     const params = useParams();
     const id = params.id as string;
 
+    const {data: userData} = useGetUserById(id, {
+        query: { enabled: !!id }
+    });
+    const selectedUser = (userData as unknown as ApiResponseUserDto)?.data;
+    
+    const updateUserMutation = useUpdateUser();
+    const updateUser = async (data: UpdateUserRequest) => {
+        await updateUserMutation.mutateAsync({ id, data });
+    };
 
-    const {
-        updateUser,
-        selectedUser,
-        getUserById
-    } = useUser();
-
-    const {
-        getAllBrands,
-        brands
-    } = useBrand();
-
-
-    useEffect(() => {
-        getAllBrands();
-        getUserById(id);
-    }, []);
+    const { data: brandsData } = useGetAllBrands();
+    const brands = (brandsData as unknown as ApiResponseListBrandDto)?.data || null;
 
     return (
         <div className="space-y-6">

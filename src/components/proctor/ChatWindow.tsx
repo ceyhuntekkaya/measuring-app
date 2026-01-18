@@ -1,7 +1,7 @@
 'use client';
 
 import React, {useState, useRef, useEffect} from "react";
-import {ApplicationDto} from "@/types/management/brand";
+import type {ApplicationDto} from "@/api/generated/model";
 import {useAdminWebSocket} from "@/components/websocket/AdminWebSocketProvider";
 import {useAuthContext} from "@/contexts/auth-context";
 import {ConnectionStatus} from "@/types/websocket.types";
@@ -35,8 +35,8 @@ export const ChatWindow = ({ participant, onClose }: {
 
     const handleSend = () => {
         if (message.trim() && isConnected && targetUsername) {
-            const senderName = user?.firstName && user?.lastName 
-                ? `${user.firstName} ${user.lastName}` 
+            const senderName = user?.name && user?.lastName 
+                ? `${user.name} ${user.lastName}` 
                 : 'Gözetmen';
             
             // Admin mesaj gönderirken targetId olarak learner'ın username'ini gönder

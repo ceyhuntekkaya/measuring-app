@@ -1,7 +1,8 @@
 import React from 'react';
-import { ExamTypeDto } from '@/types/exam/examTemplates';
+import type { ExamTypeDto } from '@/api/generated/model/examTypeDto';
 import {Button} from "@/components/ui/button";
 import { examTypeConverter, approvalStatusConverter, getApprovalStatusColor } from '@/utils/enum-converter';
+import { EExamType } from '@/types/exam/enum';
 
 interface ExamTypeDetailProps {
     selectedExamType: ExamTypeDto | null;
@@ -102,7 +103,7 @@ const ExamTypeDetail: React.FC<ExamTypeDetailProps> = ({ selectedExamType, onEdi
                     <div className="p-4 bg-gray-50 rounded-lg">
                         <div className="text-sm font-medium text-gray-500">Sınav Türü</div>
                         <div className="text-lg font-semibold text-gray-900">
-                            {examTypeConverter(selectedExamType.examType)}
+                            {examTypeConverter(selectedExamType.examType as EExamType)}
                         </div>
                     </div>
 

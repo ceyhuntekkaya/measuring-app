@@ -3,9 +3,9 @@
 'use client';
 
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import {ExamDto } from '@/types/exam/examEntities';
-import {ApplicationDto} from "@/types/management/brand";
-import {ExamAnswer, SectionProgress, TakingExamSession} from "@/types/exam/exam-taking";
+import type {ExamDto } from '@/api/generated/model/examDto';
+import type {ApplicationDto} from "@/api/generated/model/applicationDto";
+import type {ExamAnswer, SectionProgress, TakingExamSession} from "@/api/generated/model";
 
 interface ExamState {
     // Authentication
@@ -129,11 +129,15 @@ function examReducer(state: ExamState, action: ExamAction): ExamState {
             return { ...state, currentQuestionGroupIndex: action.payload };
 
         case 'SAVE_ANSWER':
+            const questionId = action.payload.questionId;
+            if (!questionId) {
+                return state;
+            }
             return {
                 ...state,
                 answers: {
                     ...state.answers,
-                    [action.payload.questionId]: action.payload,
+                    [questionId]: action.payload,
                 },
             };
 

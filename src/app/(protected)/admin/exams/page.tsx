@@ -1,24 +1,20 @@
 'use client';
 import {Column, RecordType} from "@/types/ui/table";
-import React, {useEffect} from "react";
+import React from "react";
 import PageHeader from "@/components/layout/page-header";
 import DynamicTable from "@/components/ui/dynamic-table";
 import {ActionButtons} from "@/components/ui/simple-dropdown";
 import {useRouter} from "next/navigation";
 import LoadingComp from "@/components/ui/loading-comp";
-import {useExam} from "@/hooks/exam/use-exam";
+import {useGetAllExams} from "@/api/generated/exam-management/exam-management";
+import type { ApiResponseListExamDto } from "@/api/generated/model";
 
 export default function ExamPage() {
     const router = useRouter();
-    const {
-        exams,
-        getAllExams,
-        loading
-    } = useExam();
-
-    useEffect(() => {
-        getAllExams();
-    }, []);
+    const { data, isLoading, error } = useGetAllExams();
+    
+    // Extract exams from API response
+    const exams = (data as unknown as ApiResponseListExamDto)?.data || null;
 
     const columns: Column<RecordType>[] = [
 
@@ -66,9 +62,15 @@ export default function ExamPage() {
     };
 
 
-    if (loading) {
+    if (isLoading) {
+        return <LoadingComp/>;
+    }
+
+    if (error) {
         return (
-            <LoadingComp/>
+            <div className="p-6">
+                <p className="text-red-600">Sınavlar yüklenirken bir hata oluştu.</p>
+            </div>
         );
     }
     return (
@@ -82,7 +84,7 @@ export default function ExamPage() {
             <div className="p-6 pt-1">
                 {
                     exams &&
-                    <DynamicTable columns={columns} data={exams}/>
+                    <DynamicTable columns={columns} data={exams as RecordType[]}/>
                 }
 
             </div>

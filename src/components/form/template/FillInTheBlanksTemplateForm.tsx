@@ -8,17 +8,12 @@ import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
 import {Textarea} from "@/components/ui/textarea";
 import {NumberInput} from "@/components/ui/number-input";
-import {FillInTheBlanksTemplateDto, FillInTheBlanksOptions, BlankAnswer} from "@/types/exam/questionTemplates";
+import type {FillInTheBlanksTemplateDto, BlankAnswer} from "@/api/generated/model";
 import {Plus, Trash2} from "lucide-react";
 import Checkbox from "@/components/ui/checkbox";
 
-interface FillInTheBlanksTemplateFormData {
-    textWithBlanks: string;
-    options: FillInTheBlanksOptions;
-    caseSensitive: boolean;
-    exactMatch: boolean;
-    explanation: string;
-}
+// Use ORVAL DTO types directly - only template-specific fields
+type FillInTheBlanksTemplateFormData = Pick<FillInTheBlanksTemplateDto, 'textWithBlanks' | 'options' | 'caseSensitive' | 'exactMatch' | 'explanation'>;
 
 interface FillInTheBlanksTemplateFormErrors {
     textWithBlanks?: string;
@@ -77,9 +72,9 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
     // handleChange'den sonra parent'a bildir
     useEffect(() => {
         // İlk render'da boş form için onChange tetikleme
-        if (formData.textWithBlanks || (formData.options.blanks ?? []).length > 0) {
+        if (formData.textWithBlanks || (formData.options?.blanks ?? []).length > 0) {
             // Tüm boşlukların feedback'ini boş string yap ve ana şablon ayarlarını uygula
-            const blanksWithDefaults = formData.options.blanks?.map(blank => ({
+            const blanksWithDefaults = formData.options?.blanks?.map(blank => ({
                 ...blank,
                 caseSensitive: formData.caseSensitive,
                 exactMatch: formData.exactMatch,
@@ -106,7 +101,7 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
                 onChange(templateData);
             }
         }
-    }, [formData.textWithBlanks, formData.caseSensitive, formData.exactMatch, formData.options.blanks?.length || 0]);
+    }, [formData.textWithBlanks, formData.caseSensitive, formData.exactMatch, formData.options?.blanks?.length || 0]);
 
     // Boşlukları güncelleme fonksiyonu
     const updateBlanksFromText = (text: string, currentBlanks: BlankAnswer[], caseSensitive: boolean, exactMatch: boolean): BlankAnswer[] => {
@@ -220,9 +215,9 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
             if (field === 'textWithBlanks') {
                 const updatedBlanks = updateBlanksFromText(
                     newValue as string,
-                    prev.options.blanks || [],
-                    prev.caseSensitive,
-                    prev.exactMatch
+                    prev.options?.blanks || [],
+                    prev.caseSensitive ?? false,
+                    prev.exactMatch ?? false
                 );
                 updatedData.options = {
                     ...prev.options,
@@ -231,10 +226,10 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
             }
             // Eğer caseSensitive veya exactMatch değiştiyse, tüm boşlukları güncelle
             else if (field === 'caseSensitive' || field === 'exactMatch') {
-                const updatedBlanks = (prev.options.blanks || []).map(blank => ({
+                const updatedBlanks = (prev.options?.blanks || []).map(blank => ({
                     ...blank,
-                    caseSensitive: field === 'caseSensitive' ? (newValue as boolean) : prev.caseSensitive,
-                    exactMatch: field === 'exactMatch' ? (newValue as boolean) : prev.exactMatch,
+                    caseSensitive: field === 'caseSensitive' ? (newValue as boolean) : (prev.caseSensitive ?? false),
+                    exactMatch: field === 'exactMatch' ? (newValue as boolean) : (prev.exactMatch ?? false),
                     feedback: ''
                 }));
                 updatedData.options = {
@@ -288,7 +283,7 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
         field: K,
         newValue: BlankAnswer[K]
     ) => {
-        const updatedBlanks = formData.options.blanks?.map((blank, i) =>
+        const updatedBlanks = formData.options?.blanks?.map((blank, i) =>
             i === index ? {...blank, [field]: newValue} : blank
         ) || [];
 
@@ -296,7 +291,7 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
     };
 
     const addAcceptableAnswer = (blankIndex: number) => {
-        const updatedBlanks = formData.options.blanks?.map((blank, i) =>
+        const updatedBlanks = formData.options?.blanks?.map((blank, i) =>
             i === blankIndex
                 ? {...blank, acceptableAnswers: [...(blank.acceptableAnswers || []), '']}
                 : blank
@@ -306,7 +301,7 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
     };
 
     const removeAcceptableAnswer = (blankIndex: number, answerIndex: number) => {
-        const updatedBlanks = formData.options.blanks?.map((blank, i) =>
+        const updatedBlanks = formData.options?.blanks?.map((blank, i) =>
             i === blankIndex
                 ? {
                     ...blank,
@@ -319,7 +314,7 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
     };
 
     const updateAcceptableAnswer = (blankIndex: number, answerIndex: number, newValue: string) => {
-        const updatedBlanks = formData.options.blanks?.map((blank, i) =>
+        const updatedBlanks = formData.options?.blanks?.map((blank, i) =>
             i === blankIndex
                 ? {
                     ...blank,
@@ -337,11 +332,11 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
     const validateForm = (): boolean => {
         const newErrors: FillInTheBlanksTemplateFormErrors = {};
 
-        if (!formData.textWithBlanks.trim()) {
+        if (!formData.textWithBlanks?.trim()) {
             newErrors.textWithBlanks = 'Boşluklu metin zorunludur';
         }
 
-        if (!formData.options.blanks || formData.options.blanks.length === 0) {
+        if (!formData.options?.blanks || formData.options.blanks.length === 0) {
             newErrors.options = 'En az bir boşluk tanımlanmalıdır';
         } else {
             const invalidBlanks = formData.options.blanks.some(blank =>
@@ -420,7 +415,7 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
                             </p>
                         </div>
 
-                        {formData.options.blanks?.map((blank, blankIndex) => (
+                        {formData.options?.blanks?.map((blank, blankIndex) => (
                             <div key={`${blank.blankId || 'blank'}-${blankIndex}`} className="p-4 border rounded-lg space-y-4">
                                 <div className="grid grid-cols-12 gap-2 items-center">
                                     <div className="col-span-2">

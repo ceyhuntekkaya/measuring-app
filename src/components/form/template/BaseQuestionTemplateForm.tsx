@@ -16,7 +16,7 @@ import {
     AudioResponseTemplateDto,
     VideoResponseTemplateDto,
     ImageResponseTemplateDto
-} from "@/types/exam/questionTemplates";
+} from "@/api/generated/model";
 
 // Import template form components
 import MultipleChoiceTemplateForm, {MultipleChoiceTemplateFormHandle} from './MultipleChoiceTemplateForm';
@@ -43,7 +43,7 @@ import ImageResponseTemplateForm, {
 import VideoResponseTemplateForm, {
     VideoResponseTemplateFormHandle
 } from "@/components/form/template/VideoResponseTemplateForm";
-import {BaseQuestionTemplateFormData} from "@/types/exam/examEntities";
+import type {BaseQuestionTemplateFormData} from "@/components/form/QuestionForm";
 
 interface BaseQuestionTemplateFormErrors {
     title?: string;

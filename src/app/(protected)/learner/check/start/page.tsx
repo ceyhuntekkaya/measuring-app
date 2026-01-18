@@ -1,10 +1,10 @@
 'use client';
 import React, {useEffect, useState} from "react";
 import ExamSectionsList from "@/components/take/SectionList";
-import {ExamSectionDto} from "@/types/exam/examTemplates";
+import type {ExamSectionDto} from "@/api/generated/model";
 import {useExamApplicationContext} from "@/contexts/ExamApplicationContext";
 import ExamApplicationScreen from "@/components/take/ExamApplicationScreen";
-import {QuestionGroupDto} from "@/types/exam/examEntities";
+import type {QuestionGroupDto} from "@/api/generated/model";
 
 export interface SectionQuestionCounts {
     sectionId: string;
@@ -22,7 +22,7 @@ export default function Page() {
 
     useEffect(() => {
         const loadInitialData = async () => {
-            if (examState) {
+            if (examState && examState.id) {
                 getExamData(examState.id)
             }
         };

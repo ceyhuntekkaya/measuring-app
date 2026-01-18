@@ -1,38 +1,46 @@
 'use client';
 
 import PageHeader from "@/components/layout/page-header";
-import React, {useEffect} from "react";
+import React from "react";
+import { useRouter } from "next/navigation";
 import BranchForm from "@/components/form/branch-form";
-import {useBrand} from "@/hooks/exam/use-brand";
-import {useBranch} from "@/hooks/exam/use-branch";
-
+import {useGetAllBrands} from "@/api/generated/brand-management/brand-management";
+import {useCreateBranch} from "@/api/generated/branch-management/branch-management";
+import { useQueryClient } from "@tanstack/react-query";
+import { showNotification } from "@/lib/notification";
+import type { CreateBranchRequest, UpdateBranchRequest, ApiResponseListBrandDto } from "@/api/generated/model";
 
 export default function BranchAdd() {
+    const router = useRouter();
+    const queryClient = useQueryClient();
+    
+    const { data: brandsData } = useGetAllBrands();
+    const brands = (brandsData as unknown as ApiResponseListBrandDto)?.data || null;
 
+    const { mutate: createBranch, isPending: loading } = useCreateBranch({
+        mutation: {
+            onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: ['/branches'] });
+                showNotification.success('Şube başarıyla oluşturuldu!');
+                router.push('/admin/branches');
+            },
+            onError: (error) => {
+                showNotification.error('Şube oluşturulurken bir hata oluştu!');
+                console.error('Error creating branch:', error);
+            }
+        }
+    });
 
-    const {
-        createBranch,
-        loading,
-    } = useBranch();
-
-    const {
-        getAllBrands,
-        brands,
-    } = useBrand();
-
-    useEffect(() => {
-        getAllBrands();
-    }, []);
-
+    // No manual mapping needed - formData is already CreateBranchRequest!
+    const handleSubmit = (formData: CreateBranchRequest | UpdateBranchRequest) => {
+        createBranch({ data: formData as CreateBranchRequest });
+    };
 
     return (
         <div className="space-y-6">
             <PageHeader/>
             <div className="p-1">
-                {
-                    brands &&  <BranchForm onSubmit={createBranch} loading={loading} brands={brands} />
-                }
-
+                {brands && <BranchForm onSubmit={handleSubmit} loading={loading} brands={brands} />}
             </div>
         </div>
     )

@@ -1,44 +1,28 @@
 'use client';
 
 import PageHeader from "@/components/layout/page-header";
-import React, {useEffect} from "react";
+import React from "react";
 import {useRouter} from "next/navigation";
 import {Column, RecordType} from "@/types/ui/table";
 import LoadingComp from "@/components/ui/loading-comp";
 import {ActionButtons} from "@/components/ui/simple-dropdown";
 import DynamicTable from "@/components/ui/dynamic-table";
-import {useApplication} from "@/hooks/exam/use-application";
-import {useExamSession} from "@/hooks/exam/use-exam-session";
-import {ExamSessionDto} from "@/types/exam/examEntities";
+import {useGetApplicationsByExamSession} from "@/api/generated/application-management/application-management";
+import {useGetActiveExamSessions} from "@/api/generated/exam-session-management/exam-session-management";
+import type {ExamSessionDto, ExamSessionListResponse, ApplicationDto} from "@/api/generated/model";
 
 export default function ApplicationPage() {
     const router = useRouter();
 
     const[selectedExamSession, setSelectedExamSession] = React.useState<ExamSessionDto | null>(null);
 
-    const {
-        getActiveExamSessions,
-        examSessions,
-        loading
-    } = useExamSession();
+    const {data: sessionsData, isLoading: loading} = useGetActiveExamSessions({});
+    const examSessions = (sessionsData as unknown as ExamSessionListResponse) || null;
 
-
-    const {
-        getApplicationsByExamSession,
-        applications,
-    } = useApplication();
-
-
-
-    useEffect(() => {
-        getActiveExamSessions();
-    }, []);
-
-    useEffect(() => {
-        if(selectedExamSession){
-            getApplicationsByExamSession(selectedExamSession.id);
-        }
-    }, [selectedExamSession]);
+    const {data: applicationsData} = useGetApplicationsByExamSession(selectedExamSession?.id || '', {
+        query: { enabled: !!selectedExamSession?.id }
+    });
+    const applications = (applicationsData as unknown as { data?: ApplicationDto[] })?.data || null;
 
     const columnSessions: Column<RecordType>[] = [
 
@@ -145,7 +129,7 @@ export default function ApplicationPage() {
             <div className="p-6 pt-1">
                 {
                     examSessions &&
-                    <DynamicTable columns={columnSessions} data={examSessions.examSessions}/>
+                    <DynamicTable columns={columnSessions} data={examSessions.examSessions as RecordType[]}/>
                 }
 
             </div>
@@ -153,7 +137,7 @@ export default function ApplicationPage() {
             <div className="p-6 pt-1">
                 {
                     applications &&
-                    <DynamicTable columns={columns} data={applications}/>
+                    <DynamicTable columns={columns} data={applications as RecordType[]}/>
                 }
 
             </div>

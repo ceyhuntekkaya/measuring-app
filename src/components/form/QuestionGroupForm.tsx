@@ -8,24 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { NumberInput } from "@/components/ui/number-input";
-import { CreateQuestionGroupRequest, CreateQuestionGroupHeaderRequest } from "@/types/exam/examRequests";
-import { ExamTypeDto, ExamSectionDto, QuestionGroupTypeDto } from "@/types/exam/examTemplates";
+import type { CreateQuestionGroupRequest, CreateQuestionGroupHeaderRequest, ExamTypeDto, ExamSectionDto, QuestionGroupTypeDto, QuestionGroupDto, CreateQuestionGroupHeaderRequestMediaType } from "@/api/generated/model";
 import { Textarea } from "@/components/ui/textarea";
 import { Trash2, Plus } from "lucide-react";
-import { EMediaType } from "@/types/exam/enum";
-import { QuestionGroupDto } from "@/types/exam/examEntities";
 import { FileUpload } from "@/components/ui/file-upload";
+import { CreateQuestionGroupHeaderRequestMediaType as GeneratedMediaType } from "@/api/generated/model";
 
-interface QuestionGroupFormData {
-    id?: string
-    name: string;
-    examTypeId: string;
-    examSectionId: string;
-    questionGroupTypeId: string;
-    maximumScore?: number;
-    durationInSeconds?: number;
-    headers: CreateQuestionGroupHeaderRequest[];
-}
 
 interface QuestionGroupFormErrors {
     name?: string;
@@ -49,18 +37,25 @@ interface QuestionGroupFormProps {
 }
 
 // MediaType'a göre FileType belirleme
-const getFileTypeFromMediaType = (mediaType: EMediaType): 'image' | 'video' | 'audio' | 'pdf' | 'file' => {
-    switch (mediaType) {
-        case EMediaType.IMAGE:
+const getFileTypeFromMediaType = (mediaType: CreateQuestionGroupHeaderRequestMediaType | string): 'image' | 'video' | 'audio' | 'pdf' | 'file' => {
+    const mediaTypeStr = typeof mediaType === 'string' ? mediaType : mediaType;
+    switch (mediaTypeStr) {
+        case GeneratedMediaType.IMAGE:
+        case 'IMAGE':
             return 'image';
-        case EMediaType.VIDEO:
+        case GeneratedMediaType.VIDEO:
+        case 'VIDEO':
             return 'video';
-        case EMediaType.AUDIO:
+        case GeneratedMediaType.AUDIO:
+        case 'AUDIO':
             return 'audio';
-        case EMediaType.PDF:
+        case GeneratedMediaType.PDF:
+        case 'PDF':
             return 'pdf';
-        case EMediaType.DOCUMENT:
-        case EMediaType.OTHER:
+        case GeneratedMediaType.DOCUMENT:
+        case 'DOCUMENT':
+        case GeneratedMediaType.OTHER:
+        case 'OTHER':
             return 'file';
         default:
             return 'file';
@@ -68,18 +63,25 @@ const getFileTypeFromMediaType = (mediaType: EMediaType): 'image' | 'video' | 'a
 };
 
 // MediaType'a göre max file size (MB)
-const getMaxFileSizeFromMediaType = (mediaType: EMediaType): number => {
-    switch (mediaType) {
-        case EMediaType.IMAGE:
+const getMaxFileSizeFromMediaType = (mediaType: CreateQuestionGroupHeaderRequestMediaType | string): number => {
+    const mediaTypeStr = typeof mediaType === 'string' ? mediaType : mediaType;
+    switch (mediaTypeStr) {
+        case GeneratedMediaType.IMAGE:
+        case 'IMAGE':
             return 5;
-        case EMediaType.VIDEO:
+        case GeneratedMediaType.VIDEO:
+        case 'VIDEO':
             return 100;
-        case EMediaType.AUDIO:
+        case GeneratedMediaType.AUDIO:
+        case 'AUDIO':
             return 20;
-        case EMediaType.PDF:
-        case EMediaType.DOCUMENT:
+        case GeneratedMediaType.PDF:
+        case 'PDF':
+        case GeneratedMediaType.DOCUMENT:
+        case 'DOCUMENT':
             return 10;
-        case EMediaType.OTHER:
+        case GeneratedMediaType.OTHER:
+        case 'OTHER':
             return 50;
         default:
             return 10;
@@ -96,15 +98,14 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                                                                  onExamTypeChange,
                                                                  onExamSectionChange
                                                              }) => {
-    const [formData, setFormData] = useState<QuestionGroupFormData>({
-        id:'',
+    const [formData, setFormData] = useState<CreateQuestionGroupRequest>({
         name: '',
         examTypeId: '',
         examSectionId: '',
         questionGroupTypeId: '',
         maximumScore: undefined,
         durationInSeconds: undefined,
-        headers: []
+        headers: [] as CreateQuestionGroupHeaderRequest[]
     });
 
     const [errors, setErrors] = useState<QuestionGroupFormErrors>({});
@@ -115,18 +116,18 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
     // QuestionGroup geldiğinde form verilerini doldur (sadece bir kez)
     useEffect(() => {
         if (questionGroup && !isInitialized) {
+            const examType = questionGroup.examType as ExamTypeDto | undefined;
             setFormData({
-                id: questionGroup.id || '',
                 name: questionGroup.name || '',
-                examTypeId: questionGroup.examType?.id || '',
+                examTypeId: examType?.id || '',
                 examSectionId: questionGroup.examSection?.id || '',
                 questionGroupTypeId: questionGroup.questionGroupType?.id || '',
                 maximumScore: questionGroup.maximumScore,
                 durationInSeconds: questionGroup.durationInSeconds,
-                headers: questionGroup.headers?.map(h => ({
-                    id: h.id,
+                headers: questionGroup.headers?.map((h, index) => ({
+                    id: h.id || `temp-${index}`,
                     orderNumber: h.orderNumber || 1,
-                    mediaType: h.mediaType || EMediaType.TEXT,
+                    mediaType: (h.mediaType as CreateQuestionGroupHeaderRequestMediaType) || GeneratedMediaType.TEXT,
                     content: h.content || ''
                 })) || []
             });
@@ -137,7 +138,10 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
     // Exam Type değiştiğinde sections'ı filtrele
     useEffect(() => {
         if (formData.examTypeId) {
-            const filtered = examSections.filter(section => section.examType?.id === formData.examTypeId);
+            const filtered = examSections.filter(section => {
+                const examType = section.examType as ExamTypeDto | undefined;
+                return examType?.id === formData.examTypeId;
+            });
             setFilteredSections(filtered);
 
             // Eğer seçili section filtered listede yoksa ve bu create modu ise temizle
@@ -173,9 +177,9 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
     }, [formData.examSectionId, questionGroupTypes, questionGroup]);
 
 
-    const handleChange = <T extends keyof QuestionGroupFormData>(
+    const handleChange = <T extends keyof CreateQuestionGroupRequest>(
         name: T,
-        value: QuestionGroupFormData[T]
+        value: CreateQuestionGroupRequest[T]
     ) => {
         setFormData(prev => ({
             ...prev,
@@ -203,10 +207,11 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
         setFormData(prev => ({
             ...prev,
             headers: [
-                ...prev.headers,
+                ...(prev.headers || []),
                 {
-                    orderNumber: prev.headers.length + 1,
-                    mediaType: EMediaType.TEXT,
+                    id: `temp-${Date.now()}`,
+                    orderNumber: (prev.headers?.length || 0) + 1,
+                    mediaType: GeneratedMediaType.TEXT,
                     content: ''
                 }
             ]
@@ -216,7 +221,7 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
     const removeHeader = (index: number) => {
         setFormData(prev => ({
             ...prev,
-            headers: prev.headers.filter((_, i) => i !== index)
+            headers: (prev.headers || []).filter((_, i) => i !== index)
         }));
     };
 
@@ -227,7 +232,7 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
     ) => {
         setFormData(prev => ({
             ...prev,
-            headers: prev.headers.map((header, i) => {
+            headers: (prev.headers || []).map((header, i) => {
                 if (i === index) {
                     // MediaType değiştiğinde content'i temizle
                     if (field === 'mediaType' && header.mediaType !== value) {
@@ -259,7 +264,7 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
             newErrors.questionGroupTypeId = 'Soru grubu tipi seçimi zorunludur';
         }
 
-        if (formData.headers.length === 0) {
+        if (!formData.headers || formData.headers.length === 0) {
             newErrors.headers = 'En az bir başlık eklemelisiniz';
         }
 
@@ -272,13 +277,8 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
             return;
         }
 
-        const submitData: CreateQuestionGroupRequest = {
-            ...formData,
-            maximumScore: formData.maximumScore || 0,
-            durationInSeconds: formData.durationInSeconds || 0
-        };
-
-        onSubmit(submitData);
+        // Directly use formData - no manual mapping needed!
+        onSubmit(formData);
     };
 
     return (
@@ -459,7 +459,7 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                             </Button>
                         </div>
 
-                        {formData.headers.map((header, index) => (
+                        {(formData.headers || []).map((header, index) => (
                             <div key={index} className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg">
                                 <div className="col-span-1">
                                     <Label>Sıra</Label>
@@ -476,8 +476,8 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                                 <div className="col-span-2">
                                     <Label>Medya Tipi</Label>
                                     <Select
-                                        onValueChange={(value) => updateHeader(index, 'mediaType', value as EMediaType)}
-                                        value={header.mediaType || EMediaType.TEXT}
+                                        onValueChange={(value) => updateHeader(index, 'mediaType', value as CreateQuestionGroupHeaderRequestMediaType)}
+                                        value={header.mediaType || GeneratedMediaType.TEXT}
                                         disabled={loading}
                                         searchable={false}
                                         sortable={false}
@@ -487,9 +487,9 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectGroup>
-                                                {Object.entries(EMediaType).map(([key, value]) => (
-                                                    <SelectItem key={key} value={key}>
-                                                        {value}
+                                                {Object.entries(GeneratedMediaType).map(([key, value]) => (
+                                                    <SelectItem key={key} value={value}>
+                                                        {key}
                                                     </SelectItem>
                                                 ))}
                                             </SelectGroup>
@@ -499,9 +499,9 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
 
                                 <div className="col-span-8">
                                     <Label>İçerik</Label>
-                                    {header.mediaType === EMediaType.TEXT ? (
+                                    {(!header.mediaType || header.mediaType === (GeneratedMediaType.TEXT as CreateQuestionGroupHeaderRequestMediaType)) ? (
                                         <Textarea
-                                            value={header.content}
+                                            value={header.content || ''}
                                             onChange={(e) => updateHeader(index, 'content', e.target.value)}
                                             placeholder="Başlık içeriğini giriniz"
                                             className="min-h-[60px]"
@@ -510,12 +510,12 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                                     ) : (
                                         <div className="space-y-2">
                                             <FileUpload
-                                                acceptedFileTypes={[getFileTypeFromMediaType(header.mediaType || EMediaType.TEXT)]}
-                                                maxFileSize={getMaxFileSizeFromMediaType(header.mediaType || EMediaType.TEXT)}
+                                                acceptedFileTypes={[getFileTypeFromMediaType(header.mediaType || GeneratedMediaType.TEXT)]}
+                                                maxFileSize={getMaxFileSizeFromMediaType(header.mediaType || GeneratedMediaType.TEXT)}
                                                 entityId={questionGroup?.id || 'qg_new'}
-                                                uploadType={`qg_header_${header.mediaType}`}
+                                                uploadType={`qg_header_${header.mediaType || GeneratedMediaType.TEXT}`}
                                                 multiple={false}
-                                                labelText={`${header.mediaType} Dosyası Yükle`}
+                                                labelText={`${header.mediaType || GeneratedMediaType.TEXT} Dosyası Yükle`}
                                                 onUploadComplete={(files) => {
                                                     if (files && files.length > 0) {
                                                         updateHeader(index, 'content', files[0].path || '');

@@ -1,9 +1,9 @@
 import React, {useState, useEffect, useCallback} from 'react';
-import {MultipleChoiceTemplateDto, ChoiceOption} from '@/types/exam/questionTemplates';
+import type {MultipleChoiceTemplateDto, ChoiceOption} from '@/api/generated/model';
 import {
     EMediaType, EQuestionType,
 } from "@/types/exam/enum";
-import {QuestionTemplateType} from "@/types/exam/examEntities";
+import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 
 
 interface MultipleChoiceQuestionProps {

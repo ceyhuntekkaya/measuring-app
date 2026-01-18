@@ -2,48 +2,43 @@
 
 
 import PageHeader from "@/components/layout/page-header";
-import React, {useEffect} from "react";
+import React from "react";
 import QuestionGroupForm from "@/components/form/QuestionGroupForm";
-import {useExamType} from "@/hooks/exam/use-exam-type";
-import {useQuestionGroupType} from "@/hooks/exam/use-question-group-type";
-import {useExamSection} from "@/hooks/exam/use-exam-section";
-import {useQuestionGroup} from "@/hooks/exam/use-question-group";
+import {useGetAllExamTypes} from "@/api/generated/exam-type-management/exam-type-management";
+import type { ApiResponseExamTypeListResponse } from "@/api/generated/model";
+import {useGetQuestionGroupTypesByExamSection} from "@/api/generated/question-group-type-management/question-group-type-management";
+import {useGetExamSectionsByExamType} from "@/api/generated/exam-section-management/exam-section-management";
+import {useCreateQuestionGroup} from "@/api/generated/question-group-management/question-group-management";
+import type {ApiResponseListExamSectionDto, ApiResponseListQuestionGroupTypeDto, CreateQuestionGroupRequest} from "@/api/generated/model";
 
 export default function QuestionGroupAdd() {
 
+    const { data: examTypesData } = useGetAllExamTypes({});
+    const examTypes = (examTypesData as ApiResponseExamTypeListResponse)?.data || null;
 
-    const {
-        examTypes,
-        getAllExamTypes,
-    } = useExamType();
+    const createQuestionGroupMutation = useCreateQuestionGroup();
+    const createQuestionGroup = async (data: CreateQuestionGroupRequest) => {
+        await createQuestionGroupMutation.mutateAsync({ data });
+    };
 
+    const [selectedExamTypeId, setSelectedExamTypeId] = React.useState<string>('');
+    const { data: sectionsData } = useGetExamSectionsByExamType(selectedExamTypeId, {
+        query: { enabled: !!selectedExamTypeId }
+    });
+    const sectionsByExamType = (sectionsData as ApiResponseListExamSectionDto)?.data || [];
 
-    const {
-        createQuestionGroup
-    } = useQuestionGroup();
-
-
-    const {
-        sectionsByExamType,
-        getExamSectionsByExamType,
-    } = useExamSection();
-
-    const {
-        typesByExamSection,
-        getQuestionGroupTypesByExamSection,
-    } = useQuestionGroupType();
-
-    useEffect(() => {
-        getAllExamTypes();
-    }, []);
-
+    const [selectedExamSectionId, setSelectedExamSectionId] = React.useState<string>('');
+    const { data: typesData } = useGetQuestionGroupTypesByExamSection(selectedExamSectionId, {
+        query: { enabled: !!selectedExamSectionId }
+    });
+    const typesByExamSection = (typesData as ApiResponseListQuestionGroupTypeDto)?.data || [];
 
     const onExamTypeChange = (examTypeId: string) => {
-        getExamSectionsByExamType(examTypeId);
+        setSelectedExamTypeId(examTypeId);
     }
 
     const onExamSectionChange = (examSectionId: string) => {
-        getQuestionGroupTypesByExamSection(examSectionId);
+        setSelectedExamSectionId(examSectionId);
     }
 
 

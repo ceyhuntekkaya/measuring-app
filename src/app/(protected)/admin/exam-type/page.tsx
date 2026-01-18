@@ -1,27 +1,23 @@
 'use client';
 import {Column, RecordType} from "@/types/ui/table";
-import React, {useEffect} from "react";
+import React from "react";
 import PageHeader from "@/components/layout/page-header";
 import DynamicTable from "@/components/ui/dynamic-table";
 import {ActionButtons} from "@/components/ui/simple-dropdown";
 import {useRouter} from "next/navigation";
 import LoadingComp from "@/components/ui/loading-comp";
-import {useExamType} from "@/hooks/exam/use-exam-type";
+import {useGetAllExamTypes} from "@/api/generated/exam-type-management/exam-type-management";
+import type { ApiResponseExamTypeListResponse } from "@/api/generated/model";
 import Link from "next/link";
 import {examTypeConverter, statusConverter} from "@/utils/enum-converter";
 import {EExamType, EStatus} from "@/types/exam/enum";
 
 export default function ExamTypePage() {
     const router = useRouter();
-    const {
-        examTypes,
-        getAllExamTypes,
-        loading
-    } = useExamType();
-
-    useEffect(() => {
-        getAllExamTypes();
-    }, []);
+    const { data, isLoading, error } = useGetAllExamTypes({});
+    
+    // Extract examTypes from API response
+    const examTypes = (data as unknown as ApiResponseExamTypeListResponse)?.data || null;
 
     const columns: Column<RecordType>[] = [
 
@@ -94,9 +90,15 @@ export default function ExamTypePage() {
     };
 
 
-    if (loading) {
+    if (isLoading) {
+        return <LoadingComp/>;
+    }
+
+    if (error) {
         return (
-            <LoadingComp/>
+            <div className="p-6">
+                <p className="text-red-600">Sınav tipleri yüklenirken bir hata oluştu.</p>
+            </div>
         );
     }
     return (
@@ -110,7 +112,7 @@ export default function ExamTypePage() {
             <div className="p-6 pt-1">
                 {
                     examTypes &&
-                    <DynamicTable columns={columns} data={examTypes.examTypes}/>
+                    <DynamicTable columns={columns} data={examTypes.examTypes as RecordType[]}/>
                 }
 
             </div>

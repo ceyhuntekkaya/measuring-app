@@ -1,13 +1,8 @@
 'use client';
 
-import React, {useEffect, useRef, useState} from 'react';
-import {
-    QuestionAnswerRequest,
-    QuestionGroupDto,
-    QuestionGroupHeaderDto,
-    QuestionTemplateType
-} from "@/types/exam/examEntities";
-import {useQuestion} from "@/hooks/exam/use-question";
+import React, {useEffect, useRef, useState, useCallback} from 'react';
+import type {QuestionGroupDto, QuestionGroupHeaderDto, QuestionAnswerRequest, QuestionDto} from "@/api/generated/model";
+import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
 import MultipleChoiceQuestion from "@/components/template/MultipleChoiceQuestion";
 import {
@@ -24,10 +19,10 @@ import {
     ShortAnswerTemplateDto,
     TrueFalseTemplateDto,
     VideoResponseTemplateDto
-} from "@/types/exam/questionTemplates";
+} from "@/api/generated/model";
 import TrueFalseQuestion from "@/components/template/TrueFalseQuestion";
 import FillInTheBlanksQuestion from "@/components/template/FillInTheBlanksQuestion";
-import {useQuestionGroup} from "@/hooks/exam/use-question-group";
+import {useGetQuestionGroupById} from "@/api/generated/question-group-management/question-group-management";
 import ShortAnswerQuestion from "@/components/template/ShortAnswerQuestion";
 import EssayQuestion from "@/components/template/EssayQuestion";
 import MatchingQuestion from "@/components/template/MatchingQuestion";
@@ -39,11 +34,14 @@ import AudioResponseQuestion from "@/components/template/AudioResponseQuestion";
 import VideoResponseQuestion from "@/components/template/VideoResponseQuestion";
 import ImageResponseQuestion from "@/components/template/ImageResponseQuestion";
 import {useExamApplicationContext} from "@/contexts/ExamApplicationContext";
-import {useExamResult} from "@/hooks/exam/use-exam-result";
-import {UploadedFileDto} from "@/types/exam/miscDtos";
-import {useApplication} from "@/hooks/exam/use-application";
+import {useSaveAnswer} from "@/api/generated/question-result-management/question-result-management";
+import { showNotification } from "@/lib/notification";
+import type {UploadedFileDto} from "@/api/generated/model";
+import {useSetStartedAt, useUpdateSessionState1} from "@/api/generated/application-management/application-management";
 import {ESessionState} from "@/types/exam/enum";
+import type {UpdateSessionStateRequestSessionState} from "@/api/generated/model";
 import siteConfig from "@/config/config.json";
+import {useGetQuestionsByGroup} from "@/api/generated/question-management/question-management";
 
 const API_URL = siteConfig.api.invokeUrl + "/upload/serve";
 
@@ -234,8 +232,32 @@ export default function ExamApplicationScreen({
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [answeredQuestions, setAnsweredQuestions] = useState<Set<string>>(new Set());
     const {application, evaluations} = useExamApplicationContext();
-    const {saveAnswer} = useExamResult();
-    const {setApplicationStartedAt, updateApplicationSessionState} = useApplication();
+    const { mutate: saveAnswer } = useSaveAnswer({
+        mutation: {
+            onSuccess: () => {
+                showNotification.success('Cevap başarıyla kaydedildi!');
+            },
+            onError: () => {
+                showNotification.error('Cevap kaydedilirken bir hata oluştu!');
+            }
+        }
+    });
+    const setStartedAtMutation = useSetStartedAt();
+    const updateSessionStateMutation = useUpdateSessionState1();
+    
+    const setApplicationStartedAt = useCallback(async (applicationId: string) => {
+        await setStartedAtMutation.mutateAsync({ id: applicationId });
+    }, [setStartedAtMutation]);
+    
+    const updateApplicationSessionState = useCallback(async (applicationId: string, state: ESessionState) => {
+        await updateSessionStateMutation.mutateAsync({ 
+            id: applicationId, 
+            data: { 
+                applicationId: applicationId,
+                sessionState: state as UpdateSessionStateRequestSessionState
+            } 
+        });
+    }, [updateSessionStateMutation]);
 
     const totalGroups = questionGroups.length;
     const progressPercentage = (completedGroups.size / totalGroups) * 100;
@@ -257,16 +279,25 @@ export default function ExamApplicationScreen({
         setShowExitModal(false);
     };
 
-    const {
-        questionsByGroup,
-        getQuestionsByGroup,
-    } = useQuestion();
+    const [selectedGroupId, setSelectedGroupId] = useState<string>('');
+    const {data: questionsData} = useGetQuestionsByGroup(selectedGroupId, {
+        query: { enabled: !!selectedGroupId }
+    });
+    const questionsByGroup = (questionsData as { data?: QuestionDto[] })?.data || [];
+    
+    const getQuestionsByGroup = (groupId: string) => {
+        setSelectedGroupId(groupId);
+    };
 
-
-    const {
-        selectedQuestionGroup,
-        getQuestionGroupById,
-    } = useQuestionGroup();
+    const [selectedQuestionGroupId, setSelectedQuestionGroupId] = useState<string>('');
+    const {data: questionGroupData} = useGetQuestionGroupById(selectedQuestionGroupId, {
+        query: { enabled: !!selectedQuestionGroupId }
+    });
+    const selectedQuestionGroup = (questionGroupData as { data?: QuestionGroupDto })?.data;
+    
+    const getQuestionGroupById = (groupId: string) => {
+        setSelectedQuestionGroupId(groupId);
+    };
 
     // Sınav başladığında API çağrıları (sadece bir kez çalışsın)
     const hasInitializedRef = useRef(false);
@@ -286,20 +317,26 @@ export default function ExamApplicationScreen({
 
     useEffect(() => {
         if (questionGroups && questionGroups.length > 0) {
-            getQuestionGroupById(questionGroups[currentGroupIndex].id);
-            getQuestionsByGroup(questionGroups[currentGroupIndex].id);
-            setCurrentQuestionIndex(0);
-            setAnsweredQuestions(new Set());
+            const currentGroup = questionGroups[currentGroupIndex];
+            if (currentGroup?.id) {
+                getQuestionGroupById(currentGroup.id);
+                getQuestionsByGroup(currentGroup.id);
+                setCurrentQuestionIndex(0);
+                setAnsweredQuestions(new Set());
+            }
         }
     }, [currentGroupIndex]);
 
 
     useEffect(() => {
         if (questionGroups && questionGroups.length > 0) {
-            getQuestionGroupById(questionGroups[0].id);
-            getQuestionsByGroup(questionGroups[0].id);
-            setCurrentQuestionIndex(0);
-            setAnsweredQuestions(new Set());
+            const firstGroup = questionGroups[0];
+            if (firstGroup?.id) {
+                getQuestionGroupById(firstGroup.id);
+                getQuestionsByGroup(firstGroup.id);
+                setCurrentQuestionIndex(0);
+                setAnsweredQuestions(new Set());
+            }
         }
     }, []);
 
@@ -333,7 +370,7 @@ export default function ExamApplicationScreen({
             evaluationId: evaluation?.id || '',
             isEmptyAnswer,
         }
-      saveAnswer(answerData);
+      saveAnswer({ data: answerData });
 
         if (isConversationSection() && !isEmptyAnswer && !answeredQuestions.has(questionId)) {
             setAnsweredQuestions(prev => new Set([...prev, questionId]));
@@ -626,7 +663,7 @@ export default function ExamApplicationScreen({
                             src={material.content || ""}
                             className="w-100"
                             style={{height: "600px"}}
-                            title={`${material.name || 'title'}`}
+                            title={material.content || 'PDF Document'}
                         ></iframe>
                     </div>
                 );
@@ -640,7 +677,7 @@ export default function ExamApplicationScreen({
                             className="btn btn-primary"
                             target="_blank"
                             rel="noopener noreferrer"
-                            download={material.uploadedFileName || undefined}
+                            download={material.content ? material.content.split('/').pop() : undefined}
                         >
                             <i className="bi bi-file-earmark-text me-2"></i>
                             Download Document
@@ -653,7 +690,7 @@ export default function ExamApplicationScreen({
                     <div className="mb-4 text-center">
                         <img
                             src={`${API_URL}/${material.content}`}
-                            alt={`${material.name || 'images'}`}
+                            alt={material.content || 'Image'}
                             className="img-fluid"
                             style={{maxHeight: "500px"}}
                         />
@@ -722,7 +759,7 @@ export default function ExamApplicationScreen({
                     <div className="mx-auto">
                         <div className="bg-white rounded-lg shadow-sm p-5 min-h-[500px]">
                             {
-                                questionsByGroup && selectedQuestionGroup?.headers?.map((header, key) => (
+                                questionsByGroup && selectedQuestionGroup?.headers?.map((header: QuestionGroupHeaderDto, key: number) => (
                                     <div key={key}>{renderContent(header)}</div>
                                 ))
                             }
@@ -734,11 +771,12 @@ export default function ExamApplicationScreen({
                                                 SORU: {currentQuestionIndex + 1} / {questionsByGroup.length}
                                             </h3>
                                             {
+                                                questionsByGroup[currentQuestionIndex].id &&
                                                 questionsByGroup[currentQuestionIndex].questionType &&
                                                 questionsByGroup[currentQuestionIndex].questionTemplate &&
                                                 renderTemplateSpecificForm(
-                                                    questionsByGroup[currentQuestionIndex].id,
-                                                    questionsByGroup[currentQuestionIndex].questionType!,
+                                                    questionsByGroup[currentQuestionIndex].id!,
+                                                    questionsByGroup[currentQuestionIndex].questionType! as EQuestionType,
                                                     questionsByGroup[currentQuestionIndex].questionTemplate!
                                                 )
                                             }
@@ -768,8 +806,19 @@ export default function ExamApplicationScreen({
 
                                             </h3>
                                         {
-                                            question.questionType && question.questionTemplate &&
-                                            renderTemplateSpecificForm(question.id, question.questionType, question.questionTemplate)
+                                            (() => {
+                                                const questionId = question.id;
+                                                const questionType = question.questionType;
+                                                const questionTemplate = question.questionTemplate;
+                                                if (questionId && questionType && questionTemplate) {
+                                                    return renderTemplateSpecificForm(
+                                                        questionId,
+                                                        questionType as EQuestionType,
+                                                        questionTemplate
+                                                    );
+                                                }
+                                                return null;
+                                            })()
                                         }
                                     </div>
                                 ))

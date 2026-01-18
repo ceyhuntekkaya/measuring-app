@@ -6,17 +6,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { NumberInput } from "@/components/ui/number-input";
-import { EssayTemplateDto } from "@/types/exam/questionTemplates";
+import type { EssayTemplateDto } from "@/api/generated/model";
 
-interface EssayTemplateFormData {
-    prompt: string;
-    gradingCriteria: string[];
-    minWords: number;
-    maxWords: number;
-    requiredTopics: string[];
-    rubric: string;
-    requiresManualGrading: boolean;
-}
+// Use ORVAL DTO types directly - only template-specific fields
+type EssayTemplateFormData = Pick<EssayTemplateDto, 'prompt' | 'gradingCriteria' | 'minWords' | 'maxWords' | 'requiredTopics' | 'rubric' | 'requiresManualGrading'>;
 
 interface EssayTemplateFormErrors {
     prompt?: string;
@@ -109,15 +102,15 @@ const EssayTemplateForm = forwardRef<EssayTemplateFormHandle, EssayTemplateFormP
     const validateForm = (): boolean => {
         const newErrors: EssayTemplateFormErrors = {};
 
-        if (!formData.prompt.trim()) {
+        if (!formData.prompt?.trim()) {
             newErrors.prompt = 'Kompozisyon konusu zorunludur';
         }
 
-        if (formData.minWords <= 0) {
+        if ((formData.minWords ?? 0) <= 0) {
             newErrors.minWords = 'Minimum kelime sayısı 0\'dan büyük olmalıdır';
         }
 
-        if (formData.maxWords <= formData.minWords) {
+        if ((formData.maxWords ?? 0) <= (formData.minWords ?? 0)) {
             newErrors.maxWords = 'Maksimum kelime sayısı minimum kelime sayısından büyük olmalıdır';
         }
 

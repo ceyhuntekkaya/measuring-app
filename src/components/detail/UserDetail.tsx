@@ -9,8 +9,9 @@ import {
     Shield, Users, Building2, Key, UserCheck, UserX, Settings,
     Calendar, Activity, Info
 } from 'lucide-react';
-import {UserDto, Permission, Department, Role} from '@/types/auth';
-import {BrandDto} from '@/types/management/brand';
+import type {UserDto} from '@/api/generated/model/userDto';
+import type {BrandDto} from '@/api/generated/model/brandDto';
+import type {Permission, Department, Role} from '@/types/auth';
 import { formatDate } from '@/utils/date-formater';
 import LoadingComp from "@/components/ui/loading-comp";
 import {departmentConverter, permissionConverter, roleConverter} from "@/utils/name-converter";
@@ -330,8 +331,8 @@ const UserDetailPage: React.FC<UserDetailProps> = ({
                                 </CardHeader>
                                 <CardContent>
                                     <div className="flex flex-wrap gap-2">
-                                        {user.roleSet?.length > 0 ? (
-                                            user.roleSet.map((role: Role) => (
+                                        {user.roleSet && user.roleSet?.length > 0 ? (
+                                            user.roleSet?.map((role: Role) => (
                                                 <Badge key={role} variant="secondary">
                                                     {roleConverter(role)}
                                                 </Badge>
@@ -352,11 +353,11 @@ const UserDetailPage: React.FC<UserDetailProps> = ({
                                 </CardHeader>
                                 <CardContent>
                                     <div className="flex flex-wrap gap-2">
-                                        {user.departmentSet?.length > 0 ? (
-                                            user.departmentSet.map((dept: Department) => (
+                                        {user.departmentSet && user.departmentSet.length > 0 ? (
+                                            user.departmentSet.map((dept) => (
                                                 <Badge key={dept} variant="outline">
 
-                                                    {departmentConverter(dept)}
+                                                    {departmentConverter(dept as Department)}
                                                 </Badge>
                                             ))
                                         ) : (
@@ -375,7 +376,7 @@ const UserDetailPage: React.FC<UserDetailProps> = ({
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                {user.authoritySet?.length > 0 ? (
+                                {user.authoritySet && user.authoritySet.length > 0 ? (
                                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                                         {user.authoritySet.map((permission: Permission) => (
                                             <Badge key={permission} variant="default" className="text-xs">

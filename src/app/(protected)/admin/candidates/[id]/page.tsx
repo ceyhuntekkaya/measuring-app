@@ -1,26 +1,22 @@
 'use client';
 
 import {useParams, useRouter} from "next/navigation";
-import React, {useEffect} from "react";
+import React from "react";
 import PageHeader from "@/components/layout/page-header";
 import LoadingComp from "@/components/ui/loading-comp";
 import CandidateDetail from "@/components/detail/CandidateDetail";
-import {useCandidate} from "@/hooks/exam/use-candidate";
+import {useGetCandidateById} from "@/api/generated/candidate-management/candidate-management";
+import type {ApiResponseCandidateDto} from "@/api/generated/model";
 
 export default function CandidateDetailPage() {
     const params = useParams();
     const id = params.id as string;
     const router = useRouter();
 
-    const {
-        selectedCandidate,
-        getCandidateById,
-        loading
-    } = useCandidate();
-
-    useEffect(() => {
-        getCandidateById(id);
-    }, []);
+    const {data, isLoading: loading} = useGetCandidateById(id, {
+        query: { enabled: !!id }
+    });
+    const selectedCandidate = (data as unknown as ApiResponseCandidateDto)?.data;
 
     if (loading) {
         return (

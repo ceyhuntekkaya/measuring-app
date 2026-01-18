@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { NumberInput } from "@/components/ui/number-input";
-import { HotSpotTemplateDto, HotSpotOptions, HotSpotArea } from "@/types/exam/questionTemplates";
+import type { HotSpotTemplateDto, HotSpotArea, HotSpotOptions } from "@/api/generated/model";
 import { Trash2, Plus } from "lucide-react";
 import Checkbox from "@/components/ui/checkbox";
 
@@ -19,14 +19,8 @@ interface HotSpotTemplateFormProps {
     loading?: boolean;
 }
 
-interface HotSpotTemplateFormData {
-    instructions: string;
-    imageUrl: string;
-    options: HotSpotOptions;
-    maxSelections?: number;
-    allowMultipleSpots: boolean;
-    explanation: string;
-}
+// Use ORVAL DTO types directly - only template-specific fields
+type HotSpotTemplateFormData = Pick<HotSpotTemplateDto, 'instructions' | 'imageUrl' | 'options' | 'maxSelections' | 'allowMultipleSpots' | 'explanation'>;
 
 interface HotSpotTemplateFormErrors {
     instructions?: string;
@@ -81,7 +75,7 @@ const HotSpotTemplateForm = forwardRef<HotSpotTemplateFormHandle, HotSpotTemplat
     // Form data değiştiğinde parent'a bildir (Anlık güncelleme)
     useEffect(() => {
         // İlk render'da boş form için onChange tetikleme
-        if (formData.instructions || formData.imageUrl || (formData.options.hotSpots ?? []).length > 0) {
+        if (formData.instructions || formData.imageUrl || (formData.options?.hotSpots ?? []).length > 0) {
             // Background image URL'yi sync et
             const optionsWithImage: HotSpotOptions = {
                 ...formData.options,
@@ -134,7 +128,7 @@ const HotSpotTemplateForm = forwardRef<HotSpotTemplateFormHandle, HotSpotTemplat
             ...prev,
             options: {
                 ...prev.options,
-                hotSpots: [...(prev.options.hotSpots || []), newHotSpot]
+                hotSpots: [...(prev.options?.hotSpots || []), newHotSpot]
             }
         }));
     };
@@ -144,7 +138,7 @@ const HotSpotTemplateForm = forwardRef<HotSpotTemplateFormHandle, HotSpotTemplat
             ...prev,
             options: {
                 ...prev.options,
-                hotSpots: prev.options.hotSpots?.filter((_, i) => i !== index) || []
+                hotSpots: prev.options?.hotSpots?.filter((_, i) => i !== index) || []
             }
         }));
     };
@@ -158,7 +152,7 @@ const HotSpotTemplateForm = forwardRef<HotSpotTemplateFormHandle, HotSpotTemplat
             ...prev,
             options: {
                 ...prev.options,
-                hotSpots: prev.options.hotSpots?.map((hotSpot, i) =>
+                hotSpots: prev.options?.hotSpots?.map((hotSpot, i) =>
                     i === index ? { ...hotSpot, [field]: newValue } : hotSpot
                 ) || []
             }
@@ -169,15 +163,15 @@ const HotSpotTemplateForm = forwardRef<HotSpotTemplateFormHandle, HotSpotTemplat
     const validateForm = (): boolean => {
         const newErrors: HotSpotTemplateFormErrors = {};
 
-        if (!formData.instructions.trim()) {
+        if (!formData.instructions?.trim()) {
             newErrors.instructions = 'Talimatlar zorunludur';
         }
 
-        if (!formData.imageUrl.trim() && !formData.options.backgroundImageUrl?.trim()) {
+        if (!formData.imageUrl?.trim() && !formData.options?.backgroundImageUrl?.trim()) {
             newErrors.imageUrl = 'Arkaplan resmi URL\'si zorunludur';
         }
 
-        if (!formData.options.hotSpots || formData.options.hotSpots.length === 0) {
+        if (!formData.options?.hotSpots || formData.options.hotSpots.length === 0) {
             newErrors.options = 'En az bir sıcak nokta tanımlanmalıdır';
         } else {
             const hasEmptyHotSpots = formData.options.hotSpots.some(hotSpot =>
@@ -258,7 +252,7 @@ const HotSpotTemplateForm = forwardRef<HotSpotTemplateFormHandle, HotSpotTemplat
                                     ...formData.options,
                                     selectionType: val as string
                                 })}
-                                value={formData.options.selectionType || 'SINGLE'}
+                                value={formData.options?.selectionType || 'SINGLE'}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Seçim tipi seçin" />
@@ -319,7 +313,7 @@ const HotSpotTemplateForm = forwardRef<HotSpotTemplateFormHandle, HotSpotTemplat
                             </Button>
                         </div>
 
-                        {formData.options.hotSpots?.map((hotSpot, index) => (
+                        {formData.options?.hotSpots?.map((hotSpot, index) => (
                             <div key={hotSpot.id || index} className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg">
                                 <div className="col-span-1">
                                     <div className="flex items-center space-x-2">

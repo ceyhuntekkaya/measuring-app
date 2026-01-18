@@ -8,11 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, User, Calendar, FileText, ArrowRight } from 'lucide-react';
-import {useExamTaking} from "@/hooks/exam/use-exam-taking";
+import {useExamApplicationContext} from "@/contexts/ExamApplicationContext";
 
 export default function ExamWelcomePage() {
     const router = useRouter();
-    const { application, loading, error } = useExamTaking();
+    const { application } = useExamApplicationContext();
+    const loading = false;
+    const error: Error | null = null;
 
 
     useEffect(() => {
@@ -36,14 +38,14 @@ export default function ExamWelcomePage() {
         );
     }
 
-    if (error || !application) {
+    if (!application) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
                 <Card className="w-full max-w-md">
                     <CardContent className="pt-6">
                         <Alert variant="destructive">
                             <AlertDescription>
-                                {error?.message || 'Oturum bilgileri bulunamadı. Lütfen tekrar giriş yapın.'}
+                                {error && 'message' in error ? (error as Error).message : 'Oturum bilgileri bulunamadı. Lütfen tekrar giriş yapın.'}
                             </AlertDescription>
                         </Alert>
                         <Button

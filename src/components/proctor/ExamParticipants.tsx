@@ -1,12 +1,13 @@
 import React, {useEffect, useState} from 'react';
 import {Clock, MessageCircle, CheckCircle, Play, XCircle} from 'lucide-react';
 import {ChatWindow} from "@/components/proctor/ChatWindow";
-import {ApplicationDto} from "@/types/management/brand";
+import type {ApplicationDto} from "@/api/generated/model";
 import {ESessionState} from "@/types/exam/enum";
 import OnlineStatusIndicator from '@/components/admin/OnlineStatusIndicator';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
-import {useApplication} from "@/hooks/exam/use-application";
+import {useSetStartedAt, useSetEndedAt, useUpdateSessionState1} from "@/api/generated/application-management/application-management";
 import {ESessionState as ESessionStateEnum} from "@/types/exam/enum";
+import type { UpdateSessionStateRequestSessionState } from "@/api/generated/model";
 
 const ParticipantCard = ({participant, onChat, isOnline, onStart, onStop, onFinish}: {
     participant: ApplicationDto;
@@ -16,6 +17,25 @@ const ParticipantCard = ({participant, onChat, isOnline, onStart, onStop, onFini
     onStop?: (id: string) => void;
     onFinish?: (id: string) => void;
 }) => {
+
+    const calculateDuration = (): string => {
+        if (!participant.startedAt) return '';
+        
+        const startTime = new Date(participant.startedAt).getTime();
+        const endTime = participant.endedAt 
+            ? new Date(participant.endedAt).getTime() 
+            : Date.now();
+        
+        const diffMs = endTime - startTime;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMins / 60);
+        const remainingMins = diffMins % 60;
+        
+        if (diffHours > 0) {
+            return `${diffHours}s ${remainingMins}dk`;
+        }
+        return `${diffMins}dk`;
+    };
 
     const getBorderColor = () => {
         switch (participant.sessionState) {
@@ -100,14 +120,15 @@ const ParticipantCard = ({participant, onChat, isOnline, onStart, onStop, onFini
 
                             <div className="text-sm">
                                 <div className="text-gray-500">Süre</div>
-                                <div className="font-medium">{participant.duration as string || ''}</div>
+                                <div className="font-medium">{calculateDuration()}</div>
                             </div>
 
                             {participant.sessionState === ESessionState.IN_PROGRESS && (
                                 <div className="text-sm">
                                     <div className="text-gray-500">Soru</div>
                                     <div className="font-medium">
-                                        participant.currentQuestion/participant.totalQuestions
+                                        {/* currentQuestion and totalQuestions are not available in ApplicationDto */}
+                                        -
                                     </div>
                                 </div>
                             )}
@@ -197,7 +218,27 @@ interface ExamTypeFormProps {
 const ExamParticipants: React.FC<ExamTypeFormProps> = ({ candidates }) => {
     const [chatParticipant, setChatParticipant] = useState<ApplicationDto | null>(null);
     const { isOnline ,onlineUsers} = useOnlineStatus();
-    const {setApplicationStartedAt, setApplicationEndedAt, updateApplicationSessionState} = useApplication();
+    const setStartedAtMutation = useSetStartedAt();
+    const setEndedAtMutation = useSetEndedAt();
+    const updateSessionStateMutation = useUpdateSessionState1();
+    
+    const setApplicationStartedAt = async (applicationId: string) => {
+        await setStartedAtMutation.mutateAsync({ id: applicationId });
+    };
+    
+    const setApplicationEndedAt = async (applicationId: string) => {
+        await setEndedAtMutation.mutateAsync({ id: applicationId });
+    };
+    
+    const updateApplicationSessionState = async (applicationId: string, state: ESessionStateEnum) => {
+        await updateSessionStateMutation.mutateAsync({ 
+            id: applicationId, 
+            data: { 
+                applicationId: applicationId,
+                sessionState: state as UpdateSessionStateRequestSessionState
+            } 
+        });
+    };
 
 
 

@@ -18,7 +18,7 @@ export default function AppLayout({
     const router = useRouter();
 
     useEffect(() => {
-        if (!loading && (!user || !user.roleSet.includes('USER') )) {
+        if (!loading && (!user || !user.roleSet?.includes('USER') )) {
         router.push('/login');
         }
     }, [user, loading, router]);

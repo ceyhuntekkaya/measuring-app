@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { VideoResponseTemplateDto } from '@/types/exam/questionTemplates';
-import {QuestionTemplateType} from "@/types/exam/examEntities";
+import type { VideoResponseTemplateDto } from '@/api/generated/model';
+import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
 import {uploadVideoFile} from "@/services/api/upload-file";
-import {UploadedFileDto} from "@/types/exam/miscDtos";
+import type {UploadedFileDto} from "@/api/generated/model";
 import siteConfig from "@/config/config.json";
 
 interface VideoResponseQuestionProps {

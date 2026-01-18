@@ -1,6 +1,6 @@
 import React, {useState, useEffect, useMemo} from 'react';
-import { DragAndDropTemplateDto } from '@/types/exam/questionTemplates';
-import {QuestionTemplateType} from "@/types/exam/examEntities";
+import type { DragAndDropTemplateDto } from '@/api/generated/model';
+import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
 
 interface DragAndDropQuestionProps {

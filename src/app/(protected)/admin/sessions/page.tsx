@@ -1,27 +1,22 @@
 'use client';
 
 import PageHeader from "@/components/layout/page-header";
-import React, {useEffect} from "react";
+import React from "react";
 import {ActionButtons} from "@/components/ui/simple-dropdown";
 import {useRouter} from "next/navigation";
 import {Column, RecordType} from "@/types/ui/table";
 import LoadingComp from "@/components/ui/loading-comp";
 import DynamicTable from "@/components/ui/dynamic-table";
-import {useExamSession} from "@/hooks/exam/use-exam-session";
+import {useGetUpcomingExamSessions} from "@/api/generated/exam-session-management/exam-session-management";
 import {formatDate} from "@/utils/date-formater";
+import type {ApiResponseExamSessionListResponse} from "@/api/generated/model";
 
 
 export default function AdminPage() {
     const router = useRouter();
-    const {
-        getUpcomingExamSessions,
-        upcomingExamSessions,
-        loading
-    } = useExamSession();
-
-    useEffect(() => {
-        getUpcomingExamSessions();
-    }, []);
+    const {data, isLoading: loading} = useGetUpcomingExamSessions({});
+    
+    const upcomingExamSessions = (data as unknown as ApiResponseExamSessionListResponse)?.data || null;
 
     const columns: Column<RecordType>[] = [
 
@@ -112,7 +107,7 @@ export default function AdminPage() {
             <div className="p-6 pt-1">
                 {
                     upcomingExamSessions &&
-                    <DynamicTable columns={columns} data={upcomingExamSessions}/>
+                    <DynamicTable columns={columns} data={upcomingExamSessions as RecordType[]}/>
                 }
 
             </div>

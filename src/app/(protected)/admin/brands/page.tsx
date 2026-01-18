@@ -1,25 +1,21 @@
 'use client';
 
 import PageHeader from "@/components/layout/page-header";
-import React, {useEffect} from "react";
+import React from "react";
 import {useRouter} from "next/navigation";
-import {useBrand} from "@/hooks/exam/use-brand";
+import {useGetAllBrands} from "@/api/generated/brand-management/brand-management";
 import {Column, RecordType} from "@/types/ui/table";
 import LoadingComp from "@/components/ui/loading-comp";
 import {ActionButtons} from "@/components/ui/simple-dropdown";
 import DynamicTable from "@/components/ui/dynamic-table";
+import type { ApiResponseListBrandDto } from "@/api/generated/model";
 
 export default function BrandsPage() {
     const router = useRouter();
-    const {
-        getAllBrands,
-        brands,
-        loading
-    } = useBrand();
-
-    useEffect(() => {
-        getAllBrands();
-    }, []);
+    const { data, isLoading, error } = useGetAllBrands();
+    
+    // Extract brands from API response
+    const brands = (data as unknown as ApiResponseListBrandDto)?.data || null;
 
     const columns: Column<RecordType>[] = [
 
@@ -67,9 +63,15 @@ export default function BrandsPage() {
     };
 
 
-    if (loading) {
+    if (isLoading) {
+        return <LoadingComp/>;
+    }
+
+    if (error) {
         return (
-            <LoadingComp/>
+            <div className="p-6">
+                <p className="text-red-600">Markalar yüklenirken bir hata oluştu.</p>
+            </div>
         );
     }
     return (
@@ -83,7 +85,7 @@ export default function BrandsPage() {
             <div className="p-6 pt-1">
                 {
                     brands &&
-                    <DynamicTable columns={columns} data={brands}/>
+                    <DynamicTable columns={columns} data={brands as RecordType[]}/>
                 }
 
             </div>

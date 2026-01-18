@@ -1,28 +1,22 @@
 'use client';
 import {Column, RecordType} from "@/types/ui/table";
-import React, {useEffect} from "react";
+import React from "react";
 import PageHeader from "@/components/layout/page-header";
 import DynamicTable from "@/components/ui/dynamic-table";
 import {ActionButtons} from "@/components/ui/simple-dropdown";
 import {useRouter} from "next/navigation";
 import LoadingComp from "@/components/ui/loading-comp";
 import Link from "next/link";
-import {useQuestionGroup} from "@/hooks/exam/use-question-group";
-import {QuestionGroupDto} from "@/types/exam/examEntities";
+import {useGetAllQuestionGroups} from "@/api/generated/question-group-management/question-group-management";
+import type {QuestionGroupDto, ApiResponseListQuestionGroupDto} from "@/api/generated/model";
 import {statusConverter} from "@/utils/enum-converter";
 import {EStatus} from "@/types/exam/enum";
 
 export default function QuestionGroupPage() {
     const router = useRouter();
-    const {
-        questionGroups,
-        getAllQuestionGroup,
-        loading
-    } = useQuestionGroup();
-
-    useEffect(() => {
-        getAllQuestionGroup();
-    }, []);
+    const {data, isLoading: loading} = useGetAllQuestionGroups();
+    
+    const questionGroups = (data as unknown as ApiResponseListQuestionGroupDto)?.data;
 
     const columns: Column<RecordType>[] = [
 
@@ -107,7 +101,7 @@ export default function QuestionGroupPage() {
             <div className="p-6 pt-1">
                 {
                     questionGroups &&
-                    <DynamicTable columns={columns} data={questionGroups}/>
+                    <DynamicTable columns={columns} data={questionGroups as RecordType[]}/>
                 }
 
             </div>

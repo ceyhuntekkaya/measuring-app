@@ -5,12 +5,13 @@
 import React, { useState, useEffect } from 'react';
 import { useExamContext } from '@/contexts/ExamContext';
 import { Eye, EyeOff, User, Lock, LogIn } from 'lucide-react';
-import {useExamTaking} from "@/hooks/exam/use-exam-taking";
+import {useGetApplicationByCredentials} from "@/api/generated/exam-taking/exam-taking";
 import {showNotification} from "@/lib/notification";
+import type {ApiResponseApplicationDto} from "@/api/generated/model";
 
 export default function ExamLoginPage() {
     const { state, loginSuccess, setStep } = useExamContext();
-    const { getApplicationByCredentials } = useExamTaking();
+    const getApplicationByCredentialsMutation = useGetApplicationByCredentials();
 
     const [formData, setFormData] = useState({
         username: '',
@@ -54,24 +55,23 @@ export default function ExamLoginPage() {
         setError('');
 
         try {
-            await getApplicationByCredentials(formData.username, formData.password);
+            const result = await getApplicationByCredentialsMutation.mutateAsync({
+                data: {
+                    username: formData.username,
+                    password: formData.password
+                }
+            });
+            const applicationData = (result as unknown as ApiResponseApplicationDto)?.data;
+            if (applicationData) {
+                loginSuccess(applicationData);
+            }
         } catch (err) {
-
             setError(err instanceof Error ? 'Giriş başarısız. Kullanıcı adı ve şifreyi kontrol edin.' : 'Giriş başarısız. Kullanıcı adı ve şifreyi kontrol edin.');
-            showNotification.error('Kullanıcı oluşturulurken bir hata oluştu!');
+            showNotification.error('Giriş yapılırken bir hata oluştu!');
         } finally {
             setLoading(false);
         }
     };
-
-    // useExamTaking hook'undan gelen application state'ini izle
-    const { application } = useExamTaking();
-
-    useEffect(() => {
-        if (application) {
-            loginSuccess(application);
-        }
-    }, [application, loginSuccess]);
 
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword);

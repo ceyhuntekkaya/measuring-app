@@ -1,7 +1,10 @@
 'use client';
 
 import React from 'react';
-import {ExamDto, QuestionGroupDto, QuestionDto, QuestionTemplateType} from '@/types/exam/examEntities';
+import type {ExamDto} from '@/api/generated/model/examDto';
+import type {QuestionGroupDto} from '@/api/generated/model/questionGroupDto';
+import type {QuestionDto} from '@/api/generated/model/questionDto';
+import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EQuestionType, EMediaType} from '@/types/exam/enum';
 import {getQuestionTypeLabel} from '@/utils/question-type-convert';
 import {
@@ -18,7 +21,7 @@ import {
     ShortAnswerTemplateDto,
     TrueFalseTemplateDto,
     VideoResponseTemplateDto
-} from '@/types/exam/questionTemplates';
+} from '@/api/generated/model';
 import MultipleChoiceQuestion from '@/components/template/MultipleChoiceQuestion';
 import TrueFalseQuestion from '@/components/template/TrueFalseQuestion';
 import FillInTheBlanksQuestion from '@/components/template/FillInTheBlanksQuestion';
@@ -231,7 +234,7 @@ const ExamPreviewList: React.FC<ExamPreviewListProps> = ({ exam }) => {
                 </div>
             ) : (
                 sortedQuestionGroups.map((questionGroup: QuestionGroupDto, groupIndex: number) => {
-                    const sortedQuestions = [...(questionGroup.questions || [])].sort((a, b) => {
+                    const sortedQuestions = [...((questionGroup.questions || []) as QuestionDto[])].sort((a: QuestionDto, b: QuestionDto) => {
                         return (a.orderNumber ?? 0) - (b.orderNumber ?? 0);
                     });
 
@@ -317,7 +320,7 @@ const ExamPreviewList: React.FC<ExamPreviewListProps> = ({ exam }) => {
                                                             {question.name || `Soru ${questionIndex + 1}`}
                                                         </div>
                                                         <div className="text-sm text-gray-500 mt-1">
-                                                            {getQuestionTypeLabel(question.questionType)}
+                                                            {getQuestionTypeLabel(question.questionType as EQuestionType)}
                                                         </div>
                                                     </div>
                                                 </div>

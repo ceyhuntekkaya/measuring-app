@@ -1,13 +1,14 @@
 'use client';
 
 import {createContext, useContext, useState, useEffect, ReactNode} from 'react';
-import {EvaluationDto, ExamDto, ExamSessionDto} from "@/types/exam/examEntities";
-import {ApplicationDto, CandidateDto} from "@/types/management/brand";
+import type {EvaluationDto, ExamDto, ExamSessionDto} from "@/api/generated/model";
+import type {ApplicationDto, CandidateDto} from "@/api/generated/model";
 import {useAuth} from "@/hooks/use-auth";
 import {EApplicationUpdateState} from "@/types/exam/enum";
-import {useApplication} from "@/hooks/exam/use-application";
-import {ExamSectionDto} from "@/types/exam/examTemplates";
-import {useExam} from "@/hooks/exam/use-exam";
+import {useUpdateApplicationState} from "@/api/generated/application-management/application-management";
+import type {ExamSectionDto} from "@/api/generated/model";
+import {useGetExamById} from "@/api/generated/exam-management/exam-management";
+import type { ApiResponseExamDto } from "@/api/generated/model";
 
 interface ExamApplicationContextType {
     exam: ExamDto | null;
@@ -32,12 +33,13 @@ export function ExamApplicationProvider({children}: { children: ReactNode }) {
         evaluations: authEvaluations
     } = useAuth();
 
+    const updateApplicationStateMutation = useUpdateApplicationState();
 
-    const {
-        updateApplicationState
-    } = useApplication();
-
-    const {selectedExam, getExamById,} = useExam();
+    const [examIdForQuery, setExamIdForQuery] = useState<string | null>(null);
+    const { data: examData } = useGetExamById(examIdForQuery || '', {
+        query: { enabled: !!examIdForQuery }
+    });
+    const selectedExam = (examData as unknown as ApiResponseExamDto)?.data as ExamDto | undefined;
 
     const [examSession, setExamSession] = useState<ExamSessionDto | null>(null);
     const [application, setApplication] = useState<ApplicationDto | null>(null);
@@ -54,8 +56,8 @@ export function ExamApplicationProvider({children}: { children: ReactNode }) {
         if (authEvaluations) setEvaluations(authEvaluations)
     }, []);
 
-    const getExamData = (examId: string, ) => {
-        getExamById(examId)
+    const getExamData = (examId: string) => {
+        setExamIdForQuery(examId);
     };
 
     function getUniqueSortedExamSections(): ExamSectionDto[] {
@@ -97,12 +99,14 @@ export function ExamApplicationProvider({children}: { children: ReactNode }) {
 
     const updateApplicationStateStatus = (state: EApplicationUpdateState) => {
 
-        updateApplicationState(application?.id || '',
-            {
+        updateApplicationStateMutation.mutate({
+            id: application?.id || '',
+            data: {
                 state: state,
                 description: '',
                 userId: ''
-            });
+            }
+        });
 
 
 
@@ -120,12 +124,12 @@ export function ExamApplicationProvider({children}: { children: ReactNode }) {
                     break;
                 case "EXAM_START":
                     setApplication(prev =>
-                        prev ? {...prev, startedAt: new Date()} : prev
+                        prev ? {...prev, startedAt: new Date().toISOString()} : prev
                     );
                     break;
                 case "EXAM_END":
                     setApplication(prev =>
-                        prev ? {...prev, endedAt: new Date()} : prev
+                        prev ? {...prev, endedAt: new Date().toISOString()} : prev
                     );
                     break;
                 case "CAMERA":

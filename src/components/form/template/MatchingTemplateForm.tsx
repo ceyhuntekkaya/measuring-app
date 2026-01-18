@@ -7,16 +7,12 @@ import {Button} from "@/components/ui/button";
 import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
 import {Textarea} from "@/components/ui/textarea";
-import {MatchingTemplateDto, MatchingOptions, MatchingPair} from "@/types/exam/questionTemplates";
+import type {MatchingTemplateDto, MatchingPair} from "@/api/generated/model";
 import {Trash2, Plus} from "lucide-react";
 import Checkbox from "@/components/ui/checkbox";
 
-interface MatchingTemplateFormData {
-    instructions: string;
-    options: MatchingOptions;
-    shuffleItems: boolean;
-    explanation: string;
-}
+// Use ORVAL DTO types directly - only template-specific fields
+type MatchingTemplateFormData = Pick<MatchingTemplateDto, 'instructions' | 'options' | 'shuffleItems' | 'explanation'>;
 
 interface MatchingTemplateFormErrors {
     instructions?: string;
@@ -64,7 +60,7 @@ const MatchingTemplateForm = forwardRef<MatchingTemplateFormHandle, MatchingTemp
     // Form data değiştiğinde parent'a bildir (Anlık güncelleme)
     useEffect(() => {
         // İlk render'da boş form için onChange tetikleme
-        if (formData.instructions || (formData.options.pairs ?? []).length > 0) {
+        if (formData.instructions || (formData.options?.pairs ?? []).length > 0) {
             const templateData: MatchingTemplateDto = {
                 ...value,
                 instructions: formData.instructions,
@@ -105,12 +101,12 @@ const MatchingTemplateForm = forwardRef<MatchingTemplateFormHandle, MatchingTemp
             feedback: ''
         };
 
-        const updatedPairs = [...(formData.options.pairs || []), newPair];
+        const updatedPairs = [...(formData.options?.pairs || []), newPair];
         handleChange('options', {...formData.options, pairs: updatedPairs});
     };
 
     const removePair = (index: number) => {
-        const updatedPairs = formData.options.pairs?.filter((_, i) => i !== index) || [];
+        const updatedPairs = formData.options?.pairs?.filter((_, i) => i !== index) || [];
         handleChange('options', {...formData.options, pairs: updatedPairs});
     };
 
@@ -119,7 +115,7 @@ const MatchingTemplateForm = forwardRef<MatchingTemplateFormHandle, MatchingTemp
         field: K,
         newValue: MatchingPair[K]
     ) => {
-        const updatedPairs = formData.options.pairs?.map((pair, i) =>
+        const updatedPairs = formData.options?.pairs?.map((pair, i) =>
             i === index ? {...pair, [field]: newValue} : pair
         ) || [];
 
@@ -127,15 +123,15 @@ const MatchingTemplateForm = forwardRef<MatchingTemplateFormHandle, MatchingTemp
     };
 
     const addDistractor = () => {
-        if (distractorInput.trim() && !formData.options.distractors?.includes(distractorInput.trim())) {
-            const updatedDistractors = [...(formData.options.distractors || []), distractorInput.trim()];
+        if (distractorInput.trim() && !formData.options?.distractors?.includes(distractorInput.trim())) {
+            const updatedDistractors = [...(formData.options?.distractors || []), distractorInput.trim()];
             handleChange('options', {...formData.options, distractors: updatedDistractors});
             setDistractorInput('');
         }
     };
 
     const removeDistractor = (index: number) => {
-        const updatedDistractors = formData.options.distractors?.filter((_, i) => i !== index) || [];
+        const updatedDistractors = formData.options?.distractors?.filter((_, i) => i !== index) || [];
         handleChange('options', {...formData.options, distractors: updatedDistractors});
     };
 
@@ -150,11 +146,11 @@ const MatchingTemplateForm = forwardRef<MatchingTemplateFormHandle, MatchingTemp
     const validateForm = (): boolean => {
         const newErrors: MatchingTemplateFormErrors = {};
 
-        if (!formData.instructions.trim()) {
+        if (!formData.instructions?.trim()) {
             newErrors.instructions = 'Eşleştirme talimatları zorunludur';
         }
 
-        if (!formData.options.pairs || formData.options.pairs.length < 2) {
+        if (!formData.options?.pairs || formData.options.pairs.length < 2) {
             newErrors.options = 'En az 2 eşleştirme çifti olmalıdır';
         } else {
             const invalidPairs = formData.options.pairs.some(pair =>
@@ -214,7 +210,7 @@ const MatchingTemplateForm = forwardRef<MatchingTemplateFormHandle, MatchingTemp
                             </Button>
                         </div>
 
-                        {formData.options.pairs?.map((pair, index) => (
+                        {formData.options?.pairs?.map((pair, index) => (
                             <div key={pair.leftId || index} className="p-4 border rounded-lg space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     {/* Sol Taraf */}
@@ -317,7 +313,7 @@ const MatchingTemplateForm = forwardRef<MatchingTemplateFormHandle, MatchingTemp
                             </Button>
                         </div>
 
-                        {formData.options.distractors && formData.options.distractors.length > 0 && (
+                        {formData.options?.distractors && formData.options.distractors.length > 0 && (
                             <div className="space-y-2">
                                 {formData.options.distractors.map((distractor, index) => (
                                     <div

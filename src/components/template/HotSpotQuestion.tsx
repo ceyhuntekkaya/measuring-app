@@ -1,6 +1,6 @@
 import React, {useState, useEffect, useRef, useMemo} from 'react';
-import { HotSpotTemplateDto, HotSpotArea } from '@/types/exam/questionTemplates';
-import {QuestionTemplateType} from "@/types/exam/examEntities";
+import type { HotSpotTemplateDto, HotSpotArea } from '@/api/generated/model';
+import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
 
 interface HotSpotQuestionProps {

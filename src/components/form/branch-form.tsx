@@ -7,9 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {BranchDto, BranchFormData} from "@/types/management/brand";
-import { BrandDto } from "@/types/management/brand";
-import {EStatus} from "@/types/exam/enum";
+import type {BranchDto, BrandDto, CreateBranchRequest, UpdateBranchRequest} from "@/api/generated/model";
 
 
 interface BranchFormErrors {
@@ -19,7 +17,7 @@ interface BranchFormErrors {
 }
 
 interface BranchFormProps {
-    onSubmit: (data: BranchFormData) => void;
+    onSubmit: (data: CreateBranchRequest | UpdateBranchRequest) => void;
     branch?: BranchDto | null;
     brands: BrandDto[];
     loading?: boolean;
@@ -31,16 +29,10 @@ const BranchForm: React.FC<BranchFormProps> = ({
                                                    brands,
                                                    loading = false
                                                }) => {
-    const [formData, setFormData] = useState<BranchFormData>({
+    const [formData, setFormData] = useState<CreateBranchRequest>({
         branchName: '',
         code: '',
-        brandId: '',
-        id: '',
-        createdAt: new Date(),
-        deletedAt: null,
-        status: EStatus.ACTIVE,
-        createdById: '',
-        deletedById: ''
+        brandId: ''
     });
 
     const [errors, setErrors] = useState<BranchFormErrors>({});
@@ -48,13 +40,6 @@ const BranchForm: React.FC<BranchFormProps> = ({
     useEffect(() => {
         if (branch) {
             setFormData({
-                id: branch.id || '',
-                createdAt: branch.createdAt || new Date(),
-                deletedAt: branch.deletedAt || null,
-                status: branch.status,
-                createdById: branch.createdById || null,
-                deletedById: branch.deletedById || null,
-
                 branchName: branch.branchName || '',
                 code: branch.code || '',
                 brandId: branch.brandId || ''
@@ -62,9 +47,9 @@ const BranchForm: React.FC<BranchFormProps> = ({
         }
     }, [branch]);
 
-    const handleChange = <T extends keyof BranchFormData>(
+    const handleChange = <T extends keyof CreateBranchRequest>(
         name: T,
-        value: BranchFormData[T]
+        value: CreateBranchRequest[T]
     ) => {
         setFormData(prev => ({
             ...prev,
@@ -100,15 +85,8 @@ const BranchForm: React.FC<BranchFormProps> = ({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (validateForm()) {
-            const submitData = {
-
-                id: formData.id || '',
-                createdAt: formData.createdAt || new Date(),
-                deletedAt: formData.deletedAt || null,
-                status: formData.status,
-                createdById: formData.createdById || null,
-                deletedById: formData.deletedById || null,
-
+            // Directly use formData - no manual mapping needed!
+            const submitData: CreateBranchRequest | UpdateBranchRequest = {
                 branchName: formData.branchName.trim(),
                 code: formData.code.trim().toUpperCase(),
                 brandId: formData.brandId
@@ -170,15 +148,15 @@ const BranchForm: React.FC<BranchFormProps> = ({
                         <Label htmlFor="brandId">Marka *</Label>
                         <Select
                             onValueChange={(value) => handleChange('brandId', value as string)}
-                            value={formData.brandId}
+                            value={formData.brandId || ''}
                         >
                             <SelectTrigger className={errors.brandId ? 'border-red-500' : ''}>
                                 <SelectValue placeholder="Marka seçin" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectGroup>
-                                    {brands.map((brand) => (
-                                        <SelectItem key={brand.id} value={brand.id}>
+                                    {brands.filter(b => b.id).map((brand) => (
+                                        <SelectItem key={brand.id} value={brand.id!}>
                                             {brand.name} ({brand.code})
                                         </SelectItem>
                                     ))}

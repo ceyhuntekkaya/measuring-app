@@ -12,7 +12,7 @@ export default function AdminLayout({
     children: React.ReactNode;
 }) {
     const {user} = useAuth();
-    if (!user || !user.roleSet.includes('ADMIN')) {
+    if (!user || !user.roleSet?.includes('ADMIN')) {
         return null;
     }
 

@@ -5,7 +5,7 @@ import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
 import {Clock, FileText, Hash, CheckCircle, XCircle, Building, BookOpen, Users, Timer, Trophy} from 'lucide-react';
-import {ExamDto} from '@/types/exam/examEntities';
+import type {ExamDto} from '@/api/generated/model/examDto';
 import { formatDate } from '@/utils/date-formater';
 import LoadingComp from "@/components/ui/loading-comp";
 import { approvalStatusConverter, getApprovalStatusColor } from '@/utils/enum-converter';

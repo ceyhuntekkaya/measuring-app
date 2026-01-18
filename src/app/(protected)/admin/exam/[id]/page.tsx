@@ -1,9 +1,11 @@
 'use client';
-import React, {useEffect} from "react";
+import React from "react";
 import PageHeader from "@/components/layout/page-header";
 import {ActionButtons} from "@/components/ui/simple-dropdown";
 import {useParams} from "next/navigation";
-import {useExam} from "@/hooks/exam/use-exam";
+import {useGetExamById} from "@/api/generated/exam-management/exam-management";
+import type { ExamDto } from "@/api/generated/model";
+import type { ApiResponseExamDto } from "@/api/generated/model";
 import LoadingComp from "@/components/ui/loading-comp";
 import ExamPreviewList from "@/components/take/ExamPreviewList";
 
@@ -11,24 +13,18 @@ export default function ExamPreviewPage() {
     const params = useParams();
     const examId = params.id as string;
 
-    const {
-        selectedExam,
-        loading,
-        getExamById
-    } = useExam();
+    const { data, isLoading, error } = useGetExamById(examId, {
+        query: { enabled: !!examId }
+    });
+    
+    // Extract exam from API response
+    const selectedExam = (data as unknown as ApiResponseExamDto)?.data as ExamDto | undefined;
 
-    useEffect(() => {
-        if (examId) {
-            getExamById(examId);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [examId]);
-
-    if (loading) {
+    if (isLoading) {
         return <LoadingComp/>;
     }
 
-    if (!selectedExam) {
+    if (error || !selectedExam) {
         return (
             <div className="space-y-6">
                 <PageHeader/>

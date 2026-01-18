@@ -6,14 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TrueFalseTemplateDto, TrueFalseOptions } from "@/types/exam/questionTemplates";
+import type { TrueFalseTemplateDto, TrueFalseOptions } from "@/api/generated/model";
 
-interface TrueFalseTemplateFormData {
-    statement: string;
-    options: TrueFalseOptions;
-    correctAnswer: boolean;
-    explanation: string;
-}
+// Use ORVAL DTO types directly - only template-specific fields
+type TrueFalseTemplateFormData = Pick<TrueFalseTemplateDto, 'statement' | 'options' | 'correctAnswer' | 'explanation'>;
 
 interface TrueFalseTemplateFormErrors {
     statement?: string;
@@ -108,7 +104,7 @@ const TrueFalseTemplateForm = forwardRef<TrueFalseTemplateFormHandle, TrueFalseT
     const validateForm = (): boolean => {
         const newErrors: TrueFalseTemplateFormErrors = {};
 
-        if (!formData.statement.trim()) {
+        if (!formData.statement?.trim()) {
             newErrors.statement = 'İfade metni zorunludur';
         }
 
@@ -154,7 +150,7 @@ const TrueFalseTemplateForm = forwardRef<TrueFalseTemplateFormHandle, TrueFalseT
                         handleChange('correctAnswer', isTrue);
                         updateOptions('correctAnswer', isTrue);
                     }}
-                    value={formData.correctAnswer.toString()}
+                    value={(formData.correctAnswer ?? true).toString()}
                 >
                     <SelectTrigger>
                         <SelectValue />
@@ -174,7 +170,7 @@ const TrueFalseTemplateForm = forwardRef<TrueFalseTemplateFormHandle, TrueFalseT
                     <Label htmlFor="trueLabel">Doğru Etiketi</Label>
                     <Input
                         id="trueLabel"
-                        value={formData.options.trueLabel || ''}
+                        value={formData.options?.trueLabel || ''}
                         onChange={(e) => updateOptions('trueLabel', e.target.value)}
                         placeholder="Doğru seçeneği etiketi"
                     />
@@ -184,7 +180,7 @@ const TrueFalseTemplateForm = forwardRef<TrueFalseTemplateFormHandle, TrueFalseT
                     <Label htmlFor="falseLabel">Yanlış Etiketi</Label>
                     <Input
                         id="falseLabel"
-                        value={formData.options.falseLabel || ''}
+                        value={formData.options?.falseLabel || ''}
                         onChange={(e) => updateOptions('falseLabel', e.target.value)}
                         placeholder="Yanlış seçeneği etiketi"
                     />
