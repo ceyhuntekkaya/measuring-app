@@ -1,7 +1,7 @@
 'use client';
 
 import PageHeader from "@/components/layout/page-header";
-import React from "react";
+import React, {useMemo, useCallback, useRef} from "react";
 import {useRouter} from "next/navigation";
 import {Column, RecordType} from "@/types/ui/table";
 import LoadingComp from "@/components/ui/loading-comp";
@@ -13,133 +13,125 @@ import type {ExamSessionDto, ExamSessionListResponse, ApplicationDto} from "@/ap
 
 export default function ApplicationPage() {
     const router = useRouter();
-
-    const[selectedExamSession, setSelectedExamSession] = React.useState<ExamSessionDto | null>(null);
+    const [selectedExamSession, setSelectedExamSession] = React.useState<ExamSessionDto | null>(null);
 
     const {data: sessionsData, isLoading: loading} = useGetActiveExamSessions({});
-    const examSessions = (sessionsData as unknown as ExamSessionListResponse) || null;
+    
+    // Stabilize examSessions data
+    const examSessions = useMemo(() => {
+        if (!sessionsData) return null;
+        const response = sessionsData as unknown as ExamSessionListResponse;
+        return response?.examSessions ? response : null;
+    }, [sessionsData]);
 
     const {data: applicationsData} = useGetApplicationsByExamSession(selectedExamSession?.id || '', {
         query: { enabled: !!selectedExamSession?.id }
     });
-    const applications = (applicationsData as unknown as { data?: ApplicationDto[] })?.data || null;
+    
+    // Stabilize applications data
+    const applications = useMemo(() => {
+        if (!applicationsData) return null;
+        const response = applicationsData as unknown as { data?: ApplicationDto[] };
+        return response?.data || null;
+    }, [applicationsData]);
 
-    const columnSessions: Column<RecordType>[] = [
+    // Stabilize examSessions array
+    const examSessionsArray = useMemo(() => {
+        if (!examSessions?.examSessions) return [];
+        return examSessions.examSessions as RecordType[];
+    }, [examSessions]);
 
+    // Stabilize applications array
+    const applicationsArray = useMemo(() => {
+        if (!applications) return [];
+        return applications as RecordType[];
+    }, [applications]);
+
+    const handleSessionSelect = useCallback((record: RecordType) => {
+        setSelectedExamSession(record as ExamSessionDto);
+    }, []);
+
+    const renderSessionCell = useCallback((value: unknown, record: RecordType) => {
+        return (
+            <div
+                className="font-medium cursor-pointer hover:text-blue-600"
+                onClick={() => handleSessionSelect(record)}
+            >
+                {String(value || '')}
+            </div>
+        );
+    }, [handleSessionSelect]);
+
+    const columnSessions: Column<RecordType>[] = useMemo(() => [
         {
             key: 'name',
             header: 'Ad',
-            render: (value, record) => (
-                <div
-                    className="font-medium cursor-pointer hover:text-blue-600"
-                    onClick={() => setSelectedExamSession(record as ExamSessionDto)}
-                >
-                    {value as string}
-                </div>
-            )
-        }
-        ,
+            render: renderSessionCell
+        },
         {
             key: 'code',
             header: 'Kod',
-            render: (value, record) => (
-                <div
-                    className="font-medium cursor-pointer hover:text-blue-600"
-                    onClick={() => setSelectedExamSession(record as ExamSessionDto)}
-                >
-                    {value as string}
-                </div>
-            )
+            render: renderSessionCell
         },
         {
             key: 'description',
             header: 'Açıklama',
-            render: (value, record) => (
-                <div
-                    className="font-medium cursor-pointer hover:text-blue-600"
-                    onClick={() => setSelectedExamSession(record as ExamSessionDto)}
-                >
-                    {value as string}
-                </div>
-            )
+            render: renderSessionCell
         }
-    ];
+    ], [renderSessionCell]);
 
-
-
-    const columns: Column<RecordType>[] = [
-
+    const columns: Column<RecordType>[] = useMemo(() => [
         {
             key: 'name',
             header: 'Ad',
-            render: (value, record) => (
-                <div
-                    className="font-medium cursor-pointer hover:text-blue-600"
-                    onClick={() => setSelectedExamSession(record as ExamSessionDto)}
-                >
-                    {value as string}
-                </div>
-            )
-        }
-        ,
+            render: renderSessionCell
+        },
         {
             key: 'code',
             header: 'Kod',
-            render: (value, record) => (
-                <div
-                    className="font-medium cursor-pointer hover:text-blue-600"
-                    onClick={() => setSelectedExamSession(record as ExamSessionDto)}
-                >
-                    {value as string}
-                </div>
-            )
+            render: renderSessionCell
         },
         {
             key: 'description',
             header: 'Açıklama',
-            render: (value, record) => (
-                <div
-                    className="font-medium cursor-pointer hover:text-blue-600"
-                    onClick={() => setSelectedExamSession(record as ExamSessionDto)}
-                >
-                    {value as string}
-                </div>
-            )
+            render: renderSessionCell
         }
-    ];
+    ], [renderSessionCell]);
 
-    const handleAdd = () => {
+    const handleAdd = useCallback(() => {
         router.push('/admin/applications/add');
-    };
-
+    }, [router]);
 
     if (loading) {
-        return (
-            <LoadingComp/>
-        );
+        return <LoadingComp/>;
     }
+
     return (
         <div className="space-y-6">
-            <PageHeader actions={
-                <ActionButtons
-                    onAdd={handleAdd}
-                    addButtonText="Yeni Uygulama Tanımla"
-                />
-            }/>
-            <div className="p-6 pt-1">
-                {
-                    examSessions &&
-                    <DynamicTable columns={columnSessions} data={examSessions.examSessions as RecordType[]}/>
+            <PageHeader 
+                actions={
+                    <ActionButtons
+                        onAdd={handleAdd}
+                        addButtonText="Yeni Uygulama Tanımla"
+                    />
                 }
-
+            />
+            <div className="p-6 pt-1">
+                {examSessionsArray.length > 0 && (
+                    <DynamicTable 
+                        columns={columnSessions} 
+                        data={examSessionsArray}
+                    />
+                )}
             </div>
 
             <div className="p-6 pt-1">
-                {
-                    applications &&
-                    <DynamicTable columns={columns} data={applications as RecordType[]}/>
-                }
-
+                {applicationsArray.length > 0 && (
+                    <DynamicTable 
+                        columns={columns} 
+                        data={applicationsArray}
+                    />
+                )}
             </div>
         </div>
     );

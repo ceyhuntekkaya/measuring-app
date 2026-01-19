@@ -10,7 +10,7 @@ export default defineConfig({
       target: 'src/api/generated',
       schemas: 'src/api/generated/model',
       client: 'react-query',
-      httpClient: 'axios', // ÖNEMLİ: Axios kullanacağımızı belirtiyoruz
+      httpClient: 'axios', 
       mock: false,
       clean: true,
       prettier: true,

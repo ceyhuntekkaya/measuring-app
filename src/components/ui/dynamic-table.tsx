@@ -49,8 +49,25 @@ const DynamicTable = <T extends RecordType>({
         return sortableData;
     }, [safeData, sortConfig]);
 
+    // Memoize column keys to prevent unnecessary re-renders
+    // Use a ref to track previous column keys and only update when they actually change
+    const prevColumnKeysRef = useRef<string>('');
+    const columnKeysString = useMemo(() => {
+        const keys = columns.map(c => String(c.key)).sort().join(',');
+        if (keys !== prevColumnKeysRef.current) {
+            prevColumnKeysRef.current = keys;
+        }
+        return prevColumnKeysRef.current;
+    }, [columns]);
+
     // Extract all rendered values for each record as strings
     useEffect(() => {
+        // Skip if no data or columns
+        if (sortedData.length === 0 || columns.length === 0) {
+            setRenderedValuesMap(new Map());
+            return;
+        }
+
         const newMap = new Map<string, string[]>();
 
         sortedData.forEach((item) => {
@@ -173,8 +190,22 @@ const DynamicTable = <T extends RecordType>({
             newMap.set(recordId, renderedValues);
         });
 
-        setRenderedValuesMap(newMap);
-    }, [sortedData, columns]);
+        // Only update if the map actually changed
+        setRenderedValuesMap(prevMap => {
+            // Check if maps are equal
+            if (prevMap.size !== newMap.size) {
+                return newMap;
+            }
+            for (const [key, value] of newMap) {
+                const prevValue = prevMap.get(key);
+                if (!prevValue || prevValue.length !== value.length || 
+                    !prevValue.every((v, i) => v === value[i])) {
+                    return newMap;
+                }
+            }
+            return prevMap; // No change, return previous map
+        });
+    }, [sortedData, columnKeysString]);
 
     // Enhanced search functionality with pre-rendered values
     const filteredData = useMemo(() => {
@@ -204,19 +235,21 @@ const DynamicTable = <T extends RecordType>({
     const onFilteredDataChangeRef = useRef(onFilteredDataChange);
     onFilteredDataChangeRef.current = onFilteredDataChange;
 
-    // Filtrelenmiş veri değiştiğinde parent component'e bildir - sadece search değiştiğinde
+    // Filtrelenmiş veri değiştiğinde parent component'e bildir
+    // Sadece search term değiştiğinde çalışır (filteredData her render'da yeni referans olabilir)
+    // Only call onFilteredDataChange when search term or data length changes
+    // Don't include filteredData in dependencies to avoid infinite loops
+    const prevFilteredDataLengthRef = useRef(filteredData.length);
     useEffect(() => {
-        if (onFilteredDataChangeRef.current) {
-            onFilteredDataChangeRef.current(filteredData);
+        // Only call callback if length actually changed
+        if (prevFilteredDataLengthRef.current !== filteredData.length) {
+            prevFilteredDataLengthRef.current = filteredData.length;
+            if (onFilteredDataChangeRef.current) {
+                onFilteredDataChangeRef.current(filteredData);
+            }
         }
-    }, [searchTerm]); // Sadece search term değiştiğinde çalışır
-
-    // İlk yüklemede de çalışması için
-    useEffect(() => {
-        if (onFilteredDataChangeRef.current && safeData.length > 0) {
-            onFilteredDataChangeRef.current(filteredData);
-        }
-    }, [safeData.length]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchTerm, safeData.length, filteredData.length]);
 
     const totalPages = Math.ceil(filteredData.length / pageSize);
     const paginatedData = filteredData.slice(
