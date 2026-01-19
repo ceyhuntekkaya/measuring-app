@@ -2,7 +2,7 @@
 
 import {useAuth} from '@/hooks/use-auth';
 import {useRouter} from 'next/navigation';
-import {useEffect} from 'react';
+import {useEffect, useState, useCallback} from 'react';
 import ProtectedLayout from "@/components/layout/protected-layout";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
@@ -16,6 +16,11 @@ export default function AppLayout({
 }) {
     const {user, loading} = useAuth();
     const router = useRouter();
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+    const handleSidebarClose = useCallback(() => {
+        setIsSidebarOpen(false);
+    }, []);
 
     useEffect(() => {
         if (!loading && (!user || !user.roleSet?.includes('USER') )) {
@@ -27,15 +32,11 @@ export default function AppLayout({
         return <div>Loading...</div>;
     }
 
-
-
     return (
         <ProtectedLayout requiredRole={['ADMIN', 'USER']}>
             <div className="min-h-screen bg-gray-100">
                 <div className="flex min-h-screen">
-                    <Sidebar isOpen={false} onCloseAction={function(): void {
-                        throw new Error('Function not implemented.');
-                    }} />
+                    <Sidebar isOpen={isSidebarOpen} onCloseAction={handleSidebarClose} />
                     <div className="flex-1">
                         <Header/>
                         <main className="p-3">

@@ -5,7 +5,12 @@
  * @param blobResponse - The Blob response from ORVAL generated API
  * @returns Promise that resolves to the parsed JSON data
  */
-export async function parseBlobResponse<T>(blobResponse: Blob): Promise<T> {
+export async function parseBlobResponse<T>(blobResponse: Blob | T): Promise<T> {
+  // Eğer zaten parse edilmiş bir obje ise, direkt döndür
+  if (!(blobResponse instanceof Blob)) {
+    return blobResponse as T;
+  }
+  
   try {
     const text = await blobResponse.text();
     return JSON.parse(text) as T;

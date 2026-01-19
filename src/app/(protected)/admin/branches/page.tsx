@@ -1,24 +1,23 @@
 'use client';
 
 import PageHeader from "@/components/layout/page-header";
-import React from "react";
+import React, {useMemo, useCallback} from "react";
 import {useRouter} from "next/navigation";
 import {Column, RecordType} from "@/types/ui/table";
 import LoadingComp from "@/components/ui/loading-comp";
 import {ActionButtons} from "@/components/ui/simple-dropdown";
 import DynamicTable from "@/components/ui/dynamic-table";
 import {useGetAllBranches} from "@/api/generated/branch-management/branch-management";
-import type { ApiResponseListBranchDto } from "@/api/generated/model";
+import {extractApiListData} from "@/utils/api-helpers/extract-api-data";
+import type {BranchDto} from "@/api/generated/model";
 
 export default function BranchPage() {
     const router = useRouter();
     const { data, isLoading, error } = useGetAllBranches();
     
-    // Extract branches from API response
-    const branches = (data as unknown as ApiResponseListBranchDto)?.data || null;
+    const branches = useMemo(() => extractApiListData<BranchDto>(data), [data]);
 
-    const columns: Column<RecordType>[] = [
-
+    const columns: Column<RecordType>[] = useMemo(() => [
         {
             key: 'branchName',
             header: 'Ad',
@@ -27,11 +26,10 @@ export default function BranchPage() {
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => router.push(`/admin/branches/${record.id}`)}
                 >
-                    {value as string}
+                    {String(value || '')}
                 </div>
             )
-        }
-        ,
+        },
         {
             key: 'code',
             header: 'Kod',
@@ -40,7 +38,7 @@ export default function BranchPage() {
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => router.push(`/admin/branches/${record.id}`)}
                 >
-                    {value as string}
+                    {String(value || '')}
                 </div>
             )
         },
@@ -52,15 +50,15 @@ export default function BranchPage() {
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => router.push(`/admin/branches/${record.id}`)}
                 >
-                    {value as string}
+                    {String(value || '')}
                 </div>
             )
         }
-    ];
+    ], [router]);
 
-    const handleAdd = () => {
+    const handleAdd = useCallback(() => {
         router.push('/admin/branches/add');
-    };
+    }, [router]);
 
 
     if (isLoading) {

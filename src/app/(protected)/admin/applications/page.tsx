@@ -9,43 +9,57 @@ import {ActionButtons} from "@/components/ui/simple-dropdown";
 import DynamicTable from "@/components/ui/dynamic-table";
 import {useGetApplicationsByExamSession} from "@/api/generated/application-management/application-management";
 import {useGetActiveExamSessions} from "@/api/generated/exam-session-management/exam-session-management";
-import type {ExamSessionDto, ExamSessionListResponse, ApplicationDto} from "@/api/generated/model";
+import {extractNestedApiListData, extractApiListData} from "@/utils/api-helpers/extract-api-data";
+import type {ExamSessionDto, ApplicationDto} from "@/api/generated/model";
 
 export default function ApplicationPage() {
     const router = useRouter();
     const [selectedExamSession, setSelectedExamSession] = React.useState<ExamSessionDto | null>(null);
 
-    const {data: sessionsData, isLoading: loading} = useGetActiveExamSessions({});
-    
-    // Stabilize examSessions data
-    const examSessions = useMemo(() => {
-        if (!sessionsData) return null;
-        const response = sessionsData as unknown as ExamSessionListResponse;
-        return response?.examSessions ? response : null;
-    }, [sessionsData]);
-
-    const {data: applicationsData} = useGetApplicationsByExamSession(selectedExamSession?.id || '', {
-        query: { enabled: !!selectedExamSession?.id }
+    const {data: sessionsData, isLoading, error} = useGetActiveExamSessions({
+        query: {
+            refetchOnMount: true,
+            refetchOnWindowFocus: false,
+            staleTime: 0,
+        }
     });
     
-    // Stabilize applications data
-    const applications = useMemo(() => {
-        if (!applicationsData) return null;
-        const response = applicationsData as unknown as { data?: ApplicationDto[] };
-        return response?.data || null;
-    }, [applicationsData]);
-
-    // Stabilize examSessions array
     const examSessionsArray = useMemo(() => {
-        if (!examSessions?.examSessions) return [];
-        return examSessions.examSessions as RecordType[];
-    }, [examSessions]);
+        if (sessionsData && typeof sessionsData === 'object' && 'data' in sessionsData) {
+            const apiData = (sessionsData as any).data;
+            if (apiData && typeof apiData === 'object' && 'examSessions' in apiData) {
+                return Array.isArray(apiData.examSessions) ? apiData.examSessions : [];
+            }
+            if (Array.isArray(apiData)) {
+                return apiData;
+            }
+        }
+        return extractNestedApiListData<ExamSessionDto>(sessionsData, 'examSessions');
+    }, [sessionsData]);
+    
+    React.useEffect(() => {
+        if (examSessionsArray.length > 0 && !selectedExamSession) {
+            setSelectedExamSession(examSessionsArray[0]);
+        }
+    }, [examSessionsArray, selectedExamSession]);
 
-    // Stabilize applications array
+    const {data: applicationsData} = useGetApplicationsByExamSession(selectedExamSession?.id || '', {
+        query: { 
+            enabled: !!selectedExamSession?.id,
+            refetchOnMount: true,
+            staleTime: 0,
+        }
+    });
+    
     const applicationsArray = useMemo(() => {
-        if (!applications) return [];
-        return applications as RecordType[];
-    }, [applications]);
+        if (applicationsData && typeof applicationsData === 'object' && 'data' in applicationsData) {
+            const apiData = (applicationsData as any).data;
+            if (Array.isArray(apiData)) {
+                return apiData;
+            }
+        }
+        return (applicationsData as unknown as { data?: ApplicationDto[] })?.data || [];
+    }, [applicationsData]);
 
     const handleSessionSelect = useCallback((record: RecordType) => {
         setSelectedExamSession(record as ExamSessionDto);
@@ -55,12 +69,26 @@ export default function ApplicationPage() {
         return (
             <div
                 className="font-medium cursor-pointer hover:text-blue-600"
-                onClick={() => handleSessionSelect(record)}
+                onClick={() => {
+                    handleSessionSelect(record);
+                    router.push(`/admin/sessions/${record.id}`);
+                }}
             >
                 {String(value || '')}
             </div>
         );
-    }, [handleSessionSelect]);
+    }, [handleSessionSelect, router]);
+
+    const renderApplicationCell = useCallback((value: unknown, record: RecordType) => {
+        return (
+            <div
+                className="font-medium cursor-pointer hover:text-blue-600"
+                onClick={() => router.push(`/admin/applications/${record.id}`)}
+            >
+                {String(value || '')}
+            </div>
+        );
+    }, [router]);
 
     const columnSessions: Column<RecordType>[] = useMemo(() => [
         {
@@ -84,26 +112,34 @@ export default function ApplicationPage() {
         {
             key: 'name',
             header: 'Ad',
-            render: renderSessionCell
+            render: renderApplicationCell
         },
         {
             key: 'code',
             header: 'Kod',
-            render: renderSessionCell
+            render: renderApplicationCell
         },
         {
             key: 'description',
             header: 'Açıklama',
-            render: renderSessionCell
+            render: renderApplicationCell
         }
-    ], [renderSessionCell]);
+    ], [renderApplicationCell]);
 
     const handleAdd = useCallback(() => {
         router.push('/admin/applications/add');
     }, [router]);
 
-    if (loading) {
+    if (isLoading) {
         return <LoadingComp/>;
+    }
+
+    if (error) {
+        return (
+            <div className="p-6">
+                <p className="text-red-600">Oturumlar yüklenirken bir hata oluştu.</p>
+            </div>
+        );
     }
 
     return (
@@ -117,21 +153,17 @@ export default function ApplicationPage() {
                 }
             />
             <div className="p-6 pt-1">
-                {examSessionsArray.length > 0 && (
-                    <DynamicTable 
-                        columns={columnSessions} 
-                        data={examSessionsArray}
-                    />
-                )}
+                <DynamicTable 
+                    columns={columnSessions} 
+                    data={examSessionsArray}
+                />
             </div>
 
             <div className="p-6 pt-1">
-                {applicationsArray.length > 0 && (
-                    <DynamicTable 
-                        columns={columns} 
-                        data={applicationsArray}
-                    />
-                )}
+                <DynamicTable 
+                    columns={columns} 
+                    data={applicationsArray}
+                />
             </div>
         </div>
     );

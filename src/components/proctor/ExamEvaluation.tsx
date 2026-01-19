@@ -84,11 +84,36 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
     const [applicationQuestionDataWithEvaluation, setApplicationQuestionDataWithEvaluation] = useState<EvaluationGroup | null>(null);
     const [filteredApplicationQuestionDataWithEvaluation, setFilteredApplicationQuestionDataWithEvaluation] = useState<EvaluationGroupData[] | null>(null);
 
-    const {data: evaluationsData} = useGetApplicationEvaluationsBySession(sessionId, {
+    const {data: evaluationsData, error: evaluationsError} = useGetApplicationEvaluationsBySession(sessionId, {
         query: { enabled: !!sessionId }
     });
+    
+    // Debug: API hatasını logla
+    React.useEffect(() => {
+        if (evaluationsError) {
+            console.error('❌ Error fetching evaluations:', evaluationsError);
+            console.error('Error details:', {
+                message: evaluationsError?.message,
+                response: evaluationsError?.response,
+                data: evaluationsData
+            });
+        }
+    }, [evaluationsError, evaluationsData]);
+    
     const sessionEvaluations = React.useMemo(() => {
-        return (evaluationsData as unknown as { data?: EvaluationDto[] })?.data || [];
+        if (!evaluationsData) return [];
+        
+        // Axios interceptor zaten parse ediyor, direkt kullan
+        if (typeof evaluationsData === 'object' && 'data' in evaluationsData) {
+            return (evaluationsData as { data?: EvaluationDto[] }).data || [];
+        }
+        
+        // Fallback: Eğer direkt array ise
+        if (Array.isArray(evaluationsData)) {
+            return evaluationsData;
+        }
+        
+        return [];
     }, [evaluationsData]);
     
     const getApplicationEvaluationsBySession = () => {
@@ -108,13 +133,20 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
             
             const result = await getAllQuestionByIdListMutation.mutateAsync({ data: questionIdListRequest });
             if (result) {
+                // parseBlobResponse artık hem Blob hem de obje kabul ediyor
                 const parsedResponse = await parseBlobResponse<ApiResponseListQuestionDto>(result);
+                
                 if (parsedResponse?.data) {
                     setSessionQuestions(parsedResponse.data);
                 }
             }
         } catch (error) {
-            console.error('Error fetching questions:', error);
+            console.error('❌ Error fetching questions by ID list:', error);
+            console.error('Error details:', {
+                message: (error as any)?.message,
+                response: (error as any)?.response,
+                stack: (error as any)?.stack
+            });
         }
     };
 

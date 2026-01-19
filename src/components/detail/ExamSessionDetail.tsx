@@ -183,41 +183,7 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                         Genel Bilgiler
                     </button>
 
-                    {
-                        /*
-                        <button
-                        onClick={() => setActiveTab("exam")}
-                        className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                            activeTab === "exam"
-                                ? "border-blue-500 text-blue-600"
-                                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                        }`}
-                    >
-                        Sınav Detayları
-                    </button>
-                    <button
-                        onClick={() => setActiveTab("organization")}
-                        className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                            activeTab === "organization"
-                                ? "border-blue-500 text-blue-600"
-                                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                        }`}
-                    >
-                        Organizasyon
-                    </button>
-                    <button
-                        onClick={() => setActiveTab("participants")}
-                        className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                            activeTab === "participants"
-                                ? "border-blue-500 text-blue-600"
-                                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                        }`}
-                    >
-                        Katılımcılar & Sonuçlar
-                    </button>
-                         */
-                    }
-
+                   
 
                     <button
                         onClick={() => setActiveTab("evaluation")}
@@ -606,7 +572,7 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                         })() ? (
                             <ExamEvaluationPanel sessionId={examSession.id || ''} candidates ={examSessionApplications ? examSessionApplications : []}/>
                         ) : (
-                            <div className="flex items-center justify-center min-h-[400px]">
+                            <div className="flex items-center justify-center">
                                 <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl shadow-2xl border-4 border-yellow-400 p-8 max-w-2xl w-full mx-4">
                                     <div className="text-center">
                                         <div className="mb-6">
