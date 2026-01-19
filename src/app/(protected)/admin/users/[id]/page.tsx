@@ -18,7 +18,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {showNotification} from "@/lib/notification";
+import {showNotification, getErrorMessage} from "@/lib/notification";
 
 const UserDetailPageContainer: React.FC = () => {
     const params = useParams();
@@ -62,11 +62,11 @@ const UserDetailPageContainer: React.FC = () => {
         try {
             setActionLoading('delete');
             await deleteUserMutation.mutateAsync({ id: selectedUser.id || '' });
-            showNotification.success('Kullanıcı başarıyla silindi');
-            router.push('/users');
+            showNotification.success('Kullanıcı başarıyla silindi!');
+            router.push('/admin/users');
         } catch (error) {
-            console.log(error)
-            showNotification.error('Kullanıcı silinirken bir hata oluştu');
+            const errorMessage = getErrorMessage(error);
+            showNotification.error(errorMessage || 'Kullanıcı silinirken bir hata oluştu!');
         } finally {
             setActionLoading(null);
             setShowDeleteDialog(false);

@@ -4,7 +4,7 @@ import {useParams, useRouter} from "next/navigation";
 import React from "react";
 import {useGetExamTypeById, useDeleteExamType} from "@/api/generated/exam-type-management/exam-type-management";
 import { useQueryClient } from "@tanstack/react-query";
-import { showNotification } from "@/lib/notification";
+import { showNotification, getErrorMessage } from "@/lib/notification";
 import type { ExamTypeDto } from "@/api/generated/model";
 import type { ApiResponseExamTypeDto } from "@/api/generated/model";
 import ExamTypeDetail from "@/components/detail/ExamTypeDetail";
@@ -27,8 +27,8 @@ export default function ExamTypeDetailPage() {
                 router.push('/admin/exam-type');
             },
             onError: (error) => {
-                showNotification.error('Sınav tipi silinirken bir hata oluştu!');
-                console.error('Error deleting exam type:', error);
+                const errorMessage = getErrorMessage(error);
+                showNotification.error(errorMessage || 'Sınav tipi silinirken bir hata oluştu!');
             }
         }
     });

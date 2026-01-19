@@ -1,7 +1,7 @@
 'use client';
 
 import PageHeader from "@/components/layout/page-header";
-import React, {useMemo, useCallback, useRef} from "react";
+import React, {useMemo, useCallback} from "react";
 import {useRouter} from "next/navigation";
 import {Column, RecordType} from "@/types/ui/table";
 import LoadingComp from "@/components/ui/loading-comp";
@@ -9,7 +9,7 @@ import {ActionButtons} from "@/components/ui/simple-dropdown";
 import DynamicTable from "@/components/ui/dynamic-table";
 import {useGetApplicationsByExamSession} from "@/api/generated/application-management/application-management";
 import {useGetActiveExamSessions} from "@/api/generated/exam-session-management/exam-session-management";
-import {extractNestedApiListData, extractApiListData} from "@/utils/api-helpers/extract-api-data";
+import {extractNestedApiListData} from "@/utils/api-helpers/extract-api-data";
 import type {ExamSessionDto, ApplicationDto} from "@/api/generated/model";
 
 export default function ApplicationPage() {
@@ -26,9 +26,10 @@ export default function ApplicationPage() {
     
     const examSessionsArray = useMemo(() => {
         if (sessionsData && typeof sessionsData === 'object' && 'data' in sessionsData) {
-            const apiData = (sessionsData as any).data;
-            if (apiData && typeof apiData === 'object' && 'examSessions' in apiData) {
-                return Array.isArray(apiData.examSessions) ? apiData.examSessions : [];
+            const apiData = (sessionsData as { data?: unknown }).data;
+            if (apiData && typeof apiData === 'object' && apiData !== null && 'examSessions' in apiData) {
+                const examSessions = (apiData as { examSessions?: unknown }).examSessions;
+                return Array.isArray(examSessions) ? examSessions : [];
             }
             if (Array.isArray(apiData)) {
                 return apiData;
@@ -53,7 +54,7 @@ export default function ApplicationPage() {
     
     const applicationsArray = useMemo(() => {
         if (applicationsData && typeof applicationsData === 'object' && 'data' in applicationsData) {
-            const apiData = (applicationsData as any).data;
+            const apiData = (applicationsData as { data?: unknown }).data;
             if (Array.isArray(apiData)) {
                 return apiData;
             }

@@ -25,9 +25,10 @@ export default function SessionsPage() {
     
     const upcomingExamSessions = useMemo(() => {
         if (data && typeof data === 'object' && 'data' in data) {
-            const apiData = (data as any).data;
-            if (apiData && typeof apiData === 'object' && 'examSessions' in apiData) {
-                return Array.isArray(apiData.examSessions) ? apiData.examSessions : [];
+            const apiData = (data as { data?: unknown }).data;
+            if (apiData && typeof apiData === 'object' && apiData !== null && 'examSessions' in apiData) {
+                const examSessions = (apiData as { examSessions?: unknown }).examSessions;
+                return Array.isArray(examSessions) ? examSessions : [];
             }
             if (Array.isArray(apiData)) {
                 return apiData;

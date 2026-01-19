@@ -7,15 +7,32 @@ import {useCreateCandidate} from "@/api/generated/candidate-management/candidate
 import {useGetAllExamTypes} from "@/api/generated/exam-type-management/exam-type-management";
 import type { ApiResponseExamTypeListResponse, CreateCandidateRequest, UpdateCandidateRequest, ApiResponseExamSessionListResponse, ExamSessionDto } from "@/api/generated/model";
 import {useGetUpcomingExamSessions} from "@/api/generated/exam-session-management/exam-session-management";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { showNotification, getErrorMessage } from "@/lib/notification";
 
 
 export default function CandidateAdd() {
+    const router = useRouter();
+    const queryClient = useQueryClient();
 
-    const createCandidateMutation = useCreateCandidate();
-    const createCandidate = (data: CreateCandidateRequest | UpdateCandidateRequest): void => {
-        createCandidateMutation.mutateAsync({ data: data as CreateCandidateRequest });
+    const { mutate: createCandidate, isPending: loading } = useCreateCandidate({
+        mutation: {
+            onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: ['/candidates'] });
+                showNotification.success('Aday başarıyla eklendi!');
+                router.push('/admin/candidates');
+            },
+            onError: (error) => {
+                const errorMessage = getErrorMessage(error);
+                showNotification.error(errorMessage || 'Aday eklenirken bir hata oluştu!');
+            }
+        }
+    });
+    
+    const handleSubmit = (data: CreateCandidateRequest | UpdateCandidateRequest): void => {
+        createCandidate({ data: data as CreateCandidateRequest });
     };
-    const loading = createCandidateMutation.isPending;
 
     const { data: examTypesData } = useGetAllExamTypes({});
     const examTypes = (examTypesData as unknown as ApiResponseExamTypeListResponse)?.data || null;
@@ -31,7 +48,7 @@ export default function CandidateAdd() {
             <PageHeader/>
             <div className="p-1">
                 {
-                    examTypesList.length > 0 &&  <CandidateForm onSubmit={createCandidate} loading={loading} examSessions={upcomingExamSessions} examTypes={examTypesList} />
+                    examTypesList.length > 0 &&  <CandidateForm onSubmit={handleSubmit} loading={loading} examSessions={upcomingExamSessions} examTypes={examTypesList} />
                 }
 
 

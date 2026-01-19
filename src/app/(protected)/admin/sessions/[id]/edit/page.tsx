@@ -12,22 +12,40 @@ import type { ApiResponseListBranchDto } from "@/api/generated/model";
 import {useGetUsersByDepartment} from "@/api/generated/user-management/user-management";
 import {useGetAllExamTypes} from "@/api/generated/exam-type-management/exam-type-management";
 import type { ApiResponseExamTypeListResponse, ApiResponseExamSessionDto, ApiResponseListUserDto } from "@/api/generated/model";
-import {useParams} from "next/navigation";
+import {useParams, useRouter} from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { showNotification, getErrorMessage } from "@/lib/notification";
 
 export default function SessionAdd() {
 
 
     const params = useParams();
     const id = params.id as string;
+    const router = useRouter();
+    const queryClient = useQueryClient();
 
     const {data: examSessionData, isLoading: loading} = useGetExamSessionById(id, {
         query: { enabled: !!id }
     });
     const selectedExamSession = (examSessionData as unknown as ApiResponseExamSessionDto)?.data;
     
-    const updateExamSessionMutation = useUpdateExamSession();
-    const updateExamSession = async (data: UpdateExamSessionRequest) => {
-        await updateExamSessionMutation.mutateAsync({ id, data });
+    const { mutate: updateExamSession, isPending: updating } = useUpdateExamSession({
+        mutation: {
+            onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: ['/exam-sessions'] });
+                queryClient.invalidateQueries({ queryKey: [`/exam-sessions/${id}`] });
+                showNotification.success('Sınav oturumu başarıyla güncellendi!');
+                router.push(`/admin/sessions/${id}`);
+            },
+            onError: (error) => {
+                const errorMessage = getErrorMessage(error);
+                showNotification.error(errorMessage || 'Sınav oturumu güncellenirken bir hata oluştu!');
+            }
+        }
+    });
+    
+    const handleSubmit = async (data: UpdateExamSessionRequest) => {
+        updateExamSession({ id, data });
     };
 
     const { data: brandsData } = useGetAllBrands();
@@ -67,7 +85,7 @@ export default function SessionAdd() {
             <div className="p-1">
                 {
                     brands && brandBranches && users && examTypes && selectedExamSession &&
-                    <ExamSessionForm examSession={selectedExamSession} onSubmit={updateExamSession} loading={loading} supervisors={users} brands={brands}
+                    <ExamSessionForm examSession={selectedExamSession} onSubmit={handleSubmit} loading={loading || updating} supervisors={users} brands={brands}
                                      branches={brandBranches} onBrandChange={onBrandChange} examTypes={examTypes.examTypes || []}/>
                 }
 

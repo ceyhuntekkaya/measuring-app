@@ -60,7 +60,7 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
                 explanation: '' // UI'dan kaldırıldı, her zaman boş string
             });
         }
-    }, []);
+    }, [value]);
 
     // NOT: caseSensitive ve exactMatch güncellemeleri artık textWithBlanks useEffect'inde yapılıyor
     // Bu useEffect'i kaldırdık çünkü sonsuz döngüye neden oluyordu
@@ -72,7 +72,8 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
     // handleChange'den sonra parent'a bildir
     useEffect(() => {
         // İlk render'da boş form için onChange tetikleme
-        if (formData.textWithBlanks || (formData.options?.blanks ?? []).length > 0) {
+        const blanksLength = formData.options?.blanks?.length || 0;
+        if (formData.textWithBlanks || blanksLength > 0) {
             // Tüm boşlukların feedback'ini boş string yap ve ana şablon ayarlarını uygula
             const blanksWithDefaults = formData.options?.blanks?.map(blank => ({
                 ...blank,
@@ -94,14 +95,14 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
             };
             
             // Basit bir key oluştur (sonsuz döngüyü önlemek için)
-            const dataKey = `${formData.textWithBlanks}|${formData.caseSensitive}|${formData.exactMatch}|${blanksWithDefaults.length}`;
+            const dataKey = `${formData.textWithBlanks}|${formData.caseSensitive}|${formData.exactMatch}|${blanksLength}`;
             
             if (dataKey !== lastSentRef.current) {
                 lastSentRef.current = dataKey;
                 onChange(templateData);
             }
         }
-    }, [formData.textWithBlanks, formData.caseSensitive, formData.exactMatch, formData.options?.blanks?.length || 0]);
+    }, [formData.textWithBlanks, formData.caseSensitive, formData.exactMatch, formData.options, onChange, value]);
 
     // Boşlukları güncelleme fonksiyonu
     const updateBlanksFromText = (text: string, currentBlanks: BlankAnswer[], caseSensitive: boolean, exactMatch: boolean): BlankAnswer[] => {
@@ -201,6 +202,30 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
         });
     };
 
+    // Aynı blank_[id] değerinden birden fazla olup olmadığını kontrol et
+    const checkDuplicateBlanks = (text: string): string | undefined => {
+        const regex = /\[blank_\d+\]/g;
+        const matches = text.match(regex);
+        if (!matches) return undefined;
+        
+        // Her ID'nin kaç kez geçtiğini say
+        const idCounts = new Map<string, number>();
+        matches.forEach(match => {
+            idCounts.set(match, (idCounts.get(match) || 0) + 1);
+        });
+        
+        // Birden fazla kez geçen ID'leri bul
+        const duplicates = Array.from(idCounts.entries())
+            .filter(([, count]) => count > 1)
+            .map(([id]) => id);
+        
+        if (duplicates.length > 0) {
+            return `Aynı boşluk ID'si birden fazla kez kullanılamaz: ${duplicates.join(', ')}`;
+        }
+        
+        return undefined;
+    };
+
     const handleChange = <T extends keyof FillInTheBlanksTemplateFormData>(
         field: T,
         newValue: FillInTheBlanksTemplateFormData[T]
@@ -213,6 +238,21 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
 
             // Eğer textWithBlanks değiştiyse, boşlukları güncelle
             if (field === 'textWithBlanks') {
+                // Aynı blank ID kontrolü
+                const duplicateError = checkDuplicateBlanks(newValue as string);
+                if (duplicateError) {
+                    setErrors(prev => ({
+                        ...prev,
+                        textWithBlanks: duplicateError
+                    }));
+                } else {
+                    // Hata yoksa temizle
+                    setErrors(prev => ({
+                        ...prev,
+                        textWithBlanks: undefined
+                    }));
+                }
+                
                 const updatedBlanks = updateBlanksFromText(
                     newValue as string,
                     prev.options?.blanks || [],
@@ -334,16 +374,43 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
 
         if (!formData.textWithBlanks?.trim()) {
             newErrors.textWithBlanks = 'Boşluklu metin zorunludur';
+        } else {
+            // Aynı blank ID kontrolü
+            const duplicateError = checkDuplicateBlanks(formData.textWithBlanks);
+            if (duplicateError) {
+                newErrors.textWithBlanks = duplicateError;
+            }
         }
 
         if (!formData.options?.blanks || formData.options.blanks.length === 0) {
             newErrors.options = 'En az bir boşluk tanımlanmalıdır';
         } else {
-            const invalidBlanks = formData.options.blanks.some(blank =>
-                !blank.acceptableAnswers || blank.acceptableAnswers.length === 0 ||
-                blank.acceptableAnswers.some(answer => !answer.trim())
-            );
-            if (invalidBlanks) {
+
+            // Geçersiz blank'ları bul
+            const invalidBlanksList = formData.options.blanks.filter(blank => {
+                // acceptableAnswers yoksa, array değilse veya boş array ise
+                if (!blank.acceptableAnswers || !Array.isArray(blank.acceptableAnswers) || blank.acceptableAnswers.length === 0) {
+                    return true;
+                }
+                
+                // Tüm cevapları kontrol et - en az bir geçerli (trim edilmiş ve boş olmayan) cevap olmalı
+                const validAnswers = blank.acceptableAnswers.filter(answer => {
+                    // String kontrolü ve boş olmayan kontrolü
+                    if (answer == null) return false;
+                    if (typeof answer !== 'string') return false;
+                    return answer.trim().length > 0;
+                });
+                
+                // Eğer geçerli cevap yoksa hata
+                if (validAnswers.length === 0) {
+                    return true;
+                }
+                
+                return false;
+            });
+
+            
+            if (invalidBlanksList.length > 0) {
                 newErrors.options = 'Tüm boşluklar için en az bir kabul edilebilir cevap girilmelidir';
             }
         }
@@ -490,19 +557,8 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
                         )}
                     </div>
 
-                    {/* Açıklama - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
-                    {/* <div className="space-y-2">
-                        <Label htmlFor="explanation">Açıklama</Label>
-                        <Textarea
-                            id="explanation"
-                            value={formData.explanation}
-                            onChange={(e) => handleChange('explanation', e.target.value)}
-                            className="min-h-[100px]"
-                            placeholder="Soru açıklaması (opsiyonel)"
-                        />
-                    </div> */}
-
-                    {/* KAYDET BUTONU KALDIRILDI - Parent component'te olacak */}
+                   
+                   
                 </div>
             </CardContent>
         </Card>

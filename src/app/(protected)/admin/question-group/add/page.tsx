@@ -10,15 +10,33 @@ import {useGetQuestionGroupTypesByExamSection} from "@/api/generated/question-gr
 import {useGetExamSectionsByExamType} from "@/api/generated/exam-section-management/exam-section-management";
 import {useCreateQuestionGroup} from "@/api/generated/question-group-management/question-group-management";
 import type {ApiResponseListExamSectionDto, ApiResponseListQuestionGroupTypeDto, CreateQuestionGroupRequest} from "@/api/generated/model";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { showNotification, getErrorMessage } from "@/lib/notification";
 
 export default function QuestionGroupAdd() {
+    const router = useRouter();
+    const queryClient = useQueryClient();
 
     const { data: examTypesData } = useGetAllExamTypes({});
     const examTypes = (examTypesData as ApiResponseExamTypeListResponse)?.data || null;
 
-    const createQuestionGroupMutation = useCreateQuestionGroup();
-    const createQuestionGroup = async (data: CreateQuestionGroupRequest) => {
-        await createQuestionGroupMutation.mutateAsync({ data });
+    const { mutate: createQuestionGroup, isPending: loading } = useCreateQuestionGroup({
+        mutation: {
+            onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: ['/question-groups'] });
+                showNotification.success('Soru grubu başarıyla eklendi!');
+                router.push('/admin/question-group');
+            },
+            onError: (error) => {
+                const errorMessage = getErrorMessage(error);
+                showNotification.error(errorMessage || 'Soru grubu eklenirken bir hata oluştu!');
+            }
+        }
+    });
+    
+    const handleSubmit = async (data: CreateQuestionGroupRequest) => {
+        createQuestionGroup({ data });
     };
 
     const [selectedExamTypeId, setSelectedExamTypeId] = React.useState<string>('');
@@ -48,10 +66,11 @@ export default function QuestionGroupAdd() {
             <div className="p-1">
                 <QuestionGroupForm onExamSectionChange={onExamSectionChange}
                                    onExamTypeChange={onExamTypeChange}
-                                   onSubmit={createQuestionGroup}
+                                   onSubmit={handleSubmit}
                                    examTypes={examTypes?.examTypes || []}
                                    examSections={sectionsByExamType}
-                                   questionGroupTypes={typesByExamSection}/>
+                                   questionGroupTypes={typesByExamSection}
+                                   loading={loading}/>
 
             </div>
         </div>

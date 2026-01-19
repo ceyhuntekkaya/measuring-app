@@ -37,6 +37,7 @@ import Checkbox from "@/components/ui/checkbox";
 import FilePreview from "@/components/ui/file-preview";
 import {getQuestionTypeLabel} from "@/utils/question-type-convert";
 import {approvalStatusConverter} from "@/utils/enum-converter";
+import {hasCorrectAnswer} from "@/utils/question-validation";
 
 export default function QuestionPage() {
     const router = useRouter();
@@ -137,6 +138,27 @@ export default function QuestionPage() {
                                     {getQuestionTypeLabel((record as QuestionDto).questionType as EQuestionType)}
                 </div>
             )
+        },
+        {
+            key: 'answerStatus',
+            header: 'Cevap Durumu',
+            render: (value, record) => {
+                const question = record as QuestionDto;
+                const hasAnswer = hasCorrectAnswer(
+                    question.questionTemplate,
+                    question.questionType
+                );
+                const status = hasAnswer ? 'HAZIR' : 'CEVAP EKSİK';
+                return (
+                    <div
+                        className={`font-medium ${
+                            status === 'HAZIR' ? 'text-green-600' : 'text-red-600'
+                        }`}
+                    >
+                        {status}
+                    </div>
+                );
+            }
         },
         {
             key: 'id',

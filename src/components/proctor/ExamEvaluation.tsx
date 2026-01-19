@@ -92,9 +92,10 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
     React.useEffect(() => {
         if (evaluationsError) {
             console.error('❌ Error fetching evaluations:', evaluationsError);
+            const errorObj = evaluationsError as unknown as { message?: string; response?: unknown };
             console.error('Error details:', {
-                message: evaluationsError?.message,
-                response: evaluationsError?.response,
+                message: errorObj?.message,
+                response: errorObj?.response,
                 data: evaluationsData
             });
         }
@@ -142,10 +143,11 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
             }
         } catch (error) {
             console.error('❌ Error fetching questions by ID list:', error);
+            const errorObj = error as { message?: string; response?: unknown; stack?: string };
             console.error('Error details:', {
-                message: (error as any)?.message,
-                response: (error as any)?.response,
-                stack: (error as any)?.stack
+                message: errorObj?.message,
+                response: errorObj?.response,
+                stack: errorObj?.stack
             });
         }
     };

@@ -11,10 +11,12 @@ import {
     MessageType,
     CommandPayload,
     InfoPayload,
+    InfoType,
     WebSocketMessage,
 } from '@/types/websocket.types';
 import siteConfig from '@/config/config.json';
 import { useAuthContext } from '@/contexts/auth-context';
+import { useExamApplicationContext } from '@/contexts/ExamApplicationContext';
 
 const WebSocketContext = createContext<WebSocketContextValue | null>(null);
 
@@ -28,6 +30,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
                                                                         autoConnect = true,
                                                                     }) => {
     const { candidate, examSession } = useAuthContext();
+    const { examSession: examApplicationSession, application } = useExamApplicationContext();
 
     const serviceRef = useRef<WebSocketService | null>(null);
     const isConnectingRef = useRef(false); // Bağlantı sırasında tekrar bağlanmayı engelle
@@ -40,7 +43,11 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
 
     const username = candidate?.username || null;
     const role = 'LEARNER' as const;
-    const sessionId = examSession?.id || null;
+    // sessionId'yi öncelik sırasına göre al:
+    // 1. examSession?.id (auth context)
+    // 2. examApplicationSession?.id (ExamApplicationContext)
+    // 3. application?.examSessionId (Application - en güvenilir)
+    const sessionId = examSession?.id || examApplicationSession?.id || application?.examSessionId || null;
 
     const getWebSocketUrl = () => {
         const apiUrl = siteConfig.api.invokeUrl;
@@ -84,7 +91,21 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
 
     // Connect when ready
     useEffect(() => {
-        if (!autoConnect || !serviceRef.current || !username || !sessionId) {
+        if (!autoConnect || !serviceRef.current || !username) {
+            console.log('⚠️ LEARNER WebSocket: Missing requirements', {
+                autoConnect,
+                hasService: !!serviceRef.current,
+                username
+            });
+            return;
+        }
+
+        if (!sessionId) {
+            console.warn('⚠️ LEARNER WebSocket: sessionId is null, cannot connect', {
+                examSessionId: examSession?.id,
+                examApplicationSessionId: examApplicationSession?.id,
+                applicationExamSessionId: application?.examSessionId
+            });
             return;
         }
 
@@ -100,10 +121,36 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
         console.log(`🔌 LEARNER connecting to session: ${sessionId}`, {
             username,
             hasToken: !!token,
-            examSessionId: examSession?.id
+            examSessionId: examSession?.id,
+            examApplicationSessionId: examApplicationSession?.id,
+            applicationExamSessionId: application?.examSessionId
         });
         serviceRef.current.connect(token, username, role, sessionId);
-    }, [autoConnect, username, sessionId, role]);
+    }, [autoConnect, username, sessionId, role, examSession, examApplicationSession, application]);
+
+    // LEARNER bağlandığında sessionState IN_PROGRESS ise INFO mesajı gönder
+    useEffect(() => {
+        if (status !== ConnectionStatus.CONNECTED || !serviceRef.current || role !== 'LEARNER') {
+            return;
+        }
+
+        // examSession'ı kontrol et
+        const currentExamSession = examSession || examApplicationSession;
+        if (currentExamSession?.sessionState === 'IN_PROGRESS') {
+            // INFO mesajı gönder
+            const payload: InfoPayload = {
+                infoType: InfoType.STATUS_CHANGE,
+                metadata: {
+                    sessionState: 'IN_PROGRESS',
+                    username: username || '',
+                    timestamp: new Date().toISOString()
+                }
+            };
+            
+            serviceRef.current.sendInfo(payload);
+            console.log('📤 LEARNER sent sessionState IN_PROGRESS INFO message');
+        }
+    }, [status, examSession, examApplicationSession, username, role, serviceRef]);
 
 
 

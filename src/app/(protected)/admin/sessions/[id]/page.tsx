@@ -9,6 +9,7 @@ import {useGetExamSessionById, useGetExamSessionStatistics, useDeleteExamSession
 import { AdminWebSocketProvider } from '@/components/websocket/AdminWebSocketProvider';
 import {useQueryClient} from "@tanstack/react-query";
 import type {ApiResponseExamSessionDto, ApiResponseExamSessionStatistics, UpdateExamSessionStateRequest, UpdateExamSessionStateRequestSessionState} from "@/api/generated/model";
+import { showNotification, getErrorMessage } from "@/lib/notification";
 
 export default function CandidateDetailPage() {
     const params = useParams();
@@ -47,9 +48,12 @@ export default function CandidateDetailPage() {
 
         try {
             await deleteExamSessionMutation.mutateAsync({ id: sessionId });
+            queryClient.invalidateQueries({ queryKey: ['/exam-sessions'] });
+            showNotification.success('Sınav oturumu başarıyla silindi!');
             router.push('/admin/sessions');
         } catch (err) {
-            console.error('Error deleting exam session:', err);
+            const errorMessage = getErrorMessage(err);
+            showNotification.error(errorMessage || 'Sınav oturumu silinirken bir hata oluştu!');
         }
     };
 
@@ -138,7 +142,7 @@ export default function CandidateDetailPage() {
     }
 
     return (
-        <AdminWebSocketProvider  sessionId={sessionId}>
+        <AdminWebSocketProvider sessionId={sessionId} examSession={selectedExamSession}>
         <div className="space-y-6">
             <PageHeader/>
             <div className="p-1">

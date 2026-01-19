@@ -36,6 +36,7 @@ import BaseQuestionTemplateForm, {
 } from "@/components/form/template/BaseQuestionTemplateForm";
 import {useParams} from "next/navigation";
 import {getQuestionTypeLabel} from "@/utils/question-type-convert";
+import {showNotification} from "@/lib/notification";
 
 // Local types for parts and options (not part of API, used for UI only)
 interface QuestionPart {
@@ -309,6 +310,11 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
         return Object.keys(newErrors).length === 0;
     };
 
+    // NOT: Template-specific validasyonlar artık template form'ların kendi validate() fonksiyonlarında yapılıyor
+    // validateCorrectAnswer() fonksiyonu kaldırıldı - tekrarlı validasyon yönetim sorununa yol açıyordu
+    // BaseQuestionTemplateForm.validateAll() zaten templateValidateRef.current?.validate() çağırarak
+    // tüm template form validasyonlarını yapıyor
+
     // Transform data to API request format
     const transformToCreateQuestionRequest = (): CreateQuestionRequest => {
         // Template data'yı doğru formata dönüştür
@@ -376,7 +382,15 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
             return;
         }
 
-        // 3. Tüm validationlar başarılı - data transform ve submit
+        // 3. Template data kontrolü
+        // NOT: Template-specific validasyonlar artık template form'ların kendi validate() fonksiyonlarında yapılıyor
+        // Bu yüzden validateCorrectAnswer() fonksiyonunu kaldırdık - tekrarlı validasyon yönetim sorununa yol açıyordu
+        if (!baseFormData.templateData && formData.questionType) {
+            showNotification.error('Template bilgileri eksik! Lütfen template formunu doldurunuz.');
+            return;
+        }
+
+        // 4. Tüm validationlar başarılı - data transform ve submit
         const finalData = transformToCreateQuestionRequest();
         if(question){
             finalData.id = question.id;

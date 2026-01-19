@@ -8,6 +8,8 @@ import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import {useSetStartedAt, useSetEndedAt, useUpdateSessionState1} from "@/api/generated/application-management/application-management";
 import {ESessionState as ESessionStateEnum} from "@/types/exam/enum";
 import type { UpdateSessionStateRequestSessionState } from "@/api/generated/model";
+import { useAdminWebSocket } from '@/components/websocket/AdminWebSocketProvider';
+import { CommandAction } from '@/types/websocket.types';
 
 const ParticipantCard = ({participant, onChat, isOnline, onStart, onStop, onFinish}: {
     participant: ApplicationDto;
@@ -218,6 +220,7 @@ interface ExamTypeFormProps {
 const ExamParticipants: React.FC<ExamTypeFormProps> = ({ candidates }) => {
     const [chatParticipant, setChatParticipant] = useState<ApplicationDto | null>(null);
     const { isOnline ,onlineUsers} = useOnlineStatus();
+    const { sendCommand } = useAdminWebSocket();
     const setStartedAtMutation = useSetStartedAt();
     const setEndedAtMutation = useSetEndedAt();
     const updateSessionStateMutation = useUpdateSessionState1();
@@ -257,8 +260,20 @@ const ExamParticipants: React.FC<ExamTypeFormProps> = ({ candidates }) => {
 
     const handleStart = async (id: string) => {
         try {
+            const candidate = candidates.find(c => c.id === id);
+            if (!candidate?.username) {
+                console.error('Candidate username not found');
+                return;
+            }
+
             await setApplicationStartedAt(id);
             await updateApplicationSessionState(id, ESessionStateEnum.IN_PROGRESS);
+            
+            // COMMAND gönder
+            sendCommand({
+                action: CommandAction.RESUME_EXAM,
+                targetId: candidate.username,
+            });
         } catch (err) {
             console.error('Error starting application:', err);
         }
@@ -266,7 +281,19 @@ const ExamParticipants: React.FC<ExamTypeFormProps> = ({ candidates }) => {
 
     const handleStop = async (id: string) => {
         try {
+            const candidate = candidates.find(c => c.id === id);
+            if (!candidate?.username) {
+                console.error('Candidate username not found');
+                return;
+            }
+
             await setApplicationEndedAt(id);
+            
+            // COMMAND gönder
+            sendCommand({
+                action: CommandAction.PAUSE_EXAM,
+                targetId: candidate.username,
+            });
         } catch (err) {
             console.error('Error stopping application:', err);
         }
@@ -275,10 +302,22 @@ const ExamParticipants: React.FC<ExamTypeFormProps> = ({ candidates }) => {
     const handleFinish = async (id: string) => {
         if (window.confirm('Bu başvuruyu sonlandırmak istediğinize emin misiniz? Bu işlem geri alınamaz.')) {
             try {
+                const candidate = candidates.find(c => c.id === id);
+                if (!candidate?.username) {
+                    console.error('Candidate username not found');
+                    return;
+                }
+
                 // Application için isFinish endpoint'i yok gibi görünüyor, 
                 // bu yüzden sessionState'i FINISHED yapıyoruz
                 await updateApplicationSessionState(id, ESessionStateEnum.FINISHED);
                 await setApplicationEndedAt(id);
+                
+                // COMMAND gönder
+                sendCommand({
+                    action: CommandAction.TERMINATE_EXAM,
+                    targetId: candidate.username,
+                });
             } catch (err) {
                 console.error('Error finishing application:', err);
             }

@@ -41,7 +41,7 @@ export default function CandidatePage() {
     
     const candidates = useMemo(() => {
         if (candidatesData && typeof candidatesData === 'object' && 'data' in candidatesData) {
-            const apiData = (candidatesData as any).data;
+            const apiData = (candidatesData as { data?: unknown }).data;
             if (Array.isArray(apiData)) {
                 return apiData as CandidateDto[];
             }
@@ -58,7 +58,7 @@ export default function CandidatePage() {
     
     const exams = useMemo(() => {
         if (examsData && typeof examsData === 'object' && 'data' in examsData) {
-            const apiData = (examsData as any).data;
+            const apiData = (examsData as { data?: unknown }).data;
             if (Array.isArray(apiData)) {
                 return apiData as ExamDto[];
             }
@@ -76,10 +76,11 @@ export default function CandidatePage() {
     
     const upcomingExamSessions = useMemo(() => {
         if (sessionsData && typeof sessionsData === 'object' && 'data' in sessionsData) {
-            const apiData = (sessionsData as any).data;
+            const apiData = (sessionsData as { data?: unknown }).data;
             // Nested yapı: { data: { examSessions: [...] } }
-            if (apiData && typeof apiData === 'object' && 'examSessions' in apiData) {
-                return Array.isArray(apiData.examSessions) ? apiData.examSessions : [];
+            if (apiData && typeof apiData === 'object' && apiData !== null && 'examSessions' in apiData) {
+                const examSessions = (apiData as { examSessions?: unknown }).examSessions;
+                return Array.isArray(examSessions) ? examSessions : [];
             }
             // Direct array: { data: [...] }
             if (Array.isArray(apiData)) {

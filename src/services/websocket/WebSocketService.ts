@@ -21,7 +21,7 @@ export class WebSocketService {
     private errorCallback: ErrorCallback | null = null;
 
     private currentUsername: string | null = null;
-    private currentRole: 'ADMIN' | 'LEARNER' | null = null;
+    private currentRole: 'ADMIN' | 'LEARNER' | 'OBSERVER' | null = null;
     private currentSessionId: string | null = null;
 
     constructor(private config: WebSocketConfig) {}
@@ -29,7 +29,7 @@ export class WebSocketService {
     /**
      * WebSocket bağlantısını başlat
      */
-    connect(token: string, username: string, role: 'ADMIN' | 'LEARNER', sessionId: string): void {
+    connect(token: string, username: string, role: 'ADMIN' | 'LEARNER' | 'OBSERVER', sessionId: string): void {
         if (this.client?.active) {
       //      console.warn('WebSocket already connected');
             return;
@@ -61,12 +61,13 @@ export class WebSocketService {
                 }
             },
 
-            onConnect: () => {
+            onConnect: (frame) => {
                 console.log('✅ WebSocket Connected', {
                     role: this.currentRole,
                     username: this.currentUsername,
                     sessionId: this.currentSessionId,
-                    connected: this.client?.connected
+                    connected: this.client?.connected,
+                    frame: frame
                 });
                 this.updateStatus(ConnectionStatus.CONNECTED);
                 
@@ -179,14 +180,14 @@ export class WebSocketService {
 
         }
 
-        if (this.currentRole === 'ADMIN') {
-            // 5. ADMIN: Info messages
+        if (this.currentRole === 'ADMIN' || this.currentRole === 'OBSERVER') {
+            // ADMIN/OBSERVER: Info messages
             this.subscribe(
                 `/topic/exam-session/${this.currentSessionId}/info`,
                 (message) => this.handleMessage(message)
             );
 
-            // 6. ADMIN: Private Chat Messages (learner'dan gelen mesajlar)
+            // ADMIN/OBSERVER: Private Chat Messages (learner'dan gelen mesajlar)
             this.subscribe(
                 `/user/${this.currentUsername}/queue/chat`,
                 (message) => this.handleMessage(message)
@@ -205,17 +206,13 @@ export class WebSocketService {
                 (message) => this.handleMessage(message)
             );
 
-            // 6. ADMIN: LEARNER chat
+            // ADMIN/OBSERVER: LEARNER chat
             this.subscribe(
                 `/topic/exam-session/${this.currentSessionId}/admin-chat`,
                 (message) => this.handleMessage(message)
             );
 
-            // 7. ADMIN: Presence
-            this.subscribe(
-                `/topic/exam-session/${this.currentSessionId}/presence`,
-                (message) => this.handleMessage(message)
-            );
+            // ADMIN/OBSERVER: Presence (duplicate removed - already subscribed above)
         }
 
         // Subscription setup log'u kaldırıldı
@@ -290,9 +287,22 @@ export class WebSocketService {
             const destination = message.headers.destination || '';
             
             const isPresenceSync = destination.includes('presence-sync');
+            const isPresence = destination.includes('presence');
 
             if (isPresenceSync) {
-                console.log('📋 Presence sync received');
+                console.log('📋 Presence sync received:', {
+                    destination,
+                    role: this.currentRole,
+                    username: this.currentUsername,
+                    message: parsedMessage
+                });
+            } else if (isPresence) {
+                console.log('📡 Presence message received:', {
+                    destination,
+                    role: this.currentRole,
+                    username: this.currentUsername,
+                    message: parsedMessage
+                });
             }
 
             this.messageCallbacks.forEach(callback => callback(parsedMessage));
@@ -458,7 +468,7 @@ export class WebSocketService {
     /**
      * Get current role
      */
-    getRole(): 'ADMIN' | 'LEARNER' | null {
+    getRole(): 'ADMIN' | 'LEARNER' | 'OBSERVER' | null {
         return this.currentRole;
     }
 }

@@ -12,14 +12,31 @@ import type { ApiResponseListBranchDto, ApiResponseListUserDto } from "@/api/gen
 import {useGetUsersByDepartment} from "@/api/generated/user-management/user-management";
 import {useGetAllExamTypes} from "@/api/generated/exam-type-management/exam-type-management";
 import type { ApiResponseExamTypeListResponse } from "@/api/generated/model";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { showNotification, getErrorMessage } from "@/lib/notification";
 
 export default function SessionAdd() {
+    const router = useRouter();
+    const queryClient = useQueryClient();
 
-    const createExamSessionMutation = useCreateExamSession();
-    const createExamSession = async (data: CreateExamSessionRequest) => {
-        await createExamSessionMutation.mutateAsync({ data });
+    const { mutate: createExamSession, isPending: loading } = useCreateExamSession({
+        mutation: {
+            onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: ['/exam-sessions'] });
+                showNotification.success('Sınav oturumu başarıyla eklendi!');
+                router.push('/admin/sessions');
+            },
+            onError: (error) => {
+                const errorMessage = getErrorMessage(error);
+                showNotification.error(errorMessage || 'Sınav oturumu eklenirken bir hata oluştu!');
+            }
+        }
+    });
+    
+    const handleSubmit = async (data: CreateExamSessionRequest) => {
+        createExamSession({ data });
     };
-    const loading = createExamSessionMutation.isPending;
 
     const { data: brandsData } = useGetAllBrands();
     const brands = (brandsData as unknown as ApiResponseListBrandDto)?.data || null;
@@ -58,7 +75,7 @@ export default function SessionAdd() {
             <div className="p-1">
                 {
                     brands && brandBranches && users && examTypes &&
-                    <ExamSessionForm onSubmit={createExamSession} loading={loading} supervisors={users} brands={brands}
+                    <ExamSessionForm onSubmit={handleSubmit} loading={loading} supervisors={users} brands={brands}
                                      branches={brandBranches} onBrandChange={onBrandChange} examTypes={examTypes.examTypes || []}/>
                 }
 

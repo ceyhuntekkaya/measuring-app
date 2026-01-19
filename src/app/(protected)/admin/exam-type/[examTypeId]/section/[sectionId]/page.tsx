@@ -7,18 +7,34 @@ import ExamSectionDetail from "@/components/detail/ExamSectionDetail";
 import PageHeader from "@/components/layout/page-header";
 import LoadingComp from "@/components/ui/loading-comp";
 import type {ApiResponseExamSectionDto, ExamTypeDto} from "@/api/generated/model";
+import { useQueryClient } from "@tanstack/react-query";
+import { showNotification, getErrorMessage } from "@/lib/notification";
 
 export default function ExamTypeDetailPage() {
     const params = useParams();
     const examSectionId = params.sectionId as string;
+    const examTypeId = params.examTypeId as string;
     const router = useRouter();
+    const queryClient = useQueryClient();
 
     const {data, isLoading: loading} = useGetExamSectionById(examSectionId, {
         query: { enabled: !!examSectionId }
     });
     const selectedExamSection = (data as unknown as ApiResponseExamSectionDto)?.data || null;
     
-    const deleteExamSectionMutation = useDeleteExamSection();
+    const { mutate: deleteExamSection } = useDeleteExamSection({
+        mutation: {
+            onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: ['/exam-sections'] });
+                showNotification.success('Sınav bölümü başarıyla silindi!');
+                router.push(`/admin/exam-type/${examTypeId}`);
+            },
+            onError: (error) => {
+                const errorMessage = getErrorMessage(error);
+                showNotification.error(errorMessage || 'Sınav bölümü silinirken bir hata oluştu!');
+            }
+        }
+    });
 
     if (loading) {
         return (
@@ -37,7 +53,7 @@ export default function ExamTypeDetailPage() {
     };
     const handleDelete = () => {
         if (selectedExamSection?.id) {
-            deleteExamSectionMutation.mutate({ id: selectedExamSection.id });
+            deleteExamSection({ id: selectedExamSection.id });
         }
     };
 

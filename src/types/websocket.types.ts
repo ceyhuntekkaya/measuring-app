@@ -37,7 +37,7 @@ export interface PresenceSyncPayload {
 }
 
 // Role Types
-export type UserRole = 'ADMIN' | 'LEARNER';
+export type UserRole = 'ADMIN' | 'LEARNER' | 'OBSERVER';
 
 // Payloads
 export interface ChatPayload {

@@ -16,25 +16,23 @@ import {
 import siteConfig from '@/config/config.json';
 import { useAuthContext } from '@/contexts/auth-context';
 
-const AdminWebSocketContext = createContext<WebSocketContextValue | null>(null);
+const ObserverWebSocketContext = createContext<WebSocketContextValue | null>(null);
 
-interface AdminWebSocketProviderProps {
+interface ObserverWebSocketProviderProps {
     children: React.ReactNode;
     sessionId: string;
-    examSession?: { sessionState?: string } | null;
     autoConnect?: boolean;
 }
 
-export const AdminWebSocketProvider: React.FC<AdminWebSocketProviderProps> = ({
+export const ObserverWebSocketProvider: React.FC<ObserverWebSocketProviderProps> = ({
                                                                                   children,
                                                                                   sessionId,
-                                                                                  examSession,
                                                                                   autoConnect = true,
                                                                               }) => {
     const { user } = useAuthContext();
 
     const serviceRef = useRef<WebSocketService | null>(null);
-    const isInitializedRef = useRef(false); // 🔑 Önemli!
+    const isInitializedRef = useRef(false);
 
     const [status, setStatus] = useState<ConnectionStatus>(ConnectionStatus.DISCONNECTED);
     const [error, setError] = useState<string | null>(null);
@@ -43,7 +41,7 @@ export const AdminWebSocketProvider: React.FC<AdminWebSocketProviderProps> = ({
     const [lastCommand, setLastCommand] = useState<CommandMessage | null>(null);
 
     const username = user?.username || null;
-    const role = 'ADMIN' as const;
+    const role = 'OBSERVER' as const;
 
     const getWebSocketUrl = useCallback(() => {
         const apiUrl = siteConfig.api.invokeUrl;
@@ -65,12 +63,6 @@ export const AdminWebSocketProvider: React.FC<AdminWebSocketProviderProps> = ({
 
             case MessageType.INFO:
                 const infoMsg = message as InfoMessage;
-                console.log('📨 ADMIN received INFO message:', {
-                    infoType: infoMsg.payload?.infoType,
-                    senderId: infoMsg.senderId,
-                    senderRole: infoMsg.senderRole,
-                    payload: infoMsg.payload
-                });
                 setInfoMessages((prev) => [...prev, infoMsg]);
                 break;
 
@@ -86,7 +78,7 @@ export const AdminWebSocketProvider: React.FC<AdminWebSocketProviderProps> = ({
             return;
         }
 
-        console.log('🔧 Initializing WebSocket service...');
+        console.log('🔧 Initializing WebSocket service for OBSERVER...');
 
         serviceRef.current = new WebSocketService({
             brokerURL: getWebSocketUrl(),
@@ -112,61 +104,34 @@ export const AdminWebSocketProvider: React.FC<AdminWebSocketProviderProps> = ({
         };
     }, []); // 🔑 Empty dependency array!
 
-    // Auto-connect (ONCE!) - Sadece sessionState IN_PROGRESS ise bağlan
+    // Auto-connect (ONCE!)
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
 
-        // sessionState kontrolü: Sadece IN_PROGRESS ise bağlan
-        const shouldConnect = examSession?.sessionState === 'IN_PROGRESS';
-
-        console.log('🔍 ADMIN WebSocket connection check:', {
-            autoConnect,
-            shouldConnect,
-            hasService: !!serviceRef.current,
-            hasToken: !!token,
-            username,
-            sessionId,
-            sessionState: examSession?.sessionState,
-            isConnected: serviceRef.current?.isConnected()
-        });
-
         if (
             autoConnect &&
-            shouldConnect &&
             serviceRef.current &&
             token &&
             username &&
             sessionId &&
             !serviceRef.current.isConnected()
         ) {
-            console.log(`🔌 ADMIN connecting to session: ${sessionId}`, {
+            console.log(`🔌 OBSERVER connecting to session: ${sessionId}`, {
                 username,
                 hasToken: !!token,
-                sessionId,
-                sessionState: examSession?.sessionState
+                sessionId
             });
             serviceRef.current.connect(token, username, role, sessionId);
-        } else if (!shouldConnect && serviceRef.current?.isConnected()) {
-            // sessionState IN_PROGRESS değilse bağlantıyı kes
-            console.log('🔌 ADMIN disconnecting: sessionState is not IN_PROGRESS', {
-                sessionState: examSession?.sessionState
-            });
-            serviceRef.current.disconnect();
-        } else if (!shouldConnect) {
-            console.log('⚠️ ADMIN not connecting: sessionState is not IN_PROGRESS', {
-                sessionState: examSession?.sessionState,
-                hasExamSession: !!examSession
-            });
         }
 
         // Cleanup on unmount ONLY
         return () => {
             if (serviceRef.current?.isConnected()) {
-                console.log('🔌 ADMIN disconnecting...');
+                console.log('🔌 OBSERVER disconnecting...');
                 serviceRef.current.disconnect();
             }
         };
-    }, [username, sessionId, examSession?.sessionState, autoConnect, role]); // sessionState değişikliklerini dinle
+    }, [username, sessionId, role, autoConnect, getWebSocketUrl]);
 
     // Actions
     const sendChat = useCallback(
@@ -181,11 +146,8 @@ export const AdminWebSocketProvider: React.FC<AdminWebSocketProviderProps> = ({
     );
 
     const sendCommand = useCallback((payload: CommandPayload) => {
-        if (!serviceRef.current?.isConnected()) {
-            console.warn('Cannot send command: WebSocket not connected');
-            return;
-        }
-        serviceRef.current.sendCommand(payload);
+        // OBSERVER cannot send commands
+        console.warn('OBSERVER cannot send commands', payload);
     }, []);
 
     const sendInfo = useCallback((payload: InfoPayload) => {
@@ -215,13 +177,13 @@ export const AdminWebSocketProvider: React.FC<AdminWebSocketProviderProps> = ({
         sessionId,
     };
 
-    return <AdminWebSocketContext.Provider value={value}>{children}</AdminWebSocketContext.Provider>;
+    return <ObserverWebSocketContext.Provider value={value}>{children}</ObserverWebSocketContext.Provider>;
 };
 
-export const useAdminWebSocket = (): WebSocketContextValue => {
-    const context = useContext(AdminWebSocketContext);
+export const useObserverWebSocket = (): WebSocketContextValue => {
+    const context = useContext(ObserverWebSocketContext);
     if (!context) {
-        throw new Error('useAdminWebSocket must be used within AdminWebSocketProvider');
+        throw new Error('useObserverWebSocket must be used within ObserverWebSocketProvider');
     }
     return context;
 };

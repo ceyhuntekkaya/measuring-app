@@ -247,6 +247,24 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                                             <p className="font-medium">{examSession.quota} kişi</p>
                                         </div>
                                     </div>
+
+                                    <div className="flex items-center space-x-2">
+                                        <Activity className="h-4 w-4 text-gray-400"/>
+                                        <div>
+                                            <p className="text-sm text-gray-500">Session State</p>
+                                            <div className="font-medium">
+                                                <Badge variant={
+                                                    examSession.sessionState === 'IN_PROGRESS' ? 'default' :
+                                                    examSession.sessionState === 'FINISHED' ? 'secondary' :
+                                                    examSession.sessionState === 'PAUSED' ? 'outline' :
+                                                    examSession.sessionState === 'CANCELLED' ? 'destructive' :
+                                                    'outline'
+                                                }>
+                                                    {examSession.sessionState || 'NOT_SET'}
+                                                </Badge>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>

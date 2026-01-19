@@ -9,25 +9,43 @@ import type { ApiResponseExamTypeListResponse } from "@/api/generated/model";
 import {useGetQuestionGroupTypesByExamSection} from "@/api/generated/question-group-type-management/question-group-type-management";
 import {useGetExamSectionsByExamType} from "@/api/generated/exam-section-management/exam-section-management";
 import {useGetQuestionGroupById, useUpdateQuestionGroup} from "@/api/generated/question-group-management/question-group-management";
-import {useParams} from "next/navigation";
+import {useParams, useRouter} from "next/navigation";
 import type {ApiResponseListExamSectionDto, ApiResponseListQuestionGroupTypeDto, CreateQuestionGroupRequest, ApiResponseQuestionGroupDto} from "@/api/generated/model";
+import { useQueryClient } from "@tanstack/react-query";
+import { showNotification, getErrorMessage } from "@/lib/notification";
 
 export default function QuestionGroupUpdate() {
 
     const params = useParams();
     const groupId = params.groupId as string;
+    const router = useRouter();
+    const queryClient = useQueryClient();
 
     const { data: examTypesData } = useGetAllExamTypes({});
     const examTypes = (examTypesData as unknown as ApiResponseExamTypeListResponse)?.data || null;
 
-    const {data: questionGroupData} = useGetQuestionGroupById(groupId, {
+    const {data: questionGroupData, isLoading: loading} = useGetQuestionGroupById(groupId, {
         query: { enabled: !!groupId }
     });
     const selectedQuestionGroup = (questionGroupData as unknown as ApiResponseQuestionGroupDto)?.data;
     
-    const updateQuestionGroupMutation = useUpdateQuestionGroup();
-    const updateQuestionGroup = async (data: CreateQuestionGroupRequest) => {
-        await updateQuestionGroupMutation.mutateAsync({ id: groupId, data });
+    const { mutate: updateQuestionGroup, isPending: updating } = useUpdateQuestionGroup({
+        mutation: {
+            onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: ['/question-groups'] });
+                queryClient.invalidateQueries({ queryKey: [`/question-groups/${groupId}`] });
+                showNotification.success('Soru grubu başarıyla güncellendi!');
+                router.push(`/admin/question-group/${groupId}`);
+            },
+            onError: (error) => {
+                const errorMessage = getErrorMessage(error);
+                showNotification.error(errorMessage || 'Soru grubu güncellenirken bir hata oluştu!');
+            }
+        }
+    });
+    
+    const handleSubmit = async (data: CreateQuestionGroupRequest) => {
+        updateQuestionGroup({ id: groupId, data });
     };
 
     const [selectedExamTypeId, setSelectedExamTypeId] = React.useState<string>('');
@@ -68,10 +86,11 @@ export default function QuestionGroupUpdate() {
                     selectedQuestionGroup && sectionsByExamType.length>0 && typesByExamSection.length>0 &&
                     <QuestionGroupForm questionGroup={selectedQuestionGroup} onExamSectionChange={onExamSectionChange}
                                        onExamTypeChange={onExamTypeChange}
-                                       onSubmit={updateQuestionGroup}
+                                       onSubmit={handleSubmit}
                                        examTypes={examTypes?.examTypes || []}
                                        examSections={sectionsByExamType}
-                                       questionGroupTypes={typesByExamSection}/>
+                                       questionGroupTypes={typesByExamSection}
+                                       loading={loading || updating}/>
                 }
 
 

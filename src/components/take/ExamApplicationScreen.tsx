@@ -725,8 +725,7 @@ export default function ExamApplicationScreen({
     };
 
     return (
-        <div className="h-screen w-screen flex flex-col bg-gray-50"
-             style={{height: "calc(100vh - 100px)"}}>
+        <div className="h-screen w-screen flex flex-col bg-gray-50">
             <header className="flex-shrink-0 h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm">
                 <div className="flex items-center gap-4 flex-1">
                     <h1 className="text-lg font-semibold text-gray-800">Sınav</h1>
@@ -755,7 +754,7 @@ export default function ExamApplicationScreen({
 
             {
                 selectedQuestionGroup &&
-                <main className="flex-1 overflow-y-auto p-3">
+                <main className="flex-1 overflow-y-auto p-3 pb-24">
                     <div className="mx-auto">
                         <div className="bg-white rounded-lg shadow-sm p-5 min-h-[500px]">
                             {
@@ -802,7 +801,7 @@ export default function ExamApplicationScreen({
                                     questionsByGroup.map((question, key) => (
                                     <div key={key} className="p-4 border-b">
                                             <h3 className="flex items-center gap-2">
-                                                SORU: {key + 1}
+                                                SORU: {key + 1}  
 
                                             </h3>
                                         {
@@ -829,7 +828,7 @@ export default function ExamApplicationScreen({
                 </main>
             }
 
-            <footer className="flex-shrink-0 bg-white border-t border-gray-200 p-4 shadow-lg mt-auto">
+            <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-10">
                 <div className="max-w-6xl mx-auto">
                     <div className="flex items-center justify-center gap-2 flex-wrap">
                         {questionGroups.map((_, index) => {

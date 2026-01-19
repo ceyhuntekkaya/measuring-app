@@ -55,3 +55,25 @@ export const showNotification = {
         toast.dismiss(toastId);
     }
 };
+
+// API hata mesajlarını parse eden helper fonksiyon
+export const getErrorMessage = (error: unknown): string => {
+    if (error && typeof error === 'object') {
+        // Axios error formatı
+        if ('response' in error && error.response) {
+            const response = error.response as { data?: { message?: string; error?: string } };
+            if (response.data?.message) {
+                return response.data.message;
+            }
+            if (response.data?.error) {
+                return response.data.error;
+            }
+        }
+        // Error object with message
+        if ('message' in error && typeof error.message === 'string') {
+            return error.message;
+        }
+    }
+    // Fallback
+    return 'Bir hata oluştu';
+};
