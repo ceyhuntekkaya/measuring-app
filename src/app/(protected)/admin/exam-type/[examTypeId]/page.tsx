@@ -48,9 +48,9 @@ export default function ExamTypeDetailPage() {
 
     if (error || !selectedExamType) {
         return (
-            <div className="space-y-6">
+            <div className="space-y-4">
                 <PageHeader/>
-                <div className="p-1">
+                <div className="px-4">
                     <p className="text-red-600">Sınav tipi bulunamadı veya yüklenirken bir hata oluştu.</p>
                 </div>
             </div>
@@ -58,9 +58,9 @@ export default function ExamTypeDetailPage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             <PageHeader/>
-            <div className="p-1">
+            <div className="px-4">
                 <ExamTypeDetail selectedExamType={selectedExamType} onEdit={handleEdit} onDelete={handleDelete}/>
 
             </div>

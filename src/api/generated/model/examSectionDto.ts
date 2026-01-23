@@ -17,4 +17,5 @@ export interface ExamSectionDto {
   name?: string;
   examType?: unknown;
   orderNumber?: number;
+  sectionDescription?: string;
 }

@@ -16,7 +16,13 @@ import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/c
 
 export default function ApprovalsPage() {
     const router = useRouter();
-    const {data, isLoading, error} = useGetAllQuestionGroups({});
+    const {data, isLoading, error} = useGetAllQuestionGroups({
+        query: {
+            refetchOnMount: true,
+            refetchOnWindowFocus: false,
+            staleTime: 0,
+        }
+    });
     const questionGroups = useMemo(() => extractApiListData<QuestionGroupDto>(data), [data]);
     
     const [filterStatus, setFilterStatus] = useState<EApprovalStatus | 'ALL'>(EApprovalStatus.PENDING);

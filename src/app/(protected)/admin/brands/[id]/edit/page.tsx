@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import BrandForm from "@/components/form/brand-form";
 import { useUpdateBrand, useGetBrandById } from "@/api/generated/brand-management/brand-management";
 import { useQueryClient } from "@tanstack/react-query";
-import { showNotification } from "@/lib/notification";
+import { showNotification, getErrorMessage } from "@/lib/notification";
 import {useParams} from "next/navigation";
 import LoadingComp from "@/components/ui/loading-comp";
 import type { UpdateBrandRequest, CreateBrandRequest, ApiResponseBrandDto, BrandDto } from "@/api/generated/model";
@@ -29,8 +29,8 @@ export default function BrandEdit() {
                 router.push(`/admin/brands/${id}`);
             },
             onError: (error) => {
-                showNotification.error('Marka güncellenirken bir hata oluştu!');
-                console.error('Error updating brand:', error);
+                const errorMessage = getErrorMessage(error);
+                showNotification.error(errorMessage || 'Marka güncellenirken bir hata oluştu!');
             }
         }
     });

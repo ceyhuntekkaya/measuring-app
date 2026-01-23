@@ -18,7 +18,7 @@ export default function QuestionGroupAdd() {
     const router = useRouter();
     const queryClient = useQueryClient();
 
-    const { data: examTypesData } = useGetAllExamTypes({});
+    const { data: examTypesData } = useGetAllExamTypes(undefined);
     const examTypes = (examTypesData as ApiResponseExamTypeListResponse)?.data || null;
 
     const { mutate: createQuestionGroup, isPending: loading } = useCreateQuestionGroup({

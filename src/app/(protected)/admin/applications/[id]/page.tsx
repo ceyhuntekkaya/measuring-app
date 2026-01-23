@@ -25,9 +25,9 @@ export default function ApplicationDetailPage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             <PageHeader/>
-            <div className="p-1">
+            <div className="px-4">
                 {
                     selectedApplication &&  <ApplicationDetail application={selectedApplication}/>
                 }

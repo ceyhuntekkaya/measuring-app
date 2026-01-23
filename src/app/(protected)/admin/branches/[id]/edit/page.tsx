@@ -7,7 +7,7 @@ import BranchForm from "@/components/form/branch-form";
 import {useGetAllBrands} from "@/api/generated/brand-management/brand-management";
 import {useUpdateBranch, useGetBranchById} from "@/api/generated/branch-management/branch-management";
 import { useQueryClient } from "@tanstack/react-query";
-import { showNotification } from "@/lib/notification";
+import { showNotification, getErrorMessage } from "@/lib/notification";
 import {useParams} from "next/navigation";
 import LoadingComp from "@/components/ui/loading-comp";
 import type { BranchDto, UpdateBranchRequest, CreateBranchRequest, ApiResponseListBrandDto, ApiResponseBranchDto } from "@/api/generated/model";
@@ -33,8 +33,8 @@ export default function BranchEdit() {
                 router.push(`/admin/branches/${id}`);
             },
             onError: (error) => {
-                showNotification.error('Şube güncellenirken bir hata oluştu!');
-                console.error('Error updating branch:', error);
+                const errorMessage = getErrorMessage(error);
+                showNotification.error(errorMessage || 'Şube güncellenirken bir hata oluştu!');
             }
         }
     });

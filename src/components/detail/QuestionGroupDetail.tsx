@@ -89,7 +89,7 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
     const approvalProgress = getApprovalProgress();
 
     return (
-        <div className="mx-auto p-6 space-y-6">
+        <div className="mx-auto p-4 space-y-4">
 
             <div className="flex items-center justify-between">
                 <div>
@@ -111,7 +111,7 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
             </div>
 
             {/* Header */}
-            <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+            <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
                 <div className="flex items-start justify-between mb-4">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900 mb-2">
@@ -140,7 +140,7 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
             </div>
 
             {/* Basic Information */}
-            <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+            <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Temel Bilgiler</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="p-4 bg-gray-50 rounded-lg">
@@ -174,7 +174,7 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
             </div>
 
             {/* Approval Status */}
-            <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+            <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Onay Durumu</h2>
                 <div className="space-y-4">
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -228,7 +228,7 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Exam Type */}
                 {selectedQuestionGroup.examType && (
-                    <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                    <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">Bağlı Sınav Türü</h3>
                         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
                             <div className="space-y-3">
@@ -259,7 +259,7 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
 
                 {/* Exam Section */}
                 {selectedQuestionGroup.examSection && (
-                    <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                    <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">Bağlı Sınav Bölümü</h3>
                         <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-200">
                             <div className="space-y-3">
@@ -282,7 +282,7 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
 
                 {/* Question Group Type */}
                 {selectedQuestionGroup.questionGroupType && (
-                    <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 lg:col-span-2">
+                    <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200 lg:col-span-2">
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">Soru Grup Türü</h3>
                         <div className="bg-gradient-to-r from-green-50 to-teal-50 rounded-lg p-4 border border-green-200">
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -318,7 +318,7 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
 
             {/* Questions */}
             {selectedQuestionGroup.questions && selectedQuestionGroup.questions.length > 0 && (
-                <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
                     <h2 className="text-lg font-semibold text-gray-900 mb-4">
                         Sorular ({selectedQuestionGroup.questions.length})
                     </h2>
@@ -376,7 +376,7 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
 
             {/* Headers */}
             {selectedQuestionGroup.headers && selectedQuestionGroup.headers.length > 0 && (
-                <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
                     <h2 className="text-lg font-semibold text-gray-900 mb-4">
                         Başlıklar ({selectedQuestionGroup.headers.length})
                     </h2>
@@ -422,38 +422,6 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
                 </div>
             )}
 
-            {/* Additional Information */}
-            <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Ek Bilgiler</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {selectedQuestionGroup.createdById && (
-                        <div className="p-4 bg-gray-50 rounded-lg">
-                            <div className="text-sm font-medium text-gray-500">Oluşturan Kullanıcı ID</div>
-                            <div className="text-gray-900 font-mono">{selectedQuestionGroup.createdById}</div>
-                        </div>
-                    )}
-
-                    {selectedQuestionGroup.deletedAt && (
-                        <div className="p-4 bg-red-50 rounded-lg border border-red-200">
-                            <div className="text-sm font-medium text-red-600">Silinme Tarihi</div>
-                            <div className="text-red-900 font-semibold">
-                                {new Date(selectedQuestionGroup.deletedAt).toLocaleDateString('tr-TR', {
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                })}
-                            </div>
-                            {selectedQuestionGroup.deletedById && (
-                                <div className="text-xs text-red-600 mt-1">
-                                    Silen: {selectedQuestionGroup.deletedById}
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
-            </div>
         </div>
     );
 };

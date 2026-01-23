@@ -21,7 +21,7 @@ export default function QuestionGroupUpdate() {
     const router = useRouter();
     const queryClient = useQueryClient();
 
-    const { data: examTypesData } = useGetAllExamTypes({});
+    const { data: examTypesData } = useGetAllExamTypes(undefined);
     const examTypes = (examTypesData as unknown as ApiResponseExamTypeListResponse)?.data || null;
 
     const {data: questionGroupData, isLoading: loading} = useGetQuestionGroupById(groupId, {

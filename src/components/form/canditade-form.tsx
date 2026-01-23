@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState, useMemo} from 'react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Alert, AlertDescription} from "@/components/ui/alert";
 import {Button} from "@/components/ui/button";
@@ -116,6 +116,29 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
             }));
         }
     }, [formData.name, formData.lastName, mode]);
+
+    // Filter sessions by selected exam type
+    const filteredExamSessions = useMemo(() => {
+        if (!formData.examTypeId) {
+            return [];
+        }
+        return examSessions.filter(examSession => {
+            return examSession.examType?.id === formData.examTypeId;
+        });
+    }, [examSessions, formData.examTypeId]);
+
+    // Clear exam session when exam type changes
+    useEffect(() => {
+        if (formData.examTypeId && formData.examSessionId) {
+            const selectedSession = examSessions.find(s => s.id === formData.examSessionId);
+            if (selectedSession?.examType?.id !== formData.examTypeId) {
+                setFormData(prev => ({
+                    ...prev,
+                    examSessionId: ''
+                }));
+            }
+        }
+    }, [formData.examTypeId, examSessions, formData.examSessionId]);
 
     const handleChange = <T extends keyof CreateCandidateRequest>(
         name: T,
@@ -287,18 +310,24 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
                                     <Select
                                         onValueChange={(value) => handleChange('examSessionId', value as string)}
                                         value={formData.examSessionId || ''}
+                                        disabled={!formData.examTypeId || filteredExamSessions.length === 0}
                                     >
                                         <SelectTrigger className={errors.examSessionId ? 'border-red-500' : ''}>
-                                            <SelectValue placeholder="Sınav tipi seçin"/>
+                                            <SelectValue placeholder={!formData.examTypeId ? "Önce sınav tipi seçin" : filteredExamSessions.length === 0 ? "Bu sınav tipi için oturum bulunamadı" : "Oturum seçin"}/>
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectGroup>
-                                                {examSessions.map(examSession => (
-                                                    examSession.examType && examSession.examType.id === formData.examTypeId && (
+                                                {filteredExamSessions.length > 0 ? (
+                                                    filteredExamSessions.map(examSession => (
                                                         <SelectItem key={examSession.id} value={examSession.id || ''}>
                                                             {examSession.name}
                                                         </SelectItem>
-                                                    )))}
+                                                    ))
+                                                ) : (
+                                                    <SelectItem value="no-sessions" disabled>
+                                                        {!formData.examTypeId ? "Önce sınav tipi seçin" : "Bu sınav tipi için oturum bulunamadı"}
+                                                    </SelectItem>
+                                                )}
                                             </SelectGroup>
                                         </SelectContent>
                                     </Select>

@@ -24,9 +24,9 @@ export default function BranchDetailPage() {
 
     if (error || !selectedBranch) {
         return (
-            <div className="space-y-6">
+            <div className="space-y-4">
                 <PageHeader/>
-                <div className="p-1">
+                <div className="px-4">
                     <p className="text-red-600">Şube bulunamadı veya yüklenirken bir hata oluştu.</p>
                 </div>
             </div>
@@ -34,9 +34,9 @@ export default function BranchDetailPage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             <PageHeader/>
-            <div className="p-1">
+            <div className="px-4">
                 <BranchDetail branch={selectedBranch}/>
             </div>
         </div>

@@ -13,7 +13,13 @@ import type {UserDto} from "@/api/generated/model";
 
 export default function UsersPage() {
     const router = useRouter();
-    const {data, isLoading, error} = useGetAllUsers();
+    const {data, isLoading, error} = useGetAllUsers({
+        query: {
+            refetchOnMount: true,
+            refetchOnWindowFocus: false,
+            staleTime: 0,
+        }
+    });
     
     const users = useMemo(() => extractApiListData<UserDto>(data), [data]);
 

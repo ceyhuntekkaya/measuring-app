@@ -128,7 +128,7 @@ export default function ExamFormPage() {
     // Error state - if editing but no exam found
     if (isEdit && !selectedExam) {
         return (
-            <div className="container mx-auto py-6">
+            <div className="container mx-auto py-4">
                 <Card>
                     <CardContent className="text-center py-8">
                         <h2 className="text-xl font-semibold text-gray-900 mb-2">
@@ -147,7 +147,7 @@ export default function ExamFormPage() {
     }
 
     return (
-        <div className="container mx-auto py-6 space-y-6">
+        <div className="container mx-auto py-4 space-y-4">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">

@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { useExamContext } from '@/contexts/ExamContext';
 import { Eye, EyeOff, User, Lock, LogIn } from 'lucide-react';
 import {useGetApplicationByCredentials} from "@/api/generated/exam-taking/exam-taking";
-import {showNotification} from "@/lib/notification";
+import {showNotification, getErrorMessage} from "@/lib/notification";
 import type {ApiResponseApplicationDto} from "@/api/generated/model";
 
 export default function ExamLoginPage() {
@@ -66,8 +66,9 @@ export default function ExamLoginPage() {
                 loginSuccess(applicationData);
             }
         } catch (err) {
-            setError(err instanceof Error ? 'Giriş başarısız. Kullanıcı adı ve şifreyi kontrol edin.' : 'Giriş başarısız. Kullanıcı adı ve şifreyi kontrol edin.');
-            showNotification.error('Giriş yapılırken bir hata oluştu!');
+            const errorMessage = getErrorMessage(err);
+            setError(errorMessage || 'Giriş başarısız. Kullanıcı adı ve şifreyi kontrol edin.');
+            showNotification.error(errorMessage || 'Giriş yapılırken bir hata oluştu!');
         } finally {
             setLoading(false);
         }

@@ -34,7 +34,7 @@ const ExamTypeDetail: React.FC<ExamTypeDetailProps> = ({ selectedExamType, onEdi
     };
 
     return (
-        <div className="mx-auto p-6 space-y-6">
+        <div className="mx-auto p-4 space-y-4">
 
             <div className="flex items-center justify-between">
                 <div>
@@ -57,7 +57,7 @@ const ExamTypeDetail: React.FC<ExamTypeDetailProps> = ({ selectedExamType, onEdi
 
 
             {/* Header */}
-            <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+            <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
                 <div className="flex items-start justify-between mb-4">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900 mb-2">
@@ -97,7 +97,7 @@ const ExamTypeDetail: React.FC<ExamTypeDetailProps> = ({ selectedExamType, onEdi
             </div>
 
             {/* Basic Information */}
-            <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+            <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Temel Bilgiler</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="p-4 bg-gray-50 rounded-lg">
@@ -157,7 +157,7 @@ const ExamTypeDetail: React.FC<ExamTypeDetailProps> = ({ selectedExamType, onEdi
 
             {/* Info Screen */}
             {selectedExamType.infoScreen && (
-                <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
                     <h2 className="text-lg font-semibold text-gray-900 mb-4">Bilgilendirme Ekranı</h2>
                     <div className="p-4 bg-gray-50 rounded-lg">
                         <div className="whitespace-pre-wrap text-gray-700">
@@ -169,7 +169,7 @@ const ExamTypeDetail: React.FC<ExamTypeDetailProps> = ({ selectedExamType, onEdi
 
             {/* Question Group Types */}
             {selectedExamType.questionGroupTypes && selectedExamType.questionGroupTypes.length > 0 && (
-                <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
                     <h2 className="text-lg font-semibold text-gray-900 mb-4">
                         Soru Grup Türleri ({selectedExamType.questionGroupTypes.length})
                     </h2>

@@ -6,7 +6,7 @@ import PageHeader from "@/components/layout/page-header";
 import React from "react";
 import {useUpdateExamType, useGetExamTypeById} from "@/api/generated/exam-type-management/exam-type-management";
 import { useQueryClient } from "@tanstack/react-query";
-import { showNotification } from "@/lib/notification";
+import { showNotification, getErrorMessage } from "@/lib/notification";
 import { useRouter } from "next/navigation";
 import LoadingComp from "@/components/ui/loading-comp";
 import type { ExamTypeDto } from "@/api/generated/model";
@@ -32,8 +32,8 @@ export default function ExamTypeAdd() {
                 router.push(`/admin/exam-type/${examTypeId}`);
             },
             onError: (error) => {
-                showNotification.error('Sınav tipi güncellenirken bir hata oluştu!');
-                console.error('Error updating exam type:', error);
+                const errorMessage = getErrorMessage(error);
+                showNotification.error(errorMessage || 'Sınav tipi güncellenirken bir hata oluştu!');
             }
         }
     });

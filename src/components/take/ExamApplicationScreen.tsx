@@ -35,7 +35,7 @@ import VideoResponseQuestion from "@/components/template/VideoResponseQuestion";
 import ImageResponseQuestion from "@/components/template/ImageResponseQuestion";
 import {useExamApplicationContext} from "@/contexts/ExamApplicationContext";
 import {useSaveAnswer} from "@/api/generated/question-result-management/question-result-management";
-import { showNotification } from "@/lib/notification";
+import { showNotification, getErrorMessage } from "@/lib/notification";
 import type {UploadedFileDto} from "@/api/generated/model";
 import {useSetStartedAt, useUpdateSessionState1} from "@/api/generated/application-management/application-management";
 import {ESessionState} from "@/types/exam/enum";
@@ -237,8 +237,9 @@ export default function ExamApplicationScreen({
             onSuccess: () => {
                 showNotification.success('Cevap başarıyla kaydedildi!');
             },
-            onError: () => {
-                showNotification.error('Cevap kaydedilirken bir hata oluştu!');
+            onError: (error) => {
+                const errorMessage = getErrorMessage(error);
+                showNotification.error(errorMessage || 'Cevap kaydedilirken bir hata oluştu!');
             }
         }
     });
@@ -490,7 +491,6 @@ export default function ExamApplicationScreen({
             }
             return answerString;
         } catch (e) {
-            console.log('Parse error:', e);
             if (type === 'ESSAY') {
                 const text = answerString;
                 return {

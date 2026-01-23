@@ -27,6 +27,7 @@ export interface MenuItem {
     requiredRoles?: Role[];
     children?: MenuItem[];
     parent?: MenuItem;
+    isContainer?: boolean; // True if this is just a menu group, not a real page
 }
 
 export interface RouteConfig {
@@ -65,7 +66,7 @@ export const adminRoutes: RouteConfig = {
                     requiredRoles: ['ADMIN'],
                 },
                 {
-                    title: 'Uygulamalar',
+                    title: 'Başvurular',
                     path: '/admin/applications',
                     icon: PenLine,
                     requiredRoles: ['ADMIN'],
@@ -90,6 +91,7 @@ export const adminRoutes: RouteConfig = {
             path: '/admin/pre',
             icon: GaugeCircle,
             requiredRoles: ['ADMIN'],
+            isContainer: true, // This is just a menu group, not a real page
             children:[
                 {
                     title: 'Sınav Tipleri',
@@ -319,31 +321,293 @@ export const isPathAllowed = (path: string, role: string[]): boolean => {
     return allPaths.includes(path);
 };
 
+// Path segment'lerinin Türkçe karşılıkları
+const pathSegmentLabels: Record<string, string> = {
+    'admin': 'Yönetim',
+    'exam-type': 'Sınav Tipleri',
+    'exam-types': 'Sınav Tipleri',
+    'section': 'Bölümler',
+    'sections': 'Bölümler',
+    'group': 'Gruplar',
+    'groups': 'Gruplar',
+    'question-group': 'Soru Grupları',
+    'question-groups': 'Soru Grupları',
+    'candidates': 'Katılımcılar',
+    'candidate': 'Katılımcı',
+    'applications': 'Uygulamalar',
+    'application': 'Uygulama',
+    'sessions': 'Oturumlar',
+    'session': 'Oturum',
+    'exams': 'Sınavlar',
+    'exam': 'Sınav',
+    'approvals': 'Onaylar',
+    'approval': 'Onay',
+    'users': 'Kullanıcılar',
+    'user': 'Kullanıcı',
+    'brands': 'Markalar',
+    'brand': 'Marka',
+    'branches': 'Şubeler',
+    'branch': 'Şube',
+    'add': 'Yeni Ekle',
+    'edit': 'Düzenle',
+    'preview': 'Önizleme',
+    'statistics': 'İstatistikler',
+    'certificates': 'Sertifikalar',
+    'certificate': 'Sertifika',
+};
+
+// UUID formatını kontrol et (basit regex)
+const isUUID = (str: string): boolean => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(str);
+};
+
+// Path'ten breadcrumb oluştur
+export const generateBreadcrumbsFromPath = (path: string): MenuItem[] => {
+    console.log('🚀 [generateBreadcrumbsFromPath] Starting with path:', path);
+    const breadcrumbs: MenuItem[] = [];
+    const segments = path.split('/').filter(Boolean);
+    console.log('🚀 [generateBreadcrumbsFromPath] Segments:', segments);
+    const seenPaths = new Set<string>();
+    let currentPath = '';
+    
+    for (let i = 0; i < segments.length; i++) {
+        const segment = segments[i];
+        
+        // UUID ise, atla (breadcrumb'a ekleme)
+        if (isUUID(segment)) {
+            console.log(`🆔 [generateBreadcrumbsFromPath] Skipping UUID segment: ${segment}`);
+            currentPath += `/${segment}`;
+            continue;
+        }
+        
+        currentPath += `/${segment}`;
+        console.log(`🔹 [generateBreadcrumbsFromPath] Processing segment ${i}: "${segment}", currentPath: "${currentPath}"`);
+        
+        // Duplicate kontrolü
+        if (seenPaths.has(currentPath)) {
+            console.log(`⏭️ [generateBreadcrumbsFromPath] Skipping duplicate path: ${currentPath}`);
+            continue;
+        }
+        seenPaths.add(currentPath);
+        
+        // Önce menüden eşleşme ara (sadece base path için, dinamik path'ler için değil)
+        // Dinamik path'ler (UUID içeren) için menüden eşleşme aramayalım
+        const hasUUID = currentPath.split('/').some(s => isUUID(s));
+        let menuItem: MenuItem | null = null;
+        
+        if (!hasUUID) {
+            console.log(`🔍 [generateBreadcrumbsFromPath] Looking for menu item with path: "${currentPath}"`);
+            menuItem = findMenuItemByPath(currentPath);
+            console.log(`🔍 [generateBreadcrumbsFromPath] Menu item found:`, menuItem);
+        } else {
+            console.log(`🔍 [generateBreadcrumbsFromPath] Path contains UUID, skipping menu lookup: "${currentPath}"`);
+        }
+        
+        if (menuItem) {
+            // Menüden bulundu, ekle (duplicate kontrolü yap)
+            const existingIndex = breadcrumbs.findIndex(b => b.path === menuItem!.path);
+            if (existingIndex === -1) {
+                console.log(`✅ [generateBreadcrumbsFromPath] Adding menu item:`, menuItem);
+                breadcrumbs.push(menuItem);
+            } else {
+                console.log(`⏭️ [generateBreadcrumbsFromPath] Menu item already exists, skipping`);
+            }
+        } else {
+            // Menüde yok veya UUID içeriyor, path segment'inden oluştur
+            const label = pathSegmentLabels[segment] || segment.charAt(0).toUpperCase() + segment.slice(1);
+            console.log(`📝 [generateBreadcrumbsFromPath] Label for segment "${segment}": "${label}"`);
+            
+            let title = label;
+            if (segment === 'add') {
+                if (i > 0) {
+                    // Önceki segment'i bul (UUID değilse)
+                    let prevIndex = i - 1;
+                    while (prevIndex >= 0 && isUUID(segments[prevIndex])) {
+                        prevIndex--;
+                    }
+                    if (prevIndex >= 0) {
+                        const prevSegment = segments[prevIndex];
+                        const prevLabel = pathSegmentLabels[prevSegment] || prevSegment;
+                        title = `Yeni ${prevLabel} Ekle`;
+                        console.log(`➕ [generateBreadcrumbsFromPath] Add action, title: "${title}"`);
+                    }
+                }
+            } else if (segment === 'edit') {
+                if (i > 0) {
+                    // Önceki segment'i bul (UUID değilse)
+                    let prevIndex = i - 1;
+                    while (prevIndex >= 0 && isUUID(segments[prevIndex])) {
+                        prevIndex--;
+                    }
+                    if (prevIndex >= 0) {
+                        const prevSegment = segments[prevIndex];
+                        const prevLabel = pathSegmentLabels[prevSegment] || prevSegment;
+                        title = `${prevLabel} Düzenle`;
+                        console.log(`✏️ [generateBreadcrumbsFromPath] Edit action, title: "${title}"`);
+                    }
+                }
+            }
+            
+            const breadcrumbItem = {
+                title,
+                path: currentPath,
+            };
+            console.log(`➕ [generateBreadcrumbsFromPath] Adding path-based breadcrumb:`, breadcrumbItem);
+            breadcrumbs.push(breadcrumbItem);
+        }
+    }
+    
+    // Final duplicate kontrolü - aynı path'leri kaldır
+    const uniqueBreadcrumbs: MenuItem[] = [];
+    const seenFinalPaths = new Set<string>();
+    for (const breadcrumb of breadcrumbs) {
+        if (!seenFinalPaths.has(breadcrumb.path)) {
+            seenFinalPaths.add(breadcrumb.path);
+            uniqueBreadcrumbs.push(breadcrumb);
+        }
+    }
+    
+    console.log('✅ [generateBreadcrumbsFromPath] Final breadcrumbs:', uniqueBreadcrumbs);
+    return uniqueBreadcrumbs;
+};
+
 
 export const findMenuItemByPath = (path: string): MenuItem | null => {
+    console.log('🔎 [findMenuItemByPath] Searching for path:', path);
     const allRoutes = [adminRoutes, appRoutes, learnerRoutes, observerRoutes, instructorRoutes, companyRoutes, publicRoutes];
 
+    // Helper function to check if a path matches (exact match or starts with for dynamic routes)
+    const pathMatches = (menuPath: string, currentPath: string): boolean => {
+        if (menuPath === currentPath) {
+            return true;
+        }
+        // For dynamic routes, check if current path starts with menu path followed by /
+        // e.g., /admin/exam-type matches /admin/exam-type/123/section/456
+        // But NOT /admin matches /admin/exam-type/... (too generic)
+        if (menuPath !== '/' && currentPath.startsWith(menuPath + '/')) {
+            // Check if this is a root path like /admin - if so, only match if no more specific path exists
+            // We'll handle this in findItem by checking children first
+            console.log(`✅ [pathMatches] Dynamic match: "${currentPath}" starts with "${menuPath}/"`);
+            return true;
+        }
+        return false;
+    };
+    
+    // Helper to find the most specific matching item (longest path match)
+    const findMostSpecificMatch = (items: MenuItem[], path: string): MenuItem | null => {
+        let bestMatch: MenuItem | null = null;
+        let bestMatchLength = 0;
+        let bestMatchPath = '';
+        
+        const checkItem = (item: MenuItem): void => {
+            if (pathMatches(item.path, path)) {
+                const matchLength = item.path.length;
+                // Prefer longer (more specific) paths
+                // e.g., /admin/exam-type is better than /admin
+                if (matchLength > bestMatchLength) {
+                    bestMatch = item;
+                    bestMatchLength = matchLength;
+                    bestMatchPath = item.path;
+                }
+            }
+            
+            // Recursively check children
+            if (item.children) {
+                for (const child of item.children) {
+                    checkItem(child);
+                }
+            }
+        };
+        
+        for (const item of items) {
+            checkItem(item);
+        }
+        
+       
+        return bestMatch;
+    };
+
+    // Helper to find which parent contains this item in its children
+    const findParentInRoute = (targetPath: string, items: MenuItem[], parentItem: MenuItem | null = null): MenuItem | null => {
+        for (const item of items) {
+            if (item.children) {
+                // Check if any child matches the target path
+                for (const child of item.children) {
+                    if (pathMatches(child.path, targetPath)) {
+                        return item;
+                    }
+                }
+                // Recursively check nested children
+                const found = findParentInRoute(targetPath, item.children, item);
+                if (found) {
+                    return found;
+                }
+            }
+        }
+        return null;
+    };
+
+    // Helper to build parent chain for an item
+    const buildParentChain = (item: MenuItem, routeItems: MenuItem[], visited = new Set<string>()): MenuItem => {
+        // Prevent infinite loops
+        if (visited.has(item.path)) {
+            return { ...item };
+        }
+        visited.add(item.path);
+
+        const itemCopy = { ...item };
+        const parent = findParentInRoute(item.path, routeItems);
+        if (parent && parent.path !== item.path && !visited.has(parent.path)) {
+            itemCopy.parent = buildParentChain(parent, routeItems, visited);
+        }
+        return itemCopy;
+    };
+
     for (const route of allRoutes) {
-        const findItem = (items: MenuItem[]): MenuItem | null => {
+        // First, try to find the most specific match
+        console.log(`🔍 [findMenuItemByPath] Checking route with ${route.menuItems.length} items`);
+        const mostSpecific = findMostSpecificMatch(route.menuItems, path);
+        
+        if (mostSpecific) {
+            console.log(`✅ [findMenuItemByPath] Most specific match found:`, mostSpecific);
+            const result = buildParentChain(mostSpecific, route.menuItems);
+            console.log(`✅ [findMenuItemByPath] Result with parent chain:`, result);
+            return result;
+        }
+        
+        // Fallback to recursive search
+        const findItem = (items: MenuItem[], parentItem: MenuItem | null = null): MenuItem | null => {
             for (const item of items) {
-                if (item.path === path) {
-                    return item;
+                // First check children for more specific matches
+                if (item.children) {
+                    const found = findItem(item.children, item);
+                    if (found) {
+                        console.log(`✅ [findMenuItemByPath] Found in children:`, found);
+                        // Build parent chain for the found item
+                        return buildParentChain(found, route.menuItems);
+                    }
                 }
 
-                if (item.children) {
-                    const found = findItem(item.children);
-                    if (found) {
-                        found.parent = item;
-                        return found;
-                    }
+                // Then check if this item matches (exact match or if path starts with menu item path for dynamic routes)
+                if (pathMatches(item.path, path)) {
+                    console.log(`✅ [findMenuItemByPath] Found matching item:`, item);
+                    // Build parent chain for the matched item
+                    const result = buildParentChain(item, route.menuItems);
+                    console.log(`✅ [findMenuItemByPath] Result with parent chain:`, result);
+                    return result;
                 }
             }
             return null;
         };
 
         const found = findItem(route.menuItems);
-        if (found) return found;
+        if (found) {
+            console.log(`✅ [findMenuItemByPath] Found item:`, found);
+            return found;
+        }
     }
 
+    console.log(`❌ [findMenuItemByPath] No item found for path: ${path}`);
     return null;
 };

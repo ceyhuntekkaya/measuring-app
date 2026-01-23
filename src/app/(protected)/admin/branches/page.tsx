@@ -13,7 +13,13 @@ import type {BranchDto} from "@/api/generated/model";
 
 export default function BranchPage() {
     const router = useRouter();
-    const { data, isLoading, error } = useGetAllBranches();
+    const { data, isLoading, error } = useGetAllBranches({
+        query: {
+            refetchOnMount: true,
+            refetchOnWindowFocus: false,
+            staleTime: 0,
+        }
+    });
     
     const branches = useMemo(() => extractApiListData<BranchDto>(data), [data]);
 

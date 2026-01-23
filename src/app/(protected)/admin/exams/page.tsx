@@ -12,7 +12,13 @@ import type {ExamDto} from "@/api/generated/model";
 
 export default function ExamPage() {
     const router = useRouter();
-    const { data, isLoading, error } = useGetAllExams();
+    const { data, isLoading, error } = useGetAllExams({
+        query: {
+            refetchOnMount: true,
+            refetchOnWindowFocus: false,
+            staleTime: 0,
+        }
+    });
     
     const exams = useMemo(() => extractApiListData<ExamDto>(data), [data]);
 

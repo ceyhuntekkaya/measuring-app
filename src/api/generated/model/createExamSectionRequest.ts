@@ -10,4 +10,5 @@ export interface CreateExamSectionRequest {
   name?: string;
   examTypeId?: string;
   orderNumber?: number;
+  sectionDescription?: string;
 }

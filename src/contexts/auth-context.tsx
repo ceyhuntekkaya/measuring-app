@@ -44,6 +44,13 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
 
     useEffect(() => {
         const checkAuth = async () => {
+            // Timeout wrapper to prevent infinite loading
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => {
+                    reject(new Error('Authentication check timeout'));
+                }, 10000); // 10 seconds timeout
+            });
+
             try {
                 const token = localStorage.getItem('accessToken');
                 if (token) {
@@ -52,7 +59,13 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
                     if (!cookieToken) {
                         document.cookie = `accessToken=${token}; path=/; secure; samesite=strict`;
                     }
-                    const response = await getCurrentUser();
+                    
+                    // Race between getCurrentUser and timeout
+                    const response = await Promise.race([
+                        getCurrentUser(),
+                        timeoutPromise
+                    ]) as any;
+                    
                     // customInstance zaten data'yı unwrap ediyor (.then(({ data }) => data))
                     // Backend ApiResponse<RefreshTokenResponse> döndürüyorsa, customInstance direkt RefreshTokenResponse'u döndürür
                     // Ama backend direkt RefreshTokenResponse döndürüyorsa, o zaman response zaten RefreshTokenResponse

@@ -18,7 +18,12 @@ export default function ExamSectionPage() {
     const examTypeId = params.examTypeId as string;
     
     const {data, isLoading: loading} = useGetExamSectionsByExamType(examTypeId, {
-        query: { enabled: !!examTypeId }
+        query: { 
+            enabled: !!examTypeId,
+            refetchOnMount: true,
+            refetchOnWindowFocus: false,
+            staleTime: 0,
+        }
     });
     const sectionsByExamType = (data as unknown as ApiResponseListExamSectionDto)?.data || [];
 
@@ -33,6 +38,19 @@ export default function ExamSectionPage() {
                     onClick={() => router.push(`/admin/exam-type/${examTypeId}/section/${record.id}`)}
                 >
                     {value as string}
+                </div>
+            )
+        }
+        ,
+        {
+            key: 'orderNumber',
+            header: 'Sıra Numarası',
+            render: (value, record) => (
+                <div
+                    className="font-medium cursor-pointer hover:text-blue-600"
+                    onClick={() => router.push(`/admin/exam-type/${examTypeId}/section/${record.id}`)}
+                >
+                    {value as number ?? '-'}
                 </div>
             )
         }
@@ -64,7 +82,7 @@ export default function ExamSectionPage() {
     ];
 
     const handleAdd = () => {
-        router.push('/admin/exam-type/${examTypeId}/section/add');
+        router.push(`/admin/exam-type/${examTypeId}/section/add`);
     };
 
     if (loading) {

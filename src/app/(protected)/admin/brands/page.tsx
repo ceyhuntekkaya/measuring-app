@@ -13,7 +13,13 @@ import type {BrandDto} from "@/api/generated/model";
 
 export default function BrandsPage() {
     const router = useRouter();
-    const { data, isLoading, error } = useGetAllBrands();
+    const { data, isLoading, error } = useGetAllBrands({
+        query: {
+            refetchOnMount: true,
+            refetchOnWindowFocus: false,
+            staleTime: 0,
+        }
+    });
     
     const brands = useMemo(() => extractApiListData<BrandDto>(data), [data]);
 

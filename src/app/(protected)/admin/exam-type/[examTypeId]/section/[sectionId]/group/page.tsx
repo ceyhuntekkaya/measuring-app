@@ -18,7 +18,12 @@ export default function QuestionGroupTypePage() {
     const examSectionId = params.sectionId as string;
     
     const {data, isLoading: loading} = useGetQuestionGroupTypesByExamSection(examSectionId, {
-        query: { enabled: !!examSectionId }
+        query: { 
+            enabled: !!examSectionId,
+            refetchOnMount: true,
+            refetchOnWindowFocus: false,
+            staleTime: 0,
+        }
     });
     const typesByExamSection = (data as unknown as ApiResponseListQuestionGroupTypeDto)?.data || [];
 
@@ -33,6 +38,19 @@ export default function QuestionGroupTypePage() {
                     onClick={() => router.push(`/admin/exam-type/${examTypeId}/section/${examSectionId}/group/${record.id}`)}
                 >
                     {value as string}
+                </div>
+            )
+        }
+        ,
+        {
+            key: 'orderNumber',
+            header: 'Sıra Numarası',
+            render: (value, record) => (
+                <div
+                    className="font-medium cursor-pointer hover:text-blue-600"
+                    onClick={() => router.push(`/admin/exam-type/${examTypeId}/section/${examSectionId}/group/${record.id}`)}
+                >
+                    {value as number}
                 </div>
             )
         }
@@ -53,7 +71,7 @@ export default function QuestionGroupTypePage() {
     ];
 
     const handleAdd = () => {
-        router.push('/admin/exam-type/${examTypeId}/section/${examSectionId}/group/add');
+        router.push(`/admin/exam-type/${examTypeId}/section/${examSectionId}/group/add`);
     };
 
     if (loading) {

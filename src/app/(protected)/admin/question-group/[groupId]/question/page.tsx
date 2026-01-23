@@ -50,7 +50,12 @@ export default function QuestionPage() {
     const selectedQuestionGroup = (questionGroupData as unknown as ApiResponseQuestionGroupDto)?.data;
 
     const {data: questionsData} = useGetQuestionsByGroup(groupId, {
-        query: { enabled: !!groupId }
+        query: { 
+            enabled: !!groupId,
+            refetchOnMount: true,
+            refetchOnWindowFocus: false,
+            staleTime: 0,
+        }
     });
     const questionsByGroup = (questionsData as unknown as ApiResponseListQuestionDto)?.data || [];
 
@@ -104,7 +109,7 @@ export default function QuestionPage() {
         },
         {
             key: 'approvalStatus',
-            header: 'Durum',
+            header: 'Onay Durumu',
             render: (value, record) => (
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
@@ -116,14 +121,14 @@ export default function QuestionPage() {
         }
         ,
         {
-            key: 'approvalCompletedDate',
-            header: 'Bölüm',
+            key: 'maximumScore',
+            header: 'Puan',
             render: (value, record) => (
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => router.push(`/admin/question-group/${groupId}/question/${record.id}`)}
                 >
-                    {(record as QuestionDto).questionGroup?.name}
+                    {(record as QuestionDto).maximumScore || 0}
                 </div>
             )
         },

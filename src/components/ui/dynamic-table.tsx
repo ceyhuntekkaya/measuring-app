@@ -30,6 +30,8 @@ const DynamicTable = <T extends RecordType>({
     } | null>(null);
     const [searchTerm, setSearchTerm] = useState(searchText);
 
+    console.log(data)
+
     // Create a map of record IDs to rendered values to help with search
     const [renderedValuesMap, setRenderedValuesMap] = useState<Map<string, string[]>>(new Map());
 

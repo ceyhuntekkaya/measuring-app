@@ -8,14 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { NumberInput } from "@/components/ui/number-input";
-import type { QuestionGroupTypeDto, ExamSectionDto, ExamTypeDto, CreateQuestionGroupTypeRequest, UpdateQuestionGroupTypeRequest } from "@/api/generated/model";
+import type { QuestionGroupTypeDto, ExamSectionDto, CreateQuestionGroupTypeRequest, UpdateQuestionGroupTypeRequest } from "@/api/generated/model";
 import {EQuestionGroupTemplateLevel, EQuestionGroupType} from "@/types/exam/enum";
 
 
 
 interface QuestionGroupTypeFormErrors {
     name?: string;
-    examSectionId?: string;
     orderNumber?: string;
     level?: string;
     groupType?: string;
@@ -26,6 +25,7 @@ interface QuestionGroupTypeFormProps {
     onSubmit: (data: CreateQuestionGroupTypeRequest | UpdateQuestionGroupTypeRequest) => void;
     questionGroupType?: QuestionGroupTypeDto | null;
     examSections: ExamSectionDto[];
+    examSectionId?: string;
     loading?: boolean;
 }
 
@@ -33,6 +33,7 @@ const QuestionGroupTypeForm: React.FC<QuestionGroupTypeFormProps> = ({
                                                                          onSubmit,
                                                                          questionGroupType,
                                                                          examSections = [],
+                                                                         examSectionId,
                                                                          loading = false
                                                                      }) => {
 
@@ -41,7 +42,7 @@ const QuestionGroupTypeForm: React.FC<QuestionGroupTypeFormProps> = ({
 
     const [formData, setFormData] = useState<CreateQuestionGroupTypeRequest>({
         name: '',
-        examSectionId: '',
+        examSectionId: examSectionId || '',
         orderNumber: 1,
         level: EQuestionGroupTemplateLevel.GROUP as CreateQuestionGroupTypeRequest['level'],
         groupType: EQuestionGroupType.GENERAL as CreateQuestionGroupTypeRequest['groupType']
@@ -53,13 +54,18 @@ const QuestionGroupTypeForm: React.FC<QuestionGroupTypeFormProps> = ({
         if (questionGroupType) {
             setFormData({
                 name: questionGroupType.name || '',
-                examSectionId: questionGroupType.examSection?.id || '',
+                examSectionId: examSectionId || questionGroupType.examSection?.id || '',
                 orderNumber: questionGroupType.orderNumber || 1,
                 level: questionGroupType.level as CreateQuestionGroupTypeRequest['level'],
                 groupType: questionGroupType.groupType as CreateQuestionGroupTypeRequest['groupType']
             });
+        } else if (examSectionId) {
+            setFormData(prev => ({
+                ...prev,
+                examSectionId: examSectionId
+            }));
         }
-    }, [questionGroupType]);
+    }, [questionGroupType, examSectionId]);
 
     const handleChange = <T extends keyof CreateQuestionGroupTypeRequest>(
         name: T,
@@ -78,10 +84,6 @@ const QuestionGroupTypeForm: React.FC<QuestionGroupTypeFormProps> = ({
             newErrors.name = 'Soru grubu tipi adı zorunludur';
         } else if (formData.name.trim().length < 3) {
             newErrors.name = 'Soru grubu tipi adı en az 3 karakter olmalıdır';
-        }
-
-        if (!formData.examSectionId) {
-            newErrors.examSectionId = 'Sınav bölümü seçimi zorunludur';
         }
 
         if (!formData.level) {
@@ -106,15 +108,27 @@ const QuestionGroupTypeForm: React.FC<QuestionGroupTypeFormProps> = ({
 
     const handleSubmit = () => {
         if (validateForm()) {
-            // Directly use formData - no manual mapping needed!
-            const submitData: CreateQuestionGroupTypeRequest | UpdateQuestionGroupTypeRequest = {
-                name: formData.name?.trim(),
-                examSectionId: formData.examSectionId,
-                orderNumber: formData.orderNumber,
-                level: formData.level,
-                groupType: formData.groupType
-            };
-            onSubmit(submitData);
+            if (questionGroupType) {
+                // Update request - examSectionId should not be included
+                const submitData: UpdateQuestionGroupTypeRequest = {
+                    name: formData.name?.trim(),
+                    orderNumber: formData.orderNumber,
+                    level: formData.level,
+                    groupType: formData.groupType
+                };
+                onSubmit(submitData);
+            } else {
+                // Create request - examSectionId is required
+                const finalExamSectionId = examSectionId || formData.examSectionId;
+                const submitData: CreateQuestionGroupTypeRequest = {
+                    name: formData.name?.trim(),
+                    examSectionId: finalExamSectionId,
+                    orderNumber: formData.orderNumber,
+                    level: formData.level,
+                    groupType: formData.groupType
+                };
+                onSubmit(submitData);
+            }
         }
     };
 
@@ -238,36 +252,6 @@ const QuestionGroupTypeForm: React.FC<QuestionGroupTypeFormProps> = ({
                                 </Alert>
                             )}
                         </div>
-                    </div>
-
-                    {/* Sınav Bölümü */}
-                    <div className="space-y-2">
-                        <Label htmlFor="examSection">Sınav Bölümü *</Label>
-                        <Select
-                            onValueChange={(value) => handleChange('examSectionId', value as string)}
-                            value={formData.examSectionId || ''}
-                        >
-                            <SelectTrigger className={errors.examSectionId ? 'border-red-500' : ''}>
-                                <SelectValue placeholder="Sınav bölümü seçin" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup>
-                                    {examSections.map(section => {
-                                        const examType = section.examType as ExamTypeDto | undefined;
-                                        return (
-                                            <SelectItem key={section.id} value={section.id || ''}>
-                                                {section.name} ({examType?.name || ''})
-                                            </SelectItem>
-                                        );
-                                    })}
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
-                        {errors.examSectionId && (
-                            <Alert variant="destructive">
-                                <AlertDescription>{errors.examSectionId}</AlertDescription>
-                            </Alert>
-                        )}
                     </div>
 
                     {/* Submit Button */}

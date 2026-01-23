@@ -10,7 +10,7 @@ import Link from "next/link";
 import {useGetAllQuestionGroups} from "@/api/generated/question-group-management/question-group-management";
 import {getQuestionsByGroup} from "@/api/generated/question-management/question-management";
 import {extractApiListData} from "@/utils/api-helpers/extract-api-data";
-import type {QuestionGroupDto, ApiResponseListQuestionDto} from "@/api/generated/model";
+import type {QuestionGroupDto, QuestionDto, ApiResponseListQuestionDto} from "@/api/generated/model";
 import {statusConverter} from "@/utils/enum-converter";
 import {EStatus} from "@/types/exam/enum";
 import {hasCorrectAnswer} from "@/utils/question-validation";
@@ -18,7 +18,13 @@ import {parseBlobResponse} from "@/utils/api-helpers/parse-blob-response";
 
 export default function QuestionGroupPage() {
     const router = useRouter();
-    const {data, isLoading, error} = useGetAllQuestionGroups();
+    const {data, isLoading, error} = useGetAllQuestionGroups({
+        query: {
+            refetchOnMount: true,
+            refetchOnWindowFocus: false,
+            staleTime: 0,
+        }
+    });
     
     const questionGroups = useMemo(() => extractApiListData<QuestionGroupDto>(data), [data]);
     const [answerStatusMap, setAnswerStatusMap] = useState<Record<string, 'HAZIR' | 'CEVAP EKSİK'>>({});
@@ -87,16 +93,39 @@ export default function QuestionGroupPage() {
             }
         },
         {
+            key: 'scoreStatus',
+            header: 'Puan Durumu',
+            render: (value, record) => {
+                const group = record as QuestionGroupDto;
+                const groupMaxScore = group.maximumScore || 0;
+                const questions = (group.questions || []) as QuestionDto[];
+                const questionsTotalScore = questions.reduce((sum, question) => {
+                    return sum + (question.maximumScore || 0);
+                }, 0);
+                const isEqual = groupMaxScore === questionsTotalScore;
+                
+                return (
+                    <div className={`font-medium ${!isEqual ? 'text-red-600' : ''}`}>
+                        {groupMaxScore} / {questionsTotalScore}
+                    </div>
+                );
+            }
+        },
+        {
             key: 'id',
             header: ' ',
-            render: (value) => (
-                <div className="font-medium cursor-pointer hover:text-blue-600">
+            render: (value, record) => 
+                {
+                    const group = record as QuestionGroupDto;
+                    const count = group.questions?.length || 0;
+                
+                    return( <div className="font-medium cursor-pointer hover:text-blue-600">
                     <Link className="btn btn-success" href={`/admin/question-group/${value}/question`}>
-                        Sorular
+                    {count} {count === 0 ? 'Soru Yok' :  'Soru'  }
                     </Link>
                 </div>
             )
-        }
+        }}
     ], [router, answerStatusMap]);
 
     const handleAdd = useCallback(() => {

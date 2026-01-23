@@ -59,9 +59,9 @@ export default function ExamTypeDetailPage() {
 
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             <PageHeader/>
-            <div className="p-1">
+            <div className="px-4">
                 <ExamSectionDetail selectedExamSection={selectedExamSection} onEdit={handleEdit} onDelete={handleDelete}/>
 
             </div>

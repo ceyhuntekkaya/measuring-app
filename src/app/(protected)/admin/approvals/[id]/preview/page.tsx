@@ -12,7 +12,7 @@ import {EQuestionType, EMediaType, EApprovalStatus} from '@/types/exam/enum';
 import {getQuestionTypeLabel} from '@/utils/question-type-convert';
 import ModalPanel from "@/components/ui/ModalPanel";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
-import {showNotification} from "@/lib/notification";
+import {showNotification, getErrorMessage} from "@/lib/notification";
 import {
     AudioResponseTemplateDto,
     DragAndDropTemplateDto,
@@ -100,7 +100,8 @@ export default function ApprovalPreviewPage() {
             // Verileri yeniden yükle
             queryClient.invalidateQueries({ queryKey: [`/question-groups/${groupId}/approvals`] });
         } catch (error) {
-            showNotification.error('Onay güncellenirken bir hata oluştu!');
+            const errorMessage = getErrorMessage(error);
+            showNotification.error(errorMessage || 'Onay güncellenirken bir hata oluştu!');
             console.error('Error updating approval:', error);
         } finally {
             setIsSaving(false);

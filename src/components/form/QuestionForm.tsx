@@ -76,12 +76,14 @@ interface QuestionFormProps {
     onSubmit: (data: CreateQuestionRequest) => void;
     question?: QuestionDto | null;
     loading?: boolean;
+    onDelete?: () => void;
 }
 
 const QuestionForm: React.FC<QuestionFormProps> = ({
                                                        onSubmit,
                                                        question,
-                                                       loading = false
+                                                       loading = false,
+                                                       onDelete
                                                    }) => {
 
     const params = useParams();
@@ -746,15 +748,28 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                     )}
 
                     {/* TEK KAYDET BUTONU - Master Submit */}
-                    <div className="flex justify-end space-x-4 pt-6 border-t">
-                        <Button
-                            onClick={handleSubmit}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-8"
-                            disabled={loading}
-                            size="lg"
-                        >
-                            {loading ? "İşleniyor..." : question ? "Soru Güncelle" : "Soru Oluştur"}
-                        </Button>
+                    <div className="flex justify-between items-center pt-6 border-t">
+                        {question && onDelete && (
+                            <Button
+                                onClick={onDelete}
+                                className="bg-red-600 hover:bg-red-700 text-white px-8"
+                                disabled={loading}
+                                size="lg"
+                                variant="destructive"
+                            >
+                                {loading ? "İşleniyor..." : "Soru Sil"}
+                            </Button>
+                        )}
+                        <div className="flex justify-end space-x-4 ml-auto">
+                            <Button
+                                onClick={handleSubmit}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-8"
+                                disabled={loading}
+                                size="lg"
+                            >
+                                {loading ? "İşleniyor..." : question ? "Soru Güncelle" : "Soru Oluştur"}
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </CardContent>

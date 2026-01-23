@@ -7,7 +7,7 @@ import BranchForm from "@/components/form/branch-form";
 import {useGetAllBrands} from "@/api/generated/brand-management/brand-management";
 import {useCreateBranch} from "@/api/generated/branch-management/branch-management";
 import { useQueryClient } from "@tanstack/react-query";
-import { showNotification } from "@/lib/notification";
+import { showNotification, getErrorMessage } from "@/lib/notification";
 import type { CreateBranchRequest, UpdateBranchRequest, ApiResponseListBrandDto } from "@/api/generated/model";
 
 export default function BranchAdd() {
@@ -25,8 +25,8 @@ export default function BranchAdd() {
                 router.push('/admin/branches');
             },
             onError: (error) => {
-                showNotification.error('Şube oluşturulurken bir hata oluştu!');
-                console.error('Error creating branch:', error);
+                const errorMessage = getErrorMessage(error);
+                showNotification.error(errorMessage || 'Şube oluşturulurken bir hata oluştu!');
             }
         }
     });

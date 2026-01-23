@@ -13,7 +13,7 @@ import type { ApiResponseExamTypeListResponse, ApiResponseListBrandDto, ApiRespo
 import ExamForm from "@/components/form/exam-form";
 import {useCreateExam} from "@/api/generated/exam-management/exam-management";
 import { useQueryClient } from "@tanstack/react-query";
-import { showNotification } from "@/lib/notification";
+import { showNotification, getErrorMessage } from "@/lib/notification";
 import type { CreateExamRequest, UpdateExamRequest } from "@/api/generated/model";
 import {useGetQuestionGroupsByExamType} from "@/api/generated/question-group-management/question-group-management";
 import type {BranchDto} from "@/api/generated/model";
@@ -32,8 +32,9 @@ export default function ExamFormPage() {
                 showNotification.success('Sınav başarıyla oluşturuldu!');
                 router.push('/admin/exams');
             },
-            onError: () => {
-                showNotification.error('Sınav oluşturulurken bir hata oluştu!');
+            onError: (error) => {
+                const errorMessage = getErrorMessage(error);
+                showNotification.error(errorMessage || 'Sınav oluşturulurken bir hata oluştu!');
             }
         }
     });

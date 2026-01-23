@@ -11,6 +11,7 @@ export interface ExamSectionReadyDto {
   sectionId?: string;
   name?: string;
   orderNumber?: number;
+  sectionDescription?: string;
   questionGroups?: QuestionGroupReadyDto[];
   totalQuestions?: number;
   totalScore?: number;

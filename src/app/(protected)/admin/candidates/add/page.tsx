@@ -34,7 +34,7 @@ export default function CandidateAdd() {
         createCandidate({ data: data as CreateCandidateRequest });
     };
 
-    const { data: examTypesData } = useGetAllExamTypes({});
+    const { data: examTypesData } = useGetAllExamTypes(undefined);
     const examTypes = (examTypesData as unknown as ApiResponseExamTypeListResponse)?.data || null;
 
     const { data: sessionsData } = useGetUpcomingExamSessions({});

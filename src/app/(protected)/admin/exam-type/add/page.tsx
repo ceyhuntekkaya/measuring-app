@@ -6,7 +6,7 @@ import PageHeader from "@/components/layout/page-header";
 import React from "react";
 import {useCreateExamType} from "@/api/generated/exam-type-management/exam-type-management";
 import { useQueryClient } from "@tanstack/react-query";
-import { showNotification } from "@/lib/notification";
+import { showNotification, getErrorMessage } from "@/lib/notification";
 import { useRouter } from "next/navigation";
 import type { ExamTypeDto } from "@/api/generated/model";
 
@@ -24,8 +24,8 @@ export default function ExamTypeAdd() {
                 router.push('/admin/exam-type');
             },
             onError: (error) => {
-                showNotification.error('Sınav tipi oluşturulurken bir hata oluştu!');
-                console.error('Error creating exam type:', error);
+                const errorMessage = getErrorMessage(error);
+                showNotification.error(errorMessage || 'Sınav tipi oluşturulurken bir hata oluştu!');
             }
         }
     });

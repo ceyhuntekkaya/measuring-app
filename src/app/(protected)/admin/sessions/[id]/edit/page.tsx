@@ -60,7 +60,7 @@ export default function SessionAdd() {
     const { data: usersData } = useGetUsersByDepartment('SUPERVISOR', {});
     const users = (usersData as unknown as ApiResponseListUserDto)?.data || null;
 
-    const { data: examTypesData } = useGetAllExamTypes({});
+    const { data: examTypesData } = useGetAllExamTypes(undefined);
     const examTypes = (examTypesData as unknown as ApiResponseExamTypeListResponse)?.data || null;
 
 

@@ -103,7 +103,7 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
     const sessionStatus = getSessionStatus();
 
     return (<>
-        <div className="container mx-auto space-y-6">
+        <div className="container mx-auto space-y-4">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Sınav Oturumu Detayı</h1>
@@ -585,7 +585,6 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                     <>
                         {(() => {
                             // Debug: isFinish değerini kontrol et
-                            console.log('ExamSession isFinish:', examSession.isFinish, 'Type:', typeof examSession.isFinish);
                             return examSession.isFinish;
                         })() ? (
                             <ExamEvaluationPanel sessionId={examSession.id || ''} candidates ={examSessionApplications ? examSessionApplications : []}/>

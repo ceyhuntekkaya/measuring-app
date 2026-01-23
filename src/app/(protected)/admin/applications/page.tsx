@@ -72,7 +72,7 @@ export default function ApplicationPage() {
                 className="font-medium cursor-pointer hover:text-blue-600"
                 onClick={() => {
                     handleSessionSelect(record);
-                    router.push(`/admin/sessions/${record.id}`);
+                   // router.push(`/admin/sessions/${record.id}`);
                 }}
             >
                 {String(value || '')}

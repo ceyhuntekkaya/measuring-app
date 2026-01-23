@@ -9,4 +9,5 @@
 export interface UpdateExamSectionRequest {
   name?: string;
   orderNumber?: number;
+  sectionDescription?: string;
 }

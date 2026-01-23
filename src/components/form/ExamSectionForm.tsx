@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { NumberInput } from "@/components/ui/number-input";
 import type { ExamSectionDto, ExamTypeDto, CreateExamSectionRequest, UpdateExamSectionRequest } from "@/api/generated/model";
@@ -28,18 +29,21 @@ interface ExamSectionFormProps {
     examSection?: ExamSectionDto | null;
     examTypes: ExamTypeDto[];
     loading?: boolean;
+    defaultExamTypeId?: string;
 }
 
 const ExamSectionForm: React.FC<ExamSectionFormProps> = ({
                                                              onSubmit,
                                                              examSection,
                                                              examTypes = [],
-                                                             loading = false
+                                                             loading = false,
+                                                             defaultExamTypeId
                                                          }) => {
     const [formData, setFormData] = useState<CreateExamSectionRequest>({
         name: '',
-        examTypeId: '',
-        orderNumber: 1
+        examTypeId: defaultExamTypeId || '',
+        orderNumber: 1,
+        sectionDescription: ''
     });
 
 
@@ -53,10 +57,16 @@ const ExamSectionForm: React.FC<ExamSectionFormProps> = ({
             setFormData({
                 name: examSection.name || '',
                 examTypeId: examType?.id || '',
-                orderNumber: examSection.orderNumber || 1
+                orderNumber: examSection.orderNumber || 1,
+                sectionDescription: examSection.sectionDescription || ''
             });
+        } else if (defaultExamTypeId) {
+            setFormData(prev => ({
+                ...prev,
+                examTypeId: defaultExamTypeId
+            }));
         }
-    }, [examSection]);
+    }, [examSection, defaultExamTypeId]);
 
     const handleChange = <T extends keyof CreateExamSectionRequest>(
         name: T,
@@ -77,7 +87,7 @@ const ExamSectionForm: React.FC<ExamSectionFormProps> = ({
             newErrors.name = 'Sınav bölümü adı en az 3 karakter olmalıdır';
         }
 
-        if (!formData.examTypeId) {
+        if (!formData.examTypeId && !defaultExamTypeId) {
             newErrors.examTypeId = 'Sınav tipi seçimi zorunludur';
         }
 
@@ -93,13 +103,24 @@ const ExamSectionForm: React.FC<ExamSectionFormProps> = ({
 
     const handleSubmit = () => {
         if (validateForm()) {
-            // Directly use formData - no manual mapping needed!
-            const submitData: CreateExamSectionRequest | UpdateExamSectionRequest = {
-                name: formData.name?.trim(),
-                examTypeId: formData.examTypeId,
-                orderNumber: formData.orderNumber
-            };
-            onSubmit(submitData);
+            if (examSection) {
+                // Update mode - UpdateExamSectionRequest doesn't include examTypeId
+                const submitData: UpdateExamSectionRequest = {
+                    name: formData.name?.trim(),
+                    orderNumber: formData.orderNumber,
+                    sectionDescription: formData.sectionDescription?.trim() || undefined
+                };
+                onSubmit(submitData);
+            } else {
+                // Create mode - CreateExamSectionRequest includes examTypeId
+                const submitData: CreateExamSectionRequest = {
+                    name: formData.name?.trim(),
+                    examTypeId: formData.examTypeId,
+                    orderNumber: formData.orderNumber,
+                    sectionDescription: formData.sectionDescription?.trim() || undefined
+                };
+                onSubmit(submitData);
+            }
         }
     };
 
@@ -151,31 +172,45 @@ const ExamSectionForm: React.FC<ExamSectionFormProps> = ({
                         </div>
                     </div>
 
-                    {/* Sınav Tipi */}
-                    <div className="space-y-2">
-                        <Label htmlFor="examType">Sınav Tipi *</Label>
-                        <Select
-                            onValueChange={(value) => handleChange('examTypeId', value as string)}
+                    {/* Sınav Tipi - Sadece yeni oluşturma modunda ve defaultExamTypeId yoksa göster */}
+                    {!examSection && !defaultExamTypeId && (
+                        <div className="space-y-2">
+                            <Label htmlFor="examType">Sınav Tipi *</Label>
+                            <Select
+                                onValueChange={(value) => handleChange('examTypeId', value as string)}
                                 value={formData.examTypeId || ''}
-                        >
-                            <SelectTrigger className={errors.examTypeId ? 'border-red-500' : ''}>
-                                <SelectValue placeholder="Sınav tipi seçin" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup>
-                                    {examTypes.map(examType => (
-                                        <SelectItem key={examType.id} value={examType.id || ''}>
-                                            {examType.name} - {examType.examLevel}
-                                        </SelectItem>
-                                    ))}
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
-                        {errors.examTypeId && (
-                            <Alert variant="destructive">
-                                <AlertDescription>{errors.examTypeId}</AlertDescription>
-                            </Alert>
-                        )}
+                            >
+                                <SelectTrigger className={errors.examTypeId ? 'border-red-500' : ''}>
+                                    <SelectValue placeholder="Sınav tipi seçin" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        {examTypes.map(examType => (
+                                            <SelectItem key={examType.id} value={examType.id || ''}>
+                                                {examType.name} - {examType.examLevel}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                            {errors.examTypeId && (
+                                <Alert variant="destructive">
+                                    <AlertDescription>{errors.examTypeId}</AlertDescription>
+                                </Alert>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Bölüm Açıklaması */}
+                    <div className="space-y-2">
+                        <Label htmlFor="sectionDescription">Bölüm Açıklaması</Label>
+                        <Textarea
+                            id="sectionDescription"
+                            value={formData.sectionDescription || ''}
+                            onChange={(e) => handleChange('sectionDescription', e.target.value)}
+                            className="min-h-[120px]"
+                            placeholder="Bölüm açıklamasını giriniz"
+                        />
                     </div>
 
                     {/* Submit Button */}

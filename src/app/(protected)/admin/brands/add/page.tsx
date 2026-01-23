@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import BrandForm from "@/components/form/brand-form";
 import { useCreateBrand } from "@/api/generated/brand-management/brand-management";
 import { useQueryClient } from "@tanstack/react-query";
-import { showNotification } from "@/lib/notification";
+import { showNotification, getErrorMessage } from "@/lib/notification";
 import type { CreateBrandRequest, UpdateBrandRequest } from "@/api/generated/model";
 
 export default function BrandAdd() {
@@ -21,8 +21,8 @@ export default function BrandAdd() {
                 router.push('/admin/brands');
             },
             onError: (error) => {
-                showNotification.error('Marka oluşturulurken bir hata oluştu!');
-                console.error('Error creating brand:', error);
+                const errorMessage = getErrorMessage(error);
+                showNotification.error(errorMessage || 'Marka oluşturulurken bir hata oluştu!');
             }
         }
     });

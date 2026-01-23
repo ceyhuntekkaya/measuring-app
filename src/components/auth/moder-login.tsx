@@ -18,7 +18,6 @@ export default function CorporateLoginPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    console.log(error)
 
     const redirectTo = searchParams?.get('redirectTo') || '';
 

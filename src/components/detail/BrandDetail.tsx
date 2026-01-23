@@ -33,7 +33,7 @@ const BrandDetailPage: React.FC<BrandDetailProps> = ({
     }
 
     return (
-        <div className="container mx-auto py-6 space-y-6">
+        <div className="container mx-auto py-4 space-y-4">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Marka Detayı</h1>
@@ -323,7 +323,7 @@ const BrandDetailPage: React.FC<BrandDetailProps> = ({
                                 <CardTitle>Kayıt Zaman Çizelgesi</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="space-y-6">
+                                <div className="space-y-4">
                                     <div className="flex">
                                         <div className="mr-4 flex-shrink-0">
                                             <div className="flex items-center justify-center h-10 w-10 rounded-full bg-blue-100 text-blue-600">

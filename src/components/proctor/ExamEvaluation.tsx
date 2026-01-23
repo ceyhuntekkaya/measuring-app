@@ -45,7 +45,7 @@ import {
 } from "@/api/generated/model";
 import {useSaveEvaluation} from "@/api/generated/question-result-management/question-result-management";
 import { useQueryClient } from "@tanstack/react-query";
-import { showNotification } from "@/lib/notification";
+import { showNotification, getErrorMessage } from "@/lib/notification";
 import type {UploadedFileDto} from "@/api/generated/model";
 import { parseBlobResponse } from "@/utils/api-helpers/parse-blob-response";
 import type { ApiResponseListQuestionDto } from "@/api/generated/model";
@@ -159,8 +159,9 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
                 showNotification.success('Değerlendirme başarıyla kaydedildi!');
                 getApplicationEvaluationsBySession();
             },
-            onError: () => {
-                showNotification.error('Değerlendirme kaydedilirken bir hata oluştu!');
+            onError: (error) => {
+                const errorMessage = getErrorMessage(error);
+                showNotification.error(errorMessage || 'Değerlendirme kaydedilirken bir hata oluştu!');
             }
         }
     });
@@ -420,7 +421,6 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
                 }
                 return answerString;
             } catch (e) {
-                console.log('Parse error:', e);
                 if (type === 'ESSAY') {
                     const text = answerString;
                     return {

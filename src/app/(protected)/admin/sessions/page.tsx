@@ -75,16 +75,20 @@ export default function SessionsPage() {
             )
         },
         {
-            key: 'examTemplate',
+            key: 'examType',
             header: 'Sınav Tipi',
-            render: (value, record) => (
-                <div
-                    className="font-medium cursor-pointer hover:text-blue-600"
-                    onClick={() => router.push(`/admin/sessions/${record.id}`)}
-                >
-                    {String(value || '')}
-                </div>
-            )
+            render: (value, record) => {
+                const examType = (record as ExamSessionDto)?.examType;
+                const examTypeName = examType?.name || '';
+                return (
+                    <div
+                        className="font-medium cursor-pointer hover:text-blue-600"
+                        onClick={() => router.push(`/admin/sessions/${record.id}`)}
+                    >
+                        {examTypeName}
+                    </div>
+                );
+            }
         },
         {
             key: 'startDate',
