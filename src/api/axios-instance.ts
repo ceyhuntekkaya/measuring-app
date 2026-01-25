@@ -1,4 +1,4 @@
-import Axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import Axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import siteConfig from "@/config/config.json";
 
 
@@ -58,8 +58,8 @@ AXIOS_INSTANCE.interceptors.response.use(
         const errorMessage = apiResponse.message || 'İşlem başarısız oldu';
        
         
-        const error = new Error(errorMessage) as any;
-        error.response = {
+        const error = new Error(errorMessage) as AxiosError<{ success: false; message?: string; errors?: string[] | string }>;
+        (error as AxiosError).response = {
           data: {
             success: false,
             message: apiResponse.message,
@@ -69,7 +69,7 @@ AXIOS_INSTANCE.interceptors.response.use(
           statusText: response.statusText,
           headers: response.headers,
           config: response.config
-        };
+        } as AxiosResponse;
         
       
         
@@ -94,7 +94,8 @@ AXIOS_INSTANCE.interceptors.response.use(
         if (jsonData && typeof jsonData === 'object' && 'success' in jsonData && jsonData.success === false) {
         
         }
-      } catch (parseError) {
+      } catch {
+        // Ignore parse errors
       }
     }
     
@@ -153,8 +154,8 @@ export const customInstance = <T>(
         const errorMessage = apiResponse.message || 'İşlem başarısız oldu';
        
         
-        const error = new Error(errorMessage) as any;
-        error.response = {
+        const error = new Error(errorMessage) as AxiosError<{ success: false; message?: string; errors?: string[] | string }>;
+        (error as AxiosError).response = {
           data: {
             success: false,
             message: apiResponse.message,
@@ -164,7 +165,7 @@ export const customInstance = <T>(
           statusText: response.statusText,
           headers: response.headers,
           config: response.config
-        };
+        } as AxiosResponse;
         
        
         

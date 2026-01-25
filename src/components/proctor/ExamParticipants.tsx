@@ -4,12 +4,9 @@ import {ChatWindow} from "@/components/proctor/ChatWindow";
 import type {ApplicationDto} from "@/api/generated/model";
 import {ESessionState} from "@/types/exam/enum";
 import OnlineStatusIndicator from '@/components/admin/OnlineStatusIndicator';
-import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import {useSetStartedAt, useSetEndedAt, useUpdateSessionState1} from "@/api/generated/application-management/application-management";
 import {ESessionState as ESessionStateEnum} from "@/types/exam/enum";
 import type { UpdateSessionStateRequestSessionState } from "@/api/generated/model";
-import { useAdminWebSocket } from '@/components/websocket/AdminWebSocketProvider';
-import { CommandAction } from '@/types/websocket.types';
 
 const ParticipantCard = ({participant, onChat, isOnline, onStart, onStop, onFinish}: {
     participant: ApplicationDto;
@@ -219,8 +216,6 @@ interface ExamTypeFormProps {
 
 const ExamParticipants: React.FC<ExamTypeFormProps> = ({ candidates }) => {
     const [chatParticipant, setChatParticipant] = useState<ApplicationDto | null>(null);
-    const { isOnline ,onlineUsers} = useOnlineStatus();
-    const { sendCommand } = useAdminWebSocket();
     const setStartedAtMutation = useSetStartedAt();
     const setEndedAtMutation = useSetEndedAt();
     const updateSessionStateMutation = useUpdateSessionState1();
@@ -251,11 +246,10 @@ const ExamParticipants: React.FC<ExamTypeFormProps> = ({ candidates }) => {
             console.log('  -', {
                 id: c.id,
                 name: c.candidateName,
-                username: c.username, // 🔑 Bu field var mı kontrol et
+                username: c.username,
             });
         });
-        console.log('🟢 Online users:', Array.from(onlineUsers));
-    }, [candidates, onlineUsers]);
+    }, [candidates]);
 
 
     const handleStart = async (id: string) => {
@@ -268,12 +262,6 @@ const ExamParticipants: React.FC<ExamTypeFormProps> = ({ candidates }) => {
 
             await setApplicationStartedAt(id);
             await updateApplicationSessionState(id, ESessionStateEnum.IN_PROGRESS);
-            
-            // COMMAND gönder
-            sendCommand({
-                action: CommandAction.RESUME_EXAM,
-                targetId: candidate.username,
-            });
         } catch (err) {
             console.error('Error starting application:', err);
         }
@@ -288,12 +276,6 @@ const ExamParticipants: React.FC<ExamTypeFormProps> = ({ candidates }) => {
             }
 
             await setApplicationEndedAt(id);
-            
-            // COMMAND gönder
-            sendCommand({
-                action: CommandAction.PAUSE_EXAM,
-                targetId: candidate.username,
-            });
         } catch (err) {
             console.error('Error stopping application:', err);
         }
@@ -312,12 +294,6 @@ const ExamParticipants: React.FC<ExamTypeFormProps> = ({ candidates }) => {
                 // bu yüzden sessionState'i FINISHED yapıyoruz
                 await updateApplicationSessionState(id, ESessionStateEnum.FINISHED);
                 await setApplicationEndedAt(id);
-                
-                // COMMAND gönder
-                sendCommand({
-                    action: CommandAction.TERMINATE_EXAM,
-                    targetId: candidate.username,
-                });
             } catch (err) {
                 console.error('Error finishing application:', err);
             }
@@ -338,7 +314,7 @@ const ExamParticipants: React.FC<ExamTypeFormProps> = ({ candidates }) => {
                             key={participant.id}
                             participant={participant}
                             onChat={handleChat}
-                            isOnline={isOnline(participant.username || '')}
+                            isOnline={false}
                             onStart={handleStart}
                             onStop={handleStop}
                             onFinish={handleFinish}

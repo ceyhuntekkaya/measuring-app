@@ -3,7 +3,7 @@ import ExamSectionForm from "@/components/form/ExamSectionForm";
 import PageHeader from "@/components/layout/page-header";
 import React from "react";
 import {useGetAllExamTypes} from "@/api/generated/exam-type-management/exam-type-management";
-import type { ApiResponseExamTypeListResponse, CreateExamSectionRequest } from "@/api/generated/model";
+import type { ApiResponseExamTypeListResponse, CreateExamSectionRequest, UpdateExamSectionRequest } from "@/api/generated/model";
 import {useCreateExamSection} from "@/api/generated/exam-section-management/exam-section-management";
 import {useParams, useRouter} from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";

@@ -420,7 +420,7 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
                     return optionsArray;
                 }
                 return answerString;
-            } catch (e) {
+            } catch {
                 if (type === 'ESSAY') {
                     const text = answerString;
                     return {

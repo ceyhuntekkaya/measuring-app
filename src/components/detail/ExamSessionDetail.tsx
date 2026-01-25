@@ -16,6 +16,9 @@ import LoadingComp from "@/components/ui/loading-comp";
 import ExamParticipants from "@/components/proctor/ExamParticipants";
 import ExamEvaluationPanel from "@/components/proctor/ExamEvaluation";
 import {useGetApplicationsByExamSession} from "@/api/generated/application-management/application-management";
+import {useAuth} from "@/hooks/use-auth";
+import {useExamWebSocket} from "@/hooks/useExamWebSocket";
+import {showNotification} from "@/lib/notification";
 
 interface ExamSessionDetailProps {
     examSession: ExamSessionDto;
@@ -55,11 +58,38 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                                                                  onViewStatistics,
                                                              }) => {
     const [activeTab, setActiveTab] = useState("general");
+    const {user} = useAuth();
 
     const {data: applicationsData} = useGetApplicationsByExamSession(examSession.id || '', {
         query: { enabled: !!examSession.id }
     });
     const examSessionApplications = (applicationsData as unknown as { data?: ApplicationDto[] })?.data || [];
+
+    // WebSocket bağlantısı - Sadece gözetmen (ADMIN/OBSERVER) ve sessionState IN_PROGRESS veya PAUSED ise
+    const isSupervisor = user && (user.roleSet?.includes('ADMIN') || user.roleSet?.includes('OBSERVER'));
+    const canConnect = !!(isSupervisor && 
+                      examSession.sessionState && 
+                      (examSession.sessionState === 'IN_PROGRESS' || examSession.sessionState === 'PAUSED'));
+    
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    const userName = user ? `${user.name || ''} ${user.lastName || ''}`.trim() : '';
+    const userRole = user?.roleSet?.includes('ADMIN') ? 'ADMIN' : 
+                     user?.roleSet?.includes('OBSERVER') ? 'OBSERVER' : 'LEARNER';
+
+    useExamWebSocket({
+        sessionId: examSession.id || '',
+        userRole: userRole as 'ADMIN' | 'OBSERVER' | 'LEARNER',
+        token: token || '',
+        userName: userName,
+        autoConnect: !!(canConnect && token && examSession.id),
+        onConnectionEvent: (event) => {
+            if (event.eventType === 'CONNECTED') {
+                showNotification.info(`${event.userName} odaya katıldı`);
+            } else if (event.eventType === 'DISCONNECTED') {
+                showNotification.info(`${event.userName} odadan ayrıldı`);
+            }
+        }
+    });
 
 
 

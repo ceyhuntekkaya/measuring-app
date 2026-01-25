@@ -6,7 +6,6 @@ import PageHeader from "@/components/layout/page-header";
 import LoadingComp from "@/components/ui/loading-comp";
 import ExamSessionDetail from "@/components/detail/ExamSessionDetail";
 import {useGetExamSessionById, useGetExamSessionStatistics, useDeleteExamSession, useSetBeginAt, useSetEndAt, useSetIsFinish, useUpdateSessionState} from "@/api/generated/exam-session-management/exam-session-management";
-import { AdminWebSocketProvider } from '@/components/websocket/AdminWebSocketProvider';
 import {useQueryClient} from "@tanstack/react-query";
 import type {ApiResponseExamSessionDto, ApiResponseExamSessionStatistics, UpdateExamSessionStateRequest, UpdateExamSessionStateRequestSessionState} from "@/api/generated/model";
 import { showNotification, getErrorMessage } from "@/lib/notification";
@@ -142,7 +141,6 @@ export default function CandidateDetailPage() {
     }
 
     return (
-        <AdminWebSocketProvider sessionId={sessionId} examSession={selectedExamSession}>
         <div className="space-y-4">
             <PageHeader/>
             <div className="px-4">
@@ -166,7 +164,6 @@ export default function CandidateDetailPage() {
                 }
             </div>
         </div>
-        </AdminWebSocketProvider>
     );
 
 

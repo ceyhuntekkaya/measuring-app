@@ -32,7 +32,8 @@ interface QuestionGroupTypeFormProps {
 const QuestionGroupTypeForm: React.FC<QuestionGroupTypeFormProps> = ({
                                                                          onSubmit,
                                                                          questionGroupType,
-                                                                         examSections = [],
+                                                                         // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                                                                         examSections: _examSections = [],
                                                                          examSectionId,
                                                                          loading = false
                                                                      }) => {

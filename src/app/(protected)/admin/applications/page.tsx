@@ -78,7 +78,7 @@ export default function ApplicationPage() {
                 {String(value || '')}
             </div>
         );
-    }, [handleSessionSelect, router]);
+    }, [handleSessionSelect]);
 
     const renderApplicationCell = useCallback((value: unknown, record: RecordType) => {
         return (

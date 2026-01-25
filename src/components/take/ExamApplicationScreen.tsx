@@ -286,9 +286,9 @@ export default function ExamApplicationScreen({
     });
     const questionsByGroup = (questionsData as { data?: QuestionDto[] })?.data || [];
     
-    const getQuestionsByGroup = (groupId: string) => {
+    const getQuestionsByGroup = useCallback((groupId: string) => {
         setSelectedGroupId(groupId);
-    };
+    }, []);
 
     const [selectedQuestionGroupId, setSelectedQuestionGroupId] = useState<string>('');
     const {data: questionGroupData} = useGetQuestionGroupById(selectedQuestionGroupId, {
@@ -296,9 +296,9 @@ export default function ExamApplicationScreen({
     });
     const selectedQuestionGroup = (questionGroupData as { data?: QuestionGroupDto })?.data;
     
-    const getQuestionGroupById = (groupId: string) => {
+    const getQuestionGroupById = useCallback((groupId: string) => {
         setSelectedQuestionGroupId(groupId);
-    };
+    }, []);
 
     // Sınav başladığında API çağrıları (sadece bir kez çalışsın)
     const hasInitializedRef = useRef(false);
@@ -326,7 +326,7 @@ export default function ExamApplicationScreen({
                 setAnsweredQuestions(new Set());
             }
         }
-    }, [currentGroupIndex]);
+    }, [currentGroupIndex, questionGroups, getQuestionGroupById, getQuestionsByGroup]);
 
 
     useEffect(() => {
@@ -339,7 +339,7 @@ export default function ExamApplicationScreen({
                 setAnsweredQuestions(new Set());
             }
         }
-    }, []);
+    }, [questionGroups, getQuestionGroupById, getQuestionsByGroup]);
 
     useEffect(() => {
         setCurrentQuestionIndex(0);
@@ -490,7 +490,7 @@ export default function ExamApplicationScreen({
                 return optionsArray;
             }
             return answerString;
-        } catch (e) {
+        } catch {
             if (type === 'ESSAY') {
                 const text = answerString;
                 return {

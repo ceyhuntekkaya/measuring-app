@@ -316,19 +316,15 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
                                             <SelectValue placeholder={!formData.examTypeId ? "Önce sınav tipi seçin" : filteredExamSessions.length === 0 ? "Bu sınav tipi için oturum bulunamadı" : "Oturum seçin"}/>
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectGroup>
-                                                {filteredExamSessions.length > 0 ? (
-                                                    filteredExamSessions.map(examSession => (
+                                            {filteredExamSessions.length > 0 && (
+                                                <SelectGroup>
+                                                    {filteredExamSessions.map(examSession => (
                                                         <SelectItem key={examSession.id} value={examSession.id || ''}>
                                                             {examSession.name}
                                                         </SelectItem>
-                                                    ))
-                                                ) : (
-                                                    <SelectItem value="no-sessions" disabled>
-                                                        {!formData.examTypeId ? "Önce sınav tipi seçin" : "Bu sınav tipi için oturum bulunamadı"}
-                                                    </SelectItem>
-                                                )}
-                                            </SelectGroup>
+                                                    ))}
+                                                </SelectGroup>
+                                            )}
                                         </SelectContent>
                                     </Select>
                                     {errors.examSessionId && (

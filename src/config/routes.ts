@@ -364,10 +364,8 @@ const isUUID = (str: string): boolean => {
 
 // Path'ten breadcrumb oluştur
 export const generateBreadcrumbsFromPath = (path: string): MenuItem[] => {
-    console.log('🚀 [generateBreadcrumbsFromPath] Starting with path:', path);
     const breadcrumbs: MenuItem[] = [];
     const segments = path.split('/').filter(Boolean);
-    console.log('🚀 [generateBreadcrumbsFromPath] Segments:', segments);
     const seenPaths = new Set<string>();
     let currentPath = '';
     
@@ -376,17 +374,14 @@ export const generateBreadcrumbsFromPath = (path: string): MenuItem[] => {
         
         // UUID ise, atla (breadcrumb'a ekleme)
         if (isUUID(segment)) {
-            console.log(`🆔 [generateBreadcrumbsFromPath] Skipping UUID segment: ${segment}`);
             currentPath += `/${segment}`;
             continue;
         }
         
         currentPath += `/${segment}`;
-        console.log(`🔹 [generateBreadcrumbsFromPath] Processing segment ${i}: "${segment}", currentPath: "${currentPath}"`);
         
         // Duplicate kontrolü
         if (seenPaths.has(currentPath)) {
-            console.log(`⏭️ [generateBreadcrumbsFromPath] Skipping duplicate path: ${currentPath}`);
             continue;
         }
         seenPaths.add(currentPath);
@@ -397,26 +392,18 @@ export const generateBreadcrumbsFromPath = (path: string): MenuItem[] => {
         let menuItem: MenuItem | null = null;
         
         if (!hasUUID) {
-            console.log(`🔍 [generateBreadcrumbsFromPath] Looking for menu item with path: "${currentPath}"`);
             menuItem = findMenuItemByPath(currentPath);
-            console.log(`🔍 [generateBreadcrumbsFromPath] Menu item found:`, menuItem);
-        } else {
-            console.log(`🔍 [generateBreadcrumbsFromPath] Path contains UUID, skipping menu lookup: "${currentPath}"`);
-        }
+        } 
         
         if (menuItem) {
             // Menüden bulundu, ekle (duplicate kontrolü yap)
             const existingIndex = breadcrumbs.findIndex(b => b.path === menuItem!.path);
             if (existingIndex === -1) {
-                console.log(`✅ [generateBreadcrumbsFromPath] Adding menu item:`, menuItem);
                 breadcrumbs.push(menuItem);
-            } else {
-                console.log(`⏭️ [generateBreadcrumbsFromPath] Menu item already exists, skipping`);
-            }
+            } 
         } else {
             // Menüde yok veya UUID içeriyor, path segment'inden oluştur
             const label = pathSegmentLabels[segment] || segment.charAt(0).toUpperCase() + segment.slice(1);
-            console.log(`📝 [generateBreadcrumbsFromPath] Label for segment "${segment}": "${label}"`);
             
             let title = label;
             if (segment === 'add') {
@@ -430,7 +417,6 @@ export const generateBreadcrumbsFromPath = (path: string): MenuItem[] => {
                         const prevSegment = segments[prevIndex];
                         const prevLabel = pathSegmentLabels[prevSegment] || prevSegment;
                         title = `Yeni ${prevLabel} Ekle`;
-                        console.log(`➕ [generateBreadcrumbsFromPath] Add action, title: "${title}"`);
                     }
                 }
             } else if (segment === 'edit') {
@@ -444,7 +430,6 @@ export const generateBreadcrumbsFromPath = (path: string): MenuItem[] => {
                         const prevSegment = segments[prevIndex];
                         const prevLabel = pathSegmentLabels[prevSegment] || prevSegment;
                         title = `${prevLabel} Düzenle`;
-                        console.log(`✏️ [generateBreadcrumbsFromPath] Edit action, title: "${title}"`);
                     }
                 }
             }
@@ -453,7 +438,6 @@ export const generateBreadcrumbsFromPath = (path: string): MenuItem[] => {
                 title,
                 path: currentPath,
             };
-            console.log(`➕ [generateBreadcrumbsFromPath] Adding path-based breadcrumb:`, breadcrumbItem);
             breadcrumbs.push(breadcrumbItem);
         }
     }
@@ -468,13 +452,11 @@ export const generateBreadcrumbsFromPath = (path: string): MenuItem[] => {
         }
     }
     
-    console.log('✅ [generateBreadcrumbsFromPath] Final breadcrumbs:', uniqueBreadcrumbs);
     return uniqueBreadcrumbs;
 };
 
 
 export const findMenuItemByPath = (path: string): MenuItem | null => {
-    console.log('🔎 [findMenuItemByPath] Searching for path:', path);
     const allRoutes = [adminRoutes, appRoutes, learnerRoutes, observerRoutes, instructorRoutes, companyRoutes, publicRoutes];
 
     // Helper function to check if a path matches (exact match or starts with for dynamic routes)
@@ -488,7 +470,6 @@ export const findMenuItemByPath = (path: string): MenuItem | null => {
         if (menuPath !== '/' && currentPath.startsWith(menuPath + '/')) {
             // Check if this is a root path like /admin - if so, only match if no more specific path exists
             // We'll handle this in findItem by checking children first
-            console.log(`✅ [pathMatches] Dynamic match: "${currentPath}" starts with "${menuPath}/"`);
             return true;
         }
         return false;
@@ -498,7 +479,6 @@ export const findMenuItemByPath = (path: string): MenuItem | null => {
     const findMostSpecificMatch = (items: MenuItem[], path: string): MenuItem | null => {
         let bestMatch: MenuItem | null = null;
         let bestMatchLength = 0;
-        let bestMatchPath = '';
         
         const checkItem = (item: MenuItem): void => {
             if (pathMatches(item.path, path)) {
@@ -508,7 +488,6 @@ export const findMenuItemByPath = (path: string): MenuItem | null => {
                 if (matchLength > bestMatchLength) {
                     bestMatch = item;
                     bestMatchLength = matchLength;
-                    bestMatchPath = item.path;
                 }
             }
             
@@ -529,7 +508,8 @@ export const findMenuItemByPath = (path: string): MenuItem | null => {
     };
 
     // Helper to find which parent contains this item in its children
-    const findParentInRoute = (targetPath: string, items: MenuItem[], parentItem: MenuItem | null = null): MenuItem | null => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const findParentInRoute = (targetPath: string, items: MenuItem[], _parentItem: MenuItem | null = null): MenuItem | null => {
         for (const item of items) {
             if (item.children) {
                 // Check if any child matches the target path
@@ -566,24 +546,21 @@ export const findMenuItemByPath = (path: string): MenuItem | null => {
 
     for (const route of allRoutes) {
         // First, try to find the most specific match
-        console.log(`🔍 [findMenuItemByPath] Checking route with ${route.menuItems.length} items`);
         const mostSpecific = findMostSpecificMatch(route.menuItems, path);
         
         if (mostSpecific) {
-            console.log(`✅ [findMenuItemByPath] Most specific match found:`, mostSpecific);
             const result = buildParentChain(mostSpecific, route.menuItems);
-            console.log(`✅ [findMenuItemByPath] Result with parent chain:`, result);
             return result;
         }
         
         // Fallback to recursive search
-        const findItem = (items: MenuItem[], parentItem: MenuItem | null = null): MenuItem | null => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const findItem = (items: MenuItem[], _parentItem: MenuItem | null = null): MenuItem | null => {
             for (const item of items) {
                 // First check children for more specific matches
                 if (item.children) {
                     const found = findItem(item.children, item);
                     if (found) {
-                        console.log(`✅ [findMenuItemByPath] Found in children:`, found);
                         // Build parent chain for the found item
                         return buildParentChain(found, route.menuItems);
                     }
@@ -591,10 +568,8 @@ export const findMenuItemByPath = (path: string): MenuItem | null => {
 
                 // Then check if this item matches (exact match or if path starts with menu item path for dynamic routes)
                 if (pathMatches(item.path, path)) {
-                    console.log(`✅ [findMenuItemByPath] Found matching item:`, item);
                     // Build parent chain for the matched item
                     const result = buildParentChain(item, route.menuItems);
-                    console.log(`✅ [findMenuItemByPath] Result with parent chain:`, result);
                     return result;
                 }
             }
@@ -603,11 +578,9 @@ export const findMenuItemByPath = (path: string): MenuItem | null => {
 
         const found = findItem(route.menuItems);
         if (found) {
-            console.log(`✅ [findMenuItemByPath] Found item:`, found);
             return found;
         }
     }
 
-    console.log(`❌ [findMenuItemByPath] No item found for path: ${path}`);
     return null;
 };

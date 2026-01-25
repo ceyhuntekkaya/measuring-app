@@ -64,7 +64,7 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
                     const response = await Promise.race([
                         getCurrentUser(),
                         timeoutPromise
-                    ]) as any;
+                    ]) as RefreshTokenResponse | { data: RefreshTokenResponse; success: boolean; message?: string };
                     
                     // customInstance zaten data'yı unwrap ediyor (.then(({ data }) => data))
                     // Backend ApiResponse<RefreshTokenResponse> döndürüyorsa, customInstance direkt RefreshTokenResponse'u döndürür

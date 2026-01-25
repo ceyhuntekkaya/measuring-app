@@ -1,6 +1,6 @@
 'use client';
 
-import {createContext, useContext, useState, useEffect, ReactNode} from 'react';
+import {createContext, useContext, useState, useEffect, useCallback, ReactNode} from 'react';
 import type {EvaluationDto, ExamDto, ExamSessionDto} from "@/api/generated/model";
 import type {ApplicationDto, CandidateDto} from "@/api/generated/model";
 import {useAuth} from "@/hooks/use-auth";
@@ -54,13 +54,13 @@ export function ExamApplicationProvider({children}: { children: ReactNode }) {
         if (authApplication) setApplication(authApplication)
         if (authCandidate) setCandidate(authCandidate)
         if (authEvaluations) setEvaluations(authEvaluations)
-    }, []);
+    }, [authExam, authExamSession, authApplication, authCandidate, authEvaluations]);
 
     const getExamData = (examId: string) => {
         setExamIdForQuery(examId);
     };
 
-    function getUniqueSortedExamSections(): ExamSectionDto[] {
+    const getUniqueSortedExamSections = useCallback((): ExamSectionDto[] => {
         if (!selectedExam || !selectedExam.questionGroups || selectedExam.questionGroups.length === 0) {
             return [];
         }
@@ -84,16 +84,16 @@ export function ExamApplicationProvider({children}: { children: ReactNode }) {
             const orderB = b.orderNumber ?? Number.MAX_SAFE_INTEGER;
             return orderA - orderB;
         });
-    }
+    }, [selectedExam]);
 
 
 
     useEffect(() => {
         if (selectedExam) {
             setExam(selectedExam);
-            setExamSections(getUniqueSortedExamSections)
+            setExamSections(getUniqueSortedExamSections())
         }
-    }, [selectedExam]);
+    }, [selectedExam, getUniqueSortedExamSections]);
 
 
 
