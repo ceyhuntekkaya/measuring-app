@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { AudioResponseTemplateDto } from '@/types/exam/questionTemplates';
-import {QuestionTemplateType} from "@/types/exam/examEntities";
+import type { AudioResponseTemplateDto } from '@/api/generated/model';
+import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
-import {UploadedFileDto} from "@/types/exam/miscDtos";
+import {difficultyConverter} from "@/utils/enum-converter";
+import type {UploadedFileDto} from "@/api/generated/model";
 import {uploadAudioFile} from "@/services/api/upload-file";
 import siteConfig from "@/config/config.json";
 
@@ -716,7 +717,7 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                     <h4 className="font-semibold text-gray-700 mb-2">Soru Bilgileri:</h4>
                     <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
                         {template.subject && <div><strong>Konu:</strong> {template.subject}</div>}
-                        {template.difficulty && <div><strong>Zorluk:</strong> {template.difficulty}</div>}
+                        {template.difficulty && <div><strong>Zorluk:</strong> {difficultyConverter(template.difficulty)}</div>}
                         {template.points && <div><strong>Puan:</strong> {template.points}</div>}
                         {template.timeLimit && <div><strong>Süre:</strong> {template.timeLimit} saniye</div>}
                         {template.minRecordingDuration && <div><strong>Min. Kayıt:</strong> {formatTime(template.minRecordingDuration)}</div>}

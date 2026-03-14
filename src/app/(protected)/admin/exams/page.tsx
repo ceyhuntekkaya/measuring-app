@@ -1,27 +1,28 @@
 'use client';
 import {Column, RecordType} from "@/types/ui/table";
-import React, {useEffect} from "react";
+import React, {useMemo, useCallback} from "react";
 import PageHeader from "@/components/layout/page-header";
 import DynamicTable from "@/components/ui/dynamic-table";
 import {ActionButtons} from "@/components/ui/simple-dropdown";
 import {useRouter} from "next/navigation";
 import LoadingComp from "@/components/ui/loading-comp";
-import {useExam} from "@/hooks/exam/use-exam";
+import {useGetAllExams} from "@/api/generated/exam-management/exam-management";
+import {extractApiListData} from "@/utils/api-helpers/extract-api-data";
+import type {ExamDto} from "@/api/generated/model";
 
 export default function ExamPage() {
     const router = useRouter();
-    const {
-        exams,
-        getAllExams,
-        loading
-    } = useExam();
+    const { data, isLoading, error } = useGetAllExams({
+        query: {
+            refetchOnMount: true,
+            refetchOnWindowFocus: false,
+            staleTime: 0,
+        }
+    });
+    
+    const exams = useMemo(() => extractApiListData<ExamDto>(data), [data]);
 
-    useEffect(() => {
-        getAllExams();
-    }, []);
-
-    const columns: Column<RecordType>[] = [
-
+    const columns: Column<RecordType>[] = useMemo(() => [
         {
             key: 'name',
             header: 'Ad',
@@ -30,11 +31,10 @@ export default function ExamPage() {
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => router.push(`/admin/exams/${record.id}`)}
                 >
-                    {value as string}
+                    {String(value || '')}
                 </div>
             )
-        }
-        ,
+        },
         {
             key: 'code',
             header: 'Seviye',
@@ -43,7 +43,7 @@ export default function ExamPage() {
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => router.push(`/admin/exams/${record.id}`)}
                 >
-                    {value as string}
+                    {String(value || '')}
                 </div>
             )
         },
@@ -53,22 +53,28 @@ export default function ExamPage() {
             render: (value, record) => (
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
-                    onClick={() =>  router.push(`/admin/exam/${record.id}`)}
+                    onClick={() => router.push(`/admin/exam/${record.id}`)}
                 >
                     ÖN İZLEME
                 </div>
             )
         }
-    ];
+    ], [router]);
 
-    const handleAdd = () => {
+    const handleAdd = useCallback(() => {
         router.push('/admin/exams/add');
-    };
+    }, [router]);
 
 
-    if (loading) {
+    if (isLoading) {
+        return <LoadingComp/>;
+    }
+
+    if (error) {
         return (
-            <LoadingComp/>
+            <div className="p-6">
+                <p className="text-red-600">Sınavlar yüklenirken bir hata oluştu.</p>
+            </div>
         );
     }
     return (
@@ -80,11 +86,9 @@ export default function ExamPage() {
                 />
             }/>
             <div className="p-6 pt-1">
-                {
-                    exams &&
-                    <DynamicTable columns={columns} data={exams}/>
-                }
-
+                {exams && exams.length > 0 && (
+                    <DynamicTable columns={columns} data={exams as RecordType[]}/>
+                )}
             </div>
         </div>
     );

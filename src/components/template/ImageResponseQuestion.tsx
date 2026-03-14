@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ImageResponseTemplateDto } from '@/types/exam/questionTemplates';
-import {QuestionTemplateType} from "@/types/exam/examEntities";
+import type { ImageResponseTemplateDto } from '@/api/generated/model';
+import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
-import {UploadedFileDto} from "@/types/exam/miscDtos";
+import {difficultyConverter} from "@/utils/enum-converter";
+import type {UploadedFileDto} from "@/api/generated/model";
 import {uploadFile} from "@/services/api/upload-file";
 import siteConfig from "@/config/config.json";
 
@@ -757,7 +758,7 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                             <div><strong>Konu:</strong> {template.subject}</div>
                         )}
                         {template.difficulty && (
-                            <div><strong>Zorluk:</strong> {template.difficulty}</div>
+                            <div><strong>Zorluk:</strong> {difficultyConverter(template.difficulty)}</div>
                         )}
                         {template.points && (
                             <div><strong>Puan:</strong> {template.points}</div>

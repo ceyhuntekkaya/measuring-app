@@ -5,7 +5,7 @@ import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
 import {Clock, User as UserIcon, Phone, Mail, MapPin, Globe, Calendar, IdCard, Key, CheckCircle, XCircle, Camera} from 'lucide-react';
-import {CandidateDto} from '@/types/management/brand';
+import type {CandidateDto} from '@/api/generated/model/candidateDto';
 import { formatDate } from '@/utils/date-formater';
 import LoadingComp from "@/components/ui/loading-comp";
 
@@ -37,7 +37,7 @@ const CandidateDetailPage: React.FC<CandidateDetailProps> = ({
     }
 
     return (
-        <div className="container mx-auto py-6 space-y-6">
+        <div className="container mx-auto py-4 space-y-4">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Aday Detayı</h1>
@@ -400,7 +400,7 @@ const CandidateDetailPage: React.FC<CandidateDetailProps> = ({
                                 <CardTitle>Hesap Zaman Çizelgesi</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="space-y-6">
+                                <div className="space-y-4">
                                     <div className="flex">
                                         <div className="mr-4 flex-shrink-0">
                                             <div className="flex items-center justify-center h-10 w-10 rounded-full bg-blue-100 text-blue-600">

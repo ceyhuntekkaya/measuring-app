@@ -1,8 +1,9 @@
 import React from 'react';
-import {ExamSectionDto} from "@/types/exam/examTemplates";
+import type {ExamSectionDto} from "@/api/generated/model";
 import {useExamApplicationContext} from "@/contexts/ExamApplicationContext";
-import {useApplication} from "@/hooks/exam/use-application";
+import {useSetEndedAt, useUpdateSessionState1} from "@/api/generated/application-management/application-management";
 import {ESessionState} from "@/types/exam/enum";
+import type {UpdateSessionStateRequestSessionState} from "@/api/generated/model";
 
 interface ExamSectionsListProps {
     sections: ExamSectionDto[];
@@ -14,7 +15,9 @@ const ExamSectionsList: React.FC<ExamSectionsListProps> = ({
                                                                onSectionSelect
                                                            }) => {
     const {candidate, application} = useExamApplicationContext();
-    const {setApplicationEndedAt, updateApplicationSessionState, loading} = useApplication();
+    const setEndedAtMutation = useSetEndedAt();
+    const updateSessionStateMutation = useUpdateSessionState1();
+    const loading = setEndedAtMutation.isPending || updateSessionStateMutation.isPending;
 
     const handleCompleteExam = async () => {
         if (!application?.id) {
@@ -23,8 +26,14 @@ const ExamSectionsList: React.FC<ExamSectionsListProps> = ({
 
         if (window.confirm('Sınavı tamamlamak istediğinize emin misiniz? Bu işlem geri alınamaz.')) {
             try {
-                await setApplicationEndedAt(application.id);
-                await updateApplicationSessionState(application.id, ESessionState.FINISHED);
+                await setEndedAtMutation.mutateAsync({ id: application.id });
+                await updateSessionStateMutation.mutateAsync({ 
+                    id: application.id, 
+                    data: { 
+                        applicationId: application.id,
+                        sessionState: ESessionState.FINISHED as UpdateSessionStateRequestSessionState
+                    } 
+                });
             } catch (error) {
                 console.error('Sınav tamamlanırken hata oluştu:', error);
             }
@@ -71,9 +80,9 @@ const ExamSectionsList: React.FC<ExamSectionsListProps> = ({
                                     <h3 className="text-lg font-semibold text-gray-800">
                                         {section.name || 'İsimsiz Bölüm'}
                                     </h3>
-                                    {section.examType?.name && (
+                                    {(section.examType as { name?: string })?.name && (
                                         <p className="text-sm text-gray-500 mt-1">
-                                            {section.examType.name}
+                                            {(section.examType as { name?: string }).name}
                                         </p>
                                     )}
                                 </div>

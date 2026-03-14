@@ -7,8 +7,7 @@ import {Button} from "@/components/ui/button";
 import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
 import {Textarea} from "@/components/ui/textarea";
-import {BrandDto, BrandFormData} from "@/types/management/brand";
-import {EStatus} from "@/types/exam/enum";
+import type {BrandDto, CreateBrandRequest, UpdateBrandRequest} from "@/api/generated/model";
 
 
 interface BrandFormErrors {
@@ -22,7 +21,7 @@ interface BrandFormErrors {
 }
 
 interface BrandFormProps {
-    onSubmit: (data: BrandFormData) => Promise<void>;
+    onSubmit: (data: CreateBrandRequest | UpdateBrandRequest) => Promise<void>;
     brand?: BrandDto | null;
     loading?: boolean;
 }
@@ -33,7 +32,7 @@ const BrandForm: React.FC<BrandFormProps> = ({
                                                  brand,
                                                  loading = false
                                              }) => {
-    const [formData, setFormData] = useState<BrandFormData>({
+    const [formData, setFormData] = useState<CreateBrandRequest>({
         name: '',
         code: '',
         description: '',
@@ -43,16 +42,7 @@ const BrandForm: React.FC<BrandFormProps> = ({
         phone: '',
         address: '',
         taxNumber: '',
-        taxOffice: '',
-
-
-
-        id: '',
-        createdAt: new Date(),
-        deletedAt: null,
-        status: EStatus.ACTIVE,
-        createdById: '',
-        deletedById: ''
+        taxOffice: ''
     });
 
     const [errors, setErrors] = useState<BrandFormErrors>({});
@@ -60,14 +50,6 @@ const BrandForm: React.FC<BrandFormProps> = ({
     useEffect(() => {
         if (brand) {
             setFormData({
-                id: brand.id || '',
-                createdAt: brand.createdAt || new Date(),
-                deletedAt: brand.deletedAt || null,
-                status: brand.status,
-                createdById: brand.createdById || null,
-                deletedById: brand.deletedById || null,
-
-
                 name: brand.name || '',
                 code: brand.code || '',
                 description: brand.description || '',
@@ -82,9 +64,9 @@ const BrandForm: React.FC<BrandFormProps> = ({
         }
     }, [brand]);
 
-    const handleChange = <T extends keyof BrandFormData>(
+    const handleChange = <T extends keyof CreateBrandRequest>(
         name: T,
-        value: BrandFormData[T]
+        value: CreateBrandRequest[T]
     ) => {
         setFormData(prev => ({
             ...prev,
@@ -132,27 +114,18 @@ const BrandForm: React.FC<BrandFormProps> = ({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (validateForm()) {
-            const submitData = {
-
-                id: formData.id || '',
-                createdAt: formData.createdAt || new Date(),
-                deletedAt: formData.deletedAt || null,
-                status: formData.status,
-                createdById: formData.createdById || null,
-                deletedById: formData.deletedById || null,
-
-
-
+            // Directly use formData - no manual mapping needed!
+            const submitData: CreateBrandRequest | UpdateBrandRequest = {
                 name: formData.name.trim(),
                 code: formData.code.trim().toUpperCase(),
-                description: formData.description || '',
-                logo: formData.logo ||  '',
-                website: formData.website ||  '',
-                email: formData.email ||  '',
-                phone: formData.phone ||  '',
-                address: formData.address ||  '',
-                taxNumber: formData.taxNumber ||  '',
-                taxOffice: formData.taxOffice ||  ''
+                description: formData.description || undefined,
+                logo: formData.logo || undefined,
+                website: formData.website || undefined,
+                email: formData.email || undefined,
+                phone: formData.phone || undefined,
+                address: formData.address || undefined,
+                taxNumber: formData.taxNumber || undefined,
+                taxOffice: formData.taxOffice || undefined
             };
 
             onSubmit(submitData);

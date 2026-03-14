@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { NumberInput } from "@/components/ui/number-input";
-import { AudioResponseTemplateDto } from "@/types/exam/questionTemplates";
+import type { AudioResponseTemplateDto } from "@/api/generated/model";
 
 interface AudioResponseTemplateFormProps {
     value?: AudioResponseTemplateDto | null;

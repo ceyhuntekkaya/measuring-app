@@ -2,3 +2,12 @@
 ssh root@46.62.141.0
 ssh -o ServerAliveInterval=60 root@46.62.141.0
 4 ile baslayan
+
+
+
+
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  --target runner \
+  -t ctekkaya/measuring-app:1.0 \
+  --push .

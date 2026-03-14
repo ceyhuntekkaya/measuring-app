@@ -1,26 +1,28 @@
 'use client';
 
 import PageHeader from "@/components/layout/page-header";
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useState, useMemo} from "react";
 import {useRouter} from "next/navigation";
 import {Column, RecordType} from "@/types/ui/table";
 import LoadingComp from "@/components/ui/loading-comp";
 import {ActionButtons} from "@/components/ui/simple-dropdown";
 import DynamicTable from "@/components/ui/dynamic-table";
-import {useCandidate} from "@/hooks/exam/use-candidate";
-import {CandidateDto} from "@/types/management/brand";
-import {useApplication} from "@/hooks/exam/use-application";
-import {useExam} from "@/hooks/exam/use-exam";
-import {ExamSessionDto, ExamDto} from "@/types/exam/examEntities";
-import {useExamSession} from "@/hooks/exam/use-exam-session";
-import {EStatus} from "@/types/exam/enum";
+import {useGetAllCandidates} from "@/api/generated/candidate-management/candidate-management";
+import type {CandidateDto, ApiResponseListCandidateDto} from "@/api/generated/model";
+import {useCreateApplication} from "@/api/generated/application-management/application-management";
+import {useGetAllExams} from "@/api/generated/exam-management/exam-management";
+import type { ApiResponseListExamDto, CreateApplicationRequest, ApiResponseExamSessionListResponse, ExamSessionDto } from "@/api/generated/model";
+import type {ExamDto} from "@/api/generated/model";
+import {useGetUpcomingExamSessions} from "@/api/generated/exam-session-management/exam-session-management";
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {Label} from "@/components/ui/label";
 import siteConfig from '@/config/config.json';
+import {useQueryClient} from "@tanstack/react-query";
 
 
 export default function CandidatePage() {
     const router = useRouter();
+    const queryClient = useQueryClient();
     const [selectedExamSession, setSelectedExamSession] = useState<ExamSessionDto | null>(null);
     const [selectedCandidates, setSelectedCandidates] = useState<string[]>([]);
     const [filteredCandidates, setFilteredCandidates] = useState<CandidateDto[]>([]);
@@ -29,33 +31,71 @@ export default function CandidatePage() {
 
     const LINK_URL = siteConfig.api.linkUrl;
 
+    const {data: candidatesData, isLoading: loading} = useGetAllCandidates({
+        query: {
+            refetchOnMount: true,
+            refetchOnWindowFocus: false,
+            staleTime: 0,
+        }
+    });
+    
+    const candidates = useMemo(() => {
+        if (candidatesData && typeof candidatesData === 'object' && 'data' in candidatesData) {
+            const apiData = (candidatesData as { data?: unknown }).data;
+            if (Array.isArray(apiData)) {
+                return apiData as CandidateDto[];
+            }
+        }
+        return (candidatesData as unknown as ApiResponseListCandidateDto)?.data || null;
+    }, [candidatesData]);
 
-    const {
-        getAllCandidates,
-        candidates,
-        loading,
-    } = useCandidate();
+    const { data: examsData } = useGetAllExams({
+        query: {
+            refetchOnMount: true,
+            staleTime: 0,
+        }
+    });
+    
+    const exams = useMemo(() => {
+        if (examsData && typeof examsData === 'object' && 'data' in examsData) {
+            const apiData = (examsData as { data?: unknown }).data;
+            if (Array.isArray(apiData)) {
+                return apiData as ExamDto[];
+            }
+        }
+        return (examsData as unknown as ApiResponseListExamDto)?.data || null;
+    }, [examsData]);
 
-    const {
-        exams,
-        getAllExams,
+    const { data: sessionsData } = useGetUpcomingExamSessions({
+        query: {
+            refetchOnMount: true,
+            refetchOnWindowFocus: false,
+            staleTime: 0,
+        }
+    });
+    
+    const upcomingExamSessions = useMemo(() => {
+        if (sessionsData && typeof sessionsData === 'object' && 'data' in sessionsData) {
+            const apiData = (sessionsData as { data?: unknown }).data;
+            // Nested yapı: { data: { examSessions: [...] } }
+            if (apiData && typeof apiData === 'object' && apiData !== null && 'examSessions' in apiData) {
+                const examSessions = (apiData as { examSessions?: unknown }).examSessions;
+                return Array.isArray(examSessions) ? examSessions : [];
+            }
+            // Direct array: { data: [...] }
+            if (Array.isArray(apiData)) {
+                return apiData;
+            }
+        }
+        // Fallback
+        return ((sessionsData as unknown as ApiResponseExamSessionListResponse)?.data?.examSessions || []) as ExamSessionDto[];
+    }, [sessionsData]);
 
-    } = useExam();
-
-    const {
-        upcomingExamSessions,
-        getUpcomingExamSessions,
-    } = useExamSession();
-
-    const {
-        createApplication,
-    } = useApplication();
-
-    useEffect(() => {
-        getAllCandidates();
-        getAllExams();
-        getUpcomingExamSessions();
-    }, []);
+    const createApplicationMutation = useCreateApplication();
+    const createApplication = async (data: CreateApplicationRequest) => {
+        await createApplicationMutation.mutateAsync({ data });
+        queryClient.invalidateQueries({ queryKey: ['/candidates'] });
+    };
 
     // ExamSession seçildiğinde candidate'leri filtrele
     useEffect(() => {
@@ -103,11 +143,12 @@ export default function CandidatePage() {
     };
 
     const handleManualAssignment = () => {
-        if (!selectedExamSession) return;
+        if (!selectedExamSession || !selectedExamSession.examType?.id) return;
 
+        const examTypeId = selectedExamSession.examType.id;
         // Seçili examSession'ın examType'ına göre exam'ları filtrele
         const filtered = exams?.filter(exam =>
-            exam.examType.id === selectedExamSession.examType.id
+            exam.examType?.id === examTypeId
         ) || [];
 
         setFilteredExams(filtered);
@@ -128,7 +169,7 @@ export default function CandidatePage() {
             c.examSessionId === selectedExamSession.id && c.application
         ).length || 0;
 
-        const availableQuota = selectedExamSession.quota - currentApplicationCount;
+        const availableQuota = (selectedExamSession.quota || 0) - currentApplicationCount;
 
         if (selectedCandidates.length > availableQuota) {
             alert(`Kota yetersiz! Mevcut kota: ${availableQuota}, Seçili candidate sayısı: ${selectedCandidates.length}`);
@@ -142,25 +183,15 @@ export default function CandidatePage() {
                     name: `Application for ${candidateId}`,
                     code: `APP-${Date.now()}-${candidateId.substring(0, 8)}`,
                     examId: selectedExam?.id || '',
-                    examSessionId: selectedExamSession.id,
+                    examSessionId: selectedExamSession.id || '',
                     candidateId: candidateId,
-                    username: `user_${candidateId.substring(0, 8)}`,
-
-
-                    id: '',
-                    createdAt: null,
-                    deletedAt: null,
-                    status: EStatus.ACTIVE,
-                    createdById: null,
-                    deletedById: null
-
-
+                    username: `user_${candidateId.substring(0, 8)}`
                 });
             }
 
 
             // İşlem tamamlandıktan sonra listeyi yenile
-            await getAllCandidates();
+            queryClient.invalidateQueries({ queryKey: ['/candidates'] });
             setSelectedCandidates([]);
             setShowExamModal(false);
 
@@ -185,14 +216,18 @@ export default function CandidatePage() {
         {
             key: 'checkbox',
             header: 'SEÇ',
-            render: (value, record) => (
-                <input
-                    type="checkbox"
-                    checked={selectedCandidates.includes((record as CandidateDto).id)}
-                    onChange={(e) => handleSelectCandidate((record as CandidateDto).id, e.target.checked)}
-                    className="rounded border-gray-300"
-                />
-            )
+            render: (value, record) => {
+                const candidateId = (record as CandidateDto).id;
+                if (!candidateId) return null;
+                return (
+                    <input
+                        type="checkbox"
+                        checked={selectedCandidates.includes(candidateId)}
+                        onChange={(e) => handleSelectCandidate(candidateId, e.target.checked)}
+                        className="rounded border-gray-300"
+                    />
+                );
+            }
         },
         {
             key: 'name',
@@ -324,7 +359,7 @@ export default function CandidatePage() {
 
                 {/* Candidate Tablosu */}
                 {filteredCandidates.length > 0 ? (
-                    <DynamicTable columns={columns} data={filteredCandidates}/>
+                    <DynamicTable columns={columns} data={filteredCandidates as RecordType[]}/>
                 ) : selectedExamSession ? (
                     <div className="text-center py-8 text-gray-500">
                         Bu oturuma ait katılımcı bulunamadı.

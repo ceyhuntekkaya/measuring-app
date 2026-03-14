@@ -1,30 +1,43 @@
 'use client';
 
 import PageHeader from "@/components/layout/page-header";
-import React, {useEffect} from "react";
+import React, {useMemo, useCallback} from "react";
 import {ActionButtons} from "@/components/ui/simple-dropdown";
 import {useRouter} from "next/navigation";
 import {Column, RecordType} from "@/types/ui/table";
 import LoadingComp from "@/components/ui/loading-comp";
 import DynamicTable from "@/components/ui/dynamic-table";
-import {useExamSession} from "@/hooks/exam/use-exam-session";
+import {useGetUpcomingExamSessions} from "@/api/generated/exam-session-management/exam-session-management";
 import {formatDate} from "@/utils/date-formater";
+import {extractApiListData} from "@/utils/api-helpers/extract-api-data";
+import type {ExamSessionDto} from "@/api/generated/model";
 
 
-export default function AdminPage() {
+export default function SessionsPage() {
     const router = useRouter();
-    const {
-        getUpcomingExamSessions,
-        upcomingExamSessions,
-        loading
-    } = useExamSession();
+    const {data, isLoading, error} = useGetUpcomingExamSessions({
+        query: {
+            refetchOnMount: true,
+            refetchOnWindowFocus: false,
+            staleTime: 0,
+        }
+    });
+    
+    const upcomingExamSessions = useMemo(() => {
+        if (data && typeof data === 'object' && 'data' in data) {
+            const apiData = (data as { data?: unknown }).data;
+            if (apiData && typeof apiData === 'object' && apiData !== null && 'examSessions' in apiData) {
+                const examSessions = (apiData as { examSessions?: unknown }).examSessions;
+                return Array.isArray(examSessions) ? examSessions : [];
+            }
+            if (Array.isArray(apiData)) {
+                return apiData;
+            }
+        }
+        return extractApiListData<ExamSessionDto>(data);
+    }, [data]);
 
-    useEffect(() => {
-        getUpcomingExamSessions();
-    }, []);
-
-    const columns: Column<RecordType>[] = [
-
+    const columns: Column<RecordType>[] = useMemo(() => [
         {
             key: 'name',
             header: 'Ad',
@@ -33,11 +46,10 @@ export default function AdminPage() {
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => router.push(`/admin/sessions/${record.id}`)}
                 >
-                    {value as string}
+                    {String(value || '')}
                 </div>
             )
-        }
-        ,
+        },
         {
             key: 'description',
             header: 'Açıklama',
@@ -46,7 +58,7 @@ export default function AdminPage() {
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => router.push(`/admin/sessions/${record.id}`)}
                 >
-                    {value as string}
+                    {String(value || '')}
                 </div>
             )
         },
@@ -58,24 +70,26 @@ export default function AdminPage() {
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => router.push(`/admin/sessions/${record.id}`)}
                 >
-                    {value as string}
+                    {String(value || '')}
                 </div>
             )
-        }
-        ,
+        },
         {
-            key: 'examTemplate',
+            key: 'examType',
             header: 'Sınav Tipi',
-            render: (value, record) => (
-                <div
-                    className="font-medium cursor-pointer hover:text-blue-600"
-                    onClick={() => router.push(`/admin/sessions/${record.id}`)}
-                >
-                    {value as string}
-                </div>
-            )
-        }
-        ,
+            render: (value, record) => {
+                const examType = (record as ExamSessionDto)?.examType;
+                const examTypeName = examType?.name || '';
+                return (
+                    <div
+                        className="font-medium cursor-pointer hover:text-blue-600"
+                        onClick={() => router.push(`/admin/sessions/${record.id}`)}
+                    >
+                        {examTypeName}
+                    </div>
+                );
+            }
+        },
         {
             key: 'startDate',
             header: 'Başlama',
@@ -84,23 +98,29 @@ export default function AdminPage() {
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => router.push(`/admin/sessions/${record.id}`)}
                 >
-                    {formatDate(value as string, 'dateTime') }
+                    {formatDate(value as string, 'dateTime')}
                 </div>
             )
         }
+    ], [router]);
 
-    ];
-
-    const handleAdd = () => {
+    const handleAdd = useCallback(() => {
         router.push('/admin/sessions/add');
-    };
+    }, [router]);
 
 
-    if (loading) {
+    if (isLoading) {
+        return <LoadingComp/>;
+    }
+
+    if (error) {
         return (
-            <LoadingComp/>
+            <div className="p-6">
+                <p className="text-red-600">Oturumlar yüklenirken bir hata oluştu.</p>
+            </div>
         );
     }
+
     return (
         <div className="space-y-6">
             <PageHeader actions={
@@ -110,11 +130,7 @@ export default function AdminPage() {
                 />
             }/>
             <div className="p-6 pt-1">
-                {
-                    upcomingExamSessions &&
-                    <DynamicTable columns={columns} data={upcomingExamSessions}/>
-                }
-
+                <DynamicTable columns={columns} data={upcomingExamSessions as RecordType[]}/>
             </div>
         </div>
     );

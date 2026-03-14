@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import { findMenuItemByPath, MenuItem } from '@/config/routes';
+import { findMenuItemByPath, generateBreadcrumbsFromPath, MenuItem } from '@/config/routes';
 import {useExamApplicationContext} from "@/contexts/ExamApplicationContext";
 
 interface PageHeaderProps {
@@ -20,23 +20,32 @@ export default function PageExamHeader({ actions }: PageHeaderProps) {
     const userName = candidate ? `${candidate.name || ''} ${candidate.lastName || ''}`.trim() : '';
     const greeting = userName ? `Merhaba, ${userName}` : 'Merhaba';
 
-    const getBreadcrumbs = (menuItem: MenuItem | null): MenuItem[] => {
-        const breadcrumbs: MenuItem[] = [];
-        let current = menuItem;
+    const getBreadcrumbs = (): MenuItem[] => {
+        // Önce menüden bulmaya çalış
+        if (currentPage) {
+            const chain: MenuItem[] = [];
+            let current: MenuItem | null = currentPage;
 
-        while (current?.parent) {
-            breadcrumbs.unshift(current.parent);
-            current = current.parent;
+            // Root'a kadar çık ve tüm parent chain'i topla
+            while (current) {
+                chain.push(current);
+                current = current.parent || null;
+            }
+
+            // Root'dan başlayarak sırala
+            const menuBreadcrumbs = chain.reverse();
+            
+            // Eğer menüden breadcrumb bulunduysa, onu kullan
+            if (menuBreadcrumbs.length > 0) {
+                return menuBreadcrumbs;
+            }
         }
 
-        if (menuItem) {
-            breadcrumbs.push(menuItem);
-        }
-
-        return breadcrumbs;
+        // Menüde yoksa, path'ten oluştur
+        return generateBreadcrumbsFromPath(pathname);
     };
 
-    const breadcrumbs = getBreadcrumbs(currentPage);
+    const breadcrumbs = getBreadcrumbs();
 
     return (<>
             <div className="mt-1 mb-4 p-2 flex items-center justify-between bg-white">
@@ -54,19 +63,33 @@ export default function PageExamHeader({ actions }: PageHeaderProps) {
                         </h1>
 
                         <div className="flex items-center mt-1 text-sm text-gray-500">
-                            {breadcrumbs.map((item, index) => (
-                                <div key={item.path} className="flex items-center">
-                                    {index > 0 && (
-                                        <ChevronRight className="h-4 w-4 mx-2" />
-                                    )}
-                                    <Link
-                                        href={item.path}
-                                        className="hover:text-gray-700"
-                                    >
-                                       Deneme
-                                    </Link>
-                                </div>
-                            ))}
+                            {breadcrumbs.map((item, index) => {
+                                // Check if this is a container (menu group, not a real page)
+                                const isContainer = item.isContainer === true;
+                                
+                                // Use index + path for unique key to avoid duplicate key warnings
+                                const uniqueKey = `${item.path}-${index}`;
+                                
+                                return (
+                                    <div key={uniqueKey} className="flex items-center">
+                                        {index > 0 && (
+                                            <ChevronRight className="h-4 w-4 mx-2" />
+                                        )}
+                                        {isContainer ? (
+                                            <span className="text-gray-500 cursor-default">
+                                                {item.title}
+                                            </span>
+                                        ) : (
+                                            <Link
+                                                href={item.path}
+                                                className="hover:text-gray-700"
+                                            >
+                                                {item.title}
+                                            </Link>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>

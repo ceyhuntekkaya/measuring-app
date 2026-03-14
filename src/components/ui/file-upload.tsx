@@ -5,7 +5,7 @@ import {Label} from "@/components/ui/label";
 import {Alert, AlertDescription} from "@/components/ui/alert";
 import siteConfig from '@/config/config.json';
 import {Progress} from "@/components/ui/progress";
-import {UploadedFileDto} from "@/types/exam/miscDtos";
+import type {UploadedFileDto} from "@/api/generated/model";
 
 const API_URL = siteConfig.api.invokeUrl;
 

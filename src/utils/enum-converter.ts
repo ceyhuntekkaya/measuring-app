@@ -1,4 +1,4 @@
-import {EExamType, EStatus, EApprovalStatus} from "@/types/exam/enum";
+import {EExamType, EStatus, EApprovalStatus, EDifficulty} from "@/types/exam/enum";
 
 export const examTypeConverter = (examType?: EExamType) => {
     if (!examType) return 'Belirtilmedi';
@@ -70,6 +70,23 @@ export const approvalStatusConverter = (status?: EApprovalStatus | string) => {
             return status || 'Belirtilmedi'
     }
 }
+
+export const difficultyConverter = (difficulty?: EDifficulty | string) => {
+    if (!difficulty) return 'Belirtilmedi';
+    switch (difficulty) {
+        case EDifficulty.EASY:
+        case 'EASY':
+            return 'Kolay';
+        case EDifficulty.MEDIUM:
+        case 'MEDIUM':
+            return 'Orta';
+        case EDifficulty.HARD:
+        case 'HARD':
+            return 'Zor';
+        default:
+            return typeof difficulty === 'string' ? difficulty : 'Belirtilmedi';
+    }
+};
 
 export const getApprovalStatusColor = (status?: EApprovalStatus | string) => {
     if (!status) return 'bg-gray-100 text-gray-800 border-gray-200';

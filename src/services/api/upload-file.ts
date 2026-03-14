@@ -1,7 +1,14 @@
-import siteConfig from '@/config/config.json';
-import {UploadedFileDto} from "@/types/exam/miscDtos";
+import type { UploadedFileDto } from "@/api/generated/model";
+import { AXIOS_INSTANCE } from '@/api/axios-instance';
 
-const API_URL = siteConfig.api.invokeUrl;
+type ApiResponse<T> = {
+    success: boolean;
+    message?: string;
+    data?: T;
+    errors?: string[];
+    timestamp?: string;
+    path?: string;
+};
 
 export type DatabaseObjectDto = {
     id?: string;
@@ -10,18 +17,16 @@ export type DatabaseObjectDto = {
     updatedBy?: string;
 };
 
-
-
 export interface UploadFileOptions {
     onProgress?: (progress: number) => void;
     onError?: (error: string) => void;
 }
 
 /**
- * Upload a single file to the server
+ * Upload a single file to the server using Orval's uploadFiles endpoint
  * @param file - File or Blob to upload
- * @param entityId - Entity ID for the upload endpoint
- * @param uploadType - Upload type for the upload endpoint
+ * @param entityId - Entity ID for the upload endpoint (groupId)
+ * @param uploadType - Upload type for the upload endpoint (type)
  * @param options - Optional callbacks for progress and error handling
  * @returns Promise<UploadedFileDto[]> - Array with single uploaded file data
  */
@@ -31,88 +36,52 @@ export const uploadFile = async (
     uploadType: string,
     options?: UploadFileOptions
 ): Promise<UploadedFileDto[]> => {
-    return new Promise((resolve, reject) => {
-        try {
-            const formData = new FormData();
+    try {
+        const formData = new FormData();
 
-            // If it's a Blob without a name, create a default filename
-            if (file instanceof Blob && !(file instanceof File)) {
-                const fileName = `audio-${Date.now()}.webm`;
-                formData.append('files', file, fileName);
-            } else {
-                formData.append('files', file);
-            }
+        // If it's a Blob without a name, create a default filename
+        if (file instanceof Blob && !(file instanceof File)) {
+            const fileName = `audio-${Date.now()}.webm`;
+            formData.append('files', file, fileName);
+        } else {
+            formData.append('files', file);
+        }
 
-            const xhr = new XMLHttpRequest();
-
-            // Progress tracking
-            xhr.upload.addEventListener('progress', (e) => {
-                if (e.lengthComputable && options?.onProgress) {
-                    const percentComplete = Math.round((e.loaded / e.total) * 100);
-                    options.onProgress(percentComplete);
-                }
-            });
-
-            // Success handler
-            xhr.addEventListener('load', () => {
-                if (xhr.status === 200) {
-                    try {
-                        const response: UploadedFileDto[] = JSON.parse(xhr.responseText);
-                        resolve(response);
-                    } catch (e) {
-                        const errorMsg = `Sunucu yanıtı işlenirken hata oluştu: ${e}`;
-                        if (options?.onError) {
-                            options.onError(errorMsg);
-                        }
-                        reject(new Error(errorMsg));
+        // Use AXIOS_INSTANCE directly for progress tracking support
+        const response = await AXIOS_INSTANCE.post<ApiResponse<UploadedFileDto[]>>(
+            `/upload/${entityId}/${uploadType}`,
+            formData,
+            {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+                onUploadProgress: (progressEvent: { loaded: number; total?: number }) => {
+                    if (progressEvent.total && options?.onProgress) {
+                        const percentComplete = Math.round(
+                            (progressEvent.loaded * 100) / progressEvent.total
+                        );
+                        options.onProgress(percentComplete);
                     }
-                } else {
-                    const errorMsg = `Yükleme hatası: ${xhr.status} - ${xhr.statusText}`;
-                    if (options?.onError) {
-                        options.onError(errorMsg);
-                    }
-                    reject(new Error(errorMsg));
-                }
-            });
-
-            // Error handler
-            xhr.addEventListener('error', () => {
-                const errorMsg = 'Yükleme sırasında bir hata oluştu.';
-                if (options?.onError) {
-                    options.onError(errorMsg);
-                }
-                reject(new Error(errorMsg));
-            });
-
-            // Abort handler
-            xhr.addEventListener('abort', () => {
-                const errorMsg = 'Yükleme iptal edildi.';
-                if (options?.onError) {
-                    options.onError(errorMsg);
-                }
-                reject(new Error(errorMsg));
-            });
-
-            // Open connection
-            xhr.open('POST', `${API_URL}/upload/${entityId}/${uploadType}`);
-
-            // Set authorization header
-            const token = localStorage.getItem('accessToken');
-            if (token) {
-                xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+                },
             }
+        );
 
-            // Send request
-            xhr.send(formData);
-
-        } catch (err) {
-            const errorMsg = `Yükleme başlatılırken hata oluştu: ${err}`;
+        if (response.data && response.data.success && response.data.data) {
+            return response.data.data;
+        } else {
+            const errorMsg = response.data?.message || 'Yükleme başarısız';
             if (options?.onError) {
                 options.onError(errorMsg);
             }
-            reject(new Error(errorMsg));
+            throw new Error(errorMsg);
         }
-    });
+    } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : 'Yükleme başlatılırken hata oluştu';
+        if (options?.onError) {
+            options.onError(errorMsg);
+        }
+        throw err;
+    }
 };
 
 /**

@@ -14,12 +14,14 @@ interface ActionButtonsProps {
     onAdd?: () => void;
     addButtonText?: string;
     dropdownActions?: DropdownAction[];
+    disabled?: boolean;
 }
 
 export function ActionButtons({
                                   onAdd,
                                   addButtonText = "Yeni Ekle",
-                                  dropdownActions = []
+                                  dropdownActions = [],
+                                  disabled = false
                               }: ActionButtonsProps) {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -43,7 +45,7 @@ export function ActionButtons({
         <div className="flex items-center gap-2">
             {/* Ana Ekle butonu */}
             {onAdd && (
-                <Button onClick={onAdd}>
+                <Button onClick={onAdd} disabled={disabled}>
                     <Plus className="w-4 h-4 mr-2" />
                     {addButtonText}
                 </Button>

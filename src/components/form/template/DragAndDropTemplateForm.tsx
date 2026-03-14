@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import Checkbox from "@/components/ui/checkbox";
 import { NumberInput } from "@/components/ui/number-input";
-import { DragAndDropTemplateDto, DragAndDropOptions, DraggableItem, DropZone } from "@/types/exam/questionTemplates";
+import type { DragAndDropTemplateDto, DraggableItem, DropZone, DragAndDropOptions } from "@/api/generated/model";
 import { Trash2, Plus } from "lucide-react";
 
 interface DragAndDropTemplateFormProps {
@@ -36,7 +36,7 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
                                                                                                          }, ref) => {
     const [formData, setFormData] = useState<DragAndDropTemplateDto>({
         instructions: '',
-        options: null,
+        options: undefined,
         allowMultipleItemsPerZone: false,
         shuffleDraggableItems: true,
         explanation: '' // UI'dan kaldırıldı, her zaman boş string
@@ -51,7 +51,7 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
         if (value) {
             setFormData({
                 instructions: value.instructions || '',
-                options: value.options || null,
+                options: value.options || undefined,
                 allowMultipleItemsPerZone: value.allowMultipleItemsPerZone || false,
                 shuffleDraggableItems: value.shuffleDraggableItems ?? true,
                 explanation: '' // UI'dan kaldırıldı, her zaman boş string
@@ -75,7 +75,7 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
                 }
             }
         }
-    }, []);
+    }, [value]);
 
     // Form data veya items değiştiğinde parent'a bildir (Anlık güncelleme)
     useEffect(() => {
@@ -97,7 +97,8 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
 
             onChange(templateData);
         }
-    }, [formData, draggableItems, dropZones]); // onChange ve value bağımlılığı yok
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [formData, draggableItems, dropZones]); // onChange ve value bağımlılığı yok - onChange parent'tan geliyor ve her render'da değişebilir
 
     const handleChange = <T extends keyof DragAndDropTemplateDto>(
         name: T,

@@ -1,7 +1,8 @@
 import React from 'react';
-import { ExamSectionDto } from '@/types/exam/examTemplates';
+import type { ExamSectionDto, ExamTypeDto } from '@/api/generated/model';
 import {Button} from "@/components/ui/button";
 import { examTypeConverter } from '@/utils/enum-converter';
+import { EExamType } from '@/types/exam/enum';
 
 interface ExamSectionDetailProps {
     selectedExamSection: ExamSectionDto | null;
@@ -32,8 +33,10 @@ const ExamSectionDetail: React.FC<ExamSectionDetailProps> = ({ selectedExamSecti
         return result.trim() || '0 saniye';
     };
 
+    const examType = selectedExamSection.examType as ExamTypeDto | undefined;
+
     return (
-        <div className="mx-auto p-6 space-y-6">
+        <div className="mx-auto p-4 space-y-4">
 
             <div className="flex items-center justify-between">
                 <div>
@@ -55,7 +58,7 @@ const ExamSectionDetail: React.FC<ExamSectionDetailProps> = ({ selectedExamSecti
             </div>
 
             {/* Header */}
-            <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+            <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
                 <div className="flex items-start justify-between mb-4">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900 mb-2">
@@ -90,7 +93,7 @@ const ExamSectionDetail: React.FC<ExamSectionDetailProps> = ({ selectedExamSecti
             </div>
 
             {/* Basic Information */}
-            <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+            <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Temel Bilgiler</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
@@ -145,16 +148,16 @@ const ExamSectionDetail: React.FC<ExamSectionDetailProps> = ({ selectedExamSecti
             </div>
 
             {/* Exam Type Information */}
-            {selectedExamSection.examType && (
-                <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+            {examType && (
+                <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
                     <h2 className="text-lg font-semibold text-gray-900 mb-4">Bağlı Sınav Türü</h2>
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
                         <div className="flex items-start justify-between">
                             <div className="space-y-3">
                                 <div>
                                     <div className="text-sm font-medium text-blue-600 mb-1">Sınav Türü Adı</div>
                                     <div className="text-xl font-bold text-blue-900">
-                                        {selectedExamSection.examType.name || 'İsimsiz Sınav Türü'}
+                                        {examType.name || 'İsimsiz Sınav Türü'}
                                     </div>
                                 </div>
 
@@ -162,98 +165,66 @@ const ExamSectionDetail: React.FC<ExamSectionDetailProps> = ({ selectedExamSecti
                                     <div>
                                         <div className="text-sm font-medium text-blue-600">Tür</div>
                                         <div className="text-blue-900 font-semibold">
-                                            {examTypeConverter(selectedExamSection.examType.examType)}
+                                            {examTypeConverter(examType.examType as EExamType)}
                                         </div>
                                     </div>
 
                                     <div>
                                         <div className="text-sm font-medium text-blue-600">Seviye</div>
                                         <div className="text-blue-900 font-semibold">
-                                            {selectedExamSection.examType.examLevel || 'Belirtilmedi'}
+                                            {examType.examLevel || 'Belirtilmedi'}
                                         </div>
                                     </div>
 
                                     <div>
                                         <div className="text-sm font-medium text-blue-600">Maksimum Puan</div>
                                         <div className="text-blue-900 font-semibold">
-                                            {selectedExamSection.examType.maximumScore || 'Belirtilmedi'}
+                                            {examType.maximumScore || 'Belirtilmedi'}
                                         </div>
                                     </div>
 
                                     <div>
                                         <div className="text-sm font-medium text-blue-600">Süre</div>
                                         <div className="text-blue-900 font-semibold">
-                                            {formatDuration(selectedExamSection.examType.durationInSeconds)}
+                                            {formatDuration(examType.durationInSeconds)}
                                         </div>
                                     </div>
                                 </div>
 
-                                {selectedExamSection.examType.description && (
+                                {examType.description && (
                                     <div className="mt-4 p-3 bg-white/70 rounded-lg border border-blue-200">
                                         <div className="text-sm font-medium text-blue-600 mb-1">Açıklama</div>
-                                        <div className="text-blue-900">{selectedExamSection.examType.description}</div>
+                                        <div className="text-blue-900">{examType.description}</div>
                                     </div>
                                 )}
                             </div>
 
                             <div className="flex flex-col space-y-2 ml-4">
                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    selectedExamSection.examType.isFinalized
+                    examType.isFinalized
                         ? 'bg-green-100 text-green-800'
                         : 'bg-yellow-100 text-yellow-800'
                 }`}>
-                  {selectedExamSection.examType.isFinalized ? 'Kesinleştirildi' : 'Taslak'}
+                  {examType.isFinalized ? 'Kesinleştirildi' : 'Taslak'}
                 </span>
 
                                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                    selectedExamSection.examType.status === 'ACTIVE'
+                                    examType.status === 'ACTIVE'
                                         ? 'bg-blue-100 text-blue-800'
                                         : 'bg-gray-100 text-gray-800'
                                 }`}>
-                  {selectedExamSection.examType.status === 'ACTIVE' ? 'Aktif' : selectedExamSection.examType.status}
+                  {examType.status === 'ACTIVE' ? 'Aktif' : examType.status}
                 </span>
 
                                 <div className="text-xs text-blue-600 text-right">
-                                    ID: {selectedExamSection.examType.id}
+                                    ID: {examType.id}
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             )}
-
-            {/* Additional Information */}
-            <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Ek Bilgiler</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {selectedExamSection.createdById && (
-                        <div className="p-4 bg-gray-50 rounded-lg">
-                            <div className="text-sm font-medium text-gray-500">Oluşturan Kullanıcı ID</div>
-                            <div className="text-gray-900 font-mono">{selectedExamSection.createdById}</div>
-                        </div>
-                    )}
-
-                    {selectedExamSection.deletedAt && (
-                        <div className="p-4 bg-red-50 rounded-lg border border-red-200">
-                            <div className="text-sm font-medium text-red-600">Silinme Tarihi</div>
-                            <div className="text-red-900 font-semibold">
-                                {new Date(selectedExamSection.deletedAt).toLocaleDateString('tr-TR', {
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                })}
-                            </div>
-                            {selectedExamSection.deletedById && (
-                                <div className="text-xs text-red-600 mt-1">
-                                    Silen: {selectedExamSection.deletedById}
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
-            </div>
+            
         </div>
     );
 };

@@ -2,8 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useUser } from '@/hooks/use-user';
-import { useBrand } from '@/hooks/exam/use-brand';
+import { useGetUserById, useDeleteUser, useActivateUser, useResetPassword } from '@/api/generated/user-management/user-management';
+import { useGetAllBrands } from '@/api/generated/brand-management/brand-management';
+import { useQueryClient } from '@tanstack/react-query';
+import type { ApiResponseListBrandDto, ApiResponseUserDto } from '@/api/generated/model';
 import UserDetailPage from '@/components/detail/UserDetail';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2 } from 'lucide-react';
@@ -17,24 +19,25 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {showNotification} from "@/lib/notification";
+import {showNotification, getErrorMessage} from "@/lib/notification";
 
 const UserDetailPageContainer: React.FC = () => {
     const params = useParams();
     const router = useRouter();
+    const queryClient = useQueryClient();
     const userId = params.id as string;
 
-    const {
-        selectedUser,
-        loading,
-        error,
-        getUserById,
-        deleteUser,
-        activateUser,
-        resetPassword,
-    } = useUser();
+    const {data: userData, isLoading: loading, error} = useGetUserById(userId, {
+        query: { enabled: !!userId }
+    });
+    const selectedUser = (userData as unknown as ApiResponseUserDto)?.data;
+    
+    const deleteUserMutation = useDeleteUser();
+    const activateUserMutation = useActivateUser();
+    const resetPasswordMutation = useResetPassword();
 
-    const { brands, getAllBrands } = useBrand();
+    const { data: brandsData } = useGetAllBrands();
+    const brands = (brandsData as unknown as ApiResponseListBrandDto)?.data || null;
 
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showActivateDialog, setShowActivateDialog] = useState(false);
@@ -42,18 +45,11 @@ const UserDetailPageContainer: React.FC = () => {
     const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-    // Sayfa yüklendiğinde kullanıcı ve marka verilerini getir
-    useEffect(() => {
-        if (userId) {
-            getUserById(userId);
-        }
-        getAllBrands();
-    }, [userId, getUserById, getAllBrands]);
-
     // Error handling
     useEffect(() => {
         if (error) {
-            showNotification.error('Kullanıcı bilgileri yüklenirken bir hata oluştu');
+            const errorMessage = getErrorMessage(error);
+            showNotification.error(errorMessage || 'Kullanıcı bilgileri yüklenirken bir hata oluştu');
             console.error('User detail error:', error);
         }
     }, [error]);
@@ -68,12 +64,13 @@ const UserDetailPageContainer: React.FC = () => {
 
         try {
             setActionLoading('delete');
-            await deleteUser(selectedUser.id);
-            showNotification.success('Kullanıcı başarıyla silindi');
-            router.push('/users');
+            await deleteUserMutation.mutateAsync({ id: selectedUser.id || '' });
+            queryClient.invalidateQueries({ queryKey: ['/users'] });
+            showNotification.success('Kullanıcı başarıyla silindi!');
+            router.push('/admin/users');
         } catch (error) {
-            console.log(error)
-            showNotification.error('Kullanıcı silinirken bir hata oluştu');
+            const errorMessage = getErrorMessage(error);
+            showNotification.error(errorMessage || 'Kullanıcı silinirken bir hata oluştu!');
         } finally {
             setActionLoading(null);
             setShowDeleteDialog(false);
@@ -83,16 +80,16 @@ const UserDetailPageContainer: React.FC = () => {
     const handleActivate = async () => {
         if (!selectedUser) return;
 
+        const activationCode = selectedUser.activationCode;
+        if (!activationCode) return;
+
         try {
             setActionLoading('activate');
-            // User'ı aktive etmek için activateUser fonksiyonunu kullan
-            await activateUser(selectedUser.activationCode);
+            await activateUserMutation.mutateAsync({ activationCode });
             showNotification.success('Kullanıcı başarıyla aktive edildi');
-            // Güncel veriyi yeniden yükle
-            await getUserById(userId);
         } catch (error) {
-            console.log(error)
-            showNotification.error('Kullanıcı aktive edilirken bir hata oluştu');
+            const errorMessage = getErrorMessage(error);
+            showNotification.error(errorMessage || 'Kullanıcı aktive edilirken bir hata oluştu');
         } finally {
             setActionLoading(null);
             setShowActivateDialog(false);
@@ -108,8 +105,8 @@ const UserDetailPageContainer: React.FC = () => {
             // Bu örnekte placeholder olarak bırakıyorum
             showNotification.info('Deaktive etme işlemi için API endpoint\'i implement edilmeli');
         } catch (error) {
-            console.log(error)
-            showNotification.error('Kullanıcı deaktive edilirken bir hata oluştu');
+            const errorMessage = getErrorMessage(error);
+            showNotification.error(errorMessage || 'Kullanıcı deaktive edilirken bir hata oluştu');
         } finally {
             setActionLoading(null);
             setShowDeactivateDialog(false);
@@ -121,11 +118,11 @@ const UserDetailPageContainer: React.FC = () => {
 
         try {
             setActionLoading('resetPassword');
-            await resetPassword({ email: selectedUser.email });
+            await resetPasswordMutation.mutateAsync({ data: { email: selectedUser.email } });
             showNotification.success('Şifre sıfırlama e-postası gönderildi');
         } catch (error) {
-            console.log(error)
-            showNotification.error('Şifre sıfırlanırken bir hata oluştu');
+            const errorMessage = getErrorMessage(error);
+            showNotification.error(errorMessage || 'Şifre sıfırlanırken bir hata oluştu');
         } finally {
             setActionLoading(null);
             setShowResetPasswordDialog(false);
@@ -161,7 +158,7 @@ const UserDetailPageContainer: React.FC = () => {
     // Loading state
     if (loading && !selectedUser) {
         return (
-            <div className="container mx-auto py-6">
+            <div className="container mx-auto py-4">
                 <div className="flex items-center space-x-4 mb-6">
                     <Button variant="outline" onClick={handleGoBack}>
                         <ArrowLeft className="h-4 w-4 mr-2" />
@@ -181,7 +178,7 @@ const UserDetailPageContainer: React.FC = () => {
     // User not found
     if (!loading && !selectedUser) {
         return (
-            <div className="container mx-auto py-6">
+            <div className="container mx-auto py-4">
                 <div className="flex items-center space-x-4 mb-6">
                     <Button variant="outline" onClick={handleGoBack}>
                         <ArrowLeft className="h-4 w-4 mr-2" />

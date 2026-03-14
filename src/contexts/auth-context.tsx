@@ -3,9 +3,23 @@
 import {createContext, useState, useEffect, useContext} from 'react';
 import {useRouter} from 'next/navigation';
 import {User, AuthContextType, Permission, Department} from '@/types/auth';
-import {authService} from '@/services/api/auth-service';
-import {ApplicationDto, Brand, CandidateDto} from "@/types/management/brand";
-import {EvaluationDto, ExamDto, ExamSessionDto} from "@/types/exam/examEntities";
+import type {ApplicationDto} from "@/api/generated/model/applicationDto";
+import type {CandidateDto} from "@/api/generated/model/candidateDto";
+import type {ExamDto} from "@/api/generated/model/examDto";
+import type {ExamSessionDto} from "@/api/generated/model/examSessionDto";
+import type {BrandDto} from "@/api/generated/model";
+import type {AuthenticationResponse, AuthenticationLearnerResponse} from "@/api/generated/model";
+import type {EvaluationDto} from "@/api/generated/model";
+import {
+    login,
+    logout,
+    getCurrentUser,
+    refreshToken as refreshTokenApi,
+    examCandidateAndSessionCode,
+} from '@/api/generated/authentication/authentication';
+
+import type { RefreshTokenResponse } from '@/types/auth';
+
 
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -13,7 +27,7 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({children}: { children: React.ReactNode }) {
     const [error,] = useState<string | null>(null);
     const [user, setUser] = useState<User | null>(null);
-    const [activeBrand, setActiveBrand] = useState<Brand | null>(null);
+    const [activeBrand, setActiveBrand] = useState<BrandDto | null>(null);
     const [loading, setLoading] = useState(true);
 
 
@@ -30,6 +44,15 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
 
     useEffect(() => {
         const checkAuth = async () => {
+            const AUTH_CHECK_TIMEOUT_MS = 20000; // 20 seconds - learner /auth/me can be slow (exam session, evaluations)
+            let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+            const timeoutPromise = new Promise<never>((_, reject) => {
+                timeoutId = setTimeout(() => {
+                    reject(new Error('Authentication check timeout'));
+                }, AUTH_CHECK_TIMEOUT_MS);
+            });
+
             try {
                 const token = localStorage.getItem('accessToken');
                 if (token) {
@@ -38,9 +61,33 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
                     if (!cookieToken) {
                         document.cookie = `accessToken=${token}; path=/; secure; samesite=strict`;
                     }
-                    const userData = await authService.getCurrentUser();
+                    
+                    const response = (await Promise.race([
+                        getCurrentUser(),
+                        timeoutPromise
+                    ])) as unknown as RefreshTokenResponse | { data: RefreshTokenResponse; success: boolean; message?: string };
+                    if (timeoutId !== undefined) clearTimeout(timeoutId);
+                    
+                    // customInstance zaten data'yı unwrap ediyor (.then(({ data }) => data))
+                    // Backend ApiResponse<RefreshTokenResponse> döndürüyorsa, customInstance direkt RefreshTokenResponse'u döndürür
+                    // Ama backend direkt RefreshTokenResponse döndürüyorsa, o zaman response zaten RefreshTokenResponse
+                    // Her iki durumu da handle ediyoruz
+                    let userData: RefreshTokenResponse;
+                    
+                    // Eğer response ApiResponse formatındaysa (success, data, message property'leri varsa)
+                    if (response && typeof response === 'object' && 'data' in response && 'success' in response) {
+                        const apiResponse = response as { data: RefreshTokenResponse; success: boolean; message?: string };
+                        userData = apiResponse.data as RefreshTokenResponse;
+                    } else {
+                        // Direkt RefreshTokenResponse döndürülüyorsa
+                        userData = response as unknown as RefreshTokenResponse;
+                    }
 
-                    if(userData && userData.user && userData.user.role && userData.user.role === "LEARNER"){
+                    if (!userData || !userData.user) {
+                        throw new Error('Kullanıcı bilgisi alınamadı');
+                    }
+
+                    if(userData.user && 'role' in userData.user && (userData.user as { role?: string }).role === "LEARNER"){
                         setCandidate(userData.user as CandidateDto);
                         setExamSession(userData.examSession ? userData.examSession : null);
                         setExam(userData.exam ? userData.exam : null);
@@ -72,9 +119,15 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
                         router.replace('/login');
                     }
                 }
-            } catch (error) {
-                console.error('AuthContext - Auth check failed:', error);
+            } catch (err) {
+                if (timeoutId !== undefined) clearTimeout(timeoutId);
+                const isTimeout = err instanceof Error && err.message === 'Authentication check timeout';
+                console.error('AuthContext - Auth check failed:', err);
+                if (isTimeout) {
+                    console.warn('Auth check timed out - backend /auth/me may be slow or unreachable. Redirecting to login.');
+                }
                 localStorage.removeItem('accessToken');
+                localStorage.removeItem('refreshToken');
                 document.cookie = 'accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
 
                 const currentPath = window.location.pathname;
@@ -98,22 +151,31 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
     }, [router]);
 
 
-    const login = async (username: string, password: string): Promise<boolean> => {
+    const loginHandler = async (username: string, password: string): Promise<boolean> => {
         try {
             setLoading(true);
-            const response = await authService.login(username, password);
-            localStorage.setItem('accessToken', response.accessToken);
-            localStorage.setItem('refreshToken', response.refreshToken);
-            document.cookie = `accessToken=${response.accessToken}; path=/; secure; samesite=strict`;
-            setUser(response.user);
-            const path = response.user.roleSet.includes('ADMIN') ? '/admin' :
-                response.user.roleSet.includes('USER') ? '/admin' :
-                    response.user.roleSet.includes('LEARNER') ? '/learner' :
-                        response.user.roleSet.includes('INSTRUCTOR') ? '/instructor' :
-                            response.user.roleSet.includes('OBSERVER') ? '/observer' :
-                                response.user.roleSet.includes('COMPANY') ? '/company' :
-                                    '/app';
-            router.replace(path);
+            const response = await login({ username, password });
+            const apiResponse = response as unknown as { data?: AuthenticationResponse } & AuthenticationResponse;
+            const authData = apiResponse?.data || apiResponse;
+            
+            if (authData.accessToken) {
+                localStorage.setItem('accessToken', authData.accessToken);
+                if (authData.refreshToken) {
+                    localStorage.setItem('refreshToken', authData.refreshToken);
+                }
+                document.cookie = `accessToken=${authData.accessToken}; path=/; secure; samesite=strict`;
+                if (authData.user) {
+                    setUser(authData.user as unknown as User);
+                    const path = authData.user.roleSet?.includes('ADMIN') ? '/admin' :
+                        authData.user.roleSet?.includes('USER') ? '/admin' :
+                            authData.user.roleSet?.includes('LEARNER') ? '/learner' :
+                                authData.user.roleSet?.includes('INSTRUCTOR') ? '/instructor' :
+                                    authData.user.roleSet?.includes('OBSERVER') ? '/observer' :
+                                        authData.user.roleSet?.includes('COMPANY') ? '/company' :
+                                            '/app';
+                    router.replace(path);
+                }
+            }
 
             return true;
         } catch (err) {
@@ -127,8 +189,8 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
 
     const changeActiveBrand = (id: string) => {
 
-        const brand = user?.brandSet.find((brand: Brand) => brand.id === id);
-        if (brand) {
+        const brand = user?.brandSet?.find((brand: BrandDto) => brand.id === id);
+        if (brand && brand.id) {
             setActiveBrand(brand);
             localStorage.setItem('activeBrandId', brand.id);
             return true;
@@ -136,9 +198,9 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
         return false;
     };
 
-    const logout = async () => {
+    const logoutHandler = async () => {
         try {
-            await authService.logout();
+            await logout();
         } catch (err) {
             console.error('Logout error:', err);
         } finally {
@@ -158,10 +220,16 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
 
     const refreshToken = async (): Promise<boolean> => {
         try {
-            const newAccessToken = await authService.refreshToken();
-            if (newAccessToken) {
-                localStorage.setItem('accessToken', newAccessToken);
-                document.cookie = `accessToken=${newAccessToken}; path=/`;
+            const refreshTokenValue = localStorage.getItem('refreshToken');
+            if (!refreshTokenValue) return false;
+            
+            const response = await refreshTokenApi(undefined, undefined);
+            const apiResponse = response as unknown as { data?: AuthenticationResponse } & AuthenticationResponse;
+            const tokenData = apiResponse?.data || apiResponse;
+            
+            if (tokenData.accessToken) {
+                localStorage.setItem('accessToken', tokenData.accessToken);
+                document.cookie = `accessToken=${tokenData.accessToken}; path=/`;
                 return true;
             }
             return false;
@@ -172,11 +240,11 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
     };
 
     const hasPermission = (permission: Permission) => {
-        return user?.authoritySet.includes(permission) ?? false;
+        return user?.authoritySet?.includes(permission) ?? false;
     };
 
     const hasAnyDepartment = (departments: Department[]) => {
-        return departments.some(dept => user?.departmentSet.includes(dept));
+        return departments.some(dept => user?.departmentSet?.includes(dept));
     };
 
 
@@ -189,17 +257,34 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
     const examLogin = async (examCode: string): Promise<boolean> => {
         try {
             setLoading(true);
-            const response = await authService.examLogin(examCode);
-            localStorage.setItem('accessToken', response.accessToken);
-            localStorage.setItem('refreshToken', response.refreshToken);
-            document.cookie = `accessToken=${response.accessToken}; path=/; secure; samesite=strict`;
+            const response = await examCandidateAndSessionCode({ examCandidateAndSessionCode: examCode });
+            const apiResponse = response as unknown as { data?: AuthenticationLearnerResponse } & AuthenticationLearnerResponse;
+            const authData = apiResponse?.data || apiResponse;
+            
+            if (authData.accessToken) {
+                localStorage.setItem('accessToken', authData.accessToken);
+                if (authData.refreshToken) {
+                    localStorage.setItem('refreshToken', authData.refreshToken);
+                }
+                document.cookie = `accessToken=${authData.accessToken}; path=/; secure; samesite=strict`;
 
-            setCandidate(response.user);
-            setExamSession(response.examSession);
-            setExam(response.exam);
-            setEvaluations(response.evaluations);
-            setApplication(response.application)
-            router.replace('/learner');
+                if (authData.user) {
+                    setCandidate(authData.user as CandidateDto);
+                }
+                if (authData.examSession) {
+                    setExamSession(authData.examSession);
+                }
+                if (authData.exam) {
+                    setExam(authData.exam);
+                }
+                if (authData.evaluations) {
+                    setEvaluations(authData.evaluations);
+                }
+                if (authData.application) {
+                    setApplication(authData.application);
+                }
+                router.replace('/learner');
+            }
             return true;
         } catch (err) {
             console.error('Login failed:', err);
@@ -211,13 +296,12 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
 
 
     const getPathByRole = (): string => {
-        if (user?.role && user?.role === "LEARNER") return '/learner';
-        if (user?.roleSet.includes('ADMIN')) return '/admin';
-        if (user?.roleSet.includes('USER')) return '/app';
-        if (user?.roleSet.includes('LEARNER')) return '/learner';
-        if (user?.roleSet.includes('OBSERVER')) return '/observer';
-        if (user?.roleSet.includes('INSTRUCTOR')) return '/instructor';
-        if (user?.roleSet.includes('COMPANY')) return '/company';
+        if (user?.roleSet?.includes('LEARNER')) return '/learner';
+        if (user?.roleSet?.includes('ADMIN')) return '/admin';
+        if (user?.roleSet?.includes('USER')) return '/app';
+        if (user?.roleSet?.includes('OBSERVER')) return '/observer';
+        if (user?.roleSet?.includes('INSTRUCTOR')) return '/instructor';
+        if (user?.roleSet?.includes('COMPANY')) return '/company';
         return '/app';
     };
 
@@ -225,9 +309,9 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
         user,
         loading,
         error,
-        login,
+        login: loginHandler,
         examLogin,
-        logout,
+        logout: logoutHandler,
         updateUser,
         refreshToken,
         hasPermission,

@@ -6,19 +6,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { NumberInput } from "@/components/ui/number-input";
-import {VideoResponseTemplateDto} from "@/types/exam/questionTemplates";
+import type {VideoResponseTemplateDto} from "@/api/generated/model";
 
-interface VideoResponseTemplateFormData {
-    prompt?: string;
-    videoPromptUrl?: string;
-    maxRecordingDuration?: number;
-    minRecordingDuration?: number;
-    gradingCriteria: string[];
-    rubric?: string;
-    requiresManualGrading?: boolean;
-    allowedFormats?: string;
-    allowScreenRecording?: boolean;
-}
+// Use ORVAL DTO types directly - only template-specific fields
+type VideoResponseTemplateFormData = Pick<VideoResponseTemplateDto, 'prompt' | 'videoPromptUrl' | 'maxRecordingDuration' | 'minRecordingDuration' | 'gradingCriteria' | 'rubric' | 'requiresManualGrading' | 'allowedFormats' | 'allowScreenRecording'>;
 
 interface VideoResponseTemplateFormErrors {
     prompt?: string;
@@ -28,7 +19,7 @@ interface VideoResponseTemplateFormErrors {
 }
 
 interface VideoResponseTemplateFormProps {
-    onChange: (data: VideoResponseTemplateFormData) => void;
+    onChange: (data: VideoResponseTemplateDto) => void;
     value?: VideoResponseTemplateDto | null;
     loading?: boolean;
 }

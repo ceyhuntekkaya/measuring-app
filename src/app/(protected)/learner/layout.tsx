@@ -1,7 +1,6 @@
 'use client';
 import {useAuth} from '@/hooks/use-auth';
 import {ExamApplicationProvider} from "@/contexts/ExamApplicationContext";
-import { WebSocketProvider } from '@/contexts/WebSocketContext';
 
 export default function LearnerLayout({
                                         children,
@@ -16,12 +15,9 @@ export default function LearnerLayout({
 
     return (
         <ExamApplicationProvider>
-            <WebSocketProvider>
             <div className='min-h-screen bg-gray-100'>
                 {children}
             </div>
-            </WebSocketProvider>
         </ExamApplicationProvider>
-
     );
 }

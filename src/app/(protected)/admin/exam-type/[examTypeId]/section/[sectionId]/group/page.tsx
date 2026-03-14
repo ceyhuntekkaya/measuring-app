@@ -1,29 +1,31 @@
 'use client';
 import {Column, RecordType} from "@/types/ui/table";
-import React, {useEffect} from "react";
+import React from "react";
 import PageHeader from "@/components/layout/page-header";
 import DynamicTable from "@/components/ui/dynamic-table";
 import {ActionButtons} from "@/components/ui/simple-dropdown";
 import {useParams, useRouter} from "next/navigation";
 import LoadingComp from "@/components/ui/loading-comp";
-import {useQuestionGroupType} from "@/hooks/exam/use-question-group-type";
+import {useGetQuestionGroupTypesByExamSection} from "@/api/generated/question-group-type-management/question-group-type-management";
 import {statusConverter} from "@/utils/enum-converter";
 import {EStatus} from "@/types/exam/enum";
+import type {ApiResponseListQuestionGroupTypeDto} from "@/api/generated/model";
 
 export default function QuestionGroupTypePage() {
     const router = useRouter();
     const params = useParams();
     const examTypeId = params.examTypeId as string;
     const examSectionId = params.sectionId as string;
-    const {
-        typesByExamSection,
-        getQuestionGroupTypesByExamSection,
-        loading
-    } = useQuestionGroupType();
-
-    useEffect(() => {
-        getQuestionGroupTypesByExamSection(examSectionId);
-    }, []);
+    
+    const {data, isLoading: loading} = useGetQuestionGroupTypesByExamSection(examSectionId, {
+        query: { 
+            enabled: !!examSectionId,
+            refetchOnMount: true,
+            refetchOnWindowFocus: false,
+            staleTime: 0,
+        }
+    });
+    const typesByExamSection = (data as unknown as ApiResponseListQuestionGroupTypeDto)?.data || [];
 
     const columns: Column<RecordType>[] = [
 
@@ -36,6 +38,19 @@ export default function QuestionGroupTypePage() {
                     onClick={() => router.push(`/admin/exam-type/${examTypeId}/section/${examSectionId}/group/${record.id}`)}
                 >
                     {value as string}
+                </div>
+            )
+        }
+        ,
+        {
+            key: 'orderNumber',
+            header: 'Sıra Numarası',
+            render: (value, record) => (
+                <div
+                    className="font-medium cursor-pointer hover:text-blue-600"
+                    onClick={() => router.push(`/admin/exam-type/${examTypeId}/section/${examSectionId}/group/${record.id}`)}
+                >
+                    {value as number}
                 </div>
             )
         }
@@ -56,7 +71,7 @@ export default function QuestionGroupTypePage() {
     ];
 
     const handleAdd = () => {
-        router.push('/admin/exam-type/${examTypeId}/section/${examSectionId}/group/add');
+        router.push(`/admin/exam-type/${examTypeId}/section/${examSectionId}/group/add`);
     };
 
     if (loading) {
@@ -75,7 +90,7 @@ export default function QuestionGroupTypePage() {
             <div className="p-6 pt-1">
                 {
                     typesByExamSection &&
-                    <DynamicTable columns={columns} data={typesByExamSection}/>
+                    <DynamicTable columns={columns} data={typesByExamSection as RecordType[]}/>
                 }
 
             </div>

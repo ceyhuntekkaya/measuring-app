@@ -1,13 +1,8 @@
 'use client';
 
-import React, {useEffect, useRef, useState} from 'react';
-import {
-    QuestionAnswerRequest,
-    QuestionGroupDto,
-    QuestionGroupHeaderDto,
-    QuestionTemplateType
-} from "@/types/exam/examEntities";
-import {useQuestion} from "@/hooks/exam/use-question";
+import React, {useEffect, useRef, useState, useCallback} from 'react';
+import type {QuestionGroupDto, QuestionGroupHeaderDto, QuestionAnswerRequest, QuestionDto} from "@/api/generated/model";
+import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
 import MultipleChoiceQuestion from "@/components/template/MultipleChoiceQuestion";
 import {
@@ -24,10 +19,10 @@ import {
     ShortAnswerTemplateDto,
     TrueFalseTemplateDto,
     VideoResponseTemplateDto
-} from "@/types/exam/questionTemplates";
+} from "@/api/generated/model";
 import TrueFalseQuestion from "@/components/template/TrueFalseQuestion";
 import FillInTheBlanksQuestion from "@/components/template/FillInTheBlanksQuestion";
-import {useQuestionGroup} from "@/hooks/exam/use-question-group";
+import {useGetQuestionGroupById} from "@/api/generated/question-group-management/question-group-management";
 import ShortAnswerQuestion from "@/components/template/ShortAnswerQuestion";
 import EssayQuestion from "@/components/template/EssayQuestion";
 import MatchingQuestion from "@/components/template/MatchingQuestion";
@@ -39,11 +34,14 @@ import AudioResponseQuestion from "@/components/template/AudioResponseQuestion";
 import VideoResponseQuestion from "@/components/template/VideoResponseQuestion";
 import ImageResponseQuestion from "@/components/template/ImageResponseQuestion";
 import {useExamApplicationContext} from "@/contexts/ExamApplicationContext";
-import {useExamResult} from "@/hooks/exam/use-exam-result";
-import {UploadedFileDto} from "@/types/exam/miscDtos";
-import {useApplication} from "@/hooks/exam/use-application";
+import {useSaveAnswer} from "@/api/generated/question-result-management/question-result-management";
+import { showNotification, getErrorMessage } from "@/lib/notification";
+import type {UploadedFileDto} from "@/api/generated/model";
+import {useSetStartedAt, useUpdateSessionState1} from "@/api/generated/application-management/application-management";
 import {ESessionState} from "@/types/exam/enum";
+import type {UpdateSessionStateRequestSessionState} from "@/api/generated/model";
 import siteConfig from "@/config/config.json";
+import {useGetQuestionsByGroup} from "@/api/generated/question-management/question-management";
 
 const API_URL = siteConfig.api.invokeUrl + "/upload/serve";
 
@@ -192,7 +190,7 @@ const AudioPlayerWithProgress: React.FC<AudioPlayerWithProgressProps> = ({materi
                     }}
                     controls={false}
                 >
-                    Your browser does not support the audio file.
+                    Tarayıcınız bu ses dosyasını desteklemiyor.
                 </audio>
 
                 {!showProgress && !isDisabled && (
@@ -234,8 +232,33 @@ export default function ExamApplicationScreen({
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [answeredQuestions, setAnsweredQuestions] = useState<Set<string>>(new Set());
     const {application, evaluations} = useExamApplicationContext();
-    const {saveAnswer} = useExamResult();
-    const {setApplicationStartedAt, updateApplicationSessionState} = useApplication();
+    const { mutate: saveAnswer } = useSaveAnswer({
+        mutation: {
+            onSuccess: () => {
+                showNotification.success('Cevap başarıyla kaydedildi!');
+            },
+            onError: (error) => {
+                const errorMessage = getErrorMessage(error);
+                showNotification.error(errorMessage || 'Cevap kaydedilirken bir hata oluştu!');
+            }
+        }
+    });
+    const setStartedAtMutation = useSetStartedAt();
+    const updateSessionStateMutation = useUpdateSessionState1();
+    
+    const setApplicationStartedAt = useCallback(async (applicationId: string) => {
+        await setStartedAtMutation.mutateAsync({ id: applicationId });
+    }, [setStartedAtMutation]);
+    
+    const updateApplicationSessionState = useCallback(async (applicationId: string, state: ESessionState) => {
+        await updateSessionStateMutation.mutateAsync({ 
+            id: applicationId, 
+            data: { 
+                applicationId: applicationId,
+                sessionState: state as UpdateSessionStateRequestSessionState
+            } 
+        });
+    }, [updateSessionStateMutation]);
 
     const totalGroups = questionGroups.length;
     const progressPercentage = (completedGroups.size / totalGroups) * 100;
@@ -257,16 +280,25 @@ export default function ExamApplicationScreen({
         setShowExitModal(false);
     };
 
-    const {
-        questionsByGroup,
-        getQuestionsByGroup,
-    } = useQuestion();
+    const [selectedGroupId, setSelectedGroupId] = useState<string>('');
+    const {data: questionsData} = useGetQuestionsByGroup(selectedGroupId, {
+        query: { enabled: !!selectedGroupId }
+    });
+    const questionsByGroup = (questionsData as { data?: QuestionDto[] })?.data || [];
+    
+    const getQuestionsByGroup = useCallback((groupId: string) => {
+        setSelectedGroupId(groupId);
+    }, []);
 
-
-    const {
-        selectedQuestionGroup,
-        getQuestionGroupById,
-    } = useQuestionGroup();
+    const [selectedQuestionGroupId, setSelectedQuestionGroupId] = useState<string>('');
+    const {data: questionGroupData} = useGetQuestionGroupById(selectedQuestionGroupId, {
+        query: { enabled: !!selectedQuestionGroupId }
+    });
+    const selectedQuestionGroup = (questionGroupData as { data?: QuestionGroupDto })?.data;
+    
+    const getQuestionGroupById = useCallback((groupId: string) => {
+        setSelectedQuestionGroupId(groupId);
+    }, []);
 
     // Sınav başladığında API çağrıları (sadece bir kez çalışsın)
     const hasInitializedRef = useRef(false);
@@ -286,22 +318,28 @@ export default function ExamApplicationScreen({
 
     useEffect(() => {
         if (questionGroups && questionGroups.length > 0) {
-            getQuestionGroupById(questionGroups[currentGroupIndex].id);
-            getQuestionsByGroup(questionGroups[currentGroupIndex].id);
-            setCurrentQuestionIndex(0);
-            setAnsweredQuestions(new Set());
+            const currentGroup = questionGroups[currentGroupIndex];
+            if (currentGroup?.id) {
+                getQuestionGroupById(currentGroup.id);
+                getQuestionsByGroup(currentGroup.id);
+                setCurrentQuestionIndex(0);
+                setAnsweredQuestions(new Set());
+            }
         }
-    }, [currentGroupIndex]);
+    }, [currentGroupIndex, questionGroups, getQuestionGroupById, getQuestionsByGroup]);
 
 
     useEffect(() => {
         if (questionGroups && questionGroups.length > 0) {
-            getQuestionGroupById(questionGroups[0].id);
-            getQuestionsByGroup(questionGroups[0].id);
-            setCurrentQuestionIndex(0);
-            setAnsweredQuestions(new Set());
+            const firstGroup = questionGroups[0];
+            if (firstGroup?.id) {
+                getQuestionGroupById(firstGroup.id);
+                getQuestionsByGroup(firstGroup.id);
+                setCurrentQuestionIndex(0);
+                setAnsweredQuestions(new Set());
+            }
         }
-    }, []);
+    }, [questionGroups, getQuestionGroupById, getQuestionsByGroup]);
 
     useEffect(() => {
         setCurrentQuestionIndex(0);
@@ -333,7 +371,7 @@ export default function ExamApplicationScreen({
             evaluationId: evaluation?.id || '',
             isEmptyAnswer,
         }
-      saveAnswer(answerData);
+      saveAnswer({ data: answerData });
 
         if (isConversationSection() && !isEmptyAnswer && !answeredQuestions.has(questionId)) {
             setAnsweredQuestions(prev => new Set([...prev, questionId]));
@@ -452,8 +490,7 @@ export default function ExamApplicationScreen({
                 return optionsArray;
             }
             return answerString;
-        } catch (e) {
-            console.log('Parse error:', e);
+        } catch {
             if (type === 'ESSAY') {
                 const text = answerString;
                 return {
@@ -611,7 +648,7 @@ export default function ExamApplicationScreen({
                             controls
                             src={`${API_URL}/${material.content}`}
                         >
-                            Your browser does not support the video file.
+                            Tarayıcınız bu video dosyasını desteklemiyor.
                         </video>
                     </div>
                 );
@@ -626,7 +663,7 @@ export default function ExamApplicationScreen({
                             src={material.content || ""}
                             className="w-100"
                             style={{height: "600px"}}
-                            title={`${material.name || 'title'}`}
+                            title={material.content || 'PDF Document'}
                         ></iframe>
                     </div>
                 );
@@ -640,10 +677,10 @@ export default function ExamApplicationScreen({
                             className="btn btn-primary"
                             target="_blank"
                             rel="noopener noreferrer"
-                            download={material.uploadedFileName || undefined}
+                            download={material.content ? material.content.split('/').pop() : undefined}
                         >
                             <i className="bi bi-file-earmark-text me-2"></i>
-                            Download Document
+                            Belgeyi İndir
                         </a>
                     </div>
                 );
@@ -653,7 +690,7 @@ export default function ExamApplicationScreen({
                     <div className="mb-4 text-center">
                         <img
                             src={`${API_URL}/${material.content}`}
-                            alt={`${material.name || 'images'}`}
+                            alt={material.content || 'Image'}
                             className="img-fluid"
                             style={{maxHeight: "500px"}}
                         />
@@ -678,7 +715,7 @@ export default function ExamApplicationScreen({
                             ) : (
                                 <div className="alert alert-warning">
                                     <i className="bi bi-exclamation-triangle me-2"></i>
-                                    No content found.
+                                    İçerik bulunamadı.
                                 </div>
                             )}
                         </div>
@@ -688,8 +725,7 @@ export default function ExamApplicationScreen({
     };
 
     return (
-        <div className="h-screen w-screen flex flex-col bg-gray-50"
-             style={{height: "calc(100vh - 100px)"}}>
+        <div className="h-screen w-screen flex flex-col bg-gray-50">
             <header className="flex-shrink-0 h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm">
                 <div className="flex items-center gap-4 flex-1">
                     <h1 className="text-lg font-semibold text-gray-800">Sınav</h1>
@@ -718,11 +754,11 @@ export default function ExamApplicationScreen({
 
             {
                 selectedQuestionGroup &&
-                <main className="flex-1 overflow-y-auto p-3">
+                <main className="flex-1 overflow-y-auto p-3 pb-24">
                     <div className="mx-auto">
                         <div className="bg-white rounded-lg shadow-sm p-5 min-h-[500px]">
                             {
-                                questionsByGroup && selectedQuestionGroup?.headers?.map((header, key) => (
+                                questionsByGroup && selectedQuestionGroup?.headers?.map((header: QuestionGroupHeaderDto, key: number) => (
                                     <div key={key}>{renderContent(header)}</div>
                                 ))
                             }
@@ -734,11 +770,12 @@ export default function ExamApplicationScreen({
                                                 SORU: {currentQuestionIndex + 1} / {questionsByGroup.length}
                                             </h3>
                                             {
+                                                questionsByGroup[currentQuestionIndex].id &&
                                                 questionsByGroup[currentQuestionIndex].questionType &&
                                                 questionsByGroup[currentQuestionIndex].questionTemplate &&
                                                 renderTemplateSpecificForm(
-                                                    questionsByGroup[currentQuestionIndex].id,
-                                                    questionsByGroup[currentQuestionIndex].questionType!,
+                                                    questionsByGroup[currentQuestionIndex].id!,
+                                                    questionsByGroup[currentQuestionIndex].questionType! as EQuestionType,
                                                     questionsByGroup[currentQuestionIndex].questionTemplate!
                                                 )
                                             }
@@ -764,12 +801,23 @@ export default function ExamApplicationScreen({
                                     questionsByGroup.map((question, key) => (
                                     <div key={key} className="p-4 border-b">
                                             <h3 className="flex items-center gap-2">
-                                                SORU: {key + 1}
+                                                SORU: {key + 1}  
 
                                             </h3>
                                         {
-                                            question.questionType && question.questionTemplate &&
-                                            renderTemplateSpecificForm(question.id, question.questionType, question.questionTemplate)
+                                            (() => {
+                                                const questionId = question.id;
+                                                const questionType = question.questionType;
+                                                const questionTemplate = question.questionTemplate;
+                                                if (questionId && questionType && questionTemplate) {
+                                                    return renderTemplateSpecificForm(
+                                                        questionId,
+                                                        questionType as EQuestionType,
+                                                        questionTemplate
+                                                    );
+                                                }
+                                                return null;
+                                            })()
                                         }
                                     </div>
                                 ))
@@ -780,7 +828,7 @@ export default function ExamApplicationScreen({
                 </main>
             }
 
-            <footer className="flex-shrink-0 bg-white border-t border-gray-200 p-4 shadow-lg mt-auto">
+            <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-10">
                 <div className="max-w-6xl mx-auto">
                     <div className="flex items-center justify-center gap-2 flex-wrap">
                         {questionGroups.map((_, index) => {

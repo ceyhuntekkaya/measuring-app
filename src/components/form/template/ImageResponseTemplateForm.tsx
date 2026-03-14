@@ -6,19 +6,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { NumberInput } from "@/components/ui/number-input";
-import { ImageResponseTemplateDto } from "@/types/exam/questionTemplates";
+import type { ImageResponseTemplateDto } from "@/api/generated/model";
 
-interface ImageResponseTemplateFormData {
-    prompt?: string;
-    referenceImageUrl?: string;
-    maxFileSize?: number;
-    gradingCriteria: string[];
-    rubric?: string;
-    requiresManualGrading?: boolean;
-    allowedFormats?: string;
-    requiresDrawing?: boolean;
-    allowsUpload?: boolean;
-}
+// Use ORVAL DTO types directly - only template-specific fields
+type ImageResponseTemplateFormData = Pick<ImageResponseTemplateDto, 'prompt' | 'referenceImageUrl' | 'maxFileSize' | 'gradingCriteria' | 'rubric' | 'requiresManualGrading' | 'allowedFormats' | 'requiresDrawing' | 'allowsUpload'>;
 
 interface ImageResponseTemplateFormErrors {
     prompt?: string;

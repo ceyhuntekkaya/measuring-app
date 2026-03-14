@@ -9,33 +9,55 @@ import {Input} from "@/components/ui/input";
 import {Textarea} from "@/components/ui/textarea";
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {NumberInput} from "@/components/ui/number-input";
-import {CreateQuestionOptionRequest, CreateQuestionPartRequest, CreateQuestionRequest} from "@/types/exam/examRequests";
-import {
-    BaseQuestionTemplateFormData,
-    QuestionDto,
-    QuestionTemplateType
-} from "@/types/exam/examEntities";
-import {Plus, Trash2} from "lucide-react";
+import type {CreateQuestionRequest} from "@/api/generated/model";
+import type {QuestionDto} from "@/api/generated/model";
+import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EDifficulty, EMediaType, EQuestionType} from "@/types/exam/enum";
+
+// Custom form data type for base template (UI only)
+export interface BaseQuestionTemplateFormData {
+    title: string;
+    description?: string;
+    subject: string;
+    difficulty: EDifficulty;
+    points: number;
+    timeLimit: number;
+    instructions?: string;
+    tags: string[];
+    isActive: boolean;
+    questionType: EQuestionType | '';
+    templateData?: QuestionTemplateType | null;
+}
+
+import {Plus, Trash2} from "lucide-react";
 import Checkbox from "@/components/ui/checkbox";
 import BaseQuestionTemplateForm, {
     BaseQuestionTemplateFormHandle
 } from "@/components/form/template/BaseQuestionTemplateForm";
 import {useParams} from "next/navigation";
 import {getQuestionTypeLabel} from "@/utils/question-type-convert";
+import {showNotification} from "@/lib/notification";
 
-interface QuestionFormData {
-    name: string;
-    questionGroupId: string;
-    questionType: EQuestionType | '';
-    orderNumber?: number;
-    isAutomaticallyEvaluated?: boolean;
+// Local types for parts and options (not part of API, used for UI only)
+interface QuestionPart {
+    orderNumber: number;
+    mediaType: EMediaType;
+    content: string;
+    label: string;
     maximumScore?: number;
     durationInSeconds?: number;
-    questionTemplate: QuestionTemplateType | null;
-    parts: CreateQuestionPartRequest[];
-    options: CreateQuestionOptionRequest[];
+    repetitionCount?: number;
 }
+
+interface QuestionOption {
+    orderNumber: number;
+    mediaType: EMediaType;
+    content: string;
+    baseContent: string;
+    isTrueOption: boolean;
+}
+
+// Use ORVAL Request types directly - parts and options are UI-only
 
 interface QuestionFormErrors {
     name?: string;
@@ -54,30 +76,36 @@ interface QuestionFormProps {
     onSubmit: (data: CreateQuestionRequest) => void;
     question?: QuestionDto | null;
     loading?: boolean;
+    onDelete?: () => void;
 }
 
 const QuestionForm: React.FC<QuestionFormProps> = ({
                                                        onSubmit,
                                                        question,
-                                                       loading = false
+                                                       loading = false,
+                                                       onDelete
                                                    }) => {
 
     const params = useParams();
     const questionGroupId = params.groupId as string;
 
 
-    const [formData, setFormData] = useState<QuestionFormData>({
+    const [formData, setFormData] = useState<Omit<CreateQuestionRequest, 'questionTemplate'>>({
         name: '',
         questionGroupId: questionGroupId,
-        questionType: '',
+        questionType: '' as CreateQuestionRequest['questionType'],
         orderNumber: undefined,
         isAutomaticallyEvaluated: true,
         maximumScore: undefined,
-        durationInSeconds: undefined,
-        questionTemplate: null,
-        parts: [],
-        options: []
+        durationInSeconds: undefined
     });
+    
+    // UI-only state for template
+    const [questionTemplate, setQuestionTemplate] = useState<QuestionTemplateType | null>(null);
+    
+    // UI-only state for parts and options (not sent to API)
+    const [parts, setParts] = useState<QuestionPart[]>([]);
+    const [options, setOptions] = useState<QuestionOption[]>([]);
 
 
     const [baseFormData, setBaseFormData] = useState<BaseQuestionTemplateFormData>({
@@ -120,15 +148,15 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
             setFormData({
                 name: question.name || '',
                 questionGroupId: question.questionGroup?.id || '',
-                questionType: question.questionType || '',
+                questionType: question.questionType as CreateQuestionRequest['questionType'] || '' as CreateQuestionRequest['questionType'],
                 orderNumber: question.orderNumber,
                 isAutomaticallyEvaluated: question.isAutomaticallyEvaluated ?? true,
                 maximumScore: question.maximumScore,
-                durationInSeconds: question.durationInSeconds,
-                questionTemplate: question.questionTemplate || null,
-                parts: [],
-                options: []
+                durationInSeconds: question.durationInSeconds
             });
+            setQuestionTemplate(question.questionTemplate || null);
+            setParts([]);
+            setOptions([]);
 
             // Eğer question template varsa baseFormData'yı doldur
             if (question.questionTemplate) {
@@ -142,13 +170,13 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                     title: question.questionTemplate.title || '',
                     description: question.questionTemplate.description || '',
                     subject: question.questionTemplate.subject || 'NOT_SET',
-                    difficulty: question.questionTemplate.difficulty || EDifficulty.EASY,
+                    difficulty: (question.questionTemplate.difficulty as EDifficulty) || EDifficulty.EASY,
                     points: question.questionTemplate.points || 10,
                     timeLimit: question.questionTemplate.timeLimit || 300,
                     instructions: question.questionTemplate.instructions || '',
                     tags: question.questionTemplate.tags || [],
                     isActive: question.questionTemplate.isActive ?? true,
-                    questionType: question.questionType || '',
+                    questionType: (question.questionType as EQuestionType) || '',
                     templateData: templateDataWithId // id'yi içeren template data
                 });
             }
@@ -166,9 +194,9 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
         }
     }, [formData.questionType]);
 
-    const handleChange = <T extends keyof QuestionFormData>(
+    const handleChange = <T extends keyof Omit<CreateQuestionRequest, 'questionTemplate'>>(
         name: T,
-        value: QuestionFormData[T]
+        value: Omit<CreateQuestionRequest, 'questionTemplate'>[T]
     ) => {
         setFormData(prev => ({
             ...prev,
@@ -198,17 +226,13 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
         setBaseFormData(data);
 
         // BaseForm değiştiğinde questionTemplate'i güncelle
-        // Type assertion: baseFormData zaten doğru template structure'a sahip
-        setFormData(prev => ({
-            ...prev,
-            questionTemplate: data.templateData as QuestionTemplateType
-        }));
+        setQuestionTemplate(data.templateData as QuestionTemplateType);
     };
 
-    // Question Parts Management
+    // Question Parts Management (UI-only state)
     const addPart = () => {
-        const newPart: CreateQuestionPartRequest = {
-            orderNumber: formData.parts.length + 1,
+        const newPart: QuestionPart = {
+            orderNumber: parts.length + 1,
             mediaType: EMediaType.TEXT,
             content: '',
             label: '',
@@ -216,67 +240,48 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
             durationInSeconds: undefined,
             repetitionCount: undefined
         };
-
-        setFormData(prev => ({
-            ...prev,
-            parts: [...prev.parts, newPart]
-        }));
+        setParts(prev => [...prev, newPart]);
     };
 
     const removePart = (index: number) => {
-        setFormData(prev => ({
-            ...prev,
-            parts: prev.parts.filter((_, i) => i !== index)
-        }));
+        setParts(prev => prev.filter((_, i) => i !== index));
     };
 
-    const updatePart = useCallback(<K extends keyof CreateQuestionPartRequest>(
+    const updatePart = useCallback(<K extends keyof QuestionPart>(
         index: number,
         field: K,
-        value: CreateQuestionPartRequest[K]
+        value: QuestionPart[K]
     ) => {
-        setFormData(prev => ({
-            ...prev,
-            parts: prev.parts.map((part, i) =>
-                i === index ? {...part, [field]: value} : part
-            )
-        }));
+        setParts(prev => prev.map((part, i) =>
+            i === index ? {...part, [field]: value} : part
+        ));
     }, []);
 
-    // Question Options Management
+    // Question Options Management (UI-only state)
     const addOption = () => {
-        const newOption: CreateQuestionOptionRequest = {
-            orderNumber: formData.options.length + 1,
+        const newOption: QuestionOption = {
+            orderNumber: options.length + 1,
             mediaType: EMediaType.TEXT,
             content: '',
             baseContent: '',
             isTrueOption: false
         };
 
-        setFormData(prev => ({
-            ...prev,
-            options: [...prev.options, newOption]
-        }));
+        setOptions(prev => [...prev, newOption]);
     };
 
     const removeOption = (index: number) => {
-        setFormData(prev => ({
-            ...prev,
-            options: prev.options.filter((_, i) => i !== index)
-        }));
+        setOptions(prev => prev.filter((_, i) => i !== index));
     };
 
-    const updateOption = useCallback(<K extends keyof CreateQuestionOptionRequest>(
+    const updateOption = useCallback(<K extends keyof QuestionOption>(
         index: number,
         field: K,
-        value: CreateQuestionOptionRequest[K]
+        value: QuestionOption[K]
     ) => {
-        setFormData(prev => ({
-            ...prev,
-            options: prev.options.map((option, i) =>
-                i === index ? {...option, [field]: value} : option
-            )
-        }));
+        setOptions(prev => prev.map((option, i) =>
+            i === index ? {...option, [field]: value} : option
+        ));
     }, []);
 
     // Validation
@@ -307,18 +312,23 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
         return Object.keys(newErrors).length === 0;
     };
 
+    // NOT: Template-specific validasyonlar artık template form'ların kendi validate() fonksiyonlarında yapılıyor
+    // validateCorrectAnswer() fonksiyonu kaldırıldı - tekrarlı validasyon yönetim sorununa yol açıyordu
+    // BaseQuestionTemplateForm.validateAll() zaten templateValidateRef.current?.validate() çağırarak
+    // tüm template form validasyonlarını yapıyor
+
     // Transform data to API request format
     const transformToCreateQuestionRequest = (): CreateQuestionRequest => {
         // Template data'yı doğru formata dönüştür
-        let questionTemplate: QuestionTemplateType | null = null;
+        let finalQuestionTemplate: CreateQuestionRequest['questionTemplate'] | null = null;
 
-        if (baseFormData.templateData && baseFormData.questionType) {
+        if (questionTemplate && baseFormData.questionType) {
             // BaseFormData ile templateData'yı birleştir
             // ÖNEMLİ: templateData içindeki tüm field'ları koru (id, correctOptionIndex, correctOptionIndices, vb.)
-            const templateId = baseFormData.templateData.id; // id'yi önce sakla
+            const templateId = questionTemplate.id; // id'yi önce sakla
             
-            questionTemplate = {
-                ...baseFormData.templateData, // Template-specific field'ları koru (correctOptionIndex, correctOptionIndices, vb.)
+            finalQuestionTemplate = {
+                ...questionTemplate, // Template-specific field'ları koru (correctOptionIndex, correctOptionIndices, vb.)
                 // Base template fields (eğer baseFormData'da varsa override et)
                 ...(baseFormData.title && { title: baseFormData.title }),
                 // Açıklama ve Talimatlar her zaman boş string olarak gönderiliyor (UI'dan kaldırıldı)
@@ -333,20 +343,23 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                 questionType: baseFormData.questionType as EQuestionType,
                 // ÖNEMLİ: id'yi en son ekle ki override edilmesin (update modu için gerekli)
                 ...(templateId && { id: templateId })
-            } as QuestionTemplateType;
+            } as CreateQuestionRequest['questionTemplate'];
         }
 
+        // Directly use formData - no manual mapping needed!
+        if (!finalQuestionTemplate) {
+            throw new Error('Question template is required');
+        }
+        
         return {
             name: formData.name.trim(),
             questionGroupId: formData.questionGroupId,
-            questionType: formData.questionType as EQuestionType,
+            questionType: formData.questionType as CreateQuestionRequest['questionType'],
             orderNumber: formData.orderNumber,
             isAutomaticallyEvaluated: formData.isAutomaticallyEvaluated,
             maximumScore: formData.maximumScore,
             durationInSeconds: formData.durationInSeconds,
-            parts: formData.parts,
-            options: formData.options,
-            questionTemplate: questionTemplate
+            questionTemplate: finalQuestionTemplate
         };
     };
 
@@ -371,7 +384,15 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
             return;
         }
 
-        // 3. Tüm validationlar başarılı - data transform ve submit
+        // 3. Template data kontrolü
+        // NOT: Template-specific validasyonlar artık template form'ların kendi validate() fonksiyonlarında yapılıyor
+        // Bu yüzden validateCorrectAnswer() fonksiyonunu kaldırdık - tekrarlı validasyon yönetim sorununa yol açıyordu
+        if (!baseFormData.templateData && formData.questionType) {
+            showNotification.error('Template bilgileri eksik! Lütfen template formunu doldurunuz.');
+            return;
+        }
+
+        // 4. Tüm validationlar başarılı - data transform ve submit
         const finalData = transformToCreateQuestionRequest();
         if(question){
             finalData.id = question.id;
@@ -398,7 +419,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                         </Button>
                     </div>
 
-                    {formData.parts.map((part, index) => (
+                    {parts.map((part, index) => (
                         <div key={index} className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg">
                             <div className="col-span-1">
                                 <Label>Sıra</Label>
@@ -485,7 +506,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                         </Button>
                     </div>
 
-                    {formData.options.map((option, index) => (
+                    {options.map((option, index) => (
                         <div key={index} className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg">
                             <div className="col-span-1">
                                 <Label>Sıra</Label>
@@ -727,15 +748,28 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                     )}
 
                     {/* TEK KAYDET BUTONU - Master Submit */}
-                    <div className="flex justify-end space-x-4 pt-6 border-t">
-                        <Button
-                            onClick={handleSubmit}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-8"
-                            disabled={loading}
-                            size="lg"
-                        >
-                            {loading ? "İşleniyor..." : question ? "Soru Güncelle" : "Soru Oluştur"}
-                        </Button>
+                    <div className="flex justify-between items-center pt-6 border-t">
+                        {question && onDelete && (
+                            <Button
+                                onClick={onDelete}
+                                className="bg-red-600 hover:bg-red-700 text-white px-8"
+                                disabled={loading}
+                                size="lg"
+                                variant="destructive"
+                            >
+                                {loading ? "İşleniyor..." : "Soru Sil"}
+                            </Button>
+                        )}
+                        <div className="flex justify-end space-x-4 ml-auto">
+                            <Button
+                                onClick={handleSubmit}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-8"
+                                disabled={loading}
+                                size="lg"
+                            >
+                                {loading ? "İşleniyor..." : question ? "Soru Güncelle" : "Soru Oluştur"}
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </CardContent>

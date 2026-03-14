@@ -1,28 +1,29 @@
 'use client';
 
 import PageHeader from "@/components/layout/page-header";
-import React, {useEffect} from "react";
+import React, {useMemo, useCallback} from "react";
 import {useRouter} from "next/navigation";
-import {useBrand} from "@/hooks/exam/use-brand";
+import {useGetAllBrands} from "@/api/generated/brand-management/brand-management";
 import {Column, RecordType} from "@/types/ui/table";
 import LoadingComp from "@/components/ui/loading-comp";
 import {ActionButtons} from "@/components/ui/simple-dropdown";
 import DynamicTable from "@/components/ui/dynamic-table";
+import {extractApiListData} from "@/utils/api-helpers/extract-api-data";
+import type {BrandDto} from "@/api/generated/model";
 
 export default function BrandsPage() {
     const router = useRouter();
-    const {
-        getAllBrands,
-        brands,
-        loading
-    } = useBrand();
+    const { data, isLoading, error } = useGetAllBrands({
+        query: {
+            refetchOnMount: true,
+            refetchOnWindowFocus: false,
+            staleTime: 0,
+        }
+    });
+    
+    const brands = useMemo(() => extractApiListData<BrandDto>(data), [data]);
 
-    useEffect(() => {
-        getAllBrands();
-    }, []);
-
-    const columns: Column<RecordType>[] = [
-
+    const columns: Column<RecordType>[] = useMemo(() => [
         {
             key: 'name',
             header: 'Ad',
@@ -31,11 +32,10 @@ export default function BrandsPage() {
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => router.push(`/admin/brands/${record.id}`)}
                 >
-                    {value as string}
+                    {String(value || '')}
                 </div>
             )
-        }
-        ,
+        },
         {
             key: 'code',
             header: 'Kod',
@@ -44,7 +44,7 @@ export default function BrandsPage() {
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => router.push(`/admin/brands/${record.id}`)}
                 >
-                    {value as string}
+                    {String(value || '')}
                 </div>
             )
         },
@@ -56,20 +56,26 @@ export default function BrandsPage() {
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => router.push(`/admin/brands/${record.id}`)}
                 >
-                    {value as string}
+                    {String(value || '')}
                 </div>
             )
         }
-    ];
+    ], [router]);
 
-    const handleAdd = () => {
+    const handleAdd = useCallback(() => {
         router.push('/admin/brands/add');
-    };
+    }, [router]);
 
 
-    if (loading) {
+    if (isLoading) {
+        return <LoadingComp/>;
+    }
+
+    if (error) {
         return (
-            <LoadingComp/>
+            <div className="p-6">
+                <p className="text-red-600">Markalar yüklenirken bir hata oluştu.</p>
+            </div>
         );
     }
     return (
@@ -83,7 +89,7 @@ export default function BrandsPage() {
             <div className="p-6 pt-1">
                 {
                     brands &&
-                    <DynamicTable columns={columns} data={brands}/>
+                    <DynamicTable columns={columns} data={brands as RecordType[]}/>
                 }
 
             </div>

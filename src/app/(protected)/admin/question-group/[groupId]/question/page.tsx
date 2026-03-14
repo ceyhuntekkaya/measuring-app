@@ -1,15 +1,16 @@
 'use client';
 import {Column, RecordType} from "@/types/ui/table";
-import React, {useEffect, useState} from "react";
+import React, { useState} from "react";
 import PageHeader from "@/components/layout/page-header";
 import DynamicTable from "@/components/ui/dynamic-table";
 import {ActionButtons} from "@/components/ui/simple-dropdown";
 import {useParams, useRouter} from "next/navigation";
 import LoadingComp from "@/components/ui/loading-comp";
 import Link from "next/link";
-import {useQuestionGroup} from "@/hooks/exam/use-question-group";
-import {QuestionDto, QuestionTemplateType} from "@/types/exam/examEntities";
-import {useQuestion} from "@/hooks/exam/use-question";
+import {useGetQuestionGroupById} from "@/api/generated/question-group-management/question-group-management";
+import {useGetQuestionsByGroup} from "@/api/generated/question-management/question-management";
+import type {ApiResponseQuestionGroupDto, ApiResponseListQuestionDto, QuestionDto} from "@/api/generated/model";
+import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
 import {
     AudioResponseTemplateDto,
@@ -18,7 +19,7 @@ import {
     FillInTheBlanksTemplateDto, HotSpotTemplateDto, ImageResponseTemplateDto, MatchingTemplateDto,
     MultipleChoiceTemplateDto, MultipleResponseTemplateDto, OrderingTemplateDto, ShortAnswerTemplateDto,
     TrueFalseTemplateDto, VideoResponseTemplateDto
-} from "@/types/exam/questionTemplates";
+} from "@/api/generated/model";
 import MultipleChoiceQuestion from "@/components/template/MultipleChoiceQuestion";
 import TrueFalseQuestion from "@/components/template/TrueFalseQuestion";
 import FillInTheBlanksQuestion from "@/components/template/FillInTheBlanksQuestion";
@@ -36,26 +37,28 @@ import Checkbox from "@/components/ui/checkbox";
 import FilePreview from "@/components/ui/file-preview";
 import {getQuestionTypeLabel} from "@/utils/question-type-convert";
 import {approvalStatusConverter} from "@/utils/enum-converter";
+import {hasCorrectAnswer} from "@/utils/question-validation";
 
 export default function QuestionPage() {
     const router = useRouter();
     const params = useParams();
     const groupId = params.groupId as string;
-    const {
-        selectedQuestionGroup,
-        getQuestionGroupById,
-    } = useQuestionGroup();
+    
+    const {data: questionGroupData, isLoading: loading} = useGetQuestionGroupById(groupId, {
+        query: { enabled: !!groupId }
+    });
+    const selectedQuestionGroup = (questionGroupData as unknown as ApiResponseQuestionGroupDto)?.data;
 
-    const {
-        questionsByGroup,
-        getQuestionsByGroup,
-        loading
-    } = useQuestion();
+    const {data: questionsData} = useGetQuestionsByGroup(groupId, {
+        query: { 
+            enabled: !!groupId,
+            refetchOnMount: true,
+            refetchOnWindowFocus: false,
+            staleTime: 0,
+        }
+    });
+    const questionsByGroup = (questionsData as unknown as ApiResponseListQuestionDto)?.data || [];
 
-    useEffect(() => {
-        getQuestionGroupById(groupId);
-        getQuestionsByGroup(groupId)
-    }, []);
 
 
     const [selectedQuestionForPreview, setSelectedQuestionForPreview] = useState<string | null>(null);
@@ -106,7 +109,7 @@ export default function QuestionPage() {
         },
         {
             key: 'approvalStatus',
-            header: 'Durum',
+            header: 'Onay Durumu',
             render: (value, record) => (
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
@@ -118,14 +121,14 @@ export default function QuestionPage() {
         }
         ,
         {
-            key: 'approvalCompletedDate',
-            header: 'Bölüm',
+            key: 'maximumScore',
+            header: 'Puan',
             render: (value, record) => (
                 <div
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => router.push(`/admin/question-group/${groupId}/question/${record.id}`)}
                 >
-                    {(record as QuestionDto).questionGroup?.name}
+                    {(record as QuestionDto).maximumScore || 0}
                 </div>
             )
         },
@@ -137,9 +140,30 @@ export default function QuestionPage() {
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => router.push(`/admin/question-group/${groupId}/question/${record.id}`)}
                 >
-                    {getQuestionTypeLabel((record as QuestionDto).questionType)}
+                                    {getQuestionTypeLabel((record as QuestionDto).questionType as EQuestionType)}
                 </div>
             )
+        },
+        {
+            key: 'answerStatus',
+            header: 'Cevap Durumu',
+            render: (value, record) => {
+                const question = record as QuestionDto;
+                const hasAnswer = hasCorrectAnswer(
+                    question.questionTemplate,
+                    question.questionType
+                );
+                const status = hasAnswer ? 'HAZIR' : 'CEVAP EKSİK';
+                return (
+                    <div
+                        className={`font-medium ${
+                            status === 'HAZIR' ? 'text-green-600' : 'text-red-600'
+                        }`}
+                    >
+                        {status}
+                    </div>
+                );
+            }
         },
         {
             key: 'id',
@@ -214,7 +238,7 @@ export default function QuestionPage() {
             <div className="p-6 pt-1">
                 {
                     questionsByGroup &&
-                    <DynamicTable searchable={false} columns={columns} data={questionsByGroup}/>
+                    <DynamicTable searchable={false} columns={columns} data={questionsByGroup as RecordType[]}/>
                 }
 
                 <div className="pt-4">
@@ -243,7 +267,7 @@ export default function QuestionPage() {
                         questionsByGroup.map((question, key) => (
                             question.questionType && question.questionTemplate && (selectedQuestionForPreview === null || selectedQuestionForPreview === question.id) &&
                             <div key={key}
-                                 className="p-4 border-b">  {renderTemplateSpecificForm(question.questionType, question.questionTemplate)} </div>
+                                 className="p-4 border-b">  {renderTemplateSpecificForm(question.questionType as EQuestionType, question.questionTemplate)} </div>
                         ))
                     }
                 </div>

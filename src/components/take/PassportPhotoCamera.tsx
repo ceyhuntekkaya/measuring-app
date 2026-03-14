@@ -38,8 +38,7 @@ const PassportPhotoCamera: React.FC<PassportPhotoCameraProps> = ({applicationId,
             setStream(mediaStream);
             setIsCameraActive(true);
             setCapturedPhoto(null);
-        } catch (error) {
-            console.log(error)
+        } catch {
             alert('Kameraya erişim izni gerekli. Lütfen izin verin.');
         }
     }, []);

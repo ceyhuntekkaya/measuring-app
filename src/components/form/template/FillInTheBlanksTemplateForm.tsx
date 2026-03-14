@@ -8,17 +8,12 @@ import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
 import {Textarea} from "@/components/ui/textarea";
 import {NumberInput} from "@/components/ui/number-input";
-import {FillInTheBlanksTemplateDto, FillInTheBlanksOptions, BlankAnswer} from "@/types/exam/questionTemplates";
+import type {FillInTheBlanksTemplateDto, BlankAnswer} from "@/api/generated/model";
 import {Plus, Trash2} from "lucide-react";
 import Checkbox from "@/components/ui/checkbox";
 
-interface FillInTheBlanksTemplateFormData {
-    textWithBlanks: string;
-    options: FillInTheBlanksOptions;
-    caseSensitive: boolean;
-    exactMatch: boolean;
-    explanation: string;
-}
+// Use ORVAL DTO types directly - only template-specific fields
+type FillInTheBlanksTemplateFormData = Pick<FillInTheBlanksTemplateDto, 'textWithBlanks' | 'options' | 'caseSensitive' | 'exactMatch' | 'explanation'>;
 
 interface FillInTheBlanksTemplateFormErrors {
     textWithBlanks?: string;
@@ -65,7 +60,7 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
                 explanation: '' // UI'dan kaldırıldı, her zaman boş string
             });
         }
-    }, []);
+    }, [value]);
 
     // NOT: caseSensitive ve exactMatch güncellemeleri artık textWithBlanks useEffect'inde yapılıyor
     // Bu useEffect'i kaldırdık çünkü sonsuz döngüye neden oluyordu
@@ -77,9 +72,10 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
     // handleChange'den sonra parent'a bildir
     useEffect(() => {
         // İlk render'da boş form için onChange tetikleme
-        if (formData.textWithBlanks || (formData.options.blanks ?? []).length > 0) {
+        const blanksLength = formData.options?.blanks?.length || 0;
+        if (formData.textWithBlanks || blanksLength > 0) {
             // Tüm boşlukların feedback'ini boş string yap ve ana şablon ayarlarını uygula
-            const blanksWithDefaults = formData.options.blanks?.map(blank => ({
+            const blanksWithDefaults = formData.options?.blanks?.map(blank => ({
                 ...blank,
                 caseSensitive: formData.caseSensitive,
                 exactMatch: formData.exactMatch,
@@ -99,14 +95,14 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
             };
             
             // Basit bir key oluştur (sonsuz döngüyü önlemek için)
-            const dataKey = `${formData.textWithBlanks}|${formData.caseSensitive}|${formData.exactMatch}|${blanksWithDefaults.length}`;
+            const dataKey = `${formData.textWithBlanks}|${formData.caseSensitive}|${formData.exactMatch}|${blanksLength}`;
             
             if (dataKey !== lastSentRef.current) {
                 lastSentRef.current = dataKey;
                 onChange(templateData);
             }
         }
-    }, [formData.textWithBlanks, formData.caseSensitive, formData.exactMatch, formData.options.blanks?.length || 0]);
+    }, [formData.textWithBlanks, formData.caseSensitive, formData.exactMatch, formData.options, onChange, value]);
 
     // Boşlukları güncelleme fonksiyonu
     const updateBlanksFromText = (text: string, currentBlanks: BlankAnswer[], caseSensitive: boolean, exactMatch: boolean): BlankAnswer[] => {
@@ -206,6 +202,30 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
         });
     };
 
+    // Aynı blank_[id] değerinden birden fazla olup olmadığını kontrol et
+    const checkDuplicateBlanks = (text: string): string | undefined => {
+        const regex = /\[blank_\d+\]/g;
+        const matches = text.match(regex);
+        if (!matches) return undefined;
+        
+        // Her ID'nin kaç kez geçtiğini say
+        const idCounts = new Map<string, number>();
+        matches.forEach(match => {
+            idCounts.set(match, (idCounts.get(match) || 0) + 1);
+        });
+        
+        // Birden fazla kez geçen ID'leri bul
+        const duplicates = Array.from(idCounts.entries())
+            .filter(([, count]) => count > 1)
+            .map(([id]) => id);
+        
+        if (duplicates.length > 0) {
+            return `Aynı boşluk ID'si birden fazla kez kullanılamaz: ${duplicates.join(', ')}`;
+        }
+        
+        return undefined;
+    };
+
     const handleChange = <T extends keyof FillInTheBlanksTemplateFormData>(
         field: T,
         newValue: FillInTheBlanksTemplateFormData[T]
@@ -218,11 +238,26 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
 
             // Eğer textWithBlanks değiştiyse, boşlukları güncelle
             if (field === 'textWithBlanks') {
+                // Aynı blank ID kontrolü
+                const duplicateError = checkDuplicateBlanks(newValue as string);
+                if (duplicateError) {
+                    setErrors(prev => ({
+                        ...prev,
+                        textWithBlanks: duplicateError
+                    }));
+                } else {
+                    // Hata yoksa temizle
+                    setErrors(prev => ({
+                        ...prev,
+                        textWithBlanks: undefined
+                    }));
+                }
+                
                 const updatedBlanks = updateBlanksFromText(
                     newValue as string,
-                    prev.options.blanks || [],
-                    prev.caseSensitive,
-                    prev.exactMatch
+                    prev.options?.blanks || [],
+                    prev.caseSensitive ?? false,
+                    prev.exactMatch ?? false
                 );
                 updatedData.options = {
                     ...prev.options,
@@ -231,10 +266,10 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
             }
             // Eğer caseSensitive veya exactMatch değiştiyse, tüm boşlukları güncelle
             else if (field === 'caseSensitive' || field === 'exactMatch') {
-                const updatedBlanks = (prev.options.blanks || []).map(blank => ({
+                const updatedBlanks = (prev.options?.blanks || []).map(blank => ({
                     ...blank,
-                    caseSensitive: field === 'caseSensitive' ? (newValue as boolean) : prev.caseSensitive,
-                    exactMatch: field === 'exactMatch' ? (newValue as boolean) : prev.exactMatch,
+                    caseSensitive: field === 'caseSensitive' ? (newValue as boolean) : (prev.caseSensitive ?? false),
+                    exactMatch: field === 'exactMatch' ? (newValue as boolean) : (prev.exactMatch ?? false),
                     feedback: ''
                 }));
                 updatedData.options = {
@@ -288,7 +323,7 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
         field: K,
         newValue: BlankAnswer[K]
     ) => {
-        const updatedBlanks = formData.options.blanks?.map((blank, i) =>
+        const updatedBlanks = formData.options?.blanks?.map((blank, i) =>
             i === index ? {...blank, [field]: newValue} : blank
         ) || [];
 
@@ -296,7 +331,7 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
     };
 
     const addAcceptableAnswer = (blankIndex: number) => {
-        const updatedBlanks = formData.options.blanks?.map((blank, i) =>
+        const updatedBlanks = formData.options?.blanks?.map((blank, i) =>
             i === blankIndex
                 ? {...blank, acceptableAnswers: [...(blank.acceptableAnswers || []), '']}
                 : blank
@@ -306,7 +341,7 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
     };
 
     const removeAcceptableAnswer = (blankIndex: number, answerIndex: number) => {
-        const updatedBlanks = formData.options.blanks?.map((blank, i) =>
+        const updatedBlanks = formData.options?.blanks?.map((blank, i) =>
             i === blankIndex
                 ? {
                     ...blank,
@@ -319,7 +354,7 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
     };
 
     const updateAcceptableAnswer = (blankIndex: number, answerIndex: number, newValue: string) => {
-        const updatedBlanks = formData.options.blanks?.map((blank, i) =>
+        const updatedBlanks = formData.options?.blanks?.map((blank, i) =>
             i === blankIndex
                 ? {
                     ...blank,
@@ -337,18 +372,45 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
     const validateForm = (): boolean => {
         const newErrors: FillInTheBlanksTemplateFormErrors = {};
 
-        if (!formData.textWithBlanks.trim()) {
+        if (!formData.textWithBlanks?.trim()) {
             newErrors.textWithBlanks = 'Boşluklu metin zorunludur';
+        } else {
+            // Aynı blank ID kontrolü
+            const duplicateError = checkDuplicateBlanks(formData.textWithBlanks);
+            if (duplicateError) {
+                newErrors.textWithBlanks = duplicateError;
+            }
         }
 
-        if (!formData.options.blanks || formData.options.blanks.length === 0) {
+        if (!formData.options?.blanks || formData.options.blanks.length === 0) {
             newErrors.options = 'En az bir boşluk tanımlanmalıdır';
         } else {
-            const invalidBlanks = formData.options.blanks.some(blank =>
-                !blank.acceptableAnswers || blank.acceptableAnswers.length === 0 ||
-                blank.acceptableAnswers.some(answer => !answer.trim())
-            );
-            if (invalidBlanks) {
+
+            // Geçersiz blank'ları bul
+            const invalidBlanksList = formData.options.blanks.filter(blank => {
+                // acceptableAnswers yoksa, array değilse veya boş array ise
+                if (!blank.acceptableAnswers || !Array.isArray(blank.acceptableAnswers) || blank.acceptableAnswers.length === 0) {
+                    return true;
+                }
+                
+                // Tüm cevapları kontrol et - en az bir geçerli (trim edilmiş ve boş olmayan) cevap olmalı
+                const validAnswers = blank.acceptableAnswers.filter(answer => {
+                    // String kontrolü ve boş olmayan kontrolü
+                    if (answer == null) return false;
+                    if (typeof answer !== 'string') return false;
+                    return answer.trim().length > 0;
+                });
+                
+                // Eğer geçerli cevap yoksa hata
+                if (validAnswers.length === 0) {
+                    return true;
+                }
+                
+                return false;
+            });
+
+            
+            if (invalidBlanksList.length > 0) {
                 newErrors.options = 'Tüm boşluklar için en az bir kabul edilebilir cevap girilmelidir';
             }
         }
@@ -420,7 +482,7 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
                             </p>
                         </div>
 
-                        {formData.options.blanks?.map((blank, blankIndex) => (
+                        {formData.options?.blanks?.map((blank, blankIndex) => (
                             <div key={`${blank.blankId || 'blank'}-${blankIndex}`} className="p-4 border rounded-lg space-y-4">
                                 <div className="grid grid-cols-12 gap-2 items-center">
                                     <div className="col-span-2">
@@ -495,19 +557,8 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
                         )}
                     </div>
 
-                    {/* Açıklama - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
-                    {/* <div className="space-y-2">
-                        <Label htmlFor="explanation">Açıklama</Label>
-                        <Textarea
-                            id="explanation"
-                            value={formData.explanation}
-                            onChange={(e) => handleChange('explanation', e.target.value)}
-                            className="min-h-[100px]"
-                            placeholder="Soru açıklaması (opsiyonel)"
-                        />
-                    </div> */}
-
-                    {/* KAYDET BUTONU KALDIRILDI - Parent component'te olacak */}
+                   
+                   
                 </div>
             </CardContent>
         </Card>

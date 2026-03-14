@@ -27,7 +27,7 @@ export default function ProtectedLayout({
             return;
         }
 
-        if (user && requiredRole && !user.roleSet.some(role=> requiredRole.includes(role))) {
+        if (user && requiredRole && !user.roleSet?.some(role=> requiredRole.includes(role))) {
             router.push('/unauthorized');
             return;
         }
@@ -35,7 +35,7 @@ export default function ProtectedLayout({
         if (
             user &&
             requiredPermissions.length > 0 &&
-            !user.authoritySet.some(permission=> requiredPermissions.includes(permission)
+            !user.authoritySet?.some(permission=> requiredPermissions.includes(permission)
             )
         ) {
             router.push('/unauthorized');
@@ -51,7 +51,7 @@ export default function ProtectedLayout({
         );
     }
 
-    if (!user || (requiredRole && !user.roleSet.some(role=> requiredRole.includes(role)))) {
+    if (!user || (requiredRole && !user.roleSet?.some(role=> requiredRole.includes(role)))) {
         return null;
     }
 

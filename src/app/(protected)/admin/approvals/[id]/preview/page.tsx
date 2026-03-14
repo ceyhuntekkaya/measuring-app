@@ -1,16 +1,18 @@
 'use client';
 
 import {useParams} from "next/navigation";
-import React, {useEffect, useState} from "react";
-import {useQuestionGroup} from "@/hooks/exam/use-question-group";
+import React, {useState} from "react";
+import {useGetQuestionGroupById, useGetQuestionGroupApprovals, useUpdateApproval} from "@/api/generated/question-group-management/question-group-management";
 import PageHeader from "@/components/layout/page-header";
 import LoadingComp from "@/components/ui/loading-comp";
-import {QuestionDto, QuestionTemplateType} from '@/types/exam/examEntities';
+import {useQueryClient} from "@tanstack/react-query";
+import type {QuestionDto} from '@/api/generated/model/questionDto';
+import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EQuestionType, EMediaType, EApprovalStatus} from '@/types/exam/enum';
 import {getQuestionTypeLabel} from '@/utils/question-type-convert';
 import ModalPanel from "@/components/ui/ModalPanel";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
-import {showNotification} from "@/lib/notification";
+import {showNotification, getErrorMessage} from "@/lib/notification";
 import {
     AudioResponseTemplateDto,
     DragAndDropTemplateDto,
@@ -25,7 +27,7 @@ import {
     ShortAnswerTemplateDto,
     TrueFalseTemplateDto,
     VideoResponseTemplateDto
-} from '@/types/exam/questionTemplates';
+} from '@/api/generated/model';
 import MultipleChoiceQuestion from '@/components/template/MultipleChoiceQuestion';
 import TrueFalseQuestion from '@/components/template/TrueFalseQuestion';
 import FillInTheBlanksQuestion from '@/components/template/FillInTheBlanksQuestion';
@@ -42,19 +44,24 @@ import OrderingQuestion from '@/components/template/OrderingQuestion';
 import FilePreview from '@/components/ui/file-preview';
 import {approvalStatusConverter} from "@/utils/enum-converter";
 import {formatDate} from "@/utils/date-formater";
-import {QuestionGroupApprovalResponse, ApprovalStatusRequest} from "@/types/exam/examEntities";
+import type {QuestionGroupApprovalResponse, ApprovalStatusRequest, QuestionGroupDto} from "@/api/generated/model";
 
 export default function ApprovalPreviewPage() {
     const params = useParams();
     const groupId = params.id as string;
-    const {
-        selectedQuestionGroup,
-        getQuestionGroupById,
-        questionGroupApprovals,
-        getQuestionGroupApprovals,
-        updateObjectApproval,
-        loading
-    } = useQuestionGroup();
+    const queryClient = useQueryClient();
+    
+    const {data: questionGroupData, isLoading: loading} = useGetQuestionGroupById(groupId, {
+        query: { enabled: !!groupId }
+    });
+    const selectedQuestionGroup = (questionGroupData as { data?: QuestionGroupDto })?.data;
+    
+    const {data: approvalsData} = useGetQuestionGroupApprovals(groupId, {
+        query: { enabled: !!groupId }
+    });
+    const questionGroupApprovals = (approvalsData as { data?: QuestionGroupApprovalResponse[] })?.data || [];
+    
+    const updateApprovalMutation = useUpdateApproval();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedApproval, setSelectedApproval] = useState<QuestionGroupApprovalResponse | null>(null);
@@ -62,16 +69,9 @@ export default function ApprovalPreviewPage() {
     const [comment, setComment] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
-    useEffect(() => {
-        if (groupId) {
-            getQuestionGroupById(groupId);
-            getQuestionGroupApprovals(groupId);
-        }
-    }, [groupId]);
-
     const handleButtonClick = (approval: QuestionGroupApprovalResponse) => {
         setSelectedApproval(approval);
-        setApprovalStatus(approval.approvalStatus || EApprovalStatus.PENDING);
+        setApprovalStatus((approval.approvalStatus as EApprovalStatus) || EApprovalStatus.PENDING);
         setComment(approval.comment || '');
         setIsModalOpen(true);
     };
@@ -90,14 +90,18 @@ export default function ApprovalPreviewPage() {
                 questionGroupId: groupId
             } as ApprovalStatusRequest;
 
-            await updateObjectApproval(selectedApproval.objectApprovalId, updateRequest);
+            await updateApprovalMutation.mutateAsync({
+                approvalId: selectedApproval.objectApprovalId,
+                data: updateRequest
+            });
             
             showNotification.success('Onay başarıyla güncellendi!');
             setIsModalOpen(false);
             // Verileri yeniden yükle
-            getQuestionGroupApprovals(groupId);
+            queryClient.invalidateQueries({ queryKey: [`/question-groups/${groupId}/approvals`] });
         } catch (error) {
-            showNotification.error('Onay güncellenirken bir hata oluştu!');
+            const errorMessage = getErrorMessage(error);
+            showNotification.error(errorMessage || 'Onay güncellenirken bir hata oluştu!');
             console.error('Error updating approval:', error);
         } finally {
             setIsSaving(false);
@@ -272,7 +276,7 @@ export default function ApprovalPreviewPage() {
             default:
                 return (
                     <div className="text-gray-500 text-sm p-4 bg-gray-50 rounded">
-                        Desteklenmeyen soru tipi: {type}
+                        Desteklenmeyen soru tipi: {getQuestionTypeLabel(type)}
                     </div>
                 );
         }
@@ -297,7 +301,8 @@ export default function ApprovalPreviewPage() {
         );
     }
 
-    const sortedQuestions = [...(selectedQuestionGroup.questions || [])].sort((a, b) => {
+    const sortedQuestions = [...(selectedQuestionGroup.questions || [])] as QuestionDto[];
+    sortedQuestions.sort((a, b) => {
         return (a.orderNumber ?? 0) - (b.orderNumber ?? 0);
     });
 
@@ -506,7 +511,7 @@ export default function ApprovalPreviewPage() {
                                                     {question.name || `Soru ${questionIndex + 1}`}
                                                 </div>
                                                 <div className="text-sm text-gray-500 mt-1">
-                                                    {getQuestionTypeLabel(question.questionType)}
+                                                    {getQuestionTypeLabel(question.questionType as EQuestionType)}
                                                 </div>
                                                 {question.approvalStatus && (
                                                     <div className="text-xs text-gray-400 mt-1">

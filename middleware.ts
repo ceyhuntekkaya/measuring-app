@@ -3,14 +3,14 @@ import type {NextRequest} from 'next/server';
 import {isPathAllowed} from '@/config/routes';
 import {jwtDecode} from 'jwt-decode';
 import {Department, Role, User} from "@/types/auth";
-import {Brand} from "@/types/management/brand";
+import type {BrandDto} from "@/api/generated/model";
 
 interface DecodedToken {
     user: User;
     departments: Department[];
     roles: Role[];
     authorities: Permissions[];
-    brands: Brand[];
+    brands: BrandDto[];
     user_id: string;
     email: string;
     exp: number;

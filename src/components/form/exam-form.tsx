@@ -9,10 +9,7 @@ import {Input} from "@/components/ui/input";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {Badge} from "@/components/ui/badge";
 import {X} from "lucide-react";
-import {BranchDto, BrandDto} from "@/types/management/brand";
-import {EStatus} from "@/types/exam/enum";
-import {ExamDto, ExamFormData, QuestionGroupDto} from "@/types/exam/examEntities";
-import {ExamTypeDto} from "@/types/exam/examTemplates";
+import type {BranchDto, BrandDto, ExamDto, QuestionGroupDto, ExamTypeDto, CreateExamRequest, UpdateExamRequest} from "@/api/generated/model";
 import {Column, RecordType} from "@/types/ui/table";
 import DynamicTable from "@/components/ui/dynamic-table";
 
@@ -26,7 +23,7 @@ interface ExamFormErrors {
 }
 
 interface ExamFormProps {
-    onSubmit: (data: ExamFormData) => Promise<void>;
+    onSubmit: (data: CreateExamRequest | UpdateExamRequest) => Promise<void>;
     exam?: ExamDto | null;
     loading?: boolean;
     examTypes?: ExamTypeDto[];
@@ -48,19 +45,13 @@ const ExamForm: React.FC<ExamFormProps> = ({
                                                onExamTypeChange,
                                                onBrandChange
                                            }) => {
-    const [formData, setFormData] = useState<ExamFormData>({
-        id: '',
+    const [formData, setFormData] = useState<CreateExamRequest>({
         name: '',
         code: '',
         examTypeId: '',
         questionGroupIds: [],
         branchId: '',
-        brandId: '',
-        createdAt: new Date(),
-        deletedAt: null,
-        status: EStatus.ACTIVE,
-        createdById: '',
-        deletedById: ''
+        brandId: ''
     });
 
     const [errors, setErrors] = useState<ExamFormErrors>({});
@@ -84,7 +75,7 @@ const ExamForm: React.FC<ExamFormProps> = ({
                 setSelectedQuestionGroups(compatibleSelectedGroups);
                 setFormData(prev => ({
                     ...prev,
-                    questionGroupIds: compatibleSelectedGroups.map(qg => qg.id)
+                    questionGroupIds: compatibleSelectedGroups.map(qg => qg.id).filter((id): id is string => !!id)
                 }));
             }
         } else {
@@ -100,16 +91,10 @@ const ExamForm: React.FC<ExamFormProps> = ({
     useEffect(() => {
         if (exam) {
             setFormData({
-                id: exam.id || '',
-                createdAt: exam.createdAt ? new Date(exam.createdAt) : new Date(),
-                deletedAt: exam.deletedAt ? new Date(exam.deletedAt) : null,
-                status: exam.status,
-                createdById: exam.createdById || '',
-                deletedById: exam.deletedById || '',
                 name: exam.name || '',
                 code: exam.code || '',
                 examTypeId: exam.examType?.id || '',
-                questionGroupIds: exam.questionGroups?.map(qg => qg.id) || [],
+                questionGroupIds: exam.questionGroups?.map(qg => qg.id).filter((id): id is string => !!id) || [],
                 branchId: exam.branch?.id || '',
                 brandId: exam.brand?.id || ''
             });
@@ -120,9 +105,9 @@ const ExamForm: React.FC<ExamFormProps> = ({
         }
     }, [exam]);
 
-    const handleChange = <T extends keyof ExamFormData>(
+    const handleChange = <T extends keyof CreateExamRequest>(
         name: T,
-        value: ExamFormData[T]
+        value: CreateExamRequest[T]
     ) => {
         setFormData(prev => ({
             ...prev,
@@ -149,7 +134,7 @@ const ExamForm: React.FC<ExamFormProps> = ({
             setSelectedQuestionGroups(newSelectedGroups);
             setFormData(prev => ({
                 ...prev,
-                questionGroupIds: newSelectedGroups.map(qg => qg.id)
+                questionGroupIds: newSelectedGroups.map(qg => qg.id).filter((id): id is string => !!id)
             }));
         }
     };
@@ -159,7 +144,7 @@ const ExamForm: React.FC<ExamFormProps> = ({
         setSelectedQuestionGroups(newSelectedGroups);
         setFormData(prev => ({
             ...prev,
-            questionGroupIds: newSelectedGroups.map(qg => qg.id)
+            questionGroupIds: newSelectedGroups.map(qg => qg.id).filter((id): id is string => !!id)
         }));
     };
 
@@ -203,13 +188,8 @@ const ExamForm: React.FC<ExamFormProps> = ({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (validateForm()) {
-            const submitData: ExamFormData = {
-                id: formData.id || '',
-                createdAt: formData.createdAt || new Date(),
-                deletedAt: formData.deletedAt || null,
-                status: formData.status,
-                createdById: formData.createdById || '',
-                deletedById: formData.deletedById || '',
+            // Directly use formData - no manual mapping needed!
+            const submitData: CreateExamRequest | UpdateExamRequest = {
                 name: formData.name.trim(),
                 code: formData.code.trim().toUpperCase(),
                 examTypeId: formData.examTypeId,
@@ -323,7 +303,7 @@ const ExamForm: React.FC<ExamFormProps> = ({
                                 </SelectTrigger>
                                 <SelectContent>
                                     {brands.map((brand) => (
-                                        <SelectItem key={brand.id} value={brand.id}>
+                                        <SelectItem key={brand.id} value={brand.id || ''}>
                                             {brand.name} ({brand.code})
                                         </SelectItem>
                                     ))}
@@ -351,7 +331,7 @@ const ExamForm: React.FC<ExamFormProps> = ({
                                 </SelectTrigger>
                                 <SelectContent>
                                     {availableBranches.map((branch) => (
-                                        <SelectItem key={branch.id} value={branch.id}>
+                                        <SelectItem key={branch.id} value={branch.id || ''}>
                                             {branch.branchName} ({branch.code})
                                         </SelectItem>
                                     ))}
@@ -376,7 +356,7 @@ const ExamForm: React.FC<ExamFormProps> = ({
                                 </SelectTrigger>
                                 <SelectContent>
                                     {examTypes.map((examType) => (
-                                        <SelectItem key={examType.id} value={examType.id}>
+                                        <SelectItem key={examType.id} value={examType.id || ''}>
                                             {examType.name}
                                         </SelectItem>
                                     ))}
@@ -408,7 +388,7 @@ const ExamForm: React.FC<ExamFormProps> = ({
                                                 {qg.name}
                                                 <X
                                                     className="h-3 w-3 cursor-pointer hover:text-red-500"
-                                                    onClick={() => removeQuestionGroup(qg.id)}
+                                                    onClick={() => qg.id && removeQuestionGroup(qg.id)}
                                                 />
                                             </Badge>
                                         ))}
@@ -449,7 +429,7 @@ const ExamForm: React.FC<ExamFormProps> = ({
 
 
                                     <div className="flex gap-2">
-                                        <DynamicTable columns={columns} data={getUnselectedQuestionGroups()}/>
+                                        <DynamicTable columns={columns} data={getUnselectedQuestionGroups() as RecordType[]}/>
                                     </div>
                                 </>
                             )}

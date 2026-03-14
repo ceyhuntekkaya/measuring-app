@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import {OrderingItem, OrderingTemplateDto} from '@/types/exam/questionTemplates';
-import {QuestionTemplateType} from "@/types/exam/examEntities";
+import type {OrderingItem, OrderingTemplateDto} from '@/api/generated/model';
+import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
+import {difficultyConverter} from "@/utils/enum-converter";
 
 interface OrderingQuestionProps {
     template: OrderingTemplateDto;
@@ -469,7 +470,7 @@ const OrderingQuestion: React.FC<OrderingQuestionProps> = ({
                             <div><strong>Konu:</strong> {template.subject}</div>
                         )}
                         {template.difficulty && (
-                            <div><strong>Zorluk:</strong> {template.difficulty}</div>
+                            <div><strong>Zorluk:</strong> {difficultyConverter(template.difficulty)}</div>
                         )}
                         {template.points && (
                             <div><strong>Puan:</strong> {template.points}</div>

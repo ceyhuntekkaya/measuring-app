@@ -7,9 +7,8 @@ import {Button} from "@/components/ui/button";
 import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
 import Checkbox from "@/components/ui/checkbox";
-import {UserDto, UserFormData, Permission, Department, Role, PermissionList, DepartmentList} from "@/types/auth";
-import {BrandDto} from "@/types/management/brand";
-import {EStatus} from "@/types/exam/enum";
+import {Permission, Department, Role, PermissionList, DepartmentList} from "@/types/auth";
+import type {UserDto, BrandDto, CreateUserRequest, UpdateUserRequest, CreateUserRequestAuthoritySetItem, CreateUserRequestDepartmentSetItem, CreateUserRequestRoleSetItem} from "@/api/generated/model";
 import {departmentConverter, permissionConverter, roleConverter} from "@/utils/name-converter";
 
 interface UserFormErrors {
@@ -27,7 +26,7 @@ interface UserFormErrors {
 }
 
 interface UserFormProps {
-    onSubmit: (data: UserFormData) => Promise<void>;
+    onSubmit: (data: CreateUserRequest | UpdateUserRequest) => Promise<void>;
     user?: UserDto | null;
     loading?: boolean;
     brands: BrandDto[];
@@ -47,29 +46,31 @@ const UserForm: React.FC<UserFormProps> = ({
                                                onUsernameCheck,
                                                onPasswordReset
                                            }) => {
-    const [formData, setFormData] = useState<UserFormData>({
-        id: '',
-        createdAt: Date.now(),
-        deletedAt: null,
-        status: EStatus.ACTIVE,
+    // Use ORVAL Request types - but keep local arrays for Permission[], Department[], Role[]
+    // These will be converted to Request types on submit
+    const [formData, setFormData] = useState<CreateUserRequest>({
         username: '',
         password: '',
-        lastLoginTime: null,
-        mobilePhone: '',
-        activationCode: generateActivationCode(),
+        email: '',
         name: '',
         lastName: '',
-        authoritySet: [],
-        departmentSet: [],
+        mobilePhone: '',
+        identityNumber: '',
         brandSet: [],
+        departmentSet: [],
         roleSet: [],
+        authoritySet: [],
         enabled: true,
         credentialsNonExpired: true,
         accountNonLocked: true,
         accountNonExpired: true,
-        email: '',
-        identityNumber: '',
+        activationCode: generateActivationCode()
     });
+    
+    // Local state for arrays that need conversion
+    const [authoritySet, setAuthoritySet] = useState<Permission[]>([]);
+    const [departmentSet, setDepartmentSet] = useState<Department[]>([]);
+    const [roleSet, setRoleSet] = useState<Role[]>([]);
 
     const [errors, setErrors] = useState<UserFormErrors>({});
     const [usernameChecking, setUsernameChecking] = useState(false);
@@ -77,34 +78,32 @@ const UserForm: React.FC<UserFormProps> = ({
     useEffect(() => {
         if (user) {
             setFormData({
-                id: user.id || '',
-                createdAt: user.createdAt ? new Date(user.createdAt).getTime() : Date.now(),
-                deletedAt: user.deletedAt ? new Date(user.deletedAt).getTime() : null,
-                status: user.status || EStatus.ACTIVE,
                 username: user.username || '',
                 password: '', // Always empty for edit
-                lastLoginTime: user.lastLoginTime,
-                mobilePhone: user.mobilePhone || '',
-                activationCode: user.activationCode || generateActivationCode(),
+                email: user.email || '',
                 name: user.name || '',
                 lastName: user.lastName || '',
-                authoritySet: user.authoritySet || [],
-                departmentSet: user.departmentSet || [],
+                mobilePhone: user.mobilePhone || '',
+                identityNumber: user.identityNumber || '',
                 brandSet: user.brandSet || [],
-                roleSet: user.roleSet || [],
+                departmentSet: [],
+                roleSet: [],
+                authoritySet: [],
                 enabled: user.enabled ?? true,
                 credentialsNonExpired: user.credentialsNonExpired ?? true,
                 accountNonLocked: user.accountNonLocked ?? true,
                 accountNonExpired: user.accountNonExpired ?? true,
-                email: user.email || '',
-                identityNumber: user.identityNumber || '',
+                activationCode: user.activationCode || generateActivationCode()
             });
+            setAuthoritySet((user.authoritySet || []) as unknown as Permission[]);
+            setDepartmentSet((user.departmentSet || []) as unknown as Department[]);
+            setRoleSet((user.roleSet || []) as unknown as Role[]);
         }
     }, [user]);
 
-    const handleChange = <T extends keyof UserFormData>(
+    const handleChange = <T extends keyof CreateUserRequest>(
         name: T,
-        value: UserFormData[T]
+        value: CreateUserRequest[T]
     ) => {
         setFormData(prev => ({
             ...prev,
@@ -112,25 +111,33 @@ const UserForm: React.FC<UserFormProps> = ({
         }));
     };
 
-    const handleMultiSelectChange = <T extends keyof UserFormData>(
-        name: T,
+    const handleMultiSelectChange = (
+        name: 'authoritySet' | 'departmentSet' | 'roleSet',
         value: string,
         checked: boolean
     ) => {
-        setFormData(prev => {
-            const currentArray = (prev[name] as string[]) || [];
+        if (name === 'authoritySet') {
+            const currentArray = authoritySet;
             if (checked) {
-                return {
-                    ...prev,
-                    [name]: [...currentArray.filter(item => item !== value), value]
-                };
+                setAuthoritySet([...currentArray.filter(item => item !== value), value as Permission]);
             } else {
-                return {
-                    ...prev,
-                    [name]: currentArray.filter(item => item !== value)
-                };
+                setAuthoritySet(currentArray.filter(item => item !== value));
             }
-        });
+        } else if (name === 'departmentSet') {
+            const currentArray = departmentSet;
+            if (checked) {
+                setDepartmentSet([...currentArray.filter(item => item !== value), value as Department]);
+            } else {
+                setDepartmentSet(currentArray.filter(item => item !== value));
+            }
+        } else if (name === 'roleSet') {
+            const currentArray = roleSet;
+            if (checked) {
+                setRoleSet([...currentArray.filter(item => item !== value), value as Role]);
+            } else {
+                setRoleSet(currentArray.filter(item => item !== value));
+            }
+        }
     };
 
     const checkUsername = async (username: string) => {
@@ -199,7 +206,7 @@ const UserForm: React.FC<UserFormProps> = ({
         }
 
         // Mobile phone validation
-        if (!formData.mobilePhone.trim()) {
+        if (!formData.mobilePhone || !formData.mobilePhone.trim()) {
             newErrors.mobilePhone = 'Telefon numarası zorunludur';
         } else if (!/^[\d\s\-\+\(\)]+$/.test(formData.mobilePhone)) {
             newErrors.mobilePhone = 'Geçersiz telefon formatı';
@@ -211,19 +218,19 @@ const UserForm: React.FC<UserFormProps> = ({
         }
 
         // Multi-select validations
-        if (formData.authoritySet.length === 0) {
+        if (authoritySet.length === 0) {
             newErrors.authoritySet = 'En az bir yetki seçmelisiniz';
         }
 
-        if (formData.departmentSet.length === 0) {
+        if (departmentSet.length === 0) {
             newErrors.departmentSet = 'En az bir departman seçmelisiniz';
         }
 
-        if (formData.brandSet.length === 0) {
+        if (!formData.brandSet || formData.brandSet.length === 0) {
             newErrors.brandSet = 'En az bir marka seçmelisiniz';
         }
 
-        if (formData.roleSet.length === 0) {
+        if (roleSet.length === 0) {
             newErrors.roleSet = 'En az bir rol seçmelisiniz';
         }
 
@@ -234,15 +241,24 @@ const UserForm: React.FC<UserFormProps> = ({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (validateForm()) {
-            const submitData: UserFormData = {
-                ...formData,
+            // Convert local arrays to Request types
+            const submitData: CreateUserRequest | UpdateUserRequest = {
                 username: formData.username.trim(),
                 email: formData.email.trim(),
                 name: formData.name.trim(),
                 lastName: formData.lastName.trim(),
-                mobilePhone: formData.mobilePhone.trim(),
-                identityNumber: formData.identityNumber?.trim() || '',
+                mobilePhone: formData.mobilePhone?.trim() || '',
+                identityNumber: formData.identityNumber?.trim(),
+                brandSet: formData.brandSet,
+                departmentSet: departmentSet as CreateUserRequestDepartmentSetItem[],
+                roleSet: roleSet as CreateUserRequestRoleSetItem[],
+                authoritySet: authoritySet as CreateUserRequestAuthoritySetItem[]
             };
+
+            // Add password only for create
+            if (!user && formData.password) {
+                (submitData as CreateUserRequest).password = formData.password;
+            }
 
             onSubmit(submitData);
         }
@@ -454,7 +470,7 @@ const UserForm: React.FC<UserFormProps> = ({
                                 <div key={role} className="flex items-center space-x-2">
                                     <Checkbox
                                         id={`role-${role}`}
-                                        checked={formData.roleSet.includes(role)}
+                                        checked={roleSet.includes(role)}
                                         onChange={(checked) =>
                                             handleMultiSelectChange('roleSet', role, checked as boolean)
                                         }
@@ -480,7 +496,7 @@ const UserForm: React.FC<UserFormProps> = ({
                                 <div key={dept} className="flex items-center space-x-2">
                                     <Checkbox
                                         id={`dept-${dept}`}
-                                        checked={formData.departmentSet.includes(dept)}
+                                        checked={departmentSet.includes(dept)}
                                         onChange={(checked) =>
                                             handleMultiSelectChange('departmentSet', dept, checked as boolean)
                                         }
@@ -506,7 +522,7 @@ const UserForm: React.FC<UserFormProps> = ({
                                 <div key={permission} className="flex items-center space-x-2">
                                     <Checkbox
                                         id={`perm-${permission}`}
-                                        checked={formData.authoritySet.includes(permission)}
+                                        checked={authoritySet.includes(permission)}
                                         onChange={(checked) =>
                                             handleMultiSelectChange('authoritySet', permission, checked as boolean)
                                         }
@@ -532,17 +548,17 @@ const UserForm: React.FC<UserFormProps> = ({
                                 <div key={brand.id} className="flex items-center space-x-2">
                                     <Checkbox
                                         id={`brand-${brand.id}`}
-                                        checked={formData.brandSet.some(b => b.id === brand.id)}
+                                        checked={formData.brandSet?.some(b => b.id === brand.id) || false}
                                         onChange={(checked) => {
                                             if (checked) {
                                                 setFormData(prev => ({
                                                     ...prev,
-                                                    brandSet: [...prev.brandSet.filter(b => b.id !== brand.id), brand]
+                                                    brandSet: [...(prev.brandSet || []).filter(b => b.id !== brand.id), brand]
                                                 }));
                                             } else {
                                                 setFormData(prev => ({
                                                     ...prev,
-                                                    brandSet: prev.brandSet.filter(b => b.id !== brand.id)
+                                                    brandSet: (prev.brandSet || []).filter(b => b.id !== brand.id)
                                                 }));
                                             }
                                         }}
@@ -618,50 +634,3 @@ const UserForm: React.FC<UserFormProps> = ({
 };
 
 export default UserForm;
-
-// Kullanım Örneği:
-/*
-import { useUser } from '@/hooks/use-user';
-import { useBrand } from '@/hooks/use-brand'; // Brand listesi için
-
-const UserManagementPage = () => {
-    const {
-        createUser,
-        updateUser,
-        checkUsernameAvailability,
-        resetPassword, // şifre yenileme için
-        loading
-    } = useUser();
-    const { brands } = useBrand(); // Brand listesini al
-
-    const handleSubmit = async (data: UserFormData) => {
-        if (selectedUser) {
-            await updateUser(data);
-        } else {
-            await createUser(data);
-        }
-    };
-
-    const handlePasswordReset = async (userId: string) => {
-        // Şifre yenileme işlemi
-        try {
-            const newPassword = generateRandomPassword(); // Rastgele şifre üret
-            await resetPassword({ email: selectedUser?.email || '' });
-            // Veya direkt şifre güncellemesi yapabilirsin
-        } catch (error) {
-            console.error('Şifre yenileme hatası:', error);
-        }
-    };
-
-    return (
-        <UserForm
-            onSubmit={handleSubmit}
-            user={selectedUser}
-            loading={loading}
-            brands={brands || []}
-            onUsernameCheck={checkUsernameAvailability}
-            onPasswordReset={handlePasswordReset}
-        />
-    );
-};
-*/

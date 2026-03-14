@@ -1,13 +1,14 @@
 'use client';
 import {Column, RecordType} from "@/types/ui/table";
-import React, {useEffect, useState, useMemo} from "react";
+import React, {useState, useMemo, useCallback} from "react";
 import PageHeader from "@/components/layout/page-header";
 import DynamicTable from "@/components/ui/dynamic-table";
 import {ActionButtons} from "@/components/ui/simple-dropdown";
 import {useRouter} from "next/navigation";
 import LoadingComp from "@/components/ui/loading-comp";
-import {useQuestionGroup} from "@/hooks/exam/use-question-group";
-import {QuestionGroupDto} from "@/types/exam/examEntities";
+import {useGetAllQuestionGroups} from "@/api/generated/question-group-management/question-group-management";
+import {extractApiListData} from "@/utils/api-helpers/extract-api-data";
+import type {QuestionGroupDto, QuestionDto} from "@/api/generated/model";
 import {statusConverter, approvalStatusConverter} from "@/utils/enum-converter";
 import {EStatus, EApprovalStatus} from "@/types/exam/enum";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
@@ -15,34 +16,26 @@ import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/c
 
 export default function ApprovalsPage() {
     const router = useRouter();
-    const {
-        questionGroups,
-        getAllQuestionGroup,
-        loading
-    } = useQuestionGroup();
-
-
-   
+    const {data, isLoading, error} = useGetAllQuestionGroups({
+        query: {
+            refetchOnMount: true,
+            refetchOnWindowFocus: false,
+            staleTime: 0,
+        }
+    });
+    const questionGroups = useMemo(() => extractApiListData<QuestionGroupDto>(data), [data]);
     
     const [filterStatus, setFilterStatus] = useState<EApprovalStatus | 'ALL'>(EApprovalStatus.PENDING);
-
-    useEffect(() => {
-        getAllQuestionGroup();
-    }, []);
     
     // Filtrelenmiş soru grupları
     const filteredQuestionGroups = useMemo(() => {
-        if (!questionGroups) return [];
-        
         if (filterStatus === 'ALL') {
             return questionGroups;
         }
-        
         return questionGroups.filter(group => group.approvalStatus === filterStatus);
     }, [questionGroups, filterStatus]);
 
-    const columns: Column<RecordType>[] = [
-
+    const columns: Column<RecordType>[] = useMemo(() => [
         {
             key: 'name',
             header: 'Ad',
@@ -51,12 +44,10 @@ export default function ApprovalsPage() {
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => router.push(`/admin/question-group/${record.id}`)}
                 >
-                    {value as string}
+                    {String(value || '')}
                 </div>
             )
-        }
-        ,
-
+        },
         {
             key: 'status',
             header: 'Durum',
@@ -68,10 +59,7 @@ export default function ApprovalsPage() {
                     {statusConverter(value as EStatus)}
                 </div>
             )
-        }
-
-
-        ,
+        },
         {
             key: 'approvalStatus',
             header: 'Onay Durumu',
@@ -80,25 +68,23 @@ export default function ApprovalsPage() {
                     className="font-medium cursor-pointer hover:text-blue-600"
                     onClick={() => router.push(`/admin/question-group/${record.id}`)}
                 >
-                      
-                     {approvalStatusConverter(value as string)}
+                    {approvalStatusConverter(value as string)}
                 </div>
             )
-        }
-        ,
+        },
         {
             key: 'questions',
             header: 'Sorular',
             render: (value, record) => {
                 const questionGroup = record as QuestionGroupDto;
-                const questions = questionGroup.questions || [];
+                const questions = (questionGroup.questions || []) as QuestionDto[];
                 
                 if (questions.length === 0) {
                     return <div className="text-gray-400">Soru yok</div>;
                 }
                 
                 // ApprovalStatus'e göre grupla
-                const statusCounts = questions.reduce((acc, question) => {
+                const statusCounts = questions.reduce((acc: Record<string, number>, question: QuestionDto) => {
                     const status = question.approvalStatus || 'PENDING';
                     acc[status] = (acc[status] || 0) + 1;
                     return acc;
@@ -115,17 +101,14 @@ export default function ApprovalsPage() {
                     </div>
                 );
             }
-        }
-        ,
+        },
         {
             key: 'id',
             header: ' ',
             render: (value, record) => (
-                <div
-                    className="font-medium cursor-pointer hover:text-blue-600"
-                >
+                <div className="font-medium cursor-pointer hover:text-blue-600">
                     <button 
-                        className={"btn btn-success"}
+                        className="btn btn-success"
                         onClick={() => router.push(`/admin/approvals/${record.id}/preview`)}
                     >
                         Onay Bilgisi Gir
@@ -133,18 +116,25 @@ export default function ApprovalsPage() {
                 </div>
             )
         }
-    ];
+    ], [router]);
 
-    const handleAdd = () => {
+    const handleAdd = useCallback(() => {
         router.push('/admin/question-group/add');
-    };
+    }, [router]);
 
 
-    if (loading) {
+    if (isLoading) {
+        return <LoadingComp/>;
+    }
+
+    if (error) {
         return (
-            <LoadingComp/>
+            <div className="p-6">
+                <p className="text-red-600">Soru grupları yüklenirken bir hata oluştu.</p>
+            </div>
         );
     }
+
     return (
         <div className="space-y-6">
             <PageHeader actions={
@@ -186,11 +176,9 @@ export default function ApprovalsPage() {
                         </SelectContent>
                     </Select>
                 </div>
-                {
-                    filteredQuestionGroups &&
-                    <DynamicTable columns={columns} data={filteredQuestionGroups}/>
-                }
-
+                {filteredQuestionGroups && filteredQuestionGroups.length > 0 && (
+                    <DynamicTable columns={columns} data={filteredQuestionGroups as RecordType[]}/>
+                )}
             </div>
         </div>
     );

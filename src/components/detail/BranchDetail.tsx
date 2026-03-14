@@ -5,7 +5,7 @@ import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
 import {Clock, Building2, Hash, CheckCircle, XCircle, Building} from 'lucide-react';
-import {BranchDto} from '@/types/management/brand';
+import type {BranchDto} from '@/api/generated/model/branchDto';
 import { formatDate } from '@/utils/date-formater';
 import LoadingComp from "@/components/ui/loading-comp";
 
@@ -39,7 +39,7 @@ const BranchDetailPage: React.FC<BranchDetailProps> = ({
     }
 
     return (
-        <div className="container mx-auto py-6 space-y-6">
+        <div className="container mx-auto py-4 space-y-4">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Şube Detayı</h1>
@@ -184,7 +184,7 @@ const BranchDetailPage: React.FC<BranchDetailProps> = ({
                                         <span>Oluşturulma Tarihi</span>
                                     </div>
                                     <p className="text-sm font-medium">
-                                        {formatDate(branch.createdAt)}
+                                        {formatDate(branch.createdAt || '')}
                                     </p>
                                 </div>
 
@@ -272,7 +272,7 @@ const BranchDetailPage: React.FC<BranchDetailProps> = ({
                                 <CardTitle>Kayıt Zaman Çizelgesi</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="space-y-6">
+                                <div className="space-y-4">
                                     <div className="flex">
                                         <div className="mr-4 flex-shrink-0">
                                             <div className="flex items-center justify-center h-10 w-10 rounded-full bg-blue-100 text-blue-600">
@@ -345,9 +345,11 @@ const BranchDetailPage: React.FC<BranchDetailProps> = ({
                                                     <p>• Silinme: {formatDate(branch.deletedAt)}</p>
                                                 )}
                                                 <p>• Toplam yaşam süresi: {
-                                                    branch.deletedAt
-                                                        ? Math.floor((new Date(branch.deletedAt).getTime() - new Date(branch.createdAt).getTime()) / (1000 * 60 * 60 * 24))
-                                                        : Math.floor((new Date().getTime() - new Date(branch.createdAt).getTime()) / (1000 * 60 * 60 * 24))
+                                                    branch.createdAt
+                                                        ? (branch.deletedAt
+                                                            ? Math.floor((new Date(branch.deletedAt).getTime() - new Date(branch.createdAt).getTime()) / (1000 * 60 * 60 * 24))
+                                                            : Math.floor((new Date().getTime() - new Date(branch.createdAt).getTime()) / (1000 * 60 * 60 * 24)))
+                                                        : 'Bilinmiyor'
                                                 } gün</p>
                                             </div>
                                         </div>

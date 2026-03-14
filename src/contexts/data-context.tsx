@@ -1,9 +1,7 @@
 'use client';
 
-import {createContext, useState, useEffect, useContext} from 'react';
-import {Department, Permission, Role, UserDto} from '@/types/auth';
-import {useUser} from "@/hooks/use-user";
-
+import {createContext, useState, useContext} from 'react';
+import {Department, Permission, Role} from '@/types/auth';
 
 const _permissions: Permission[] = [
     'APPROVAL', 'USER_CREATE', 'GENERAL', 'FINANCE_OPERATION',
@@ -21,9 +19,6 @@ const _roles: Role[] = [
 ];
 
 export interface DataContextType {
-    users: UserDto[] | null;
-    loading: boolean;
-    error: string | null;
     permissions: Permission[];
     departments: Department[];
     roles: Role[];
@@ -38,37 +33,7 @@ export function DataProvider({children}: { children: React.ReactNode }) {
     const [departments, ] = useState(_departments);
     const [roles, ] = useState(_roles);
 
-
-
-    const {users, getAllUsers} = useUser();
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        const fetchAllData = async () => {
-            setLoading(true)
-            try {
-                await Promise.all([
-                    getAllUsers(),
-                ]);
-            } catch (err) {
-                setError("Veriler yüklenirken bir hata oluştu");
-                console.error("Veri yükleme hatası:", err);
-            }
-            setLoading(false)
-        };
-
-        fetchAllData();
-    }, []);
-
-
-
-
-
     const value: DataContextType = {
-        users,
-        loading,
-        error,
         permissions,
         departments,
         roles,
@@ -76,13 +41,7 @@ export function DataProvider({children}: { children: React.ReactNode }) {
 
     return (
         <DataContext.Provider value={value}>
-            {loading ? (
-                <div className="flex h-screen w-screen items-center justify-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-                </div>
-            ) : (
-                children
-            )}
+            {children}
         </DataContext.Provider>
     );
 }

@@ -19,7 +19,7 @@ export function useAuth() {
     const hasAnyDepartment = useCallback(
         (department: Department) => {
             if (!user) return false;
-            return user.departmentSet.includes(department);
+            return user.departmentSet?.includes(department);
         },
         [user]
     );
@@ -29,7 +29,7 @@ export function useAuth() {
     const hasPermission = useCallback(
         (permission: Permission) => {
             if (!user) return false;
-            return user.authoritySet.includes(permission);
+            return user.authoritySet?.includes(permission);
         },
         [user]
     );
@@ -37,7 +37,7 @@ export function useAuth() {
     const hasAnyPermission = useCallback(
         (permissions: Permission[]) => {
             if (!user) return false;
-            return permissions.some(permission => user.authoritySet.includes(permission));
+            return permissions.some(permission => user.authoritySet?.includes(permission));
         },
         [user]
     );
@@ -45,7 +45,7 @@ export function useAuth() {
     const hasAllPermissions = useCallback(
         (permissions: Permission[]) => {
             if (!user) return false;
-            return permissions.every(permission => user.authoritySet.includes(permission));
+            return permissions.every(permission => user.authoritySet?.includes(permission));
         },
         [user]
     );
@@ -53,7 +53,7 @@ export function useAuth() {
     const hasRole = useCallback(
         (role: Role) => {
             if (!user) return false;
-            return user.roleSet.includes(role);
+            return user.roleSet?.includes(role);
         },
         [user]
     );
@@ -64,7 +64,7 @@ export function useAuth() {
 
     const isAdmin = useCallback(() => {
         if (!user) return false;
-        return user.roleSet.includes('ADMIN');
+        return user.roleSet?.includes('ADMIN');
     }, [user]);
 
     const isLoading = useCallback(() => {
@@ -100,7 +100,7 @@ export function useProtectedRoute(requiredRole?: string, requiredPermissions: Pe
     const isAuthorized = useCallback(() => {
         if (!user) return false;
 
-        if (!(requiredRole && user.roleSet.some(role => requiredRole.includes(role)))) {
+        if (!(requiredRole && user.roleSet?.some(role => requiredRole.includes(role)))) {
             return false;
         }
 

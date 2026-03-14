@@ -81,7 +81,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
             // Gerekli rollerin kontrolü
             const hasRequiredRoles = !requiredRoles?.length ||
-                requiredRoles.some(role => user?.roleSet.includes(role));
+                requiredRoles.some(role => user?.roleSet?.includes(role));
 
             return hasRequiredPermissions && hasRequiredDepartments && hasRequiredRoles;
         };

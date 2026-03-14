@@ -5,6 +5,7 @@ import Header from '@/components/layout/header';
 import Sidebar from '@/components/layout/sidebar';
 import Footer from '@/components/layout/footer';
 import {ExamApplicationProvider} from "@/contexts/ExamApplicationContext";
+import {useState, useCallback} from 'react';
 
 export default function AdminLayout({
                                         children,
@@ -12,7 +13,13 @@ export default function AdminLayout({
     children: React.ReactNode;
 }) {
     const {user} = useAuth();
-    if (!user || !user.roleSet.includes('ADMIN')) {
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+    const handleSidebarClose = useCallback(() => {
+        setIsSidebarOpen(false);
+    }, []);
+
+    if (!user || !user.roleSet?.includes('ADMIN')) {
         return null;
     }
 
@@ -21,9 +28,7 @@ export default function AdminLayout({
             <ExamApplicationProvider>
                 <div className='min-h-screen bg-gray-100'>
                     <div className='flex min-h-screen '>
-                        <Sidebar isOpen={false} onCloseAction={function (): void {
-                            throw new Error('Function not implemented.');
-                        }}/>
+                        <Sidebar isOpen={isSidebarOpen} onCloseAction={handleSidebarClose}/>
                         <div className='flex-1'>
                             <Header/>
                             <main className='p-3'>

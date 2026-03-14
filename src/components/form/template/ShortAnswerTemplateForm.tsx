@@ -8,17 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import Checkbox from "@/components/ui/checkbox";
 import { NumberInput } from "@/components/ui/number-input";
-import { ShortAnswerTemplateDto, ShortAnswerOptions, AcceptableAnswer } from "@/types/exam/questionTemplates";
+import type { ShortAnswerTemplateDto, AcceptableAnswer, ShortAnswerOptions } from "@/api/generated/model";
 import { Trash2, Plus } from "lucide-react";
 
-interface ShortAnswerTemplateFormData {
-    question: string;
-    options: ShortAnswerOptions;
-    maxCharacters: number;
-    minCharacters: number;
-    rubric: string;
-    requiresManualGrading: boolean;
-}
+// Use ORVAL DTO types directly - only template-specific fields
+type ShortAnswerTemplateFormData = Pick<ShortAnswerTemplateDto, 'question' | 'options' | 'maxCharacters' | 'minCharacters' | 'rubric' | 'requiresManualGrading'>;
 
 interface ShortAnswerTemplateFormErrors {
     question?: string;
@@ -117,12 +111,12 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
             feedback: ''
         };
 
-        const updatedAnswers = [...(formData.options.acceptableAnswers || []), newAnswer];
+        const updatedAnswers = [...(formData.options?.acceptableAnswers || []), newAnswer];
         updateOptions('acceptableAnswers', updatedAnswers);
     };
 
     const removeAcceptableAnswer = (index: number) => {
-        const updatedAnswers = formData.options.acceptableAnswers?.filter((_, i) => i !== index) || [];
+        const updatedAnswers = formData.options?.acceptableAnswers?.filter((_, i) => i !== index) || [];
         updateOptions('acceptableAnswers', updatedAnswers);
     };
 
@@ -131,7 +125,7 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
         field: K,
         value: AcceptableAnswer[K]
     ) => {
-        const updatedAnswers = formData.options.acceptableAnswers?.map((answer, i) =>
+        const updatedAnswers = formData.options?.acceptableAnswers?.map((answer, i) =>
             i === index ? { ...answer, [field]: value } : answer
         ) || [];
 
@@ -141,15 +135,15 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
     const validateForm = (): boolean => {
         const newErrors: ShortAnswerTemplateFormErrors = {};
 
-        if (!formData.question.trim()) {
+        if (!formData.question?.trim()) {
             newErrors.question = 'Soru metni zorunludur';
         }
 
-        if (formData.minCharacters <= 0) {
+        if ((formData.minCharacters ?? 0) <= 0) {
             newErrors.minCharacters = 'Minimum karakter sayısı 0\'dan büyük olmalıdır';
         }
 
-        if (formData.maxCharacters <= formData.minCharacters) {
+        if ((formData.maxCharacters ?? 0) <= (formData.minCharacters ?? 0)) {
             newErrors.maxCharacters = 'Maksimum karakter sayısı minimum karakter sayısından büyük olmalıdır';
         }
 
@@ -239,7 +233,7 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
                 <div className="flex items-center space-x-2">
                     <Checkbox
                         id="caseSensitive"
-                        checked={formData.options.caseSensitive || false}
+                        checked={formData.options?.caseSensitive || false}
                         onChange={(checked) => updateOptions('caseSensitive', !!checked)}
                     />
                     <Label htmlFor="caseSensitive">Büyük/Küçük Harf Duyarlı</Label>
@@ -248,7 +242,7 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
                 <div className="flex items-center space-x-2">
                     <Checkbox
                         id="exactMatch"
-                        checked={formData.options.exactMatch || false}
+                        checked={formData.options?.exactMatch || false}
                         onChange={(checked) => updateOptions('exactMatch', !!checked)}
                     />
                     <Label htmlFor="exactMatch">Tam Eşleşme Gerekli</Label>
@@ -280,7 +274,7 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
                     </Button>
                 </div>
 
-                {formData.options.acceptableAnswers?.map((answer, index) => (
+                {formData.options?.acceptableAnswers?.map((answer, index) => (
                     <div key={index} className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg">
                         <div className="col-span-9">
                             <Label>Cevap Metni</Label>

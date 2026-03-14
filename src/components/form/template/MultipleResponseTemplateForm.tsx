@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import Checkbox from "@/components/ui/checkbox";
-import { MultipleResponseTemplateDto, MultipleResponseOptions, ResponseOption } from "@/types/exam/questionTemplates";
+import type { MultipleResponseTemplateDto, ResponseOption } from "@/api/generated/model";
 import { Trash2, Plus } from "lucide-react";
 
 interface MultipleResponseTemplateFormProps {
@@ -16,15 +16,8 @@ interface MultipleResponseTemplateFormProps {
     loading?: boolean;
 }
 
-interface MultipleResponseTemplateFormData {
-    question: string;
-    options: MultipleResponseOptions;
-    correctOptionIndices: number[];
-    minSelections?: number;
-    maxSelections?: number;
-    shuffleOptions: boolean;
-    explanation: string;
-}
+// Use ORVAL DTO types directly - only template-specific fields
+type MultipleResponseTemplateFormData = Pick<MultipleResponseTemplateDto, 'question' | 'options' | 'correctOptionIndices' | 'minSelections' | 'maxSelections' | 'shuffleOptions' | 'explanation'>;
 
 interface MultipleResponseTemplateFormErrors {
     question?: string;
@@ -90,11 +83,11 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
     // Form data değiştiğinde parent'a bildir (Anlık güncelleme)
     useEffect(() => {
         // İlk render'da onChange'i tetikleme
-        if (formData.question || (formData.options.choices ?? []).length > 0) {
-            const choicesCount = formData.options.choices?.length || 0;
+        if (formData.question || (formData.options?.choices ?? []).length > 0) {
+            const choicesCount = formData.options?.choices?.length || 0;
             const templateData: MultipleResponseTemplateDto = {
                 ...value,
-                question: formData.question.trim(),
+                question: formData.question?.trim() || '',
                 options: {
                     ...formData.options,
                     selectionInstruction: 'Doğru olan tüm seçenekleri işaretleyiniz.' // UI'dan kaldırıldı, her zaman sabit değer
@@ -141,7 +134,7 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
             ...prev,
             options: {
                 ...prev.options,
-                choices: [...(prev.options.choices || []), newChoice]
+                choices: [...(prev.options?.choices || []), newChoice]
             }
         }));
     };
@@ -149,7 +142,7 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
     const removeChoice = (index: number) => {
         setFormData(prev => {
             // Silinen seçeneğin doğru seçenekler listesinden de çıkarılması
-            const newCorrectIndices = prev.correctOptionIndices
+            const newCorrectIndices = (prev.correctOptionIndices || [])
                 .filter(i => i !== index)
                 .map(i => i > index ? i - 1 : i);
 
@@ -157,7 +150,7 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
                 ...prev,
                 options: {
                     ...prev.options,
-                    choices: prev.options.choices?.filter((_, i) => i !== index) || []
+                    choices: prev.options?.choices?.filter((_, i) => i !== index) || []
                 },
                 correctOptionIndices: newCorrectIndices
             };
@@ -173,7 +166,7 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
             ...prev,
             options: {
                 ...prev.options,
-                choices: prev.options.choices?.map((choice, i) =>
+                choices: prev.options?.choices?.map((choice, i) =>
                     i === index ? { ...choice, [field]: newValue } : choice
                 ) || []
             }
@@ -182,13 +175,14 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
 
     const toggleCorrectOption = (index: number) => {
         setFormData(prev => {
-            const isCurrentlyCorrect = prev.correctOptionIndices.includes(index);
+            const currentIndices = prev.correctOptionIndices || [];
+            const isCurrentlyCorrect = currentIndices.includes(index);
             const newCorrectIndices = isCurrentlyCorrect
-                ? prev.correctOptionIndices.filter(i => i !== index)
-                : [...prev.correctOptionIndices, index];
+                ? currentIndices.filter(i => i !== index)
+                : [...currentIndices, index];
 
             // Seçenek objesindeki isCorrect değerini de güncelle
-            const updatedChoices = prev.options.choices?.map((choice, i) => ({
+            const updatedChoices = prev.options?.choices?.map((choice, i) => ({
                 ...choice,
                 isCorrect: newCorrectIndices.includes(i)
             })) || [];
@@ -208,11 +202,11 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
     const validateForm = (): boolean => {
         const newErrors: MultipleResponseTemplateFormErrors = {};
 
-        if (!formData.question.trim()) {
+        if (!formData.question?.trim()) {
             newErrors.question = 'Soru metni zorunludur';
         }
 
-        if (!formData.options.choices || formData.options.choices.length < 2) {
+        if (!formData.options?.choices || formData.options.choices.length < 2) {
             newErrors.options = 'En az 2 seçenek olmalıdır';
         } else {
             const hasEmptyChoices = formData.options.choices.some(choice => !choice.text?.trim());
@@ -221,7 +215,7 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
             }
         }
 
-        if (formData.correctOptionIndices.length === 0) {
+        if ((formData.correctOptionIndices?.length ?? 0) === 0) {
             newErrors.selections = 'En az bir doğru seçenek işaretlenmelidir';
         }
 
@@ -338,12 +332,12 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
                             </Button>
                         </div>
 
-                        {formData.options.choices?.map((choice, index) => (
+                        {formData.options?.choices?.map((choice, index) => (
                             <div key={choice.id || index} className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg">
                                 <div className="col-span-1">
                                     <div className="flex items-center space-x-2">
                                         <Checkbox
-                                            checked={formData.correctOptionIndices.includes(index)}
+                                            checked={(formData.correctOptionIndices || []).includes(index)}
                                             onChange={() => toggleCorrectOption(index)}
                                         />
                                         <Label className="text-sm">Doğru</Label>

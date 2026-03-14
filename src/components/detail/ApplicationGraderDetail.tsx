@@ -5,7 +5,7 @@ import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
 import {Clock, User as UserIcon, FileText, Calendar, Shield, CheckCircle, XCircle, Hash, Award, AlertCircle} from 'lucide-react';
-import {ApplicationGraderDto} from '@/types/management/brand';
+import type {ApplicationGraderDto} from '@/api/generated/model/applicationGraderDto';
 import { formatDate } from '@/utils/date-formater';
 import LoadingComp from "@/components/ui/loading-comp";
 
@@ -55,7 +55,7 @@ const ApplicationGraderDetailPage: React.FC<ApplicationGraderDetailProps> = ({
     const isOverdue = grader.endEndDate && new Date(grader.endEndDate) < new Date() && !grader.isCompleted;
 
     return (
-        <div className="container mx-auto py-6 space-y-6">
+        <div className="container mx-auto py-4 space-y-4">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Değerlendirici Detayı</h1>
@@ -218,8 +218,8 @@ const ApplicationGraderDetailPage: React.FC<ApplicationGraderDetailProps> = ({
                                         )}
                                         <span>Tamamlanma Durumu</span>
                                     </div>
-                                    <Badge className={getStatusColor(grader.isCompleted, grader.isReferee)}>
-                                        {getStatusText(grader.isCompleted, grader.isReferee)}
+                                    <Badge className={getStatusColor(grader.isCompleted ?? false, grader.isReferee ?? false)}>
+                                        {getStatusText(grader.isCompleted ?? false, grader.isReferee ?? false)}
                                     </Badge>
                                 </div>
 
@@ -322,8 +322,8 @@ const ApplicationGraderDetailPage: React.FC<ApplicationGraderDetailProps> = ({
                                                 </div>
                                                 <div className="flex justify-between">
                                                     <span className="text-sm text-gray-500">Durum:</span>
-                                                    <Badge className={getStatusColor(grader.isCompleted, grader.isReferee)}>
-                                                        {getStatusText(grader.isCompleted, grader.isReferee)}
+                                                    <Badge className={getStatusColor(grader.isCompleted ?? false, grader.isReferee ?? false)}>
+                                                        {getStatusText(grader.isCompleted ?? false, grader.isReferee ?? false)}
                                                     </Badge>
                                                 </div>
                                             </div>
@@ -336,7 +336,7 @@ const ApplicationGraderDetailPage: React.FC<ApplicationGraderDetailProps> = ({
                                             <div className="space-y-2">
                                                 <div className="flex justify-between">
                                                     <span className="text-sm text-gray-500">Atanma Tarihi:</span>
-                                                    <span className="text-sm font-medium">{formatDate(grader.createdAt)}</span>
+                                                    <span className="text-sm font-medium">{formatDate(grader.createdAt || '')}</span>
                                                 </div>
                                                 {grader.endEndDate && (
                                                     <div className="flex justify-between">
@@ -398,7 +398,7 @@ const ApplicationGraderDetailPage: React.FC<ApplicationGraderDetailProps> = ({
                                 <CardTitle>Değerlendirme Zaman Çizelgesi</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="space-y-6">
+                                <div className="space-y-4">
                                     <div className="flex">
                                         <div className="mr-4 flex-shrink-0">
                                             <div className="flex items-center justify-center h-10 w-10 rounded-full bg-blue-100 text-blue-600">
@@ -471,8 +471,8 @@ const ApplicationGraderDetailPage: React.FC<ApplicationGraderDetailProps> = ({
                                     <div className="space-y-3">
                                         <div className="flex items-center justify-between">
                                             <span className="font-medium">Genel Durum</span>
-                                            <Badge className={getStatusColor(grader.isCompleted, grader.isReferee)}>
-                                                {getStatusText(grader.isCompleted, grader.isReferee)}
+                                            <Badge className={getStatusColor(grader.isCompleted ?? false, grader.isReferee ?? false)}>
+                                                {getStatusText(grader.isCompleted ?? false, grader.isReferee ?? false)}
                                             </Badge>
                                         </div>
 
@@ -480,13 +480,13 @@ const ApplicationGraderDetailPage: React.FC<ApplicationGraderDetailProps> = ({
                                             <div>
                                                 <p className="text-sm text-gray-500">Atanma Süresi</p>
                                                 <p className="font-medium">
-                                                    {Math.floor((new Date().getTime() - new Date(grader.createdAt).getTime()) / (1000 * 60 * 60 * 24))} gün
+                                                    {grader.createdAt ? `${Math.floor((new Date().getTime() - new Date(grader.createdAt).getTime()) / (1000 * 60 * 60 * 24))} gün` : 'Bilinmiyor'}
                                                 </p>
                                             </div>
                                             <div>
                                                 <p className="text-sm text-gray-500">Değerlendirme Süresi</p>
                                                 <p className="font-medium">
-                                                    {grader.endEndDate
+                                                    {grader.endEndDate && grader.createdAt
                                                         ? `${Math.floor((new Date(grader.endEndDate).getTime() - new Date(grader.createdAt).getTime()) / (1000 * 60 * 60 * 24))} gün`
                                                         : 'Süre belirlenmemiş'}
                                                 </p>

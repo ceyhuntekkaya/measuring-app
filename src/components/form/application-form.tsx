@@ -7,9 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {ApplicationDto, ApplicationFormData} from "@/types/management/brand";
-import { CandidateDto } from "@/types/management/brand";
-import {EStatus} from "@/types/exam/enum";
+import type {ApplicationDto, CandidateDto, CreateApplicationRequest, UpdateApplicationRequest} from "@/api/generated/model";
 
 // Basit exam ve exam session type'ları
 interface ExamOption {
@@ -35,7 +33,7 @@ interface ApplicationFormErrors {
 }
 
 interface ApplicationFormProps {
-    onSubmit: (data: ApplicationFormData) => void;
+    onSubmit: (data: CreateApplicationRequest | UpdateApplicationRequest) => void;
     application?: ApplicationDto | null;
     candidates: CandidateDto[];
     exams: ExamOption[];
@@ -51,19 +49,13 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
                                                              examSessions,
                                                              loading = false
                                                          }) => {
-    const [formData, setFormData] = useState<ApplicationFormData>({
+    const [formData, setFormData] = useState<CreateApplicationRequest>({
         name: '',
         code: '',
         examId: '',
         examSessionId: '',
         candidateId: '',
-        username: '',
-        id: '',
-        createdAt: new Date(),
-        deletedAt: null,
-        status: EStatus.ACTIVE,
-        createdById: '',
-        deletedById: ''
+        username: ''
     });
 
     const [errors, setErrors] = useState<ApplicationFormErrors>({});
@@ -72,14 +64,6 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
     useEffect(() => {
         if (application) {
             setFormData({
-
-                id: application.id || '',
-                createdAt: application.createdAt || new Date(),
-                deletedAt: application.deletedAt || null,
-                status: application.status,
-                createdById: application.createdById || null,
-                deletedById: application.deletedById || null,
-
                 name: application.name || '',
                 code: application.code || '',
                 examId: application.examId || '',
@@ -105,9 +89,9 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
         }
     }, [formData.candidateId, candidates, autoGenerateUsername, application]);
 
-    const handleChange = <T extends keyof ApplicationFormData>(
+    const handleChange = <T extends keyof CreateApplicationRequest>(
         name: T,
-        value: ApplicationFormData[T]
+        value: CreateApplicationRequest[T]
     ) => {
         setFormData(prev => ({
             ...prev,
@@ -172,22 +156,14 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (validateForm()) {
-            const submitData = {
-
-
-                id: formData.id || '',
-                createdAt: formData.createdAt || new Date(),
-                deletedAt: formData.deletedAt || null,
-                status: formData.status,
-                createdById: formData.createdById || null,
-                deletedById: formData.deletedById || null,
-
+            // Directly use formData - no manual mapping needed!
+            const submitData: CreateApplicationRequest | UpdateApplicationRequest = {
                 name: formData.name.trim(),
                 code: formData.code.trim().toUpperCase(),
                 examId: formData.examId,
                 examSessionId: formData.examSessionId,
                 candidateId: formData.candidateId,
-                username: formData.username ? formData.username.trim().toLowerCase() : ''
+                username: formData.username ? formData.username.trim().toLowerCase() : undefined
             };
 
             onSubmit(submitData);
@@ -325,7 +301,7 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
                             <SelectContent>
                                 <SelectGroup>
                                     {candidates.map((candidate) => (
-                                        <SelectItem key={candidate.id} value={candidate.id}>
+                                        <SelectItem key={candidate.id || ''} value={candidate.id || ''}>
                                             {candidate.name} {candidate.lastName} - {candidate.identityNumber}
                                         </SelectItem>
                                     ))}

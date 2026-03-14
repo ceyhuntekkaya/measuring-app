@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { NumberInput } from "@/components/ui/number-input";
-import {OrderingTemplateDto, OrderingOptions, OrderingItem} from "@/types/exam/questionTemplates";
+import type {OrderingTemplateDto, OrderingItem} from "@/api/generated/model";
 import { Trash2, Plus, ArrowUp, ArrowDown } from "lucide-react";
 
 interface OrderingTemplateFormProps {
@@ -16,12 +16,8 @@ interface OrderingTemplateFormProps {
     loading?: boolean;
 }
 
-interface OrderingTemplateFormData {
-    instructions: string;
-    options: OrderingOptions;
-    shuffleItems: boolean;
-    explanation: string;
-}
+// Use ORVAL DTO types directly - only template-specific fields
+type OrderingTemplateFormData = Pick<OrderingTemplateDto, 'instructions' | 'options' | 'shuffleItems' | 'explanation'>;
 
 interface OrderingTemplateFormErrors {
     instructions?: string;
@@ -80,7 +76,7 @@ const OrderingTemplateForm = forwardRef<OrderingTemplateFormHandle, OrderingTemp
         const newItem: OrderingItem = {
             id: `item_${Date.now()}`,
             text: '',
-            correctPosition: (formData.options.items?.length || 0) + 1,
+            correctPosition: (formData.options?.items?.length || 0) + 1,
             mediaUrl: '',
             mediaType: '',
             feedback: ''
@@ -90,7 +86,7 @@ const OrderingTemplateForm = forwardRef<OrderingTemplateFormHandle, OrderingTemp
             ...prev,
             options: {
                 ...prev.options,
-                items: [...(prev.options.items || []), newItem]
+                items: [...(prev.options?.items || []), newItem]
             }
         }));
     };
@@ -100,7 +96,7 @@ const OrderingTemplateForm = forwardRef<OrderingTemplateFormHandle, OrderingTemp
             ...prev,
             options: {
                 ...prev.options,
-                items: prev.options.items?.filter((_, i) => i !== index) || []
+                items: prev.options?.items?.filter((_, i) => i !== index) || []
             }
         }));
     };
@@ -114,7 +110,7 @@ const OrderingTemplateForm = forwardRef<OrderingTemplateFormHandle, OrderingTemp
             ...prev,
             options: {
                 ...prev.options,
-                items: prev.options.items?.map((item, i) =>
+                items: prev.options?.items?.map((item, i) =>
                     i === index ? { ...item, [field]: value } : item
                 ) || []
             }
@@ -122,7 +118,7 @@ const OrderingTemplateForm = forwardRef<OrderingTemplateFormHandle, OrderingTemp
     };
 
     const moveItem = (index: number, direction: 'up' | 'down') => {
-        const items = [...(formData.options.items || [])];
+        const items = [...(formData.options?.items || [])];
         const newIndex = direction === 'up' ? index - 1 : index + 1;
 
         if (newIndex >= 0 && newIndex < items.length) {
@@ -146,11 +142,11 @@ const OrderingTemplateForm = forwardRef<OrderingTemplateFormHandle, OrderingTemp
     const validateForm = (): boolean => {
         const newErrors: OrderingTemplateFormErrors = {};
 
-        if (!formData.instructions.trim()) {
+        if (!formData.instructions?.trim()) {
             newErrors.instructions = 'Talimatlar zorunludur';
         }
 
-        if (!formData.options.items || formData.options.items.length < 2) {
+        if (!formData.options?.items || formData.options.items.length < 2) {
             newErrors.options = 'En az 2 öğe olmalıdır';
         } else {
             const hasEmptyItems = formData.options.items.some(item => !item.text?.trim());
@@ -262,7 +258,7 @@ const OrderingTemplateForm = forwardRef<OrderingTemplateFormHandle, OrderingTemp
                             </Button>
                         </div>
 
-                        {formData.options.items?.map((item, index) => (
+                        {formData.options?.items?.map((item, index) => (
                             <div key={item.id || index} className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg">
                                 <div className="col-span-1">
                                     <Label>Sıra</Label>
@@ -321,7 +317,7 @@ const OrderingTemplateForm = forwardRef<OrderingTemplateFormHandle, OrderingTemp
                                         onClick={() => moveItem(index, 'down')}
                                         variant="outline"
                                         size="sm"
-                                        disabled={index === (formData.options.items?.length || 0) - 1}
+                                        disabled={index === (formData.options?.items?.length || 0) - 1}
                                     >
                                         <ArrowDown className="w-3 h-3" />
                                     </Button>

@@ -1,5 +1,5 @@
 import React from 'react';
-import {ExamSectionDto} from "@/types/exam/examTemplates";
+import type {ExamSectionDto} from "@/api/generated/model";
 
 interface SimpleSectionListProps {
     sections: ExamSectionDto[];
@@ -46,9 +46,9 @@ const SimpleSectionList: React.FC<SimpleSectionListProps> = ({
                                     <h3 className="text-lg font-semibold text-gray-800">
                                         {section.name || 'İsimsiz Bölüm'}
                                     </h3>
-                                    {section.examType?.name && (
+                                    {(section.examType as { name?: string })?.name && (
                                         <p className="text-sm text-gray-500 mt-1">
-                                            {section.examType.name}
+                                            {(section.examType as { name?: string }).name}
                                         </p>
                                     )}
                                 </div>

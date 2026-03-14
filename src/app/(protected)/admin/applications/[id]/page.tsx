@@ -1,25 +1,22 @@
 'use client';
 
 import {useParams} from "next/navigation";
-import React, {useEffect} from "react";
+import React from "react";
 import PageHeader from "@/components/layout/page-header";
 import LoadingComp from "@/components/ui/loading-comp";
-import {useApplication} from "@/hooks/exam/use-application";
+import {useGetApplicationById} from "@/api/generated/application-management/application-management";
 import ApplicationDetail from "@/components/detail/ApplicationDetail";
+import type {ApiResponseApplicationDto} from "@/api/generated/model";
 
 export default function ApplicationDetailPage() {
     const params = useParams();
     const id = params.id as string;
 
-    const {
-        selectedApplication,
-        getApplicationById,
-        loading
-    } = useApplication();
-
-    useEffect(() => {
-        getApplicationById(id);
-    }, []);
+    const {data, isLoading: loading} = useGetApplicationById(id, {
+        query: { enabled: !!id }
+    });
+    
+    const selectedApplication = (data as unknown as ApiResponseApplicationDto)?.data;
 
     if (loading) {
         return (
@@ -28,9 +25,9 @@ export default function ApplicationDetailPage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             <PageHeader/>
-            <div className="p-1">
+            <div className="px-4">
                 {
                     selectedApplication &&  <ApplicationDetail application={selectedApplication}/>
                 }

@@ -4,14 +4,35 @@
 import ExamTypeForm from "@/components/form/ExamTypeForm";
 import PageHeader from "@/components/layout/page-header";
 import React from "react";
-import {useExamType} from "@/hooks/exam/use-exam-type";
+import {useCreateExamType} from "@/api/generated/exam-type-management/exam-type-management";
+import { useQueryClient } from "@tanstack/react-query";
+import { showNotification, getErrorMessage } from "@/lib/notification";
+import { useRouter } from "next/navigation";
+import type { ExamTypeDto } from "@/api/generated/model";
 
 export default function ExamTypeAdd() {
 
 
-    const {
-        createExamType,
-    } = useExamType();
+    const router = useRouter();
+    const queryClient = useQueryClient();
+    
+    const { mutate: createExamType } = useCreateExamType({
+        mutation: {
+            onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: ['/exam-types'] });
+                showNotification.success('Sınav tipi başarıyla oluşturuldu!');
+                router.push('/admin/exam-type');
+            },
+            onError: (error) => {
+                const errorMessage = getErrorMessage(error);
+                showNotification.error(errorMessage || 'Sınav tipi oluşturulurken bir hata oluştu!');
+            }
+        }
+    });
+
+    const handleSubmit = async (examType: ExamTypeDto) => {
+        createExamType({ data: examType });
+    };
 
 
 
@@ -21,7 +42,7 @@ export default function ExamTypeAdd() {
         <div className="space-y-6">
             <PageHeader/>
             <div className="p-1">
-                <ExamTypeForm onSubmit={createExamType}/>
+                <ExamTypeForm onSubmit={handleSubmit}/>
 
             </div>
         </div>

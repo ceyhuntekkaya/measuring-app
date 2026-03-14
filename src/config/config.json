@@ -1,20 +1,19 @@
 {
 
   "api": {
-    "invokeUrl": "https://demo.designexium.co.uk/measuring-api",
-    "baseUrl": "http://localhost:3000",
-    "aiUrl2": "http://185.72.9.3:11434i",
+    "invokeUrl": "https://tomerapi.genixo.ai/api",
+    "baseUrl": "https://tomer.genixo.ai",
     "aiUrl": "https://chat.studyscore.ai/ollama",
-    "linkUrl": "https://tomer.genixo.net/exam/",
+    "linkUrl": "https://tomerapi.genixo.ai/exam/",
     "fullScreenExam": false
   },
   "apiLocal": {
     "invokeUrl": "http://localhost:8080/api",
     "baseUrl": "http://localhost:3000",
-    "aiUrl2": "http://185.72.9.3:11434i",
     "aiUrl": "https://chat.studyscore.ai/ollama",
     "linkUrl": "http://localhost:3000/exam/",
     "fullScreenExam": false
   }
 }
 
+ 

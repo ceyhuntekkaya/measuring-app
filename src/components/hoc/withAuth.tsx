@@ -29,7 +29,7 @@ export default function withAuth<P extends object>(
                 !loading &&
                 isAuthenticated &&
                 requiredRoles.length > 0 &&
-                !requiredRoles.some(role => user?.roleSet.includes(role))
+                !requiredRoles.some(role => user?.roleSet?.includes(role))
             ) {
                 router.replace(user ? `/app` : '/login');
             }
@@ -52,7 +52,7 @@ export default function withAuth<P extends object>(
         // Rol kontrolü varsa ve gereken roller yoksa
         if (
             requiredRoles.length > 0 &&
-            !requiredRoles.some(role => user?.roleSet.includes(role))
+            !requiredRoles.some(role => user?.roleSet?.includes(role))
         ) {
             return null;
         }

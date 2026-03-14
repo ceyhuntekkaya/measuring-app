@@ -1,9 +1,10 @@
 import React, {useState, useEffect, useCallback} from 'react';
-import {MultipleChoiceTemplateDto, ChoiceOption} from '@/types/exam/questionTemplates';
+import type {MultipleChoiceTemplateDto, ChoiceOption} from '@/api/generated/model';
 import {
     EMediaType, EQuestionType,
 } from "@/types/exam/enum";
-import {QuestionTemplateType} from "@/types/exam/examEntities";
+import {difficultyConverter} from "@/utils/enum-converter";
+import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 
 
 interface MultipleChoiceQuestionProps {
@@ -290,7 +291,7 @@ const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
                             <div><strong>Konu:</strong> {template.subject}</div>
                         )}
                         {template.difficulty && (
-                            <div><strong>Zorluk:</strong> {template.difficulty}</div>
+                            <div><strong>Zorluk:</strong> {difficultyConverter(template.difficulty)}</div>
                         )}
                         {template.points && (
                             <div><strong>Puan:</strong> {template.points}</div>

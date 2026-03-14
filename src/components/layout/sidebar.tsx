@@ -30,17 +30,17 @@ export default function Sidebar({isOpen = true, onCloseAction}: SidebarProps) {
     const {user} = useAuth();
 
     useEffect(() => {
-        if (user?.roleSet.includes('ADMIN')) {
+        if (user?.roleSet?.includes('ADMIN')) {
             setRoutes(adminRoutes.menuItems);
-        } else if (user?.roleSet.includes('USER')) {
+        } else if (user?.roleSet?.includes('USER')) {
             setRoutes(appRoutes.menuItems);
-        } else if (user?.roleSet.includes('COMPANY')) {
+        } else if (user?.roleSet?.includes('COMPANY')) {
             setRoutes(companyRoutes.menuItems);
-        } else if (user?.roleSet.includes('LEARNER')) {
+        } else if (user?.roleSet?.includes('LEARNER')) {
             setRoutes(learnerRoutes.menuItems);
-        } else if (user?.roleSet.includes('OBSERVER')) {
+        } else if (user?.roleSet?.includes('OBSERVER')) {
             setRoutes(observerRoutes.menuItems);
-        } else if (user?.roleSet.includes('INSTRUCTOR')) {
+        } else if (user?.roleSet?.includes('INSTRUCTOR')) {
             setRoutes(instructorRoutes.menuItems);
         } else {
             setRoutes(publicRoutes.menuItems);
@@ -138,12 +138,12 @@ function SidebarMenuItem({item, level = 0}: MenuItemProps) {
 
         // Departman kontrolü - kullanıcının hiç departmanı yoksa ve menü departman gerektiriyorsa erişim yok
         const hasRequiredDepartments = !item.requiredDepartments?.length ||
-            (user.departmentSet?.length > 0 &&
+            ((user.departmentSet?.length ?? 0) > 0 &&
                 item.requiredDepartments.some(dept => hasAnyDepartment(dept as Department)));
 
         // Rol kontrolü
         const hasRequiredRoles = !item.requiredRoles?.length ||
-            item.requiredRoles.some(role => user?.roleSet.includes(role));
+            item.requiredRoles.some(role => user?.roleSet?.includes(role));
 
         return hasRequiredDepartments && hasRequiredRoles;
     };

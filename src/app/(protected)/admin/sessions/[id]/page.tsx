@@ -1,55 +1,40 @@
 'use client';
 
 import {useParams, useRouter} from "next/navigation";
-import React, {useEffect} from "react";
+import React from "react";
 import PageHeader from "@/components/layout/page-header";
 import LoadingComp from "@/components/ui/loading-comp";
 import ExamSessionDetail from "@/components/detail/ExamSessionDetail";
-import {useExamSession} from "@/hooks/exam/use-exam-session";
-import { AdminWebSocketProvider } from '@/components/websocket/AdminWebSocketProvider';
-import {ESessionState} from "@/types/exam/enum";
+import {useGetExamSessionById, useGetExamSessionStatistics, useDeleteExamSession, useSetBeginAt, useSetEndAt, useSetIsFinish, useUpdateSessionState} from "@/api/generated/exam-session-management/exam-session-management";
+import {useQueryClient} from "@tanstack/react-query";
+import type {ApiResponseExamSessionDto, ApiResponseExamSessionStatistics, UpdateExamSessionStateRequest, UpdateExamSessionStateRequestSessionState} from "@/api/generated/model";
+import { showNotification, getErrorMessage } from "@/lib/notification";
 
 export default function CandidateDetailPage() {
     const params = useParams();
     const sessionId = params.id as string;
     const router = useRouter();
+    const queryClient = useQueryClient();
 
-    const {
-        selectedExamSession,
-        sessionStatistics,
-        loading,
-        getExamSessionById,
-        getExamSessionStatistics,
-        deleteExamSession,
-        clearSessionData,
-        setExamSessionBeginAt,
-        setExamSessionEndAt,
-        setExamSessionIsFinish,
-        updateExamSessionSessionState,
-    } = useExamSession();
+    const {data: sessionData, isLoading: loading} = useGetExamSessionById(sessionId, {
+        query: { enabled: !!sessionId }
+    });
+    const selectedExamSession = (sessionData as ApiResponseExamSessionDto)?.data;
+    
+    const {data: statisticsData} = useGetExamSessionStatistics(sessionId, {
+        query: { enabled: !!sessionId }
+    });
+    const sessionStatistics = (statisticsData as ApiResponseExamSessionStatistics)?.data;
+    
+    const deleteExamSessionMutation = useDeleteExamSession();
+    const setBeginAtMutation = useSetBeginAt();
+    const setEndAtMutation = useSetEndAt();
+    const setIsFinishMutation = useSetIsFinish();
+    const updateSessionStateMutation = useUpdateSessionState();
 
-    // Load exam session data on component mount
-    useEffect(() => {
-        if (sessionId) {
-            loadExamSessionData();
-        }
-
-        return () => {
-            clearSessionData();
-        };
-    }, [sessionId]);
-
-    const loadExamSessionData = async () => {
-        if (!sessionId) return;
-
-        try {
-            await Promise.all([
-                getExamSessionById(sessionId),
-                getExamSessionStatistics(sessionId),
-            ]);
-        } catch (err) {
-            console.error('Error loading exam session data:', err);
-        }
+    const loadExamSessionData = () => {
+        queryClient.invalidateQueries({ queryKey: [`/exam-sessions/${sessionId}`] });
+        queryClient.invalidateQueries({ queryKey: [`/exam-sessions/${sessionId}/statistics`] });
     };
 
     // Event handlers
@@ -61,10 +46,13 @@ export default function CandidateDetailPage() {
         if (!sessionId) return;
 
         try {
-            await deleteExamSession(sessionId);
+            await deleteExamSessionMutation.mutateAsync({ id: sessionId });
+            queryClient.invalidateQueries({ queryKey: ['/exam-sessions'] });
+            showNotification.success('Sınav oturumu başarıyla silindi!');
             router.push('/admin/sessions');
         } catch (err) {
-            console.error('Error deleting exam session:', err);
+            const errorMessage = getErrorMessage(err);
+            showNotification.error(errorMessage || 'Sınav oturumu silinirken bir hata oluştu!');
         }
     };
 
@@ -72,9 +60,15 @@ export default function CandidateDetailPage() {
         if (!sessionId) return;
 
         try {
-            await setExamSessionBeginAt(sessionId);
-            await updateExamSessionSessionState(sessionId, ESessionState.IN_PROGRESS);
-            await loadExamSessionData(); // Refresh data
+            await setBeginAtMutation.mutateAsync({ id: sessionId });
+            await updateSessionStateMutation.mutateAsync({ 
+                id: sessionId, 
+                data: { 
+                    examSessionId: sessionId,
+                    sessionState: 'IN_PROGRESS' as UpdateExamSessionStateRequestSessionState
+                } as UpdateExamSessionStateRequest
+            });
+            loadExamSessionData();
         } catch (err) {
             console.error('Error starting exam session:', err);
         }
@@ -84,8 +78,8 @@ export default function CandidateDetailPage() {
         if (!sessionId) return;
 
         try {
-            await setExamSessionEndAt(sessionId);
-            await loadExamSessionData(); // Refresh data
+            await setEndAtMutation.mutateAsync({ id: sessionId });
+            loadExamSessionData();
         } catch (err) {
             console.error('Error pausing exam session:', err);
         }
@@ -95,8 +89,8 @@ export default function CandidateDetailPage() {
         if (!sessionId) return;
 
         try {
-            await setExamSessionEndAt(sessionId);
-            await loadExamSessionData(); // Refresh data
+            await setEndAtMutation.mutateAsync({ id: sessionId });
+            loadExamSessionData();
         } catch (err) {
             console.error('Error stopping exam session:', err);
         }
@@ -107,10 +101,8 @@ export default function CandidateDetailPage() {
 
         if (window.confirm('Oturumu sonlandırmak istediğinize emin misiniz? Bu işlem geri alınamaz.')) {
             try {
-                await setExamSessionIsFinish(sessionId);
-                // Veriyi yenile - setExamSessionIsFinish zaten selectedExamSession'ı güncelliyor
-                // ama emin olmak için tekrar yüklüyoruz
-                await loadExamSessionData();
+                await setIsFinishMutation.mutateAsync({ id: sessionId });
+                loadExamSessionData();
             } catch (err) {
                 console.error('Error finishing exam session:', err);
             }
@@ -135,11 +127,13 @@ export default function CandidateDetailPage() {
     };
 
     // Convert statistics data to the format expected by the component
-    const statisticsData = sessionStatistics ? {
+    const formattedStatistics = sessionStatistics ? {
         totalParticipants: sessionStatistics.totalApplications || 0,
         completedParticipants: sessionStatistics.approvedApplications || 0,
         activeParticipants: sessionStatistics.pendingApplications || 0,
-        completionRate: sessionStatistics.capacityUtilization || 0,
+        completionRate: sessionStatistics.totalApplications && sessionStatistics.quota 
+            ? (sessionStatistics.totalApplications / sessionStatistics.quota) * 100 
+            : 0,
     } : undefined;
 
     if (loading && !selectedExamSession) {
@@ -147,14 +141,13 @@ export default function CandidateDetailPage() {
     }
 
     return (
-        <AdminWebSocketProvider  sessionId={sessionId}>
-        <div className="space-y-6">
+        <div className="space-y-4">
             <PageHeader/>
-            <div className="p-1">
+            <div className="px-4">
                 {
                     selectedExamSession &&  <ExamSessionDetail
                         examSession={selectedExamSession}
-                        statistics={statisticsData}
+                        statistics={formattedStatistics}
                         isLoading={loading}
                         onEdit={handleEdit}
                         onDelete={handleDelete}
@@ -171,7 +164,6 @@ export default function CandidateDetailPage() {
                 }
             </div>
         </div>
-        </AdminWebSocketProvider>
     );
 
 

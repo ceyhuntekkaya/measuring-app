@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
@@ -9,12 +9,16 @@ import {
     Users, Calendar, Activity, Info,
     BookOpen, UserCheck, Play, Edit, Trash2, Copy
 } from 'lucide-react';
-import {ExamSessionDto} from '@/types/exam/examEntities';
+import type {ExamSessionDto} from '@/api/generated/model/examSessionDto';
+import type {ApplicationDto} from '@/api/generated/model/applicationDto';
 import {formatDate} from '@/utils/date-formater';
 import LoadingComp from "@/components/ui/loading-comp";
 import ExamParticipants from "@/components/proctor/ExamParticipants";
-import {useApplication} from "@/hooks/exam/use-application";
 import ExamEvaluationPanel from "@/components/proctor/ExamEvaluation";
+import {useGetApplicationsByExamSession} from "@/api/generated/application-management/application-management";
+import {useAuth} from "@/hooks/use-auth";
+import {useExamWebSocket} from "@/hooks/useExamWebSocket";
+import {showNotification} from "@/lib/notification";
 
 interface ExamSessionDetailProps {
     examSession: ExamSessionDto;
@@ -54,17 +58,38 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                                                                  onViewStatistics,
                                                              }) => {
     const [activeTab, setActiveTab] = useState("general");
+    const {user} = useAuth();
 
-    const {
-        getApplicationsByExamSession,
-        examSessionApplications,
+    const {data: applicationsData} = useGetApplicationsByExamSession(examSession.id || '', {
+        query: { enabled: !!examSession.id }
+    });
+    const examSessionApplications = (applicationsData as unknown as { data?: ApplicationDto[] })?.data || [];
 
-    } = useApplication();
+    // WebSocket bağlantısı - Sadece gözetmen (ADMIN/OBSERVER) ve sessionState IN_PROGRESS veya PAUSED ise
+    const isSupervisor = user && (user.roleSet?.includes('ADMIN') || user.roleSet?.includes('OBSERVER'));
+    const canConnect = !!(isSupervisor && 
+                      examSession.sessionState && 
+                      (examSession.sessionState === 'IN_PROGRESS' || examSession.sessionState === 'PAUSED'));
+    
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    const userName = user ? `${user.name || ''} ${user.lastName || ''}`.trim() : '';
+    const userRole = user?.roleSet?.includes('ADMIN') ? 'ADMIN' : 
+                     user?.roleSet?.includes('OBSERVER') ? 'OBSERVER' : 'LEARNER';
 
-
-    useEffect(() => {
-        getApplicationsByExamSession(examSession.id)
-    }, []);
+    useExamWebSocket({
+        sessionId: examSession.id || '',
+        userRole: userRole as 'ADMIN' | 'OBSERVER' | 'LEARNER',
+        token: token || '',
+        userName: userName,
+        autoConnect: !!(canConnect && token && examSession.id),
+        onConnectionEvent: (event) => {
+            if (event.eventType === 'CONNECTED') {
+                showNotification.info(`${event.userName} odaya katıldı`);
+            } else if (event.eventType === 'DISCONNECTED') {
+                showNotification.info(`${event.userName} odadan ayrıldı`);
+            }
+        }
+    });
 
 
 
@@ -73,6 +98,9 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
     }
 
     const getSessionStatus = () => {
+        if (!examSession.startDate) {
+            return { status: 'UNKNOWN', text: 'Bilinmiyor', color: 'bg-gray-100 text-gray-800' };
+        }
         const now = new Date();
         const startDate = new Date(examSession.startDate);
 
@@ -85,6 +113,9 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
     };
 
     const getDaysUntilStart = () => {
+        if (!examSession.startDate) {
+            return 'Bilinmiyor';
+        }
         const now = new Date();
         const startDate = new Date(examSession.startDate);
         const diffTime = startDate.getTime() - now.getTime();
@@ -102,7 +133,7 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
     const sessionStatus = getSessionStatus();
 
     return (<>
-        <div className="container mx-auto space-y-6">
+        <div className="container mx-auto space-y-4">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Sınav Oturumu Detayı</h1>
@@ -182,41 +213,7 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                         Genel Bilgiler
                     </button>
 
-                    {
-                        /*
-                        <button
-                        onClick={() => setActiveTab("exam")}
-                        className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                            activeTab === "exam"
-                                ? "border-blue-500 text-blue-600"
-                                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                        }`}
-                    >
-                        Sınav Detayları
-                    </button>
-                    <button
-                        onClick={() => setActiveTab("organization")}
-                        className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                            activeTab === "organization"
-                                ? "border-blue-500 text-blue-600"
-                                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                        }`}
-                    >
-                        Organizasyon
-                    </button>
-                    <button
-                        onClick={() => setActiveTab("participants")}
-                        className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                            activeTab === "participants"
-                                ? "border-blue-500 text-blue-600"
-                                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                        }`}
-                    >
-                        Katılımcılar & Sonuçlar
-                    </button>
-                         */
-                    }
-
+                   
 
                     <button
                         onClick={() => setActiveTab("evaluation")}
@@ -280,6 +277,24 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                                             <p className="font-medium">{examSession.quota} kişi</p>
                                         </div>
                                     </div>
+
+                                    <div className="flex items-center space-x-2">
+                                        <Activity className="h-4 w-4 text-gray-400"/>
+                                        <div>
+                                            <p className="text-sm text-gray-500">Session State</p>
+                                            <div className="font-medium">
+                                                <Badge variant={
+                                                    examSession.sessionState === 'IN_PROGRESS' ? 'default' :
+                                                    examSession.sessionState === 'FINISHED' ? 'secondary' :
+                                                    examSession.sessionState === 'PAUSED' ? 'outline' :
+                                                    examSession.sessionState === 'CANCELLED' ? 'destructive' :
+                                                    'outline'
+                                                }>
+                                                    {examSession.sessionState || 'NOT_SET'}
+                                                </Badge>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
@@ -300,7 +315,7 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                                         </div>
                                         <div className="text-right">
                                             <p className="text-sm font-medium">
-                                                {formatDate(examSession.startDate.toString())}
+                                                {examSession.startDate ? formatDate(examSession.startDate.toString()) : 'Belirtilmedi'}
                                             </p>
                                             <p className="text-xs text-gray-500">
                                                 {getDaysUntilStart()}
@@ -600,12 +615,11 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                     <>
                         {(() => {
                             // Debug: isFinish değerini kontrol et
-                            console.log('ExamSession isFinish:', examSession.isFinish, 'Type:', typeof examSession.isFinish);
                             return examSession.isFinish;
                         })() ? (
-                            <ExamEvaluationPanel sessionId={examSession.id} candidates ={examSessionApplications ? examSessionApplications : []}/>
+                            <ExamEvaluationPanel sessionId={examSession.id || ''} candidates ={examSessionApplications ? examSessionApplications : []}/>
                         ) : (
-                            <div className="flex items-center justify-center min-h-[400px]">
+                            <div className="flex items-center justify-center">
                                 <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl shadow-2xl border-4 border-yellow-400 p-8 max-w-2xl w-full mx-4">
                                     <div className="text-center">
                                         <div className="mb-6">
