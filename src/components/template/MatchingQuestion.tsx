@@ -2,6 +2,7 @@ import React, {useState, useEffect, useMemo} from 'react';
 import type { MatchingTemplateDto } from '@/api/generated/model';
 import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
+import {difficultyConverter} from "@/utils/enum-converter";
 
 interface MatchingQuestionProps {
     template: MatchingTemplateDto;
@@ -671,7 +672,7 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
                             <div><strong>Konu:</strong> {template.subject}</div>
                         )}
                         {template.difficulty && (
-                            <div><strong>Zorluk:</strong> {template.difficulty}</div>
+                            <div><strong>Zorluk:</strong> {difficultyConverter(template.difficulty)}</div>
                         )}
                         {template.points && (
                             <div><strong>Puan:</strong> {template.points}</div>

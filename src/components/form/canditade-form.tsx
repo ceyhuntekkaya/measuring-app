@@ -117,13 +117,16 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
         }
     }, [formData.name, formData.lastName, mode]);
 
-    // Filter sessions by selected exam type
+    // Filter sessions by selected exam type (compare as string - API may return id as number)
     const filteredExamSessions = useMemo(() => {
         if (!formData.examTypeId) {
             return [];
         }
+        const selectedId = String(formData.examTypeId);
         return examSessions.filter(examSession => {
-            return examSession.examType?.id === formData.examTypeId;
+            const sessionExamTypeId = examSession.examType?.id;
+            if (sessionExamTypeId == null || sessionExamTypeId === '') return false;
+            return String(sessionExamTypeId) === selectedId;
         });
     }, [examSessions, formData.examTypeId]);
 
@@ -131,7 +134,9 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
     useEffect(() => {
         if (formData.examTypeId && formData.examSessionId) {
             const selectedSession = examSessions.find(s => s.id === formData.examSessionId);
-            if (selectedSession?.examType?.id !== formData.examTypeId) {
+            const sessionTypeId = selectedSession?.examType?.id;
+            const matches = sessionTypeId != null && String(sessionTypeId) === String(formData.examTypeId);
+            if (!matches) {
                 setFormData(prev => ({
                     ...prev,
                     examSessionId: ''

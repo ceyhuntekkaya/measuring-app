@@ -276,7 +276,7 @@ export default function ApprovalPreviewPage() {
             default:
                 return (
                     <div className="text-gray-500 text-sm p-4 bg-gray-50 rounded">
-                        Desteklenmeyen soru tipi: {type}
+                        Desteklenmeyen soru tipi: {getQuestionTypeLabel(type)}
                     </div>
                 );
         }

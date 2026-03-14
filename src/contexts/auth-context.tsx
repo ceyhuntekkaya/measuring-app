@@ -44,11 +44,13 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
 
     useEffect(() => {
         const checkAuth = async () => {
-            // Timeout wrapper to prevent infinite loading
-            const timeoutPromise = new Promise((_, reject) => {
-                setTimeout(() => {
+            const AUTH_CHECK_TIMEOUT_MS = 20000; // 20 seconds - learner /auth/me can be slow (exam session, evaluations)
+            let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+            const timeoutPromise = new Promise<never>((_, reject) => {
+                timeoutId = setTimeout(() => {
                     reject(new Error('Authentication check timeout'));
-                }, 10000); // 10 seconds timeout
+                }, AUTH_CHECK_TIMEOUT_MS);
             });
 
             try {
@@ -60,11 +62,11 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
                         document.cookie = `accessToken=${token}; path=/; secure; samesite=strict`;
                     }
                     
-                    // Race between getCurrentUser and timeout
-                    const response = await Promise.race([
+                    const response = (await Promise.race([
                         getCurrentUser(),
                         timeoutPromise
-                    ]) as RefreshTokenResponse | { data: RefreshTokenResponse; success: boolean; message?: string };
+                    ])) as unknown as RefreshTokenResponse | { data: RefreshTokenResponse; success: boolean; message?: string };
+                    if (timeoutId !== undefined) clearTimeout(timeoutId);
                     
                     // customInstance zaten data'yı unwrap ediyor (.then(({ data }) => data))
                     // Backend ApiResponse<RefreshTokenResponse> döndürüyorsa, customInstance direkt RefreshTokenResponse'u döndürür
@@ -117,8 +119,13 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
                         router.replace('/login');
                     }
                 }
-            } catch (error) {
-                console.error('AuthContext - Auth check failed:', error);
+            } catch (err) {
+                if (timeoutId !== undefined) clearTimeout(timeoutId);
+                const isTimeout = err instanceof Error && err.message === 'Authentication check timeout';
+                console.error('AuthContext - Auth check failed:', err);
+                if (isTimeout) {
+                    console.warn('Auth check timed out - backend /auth/me may be slow or unreachable. Redirecting to login.');
+                }
                 localStorage.removeItem('accessToken');
                 localStorage.removeItem('refreshToken');
                 document.cookie = 'accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';

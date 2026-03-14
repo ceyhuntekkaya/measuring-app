@@ -22,15 +22,18 @@ export const useExamWebSocket = ({
   onConnectionEvent,
 }: UseExamWebSocketProps) => {
   const wsService = useRef<ExamWebSocketService | null>(null);
+  const isMountedRef = useRef(true);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [connectionEvents, setConnectionEvents] = useState<ConnectionEvent[]>([]);
 
-  // Initialize WebSocket service
+  // Initialize WebSocket service & track mount
   useEffect(() => {
+    isMountedRef.current = true;
     wsService.current = new ExamWebSocketService();
 
     return () => {
+      isMountedRef.current = false;
       wsService.current?.disconnect();
     };
   }, []);
@@ -39,9 +42,11 @@ export const useExamWebSocket = ({
   const setupSubscriptions = useCallback(() => {
     if (!wsService.current || !sessionId) return;
 
-    // Connection events (herkes dinler)
+    // Connection events (herkes dinler) - state sadece mount iken güncellenir
     wsService.current.subscribeToConnectionEvents(sessionId, (event) => {
-      setConnectionEvents((prev) => [...prev, event]);
+      if (isMountedRef.current) {
+        setConnectionEvents((prev) => [...prev, event]);
+      }
       onConnectionEvent?.(event);
     });
   }, [sessionId, onConnectionEvent]);
@@ -59,18 +64,33 @@ export const useExamWebSocket = ({
       token,
       userName,
       () => {
-        setIsConnected(true);
-        setError(null);
-        setupSubscriptions();
+        if (isMountedRef.current) {
+          setIsConnected(true);
+          setError(null);
+        }
       },
       (err) => {
-        const error = err instanceof Error ? err : new Error(String(err));
-        setError(error);
-        setIsConnected(false);
+        if (isMountedRef.current) {
+          const error = err instanceof Error ? err : new Error(String(err));
+          setError(error);
+          setIsConnected(false);
+        }
         console.error('[WebSocket] Connection error:', err);
       }
     );
-  }, [sessionId, userRole, token, userName, setupSubscriptions]);
+  }, [sessionId, userRole, token, userName]);
+
+  // isConnected true olduğunda subscriptions'ı kur
+  useEffect(() => {
+    if (isConnected && wsService.current && sessionId) {
+      // Kısa bir gecikme ile subscribe yap (STOMP client'ın tam hazır olması için)
+      const timer = setTimeout(() => {
+        setupSubscriptions();
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isConnected, sessionId, setupSubscriptions]);
 
   // Auto connect
   useEffect(() => {

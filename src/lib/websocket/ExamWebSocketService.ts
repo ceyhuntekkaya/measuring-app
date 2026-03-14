@@ -110,7 +110,12 @@ export class ExamWebSocketService {
    * Genel subscribe fonksiyonu
    */
   private subscribe<T>(destination: string, handler: MessageHandler<T>): void {
-    if (!this.client?.connected) {
+    if (!this.client) {
+      console.error('[WebSocket] Cannot subscribe, client is null');
+      return;
+    }
+    
+    if (!this.client.connected) {
       console.error('[WebSocket] Cannot subscribe, not connected');
       return;
     }

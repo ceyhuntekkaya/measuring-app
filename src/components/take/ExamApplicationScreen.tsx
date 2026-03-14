@@ -190,7 +190,7 @@ const AudioPlayerWithProgress: React.FC<AudioPlayerWithProgressProps> = ({materi
                     }}
                     controls={false}
                 >
-                    Your browser does not support the audio file.
+                    Tarayıcınız bu ses dosyasını desteklemiyor.
                 </audio>
 
                 {!showProgress && !isDisabled && (
@@ -648,7 +648,7 @@ export default function ExamApplicationScreen({
                             controls
                             src={`${API_URL}/${material.content}`}
                         >
-                            Your browser does not support the video file.
+                            Tarayıcınız bu video dosyasını desteklemiyor.
                         </video>
                     </div>
                 );
@@ -680,7 +680,7 @@ export default function ExamApplicationScreen({
                             download={material.content ? material.content.split('/').pop() : undefined}
                         >
                             <i className="bi bi-file-earmark-text me-2"></i>
-                            Download Document
+                            Belgeyi İndir
                         </a>
                     </div>
                 );
@@ -715,7 +715,7 @@ export default function ExamApplicationScreen({
                             ) : (
                                 <div className="alert alert-warning">
                                     <i className="bi bi-exclamation-triangle me-2"></i>
-                                    No content found.
+                                    İçerik bulunamadı.
                                 </div>
                             )}
                         </div>

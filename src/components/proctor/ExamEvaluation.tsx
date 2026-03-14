@@ -7,6 +7,7 @@ interface QuestionId {
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Column, RecordType} from "@/types/ui/table";
 import {statusConverter} from "@/utils/enum-converter";
+import {getQuestionTypeLabel} from "@/utils/question-type-convert";
 import {EStatus, EQuestionType} from "@/types/exam/enum";
 import DynamicTable from "@/components/ui/dynamic-table";
 import {useGetApplicationEvaluationsBySession} from "@/api/generated/application-management/application-management";
@@ -603,7 +604,7 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
                         } | null}
                     />;
                 default:
-                    return <div className="p-4 bg-gray-50 rounded-lg">Soru tipi desteklenmiyor: {type}</div>;
+                    return <div className="p-4 bg-gray-50 rounded-lg">Soru tipi desteklenmiyor: {getQuestionTypeLabel(type)}</div>;
             }
         };
 
