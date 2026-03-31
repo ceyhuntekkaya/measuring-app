@@ -1,13 +1,13 @@
 {
 
-  "api": {
+  "apiLocal": {
     "invokeUrl": "https://tomerapi.genixo.ai/api",
     "baseUrl": "https://tomer.genixo.ai",
     "aiUrl": "https://chat.studyscore.ai/ollama",
     "linkUrl": "https://tomerapi.genixo.ai/exam/",
     "fullScreenExam": false
   },
-  "apiLocal": {
+  "api": {
     "invokeUrl": "http://localhost:8080/api",
     "baseUrl": "http://localhost:3000",
     "aiUrl": "https://chat.studyscore.ai/ollama",
