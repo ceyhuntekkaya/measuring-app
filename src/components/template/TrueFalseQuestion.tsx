@@ -3,6 +3,7 @@ import type { TrueFalseTemplateDto } from '@/api/generated/model';
 import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
 import {difficultyConverter} from "@/utils/enum-converter";
+import MaybeHtml from "@/components/ui/maybe-html";
 
 interface TrueFalseQuestionProps {
     template: TrueFalseTemplateDto;
@@ -139,14 +140,14 @@ const TrueFalseQuestion: React.FC<TrueFalseQuestionProps> = ({
             {/* Question Statement */}
             {template.statement && (
                 <div className="mb-1">
-                    <p className="text-gray-800 text-base leading-relaxed">{template.statement}</p>
+                    <MaybeHtml className="text-gray-800 text-base leading-relaxed" value={template.statement} />
                 </div>
             )}
 
             {/* Instructions */}
             {template.instructions && (
                 <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
-                    <p className="text-blue-800 text-sm">{template.instructions}</p>
+                    <MaybeHtml className="text-blue-800 text-sm" value={template.instructions} />
                 </div>
             )}
 
@@ -257,7 +258,7 @@ const TrueFalseQuestion: React.FC<TrueFalseQuestionProps> = ({
             {isSubmitted && showCorrectAnswer && template.explanation && (
                 <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
                     <h4 className="font-semibold text-yellow-800 mb-2">Genel Açıklama:</h4>
-                    <p className="text-yellow-700">{template.explanation}</p>
+                    <MaybeHtml className="text-yellow-700" value={template.explanation} />
                 </div>
             )}
 

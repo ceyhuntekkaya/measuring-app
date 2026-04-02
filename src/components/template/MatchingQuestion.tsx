@@ -3,6 +3,7 @@ import type { MatchingTemplateDto } from '@/api/generated/model';
 import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
 import {difficultyConverter} from "@/utils/enum-converter";
+import MaybeHtml from "@/components/ui/maybe-html";
 
 interface MatchingQuestionProps {
     template: MatchingTemplateDto;
@@ -395,7 +396,7 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
                 <p className="text-green-700">{result.correctRightText}</p>
                 {result.feedback && (
                     <p className="text-green-700 text-sm italic mt-2">
-                        <strong>Açıklama:</strong> {result.feedback}
+                        <strong>Açıklama:</strong> <MaybeHtml value={result.feedback} />
                     </p>
                 )}
             </div>
@@ -443,7 +444,7 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
             {/* Instructions */}
             {template.instructions && (
                 <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
-                    <p className="text-blue-800 text-sm">{template.instructions}</p>
+                    <MaybeHtml className="text-blue-800 text-sm" value={template.instructions} />
                 </div>
             )}
 
@@ -513,7 +514,7 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
 
                                 <div className="flex-1 min-w-0">
                                     {/* Left Text */}
-                                    <p className="text-gray-800 font-medium">{pair.leftText}</p>
+                                    <MaybeHtml className="text-gray-800 font-medium" value={pair.leftText} />
 
                                     {/* Left Media */}
                                     {pair.leftMediaUrl && renderMedia(pair.leftMediaUrl)}
@@ -561,7 +562,7 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
                                     )}
 
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-gray-800 font-medium break-words">{item.text}</p>
+                                        <p className="text-gray-800 font-medium break-words"><MaybeHtml value={item.text} /></p>
                                         {item.mediaUrl && renderMedia(item.mediaUrl)}
 
                                         {/* Distractor Badge */}
@@ -593,7 +594,7 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
             {isSubmitted && showCorrectAnswer && template.explanation && (
                 <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
                     <h4 className="font-semibold text-yellow-800 mb-2">Genel Açıklama:</h4>
-                    <p className="text-yellow-700">{template.explanation}</p>
+                    <MaybeHtml className="text-yellow-700" value={template.explanation} />
                 </div>
             )}
 

@@ -24,6 +24,7 @@ import type {
 import type {
   ChangePasswordRequest,
   CreateCandidateRequest,
+  ResetCandidatePasswordRequest,
   SearchCandidatesParams,
   UpdateCandidateRequest,
 } from ".././model";
@@ -471,6 +472,94 @@ export const useChangePassword1 = <
   TContext
 > => {
   return useMutation(getChangePassword1MutationOptions(options), queryClient);
+};
+/**
+ * Reset candidate password by username
+ * @summary Reset candidate password
+ */
+export const resetPassword = (
+  resetCandidatePasswordRequest: BodyType<ResetCandidatePasswordRequest>,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<Blob>(
+    {
+      url: `/candidates/reset-password`,
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      data: resetCandidatePasswordRequest,
+      responseType: "blob",
+      signal,
+    },
+    options,
+  );
+};
+
+export const getResetPasswordMutationOptions = <
+  TError = ErrorType<Blob>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof resetPassword>>,
+    TError,
+    { data: BodyType<ResetCandidatePasswordRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof resetPassword>>,
+  TError,
+  { data: BodyType<ResetCandidatePasswordRequest> },
+  TContext
+> => {
+  const mutationKey = ["resetPassword"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof resetPassword>>,
+    { data: BodyType<ResetCandidatePasswordRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return resetPassword(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ResetPasswordMutationResult = NonNullable<
+  Awaited<ReturnType<typeof resetPassword>>
+>;
+export type ResetPasswordMutationBody = BodyType<ResetCandidatePasswordRequest>;
+export type ResetPasswordMutationError = ErrorType<Blob>;
+
+/**
+ * @summary Reset candidate password
+ */
+export const useResetPassword = <TError = ErrorType<Blob>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof resetPassword>>,
+      TError,
+      { data: BodyType<ResetCandidatePasswordRequest> },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof resetPassword>>,
+  TError,
+  { data: BodyType<ResetCandidatePasswordRequest> },
+  TContext
+> => {
+  return useMutation(getResetPasswordMutationOptions(options), queryClient);
 };
 /**
  * Get all candidates ordered by name
@@ -971,6 +1060,157 @@ export function useGetCandidateByUsername<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getGetCandidateByUsernameQueryOptions(username, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Get candidate details by ID
+ * @summary Get candidate by ID
+ */
+export const usernameCheck = (
+  username: string,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<Blob>(
+    {
+      url: `/candidates/username/check/${username}`,
+      method: "GET",
+      responseType: "blob",
+      signal,
+    },
+    options,
+  );
+};
+
+export const getUsernameCheckQueryKey = (username?: string) => {
+  return [`/candidates/username/check/${username}`] as const;
+};
+
+export const getUsernameCheckQueryOptions = <
+  TData = Awaited<ReturnType<typeof usernameCheck>>,
+  TError = ErrorType<Blob>,
+>(
+  username: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof usernameCheck>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getUsernameCheckQueryKey(username);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof usernameCheck>>> = ({
+    signal,
+  }) => usernameCheck(username, requestOptions, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!username,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof usernameCheck>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type UsernameCheckQueryResult = NonNullable<
+  Awaited<ReturnType<typeof usernameCheck>>
+>;
+export type UsernameCheckQueryError = ErrorType<Blob>;
+
+export function useUsernameCheck<
+  TData = Awaited<ReturnType<typeof usernameCheck>>,
+  TError = ErrorType<Blob>,
+>(
+  username: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof usernameCheck>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usernameCheck>>,
+          TError,
+          Awaited<ReturnType<typeof usernameCheck>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useUsernameCheck<
+  TData = Awaited<ReturnType<typeof usernameCheck>>,
+  TError = ErrorType<Blob>,
+>(
+  username: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof usernameCheck>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usernameCheck>>,
+          TError,
+          Awaited<ReturnType<typeof usernameCheck>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useUsernameCheck<
+  TData = Awaited<ReturnType<typeof usernameCheck>>,
+  TError = ErrorType<Blob>,
+>(
+  username: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof usernameCheck>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get candidate by ID
+ */
+
+export function useUsernameCheck<
+  TData = Awaited<ReturnType<typeof usernameCheck>>,
+  TError = ErrorType<Blob>,
+>(
+  username: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof usernameCheck>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getUsernameCheckQueryOptions(username, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

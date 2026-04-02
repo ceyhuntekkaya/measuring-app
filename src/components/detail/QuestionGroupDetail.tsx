@@ -4,6 +4,9 @@ import type { QuestionDto } from '@/api/generated/model/questionDto';
 import { EQuestionGroupType, EMediaType, EQuestionType, EExamType } from '@/types/exam/enum';
 import {Button} from "@/components/ui/button";
 import { examTypeConverter, approvalStatusConverter, getApprovalStatusColor } from '@/utils/enum-converter';
+import FilePreview from '@/components/ui/file-preview';
+import HtmlRender from '@/components/ui/html-render';
+import siteConfig from '@/config/config.json';
 
 interface QuestionGroupDetailProps {
     selectedQuestionGroup: QuestionGroupDto | null;
@@ -19,6 +22,8 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
             </div>
         );
     }
+
+    const API_URL = siteConfig.api.invokeUrl + "/upload/serve";
 
     const formatDuration = (seconds?: number) => {
         if (!seconds) return 'Belirtilmedi';
@@ -48,19 +53,6 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
         return groupType ? typeLabels[groupType] || groupType : 'Belirtilmedi';
     };
 
-    const getMediaTypeLabel = (mediaType?: EMediaType) => {
-        const typeLabels = {
-            IMAGE: 'Resim',
-            VIDEO: 'Video',
-            AUDIO: 'Ses',
-            DOCUMENT: 'Belge',
-            PDF: 'PDF',
-            TEXT: 'Metin',
-            OTHER: 'Diğer'
-        };
-        return mediaType ? typeLabels[mediaType] || mediaType : 'Belirtilmedi';
-    };
-
     const getQuestionTypeLabel = (questionType?: EQuestionType) => {
         const typeLabels = {
             MULTIPLE_CHOICE: 'Çoktan Seçmeli',
@@ -78,6 +70,57 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
             IMAGE_RESPONSE: 'Resim Cevabı'
         };
         return questionType ? typeLabels[questionType] || questionType : 'Belirtilmedi';
+    };
+
+    const renderHeaderContent = (mediaType: EMediaType | undefined, content: string) => {
+        const fullUrl = `${API_URL}/${content}`;
+
+        switch (mediaType) {
+            case EMediaType.TEXT:
+                return <HtmlRender className="prose max-w-none text-sm" html={content || ''} />;
+            case EMediaType.IMAGE:
+                return (
+                    <img
+                        src={fullUrl}
+                        alt="Header"
+                        className="max-h-96 w-auto rounded-md border border-gray-200 bg-white"
+                    />
+                );
+            case EMediaType.AUDIO:
+                return (
+                    <audio controls src={fullUrl} className="w-full" preload="metadata">
+                        Tarayıcınız audio elementini desteklemiyor.
+                    </audio>
+                );
+            case EMediaType.VIDEO:
+                return (
+                    <video controls src={fullUrl} className="w-full max-h-96 rounded-md" preload="metadata" />
+                );
+            case EMediaType.PDF:
+            case EMediaType.DOCUMENT:
+            case EMediaType.OTHER:
+            default:
+                return (
+                    <div className="space-y-2">
+                        <div className="flex items-start gap-3">
+                            <FilePreview size="medium" fileUrl={content || ''} alt="Header" />
+                            <div className="min-w-0 flex-1">
+                                <a
+                                    href={fullUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-xs font-medium text-blue-600 hover:text-blue-700 underline break-all"
+                                >
+                                    Dosyayı aç
+                                </a>
+                                <div className="text-xs text-gray-500 break-all mt-1">
+                                    {content}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+        }
     };
 
     const getApprovalProgress = () => {
@@ -316,8 +359,38 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
                 )}
             </div>
 
-            {/* Questions */}
-            {selectedQuestionGroup.questions && selectedQuestionGroup.questions.length > 0 && (
+         
+            {/* Headers */}
+            {selectedQuestionGroup.headers && selectedQuestionGroup.headers.length > 0 && (
+                <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
+                    <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                        Başlıklar ({selectedQuestionGroup.headers.length})
+                    </h2>
+                    <div className="space-y-3">
+                        {selectedQuestionGroup.headers.map((header, index) => (
+                            <div key={header.id || index} >
+                                <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                       
+
+                                        {header.content && (
+                                            <div>
+                                                {renderHeaderContent(header.mediaType as EMediaType, header.content || '')}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+
+               {/* Questions */}
+               {selectedQuestionGroup.questions && selectedQuestionGroup.questions.length > 0 && (
                 <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
                     <h2 className="text-lg font-semibold text-gray-900 mb-4">
                         Sorular ({selectedQuestionGroup.questions.length})
@@ -332,41 +405,28 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
                                                 {question.orderNumber || index + 1}
                                             </div>
                                             <div>
-                                                <div className="font-medium text-gray-900">{question.name || `Soru ${index + 1}`}</div>
-                                                <div className="text-sm text-gray-500">
-                                                    {getQuestionTypeLabel(question.questionType as EQuestionType)}
+                                                <div className="font-medium text-gray-900"> 
+
+
+                                                <span className="text-gray-500 pl-2"><b>Soru Adı:</b></span>
+                                                <span className="ml-1 font-medium"> {question.name || `Soru ${index + 1}`}</span>
+                                                     
+
+
+                                                    <span className="text-gray-500 pl-2"><b>Soru Tipi:</b></span>
+                                                    <span className="ml-1 font-medium"> {getQuestionTypeLabel(question.questionType as EQuestionType)}</span>
+
+                                                    <span className="text-gray-500 pl-2"><b>Puan:</b></span>
+                                                    <span className="ml-1 font-medium">{question.maximumScore || 'Belirtilmedi'}</span>
+
+
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="ml-11 grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                                            <div>
-                                                <span className="text-gray-500">Puan:</span>
-                                                <span className="ml-1 font-medium">{question.maximumScore || 'Belirtilmedi'}</span>
-                                            </div>
-                                            <div>
-                                                <span className="text-gray-500">Süre:</span>
-                                                <span className="ml-1 font-medium">{formatDuration(question.durationInSeconds)}</span>
-                                            </div>
-                                            <div>
-                                                <span className="text-gray-500">Otomatik değerlendirme:</span>
-                                                <span className={`ml-1 font-medium ${question.isAutomaticallyEvaluated ? 'text-green-600' : 'text-red-600'}`}>
-                          {question.isAutomaticallyEvaluated ? 'Evet' : 'Hayır'}
-                        </span>
-                                            </div>
-                                        </div>
                                     </div>
 
-                                    <div className="text-right">
-                                        <div className={`px-2 py-1 rounded text-xs font-medium ${getApprovalStatusColor(question.approvalStatus)}`}>
-                                            {approvalStatusConverter(question.approvalStatus)}
-                                        </div>
-                                        {question.currentApprovalCount && question.requiredApprovalCount && (
-                                            <div className="text-xs text-gray-500 mt-1">
-                                                {question.currentApprovalCount}/{question.requiredApprovalCount} onay
-                                            </div>
-                                        )}
-                                    </div>
+                                     
                                 </div>
                             </div>
                         ))}
@@ -374,53 +434,6 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
                 </div>
             )}
 
-            {/* Headers */}
-            {selectedQuestionGroup.headers && selectedQuestionGroup.headers.length > 0 && (
-                <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                        Başlıklar ({selectedQuestionGroup.headers.length})
-                    </h2>
-                    <div className="space-y-3">
-                        {selectedQuestionGroup.headers.map((header, index) => (
-                            <div key={header.id || index} className="border border-gray-200 rounded-lg p-4">
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                        <div className="flex items-center space-x-3 mb-2">
-                                            <div className="w-8 h-8 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-medium">
-                                                {header.orderNumber || index + 1}
-                                            </div>
-                                            <div>
-                                                <div className="text-sm font-medium text-gray-500">
-                                                    {getMediaTypeLabel(header.mediaType as EMediaType)}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {header.content && (
-                                            <div className="ml-11 p-3 bg-gray-50 rounded-lg">
-                                                <div className="text-sm text-gray-700 whitespace-pre-wrap">
-                                                    {header.content}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="text-right">
-                                        <div className={`px-2 py-1 rounded text-xs font-medium ${getApprovalStatusColor(header.approvalStatus)}`}>
-                                            {approvalStatusConverter(header.approvalStatus)}
-                                        </div>
-                                        {header.currentApprovalCount && header.requiredApprovalCount && (
-                                            <div className="text-xs text-gray-500 mt-1">
-                                                {header.currentApprovalCount}/{header.requiredApprovalCount} onay
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
 
         </div>
     );

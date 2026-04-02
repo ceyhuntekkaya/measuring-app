@@ -3,6 +3,7 @@ import type { ExamTypeDto } from '@/api/generated/model/examTypeDto';
 import {Button} from "@/components/ui/button";
 import { examTypeConverter, approvalStatusConverter, getApprovalStatusColor } from '@/utils/enum-converter';
 import { EExamType } from '@/types/exam/enum';
+import HtmlRender from '@/components/ui/html-render';
 
 interface ExamTypeDetailProps {
     selectedExamType: ExamTypeDto | null;
@@ -18,6 +19,27 @@ const ExamTypeDetail: React.FC<ExamTypeDetailProps> = ({ selectedExamType, onEdi
             </div>
         );
     }
+
+    const statusTr = (status?: string) => {
+        switch (status) {
+            case 'ACTIVE':
+                return 'Aktif';
+            case 'PASSIVE':
+                return 'Pasif';
+            case 'DELETED':
+                return 'Silindi';
+            case 'REJECTED':
+                return 'Reddedildi';
+            case 'CANCELLED':
+                return 'İptal Edildi';
+            case 'PENDING':
+                return 'Beklemede';
+            case 'SUSPENDED':
+                return 'Askıya Alındı';
+            default:
+                return status || 'Belirtilmedi';
+        }
+    };
 
     const formatDuration = (seconds?: number) => {
         if (!seconds) return 'Belirtilmedi';
@@ -76,7 +98,7 @@ const ExamTypeDetail: React.FC<ExamTypeDetailProps> = ({ selectedExamType, onEdi
                                     ? 'bg-blue-100 text-blue-800'
                                     : 'bg-gray-100 text-gray-800'
                             }`}>
-                {selectedExamType.status === 'ACTIVE' ? 'Aktif' : selectedExamType.status}
+                {statusTr(selectedExamType.status)}
               </span>
                         </div>
                     </div>
@@ -91,7 +113,10 @@ const ExamTypeDetail: React.FC<ExamTypeDetailProps> = ({ selectedExamType, onEdi
                 {selectedExamType.description && (
                     <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                         <h3 className="text-sm font-medium text-gray-700 mb-2">Açıklama</h3>
-                        <p className="text-gray-600">{selectedExamType.description}</p>
+                        <HtmlRender
+                          className="prose prose-sm max-w-none text-gray-700 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6"
+                          html={selectedExamType.description}
+                        />
                     </div>
                 )}
             </div>
@@ -160,9 +185,10 @@ const ExamTypeDetail: React.FC<ExamTypeDetailProps> = ({ selectedExamType, onEdi
                 <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
                     <h2 className="text-lg font-semibold text-gray-900 mb-4">Bilgilendirme Ekranı</h2>
                     <div className="p-4 bg-gray-50 rounded-lg">
-                        <div className="whitespace-pre-wrap text-gray-700">
-                            {selectedExamType.infoScreen}
-                        </div>
+                        <HtmlRender
+                          className="prose prose-sm max-w-none text-gray-700 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6"
+                          html={selectedExamType.infoScreen}
+                        />
                     </div>
                 </div>
             )}

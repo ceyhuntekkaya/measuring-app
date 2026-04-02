@@ -1,16 +1,16 @@
 'use client';
 
-import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
+import React, { useState, useEffect, useImperativeHandle, forwardRef, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import Checkbox from "@/components/ui/checkbox";
 import { NumberInput } from "@/components/ui/number-input";
 import type { DragAndDropTemplateDto, DraggableItem, DropZone, DragAndDropOptions } from "@/api/generated/model";
 import { Trash2, Plus } from "lucide-react";
+import HtmlEditor from "@/components/ui/html-editor";
 
 interface DragAndDropTemplateFormProps {
     value?: DragAndDropTemplateDto | null;
@@ -45,10 +45,12 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
     const [draggableItems, setDraggableItems] = useState<DraggableItem[]>([]);
     const [dropZones, setDropZones] = useState<DropZone[]>([]);
     const [errors, setErrors] = useState<DragAndDropTemplateFormErrors>({});
+    const isSyncingFromValueRef = useRef(false);
 
     // Value değiştiğinde form data'yı güncelle (Update modu için)
     useEffect(() => {
         if (value) {
+            isSyncingFromValueRef.current = true;
             setFormData({
                 instructions: value.instructions || '',
                 options: value.options || undefined,
@@ -79,6 +81,10 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
 
     // Form data veya items değiştiğinde parent'a bildir (Anlık güncelleme)
     useEffect(() => {
+        if (isSyncingFromValueRef.current) {
+            isSyncingFromValueRef.current = false;
+            return;
+        }
         // İlk render'da boş form için onChange tetikleme
         if (formData.instructions || draggableItems.length > 0 || dropZones.length > 0) {
             const dragAndDropOptions: DragAndDropOptions = {
@@ -230,11 +236,12 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
                     {/* Talimatlar */}
                     <div className="space-y-2">
                         <Label htmlFor="instructions">Talimatlar *</Label>
-                        <Textarea
+                        <HtmlEditor
                             id="instructions"
-                            value={formData.instructions}
-                            onChange={(e) => handleChange('instructions', e.target.value)}
-                            className={`min-h-[100px] ${errors.instructions ? 'border-red-500' : ''}`}
+                            value={formData.instructions || ''}
+                            onChange={(html) => handleChange('instructions', html)}
+                            error={!!errors.instructions}
+                            minHeightClassName="min-h-[100px]"
                             placeholder="Sürükle ve bırak talimatlarını giriniz"
                         />
                         {errors.instructions && (
@@ -290,25 +297,7 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
                                     />
                                 </div>
 
-                                {/* Medya URL - YORUM SATIRI: UI'dan kaldırıldı, belki sonra tekrar gösterilebilir */}
-                                {/* <div className="col-span-3">
-                                    <Label>Medya URL</Label>
-                                    <Input
-                                        value={item.mediaUrl || ''}
-                                        onChange={(e) => updateDraggableItem(index, 'mediaUrl', e.target.value)}
-                                        placeholder="Medya URL (opsiyonel)"
-                                    />
-                                </div> */}
-
-                                {/* Medya Tipi - YORUM SATIRI: UI'dan kaldırıldı, belki sonra tekrar gösterilebilir */}
-                                {/* <div className="col-span-2">
-                                    <Label>Medya Tipi</Label>
-                                    <Input
-                                        value={item.mediaType || ''}
-                                        onChange={(e) => updateDraggableItem(index, 'mediaType', e.target.value)}
-                                        placeholder="image, video, audio"
-                                    />
-                                </div> */}
+                              
 
                                 <div className="col-span-3">
                                     <Label>Doğru Bölgeler</Label>

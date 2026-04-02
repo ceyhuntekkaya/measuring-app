@@ -4,7 +4,7 @@ import React, {forwardRef, useEffect, useImperativeHandle, useState} from 'react
 import {Alert, AlertDescription} from "@/components/ui/alert";
 import {Button} from "@/components/ui/button";
 import {Label} from "@/components/ui/label";
-import {Textarea} from "@/components/ui/textarea";
+import HtmlEditor from "@/components/ui/html-editor";
 import Checkbox from "@/components/ui/checkbox";
 import type {MultipleChoiceTemplateDto, ChoiceOption} from "@/api/generated/model";
 import {Trash2, Plus} from "lucide-react";
@@ -45,6 +45,37 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
     });
 
     const [errors, setErrors] = useState<MultipleChoiceTemplateFormErrors>({});
+
+    const normalizeOptionsWithCorrect = (
+        options: MultipleChoiceTemplateFormData['options'],
+        correctOptionIndex: number | null | undefined
+    ): { options: MultipleChoiceTemplateFormData['options']; correctOptionIndex: number } => {
+        const choices = options?.choices || [];
+
+        if (choices.length === 0) {
+            return { options: { ...(options || {}), choices }, correctOptionIndex: 0 };
+        }
+
+        const idxFromState =
+            typeof correctOptionIndex === 'number' &&
+            correctOptionIndex >= 0 &&
+            correctOptionIndex < choices.length
+                ? correctOptionIndex
+                : null;
+
+        const idxFromChoices = choices.findIndex((c) => c.isCorrect === true);
+        const resolvedIndex = idxFromState ?? (idxFromChoices >= 0 ? idxFromChoices : 0);
+
+        const normalizedChoices = choices.map((c, i) => ({
+            ...c,
+            isCorrect: i === resolvedIndex
+        }));
+
+        return {
+            options: { ...(options || {}), choices: normalizedChoices },
+            correctOptionIndex: resolvedIndex
+        };
+    };
 
     useEffect(() => {
         if (value) {
@@ -98,6 +129,19 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
                     ...updatedData.options,
                     choices: updatedChoices
                 }
+            };
+        }
+
+        // Eğer options/choices değiştiyse, correctOptionIndex ile isCorrect değerlerini senkron tut
+        if (field === 'options') {
+            const normalized = normalizeOptionsWithCorrect(
+                updatedData.options,
+                updatedData.correctOptionIndex ?? null
+            );
+            updatedData = {
+                ...updatedData,
+                options: normalized.options,
+                correctOptionIndex: normalized.correctOptionIndex
             };
         }
 
@@ -217,12 +261,11 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
             {/* Soru Metni */}
             <div className="space-y-2">
                 <Label htmlFor="question">Soru Metni *</Label>
-                <Textarea
-                    id="question"
-                    value={formData.question}
-                    onChange={(e) => handleChange('question', e.target.value)}
-                    className={`min-h-[100px] ${errors.question ? 'border-red-500' : ''}`}
+                <HtmlEditor
+                    value={formData.question || ''}
+                    onChange={(nextHtml) => handleChange('question', nextHtml)}
                     placeholder="Soru metnini giriniz"
+                    minHeightClassName={`min-h-[100px] ${errors.question ? 'border border-red-500 rounded-md' : ''}`}
                 />
                 {errors.question && (
                     <Alert variant="destructive">
@@ -263,58 +306,19 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
                             </div>
                         </div>
 
-                        {/* Medya Tipi - YORUM SATIRI: UI'dan kaldırıldı, default TEXT olarak ayarlanıyor */}
-                        {/* <div className="col-span-2">
-                            <Label>Medya Tipi</Label>
-                            <Select
-                                onValueChange={(value) => updateChoice(index, 'mediaType', value as EMediaType)}
-                                value={choice.mediaType || EMediaType.TEXT}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue/>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectGroup>
-                                        {Object.entries(EMediaType).map(([key, value]) => (
-                                            <SelectItem key={key} value={key}>
-                                                {value}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
-                        </div> */}
+                        
 
                         <div className="col-span-10">
                             <Label>Seçenek Metni</Label>
-                            <Textarea
-                                value={choice.text || ''}
-                                onChange={(e) => updateChoice(index, 'text', e.target.value)}
-                                placeholder="Seçenek metnini giriniz"
-                                className="min-h-[60px]"
+                            <HtmlEditor
+                              value={choice.text || ''}
+                              onChange={(nextHtml) => updateChoice(index, 'text', nextHtml)}
+                              placeholder="Seçenek metnini giriniz"
+                              minHeightClassName="min-h-[60px]"
                             />
                         </div>
 
-                        {/* Medya URL - YORUM SATIRI: UI'dan kaldırıldı, belki sonra tekrar gösterilebilir */}
-                        {/* <div className="col-span-2">
-                            <Label>Medya URL</Label>
-                            <Input
-                                value={choice.mediaUrl || ''}
-                                onChange={(e) => updateChoice(index, 'mediaUrl', e.target.value)}
-                                placeholder="Medya URL (opsiyonel)"
-                            />
-                        </div> */}
-
-                        {/* Geri Bildirim - YORUM SATIRI: UI'dan kaldırıldı, belki sonra tekrar gösterilebilir */}
-                        {/* <div className="col-span-3">
-                            <Label>Geri Bildirim</Label>
-                            <Textarea
-                                value={choice.feedback || ''}
-                                onChange={(e) => updateChoice(index, 'feedback', e.target.value)}
-                                placeholder="Geri bildirim metni (opsiyonel)"
-                                className="min-h-[60px]"
-                            />
-                        </div> */}
+                       
 
                         <div className="col-span-1">
                             <Button
@@ -336,17 +340,7 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
                 )}
             </div>
 
-            {/* Açıklama - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
-            {/* <div className="space-y-2">
-                <Label htmlFor="explanation">Açıklama</Label>
-                <Textarea
-                    id="explanation"
-                    value={formData.explanation}
-                    onChange={(e) => handleChange('explanation', e.target.value)}
-                    className="min-h-[100px]"
-                    placeholder="Soru açıklaması (opsiyonel)"
-                />
-            </div> */}
+          
 
             {/* Seçenekleri Karıştır */}
             <div className="space-y-2">

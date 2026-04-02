@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { NumberInput } from "@/components/ui/number-input";
 import type { CreateQuestionGroupRequest, CreateQuestionGroupHeaderRequest, ExamTypeDto, ExamSectionDto, QuestionGroupTypeDto, QuestionGroupDto, CreateQuestionGroupHeaderRequestMediaType } from "@/api/generated/model";
-import { Textarea } from "@/components/ui/textarea";
+import HtmlEditor from "@/components/ui/html-editor";
 import { Trash2, Plus } from "lucide-react";
 import { FileUpload } from "@/components/ui/file-upload";
 import { CreateQuestionGroupHeaderRequestMediaType as GeneratedMediaType } from "@/api/generated/model";
@@ -218,22 +218,22 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
         }));
     };
 
-    const removeHeader = (index: number) => {
+    const removeHeaderById = (headerId: string) => {
         setFormData(prev => ({
             ...prev,
-            headers: (prev.headers || []).filter((_, i) => i !== index)
+            headers: (prev.headers || []).filter(h => h.id !== headerId)
         }));
     };
 
-    const updateHeader = <K extends keyof CreateQuestionGroupHeaderRequest>(
-        index: number,
+    const updateHeaderById = <K extends keyof CreateQuestionGroupHeaderRequest>(
+        headerId: string,
         field: K,
         value: CreateQuestionGroupHeaderRequest[K]
     ) => {
         setFormData(prev => ({
             ...prev,
-            headers: (prev.headers || []).map((header, i) => {
-                if (i === index) {
+            headers: (prev.headers || []).map((header) => {
+                if (header.id === headerId) {
                     // MediaType değiştiğinde content'i temizle
                     if (field === 'mediaType' && header.mediaType !== value) {
                         return { ...header, [field]: value, content: '' };
@@ -289,119 +289,28 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
             <CardContent>
                 <div className="space-y-6">
 
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
-                    {/* Soru Grubu Adı */}
-                    <div className="space-y-2">
-                        <Label htmlFor="name">Soru Grubu Adı *</Label>
-                        <Input
-                            id="name"
-                            value={formData.name}
-                            onChange={(e) => handleChange('name', e.target.value)}
-                            placeholder="Soru grubu adını giriniz"
-                            className={errors.name ? 'border-red-500' : ''}
-                            disabled={loading}
-                        />
-                        {errors.name && (
-                            <Alert variant="destructive">
-                                <AlertDescription>{errors.name}</AlertDescription>
-                            </Alert>
-                        )}
-                    </div>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-12 md:gap-3">
+                        {/* Soru Grubu Adı */}
+                        <div className="space-y-2 md:col-span-6">
+                            <Label htmlFor="name">Soru Grubu Adı *</Label>
+                            <Input
+                                id="name"
+                                value={formData.name}
+                                onChange={(e) => handleChange('name', e.target.value)}
+                                placeholder="Soru grubu adını giriniz"
+                                className={errors.name ? 'border-red-500' : ''}
+                                disabled={loading}
+                            />
+                            {errors.name && (
+                                <Alert variant="destructive">
+                                    <AlertDescription>{errors.name}</AlertDescription>
+                                </Alert>
+                            )}
+                        </div>
 
-                    {/* Sınav Tipi */}
-                    <div className="space-y-2">
-                        <Label htmlFor="examTypeId">Sınav Tipi *</Label>
-                        <Select
-                            onValueChange={(value) => handleChange('examTypeId', value as string)}
-                            value={formData.examTypeId}
-                            disabled={loading}
-                            searchable={false}
-                            sortable={false}
-                        >
-                            <SelectTrigger className={errors.examTypeId ? 'border-red-500' : ''}>
-                                <SelectValue placeholder="Sınav tipi seçiniz" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup>
-                                    {examTypes.map((type) => (
-                                        <SelectItem key={type.id} value={type.id!}>
-                                            {type.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
-                        {errors.examTypeId && (
-                            <Alert variant="destructive">
-                                <AlertDescription>{errors.examTypeId}</AlertDescription>
-                            </Alert>
-                        )}
-                    </div>
-
-                    {/* Sınav Bölümü */}
-                    <div className="space-y-2">
-                        <Label htmlFor="examSectionId">Sınav Bölümü *</Label>
-                        <Select
-                            onValueChange={(value) => handleChange('examSectionId', value as string)}
-                            value={formData.examSectionId}
-                            disabled={loading || !formData.examTypeId}
-                            searchable={false}
-                            sortable={false}
-                        >
-                            <SelectTrigger className={errors.examSectionId ? 'border-red-500' : ''}>
-                                <SelectValue placeholder={formData.examTypeId ? "Sınav bölümü seçiniz" : "Önce sınav tipi seçiniz"} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup>
-                                    {filteredSections.map((section) => (
-                                        <SelectItem key={section.id} value={section.id!}>
-                                            {section.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
-                        {errors.examSectionId && (
-                            <Alert variant="destructive">
-                                <AlertDescription>{errors.examSectionId}</AlertDescription>
-                            </Alert>
-                        )}
-                    </div>
-
-                    {/* Soru Grubu Tipi */}
-                    <div className="space-y-2">
-                        <Label htmlFor="questionGroupTypeId">Soru Grubu Tipi *</Label>
-                        <Select
-                            onValueChange={(value) => handleChange('questionGroupTypeId', value as string)}
-                            value={formData.questionGroupTypeId}
-                            disabled={loading || !formData.examSectionId}
-                            searchable={false}
-                            sortable={false}
-                        >
-                            <SelectTrigger className={errors.questionGroupTypeId ? 'border-red-500' : ''}>
-                                <SelectValue placeholder={formData.examSectionId ? "Soru grubu tipi seçiniz" : "Önce sınav bölümü seçiniz"} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup>
-                                    {filteredGroupTypes.map((type) => (
-                                        <SelectItem key={type.id} value={type.id!}>
-                                            {type.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
-                        {errors.questionGroupTypeId && (
-                            <Alert variant="destructive">
-                                <AlertDescription>{errors.questionGroupTypeId}</AlertDescription>
-                            </Alert>
-                        )}
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Maksimum Puan */}
-                        <div className="space-y-2">
-                            <Label htmlFor="maximumScore">Maksimum Puan</Label>
+                        <div className="space-y-2 md:col-span-3">
+                            <Label htmlFor="maximumScore">Puan</Label>
                             <NumberInput
                                 inputType={"number"}
                                 id="maximumScore"
@@ -421,7 +330,7 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                         </div>
 
                         {/* Süre */}
-                        <div className="space-y-2">
+                        <div className="space-y-2 md:col-span-3">
                             <Label htmlFor="durationInSeconds">Süre (saniye)</Label>
                             <NumberInput
                                 id="durationInSeconds"
@@ -442,6 +351,97 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                             )}
                         </div>
                     </div>
+
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-3">
+                        {/* Sınav Tipi */}
+                        <div className="space-y-2">
+                            <Label htmlFor="examTypeId">Sınav Tipi *</Label>
+                            <Select
+                                onValueChange={(value) => handleChange('examTypeId', value as string)}
+                                value={formData.examTypeId}
+                                disabled={loading}
+                                searchable={false}
+                                sortable={false}
+                            >
+                                <SelectTrigger className={errors.examTypeId ? 'border-red-500' : ''}>
+                                    <SelectValue placeholder="Sınav tipi seçiniz" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        {examTypes.map((type) => (
+                                            <SelectItem key={type.id} value={type.id!}>
+                                                {type.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                            {errors.examTypeId && (
+                                <Alert variant="destructive">
+                                    <AlertDescription>{errors.examTypeId}</AlertDescription>
+                                </Alert>
+                            )}
+                        </div>
+
+                        {/* Sınav Bölümü */}
+                        <div className="space-y-2">
+                            <Label htmlFor="examSectionId">Sınav Bölümü *</Label>
+                            <Select
+                                onValueChange={(value) => handleChange('examSectionId', value as string)}
+                                value={formData.examSectionId}
+                                disabled={loading || !formData.examTypeId}
+                                searchable={false}
+                                sortable={false}
+                            >
+                                <SelectTrigger className={errors.examSectionId ? 'border-red-500' : ''}>
+                                    <SelectValue placeholder={formData.examTypeId ? "Sınav bölümü seçiniz" : "Önce sınav tipi seçiniz"} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        {filteredSections.map((section) => (
+                                            <SelectItem key={section.id} value={section.id!}>
+                                                {section.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                            {errors.examSectionId && (
+                                <Alert variant="destructive">
+                                    <AlertDescription>{errors.examSectionId}</AlertDescription>
+                                </Alert>
+                            )}
+                        </div>
+
+                        {/* Soru Grubu Tipi */}
+                        <div className="space-y-2">
+                            <Label htmlFor="questionGroupTypeId">Soru Grubu Tipi *</Label>
+                            <Select
+                                onValueChange={(value) => handleChange('questionGroupTypeId', value as string)}
+                                value={formData.questionGroupTypeId}
+                                disabled={loading || !formData.examSectionId}
+                                searchable={false}
+                                sortable={false}
+                            >
+                                <SelectTrigger className={errors.questionGroupTypeId ? 'border-red-500' : ''}>
+                                    <SelectValue placeholder={formData.examSectionId ? "Soru grubu tipi seçiniz" : "Önce sınav bölümü seçiniz"} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        {filteredGroupTypes.map((type) => (
+                                            <SelectItem key={type.id} value={type.id!}>
+                                                {type.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                            {errors.questionGroupTypeId && (
+                                <Alert variant="destructive">
+                                    <AlertDescription>{errors.questionGroupTypeId}</AlertDescription>
+                                </Alert>
+                            )}
+                        </div>
                     </div>
                     {/* Headers Section */}
                     <div className="space-y-4">
@@ -459,52 +459,60 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                             </Button>
                         </div>
 
-                        {(formData.headers || []).map((header, index) => (
-                            <div key={index} className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg">
-                                <div className="col-span-1">
-                                    <Label>Sıra</Label>
-                                    <NumberInput
-                                        inputType={"number"}
-                                        value={header.orderNumber}
-                                        onChange={(value) => updateHeader(index, 'orderNumber', value)}
-                                        minValue={1}
-                                        decimalPlaces={0}
-                                        disabled={loading}
-                                    />
-                                </div>
+                        {(formData.headers || [])
+                            .slice()
+                            .sort((a, b) => {
+                                const aOrder = a.orderNumber === undefined || a.orderNumber === null ? Number.POSITIVE_INFINITY : Number(a.orderNumber);
+                                const bOrder = b.orderNumber === undefined || b.orderNumber === null ? Number.POSITIVE_INFINITY : Number(b.orderNumber);
+                                return aOrder - bOrder;
+                            })
+                            .map((header, index) => (
+                            <div key={header.id || index} className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg">
+                                <div className="col-span-11 space-y-3">
+                                    <div className="grid grid-cols-12 gap-2 items-end">
+                                        <div className="col-span-3">
+                                            <Label>Sıra</Label>
+                                            <NumberInput
+                                                inputType={"number"}
+                                                value={header.orderNumber}
+                                                onChange={(value) => updateHeaderById(header.id || '', 'orderNumber', value)}
+                                                minValue={1}
+                                                decimalPlaces={0}
+                                                disabled={loading}
+                                            />
+                                        </div>
 
-                                <div className="col-span-2">
-                                    <Label>Medya Tipi</Label>
-                                    <Select
-                                        onValueChange={(value) => updateHeader(index, 'mediaType', value as CreateQuestionGroupHeaderRequestMediaType)}
-                                        value={header.mediaType || GeneratedMediaType.TEXT}
-                                        disabled={loading}
-                                        searchable={false}
-                                        sortable={false}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectGroup>
-                                                {Object.entries(GeneratedMediaType).map(([key, value]) => (
-                                                    <SelectItem key={key} value={value}>
-                                                        {key}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectGroup>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                                        <div className="col-span-9">
+                                            <Label>Medya Tipi</Label>
+                                            <Select
+                                                onValueChange={(value) => updateHeaderById(header.id || '', 'mediaType', value as CreateQuestionGroupHeaderRequestMediaType)}
+                                                value={header.mediaType || GeneratedMediaType.TEXT}
+                                                disabled={loading}
+                                                searchable={false}
+                                                sortable={false}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectGroup>
+                                                        {Object.entries(GeneratedMediaType).map(([key, value]) => (
+                                                            <SelectItem key={key} value={value}>
+                                                                {key}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectGroup>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
 
-                                <div className="col-span-8">
-                                    <Label>İçerik</Label>
                                     {(!header.mediaType || header.mediaType === (GeneratedMediaType.TEXT as CreateQuestionGroupHeaderRequestMediaType)) ? (
-                                        <Textarea
+                                        <HtmlEditor
                                             value={header.content || ''}
-                                            onChange={(e) => updateHeader(index, 'content', e.target.value)}
+                                            onChange={(nextHtml) => updateHeaderById(header.id || '', 'content', nextHtml)}
                                             placeholder="Başlık içeriğini giriniz"
-                                            className="min-h-[60px]"
+                                            minHeightClassName="min-h-[120px]"
                                             disabled={loading}
                                         />
                                     ) : (
@@ -516,17 +524,14 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                                                 uploadType={`qg_header_${header.mediaType || GeneratedMediaType.TEXT}`}
                                                 multiple={false}
                                                 labelText={`${header.mediaType || GeneratedMediaType.TEXT} Dosyası Yükle`}
+                                                existingFileUrl={header.content || ''}
                                                 onUploadComplete={(files) => {
                                                     if (files && files.length > 0) {
-                                                        updateHeader(index, 'content', files[0].path || '');
+                                                        updateHeaderById(header.id || '', 'content', files[0].path || '');
                                                     }
                                                 }}
                                             />
-                                            {header.content && (
-                                                <p className="text-xs text-gray-600 break-all">
-                                                    Yüklü dosya: {header.content}
-                                                </p>
-                                            )}
+                                            
                                         </div>
                                     )}
                                 </div>
@@ -534,7 +539,7 @@ const QuestionGroupForm: React.FC<QuestionGroupFormProps> = ({
                                 <div className="col-span-1">
                                     <Button
                                         type="button"
-                                        onClick={() => removeHeader(index)}
+                                        onClick={() => removeHeaderById(header.id || '')}
                                         variant="destructive"
                                         size="sm"
                                         disabled={loading}

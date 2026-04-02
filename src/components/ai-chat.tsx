@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Loader2, Send, AlertTriangle } from 'lucide-react';
 import { streamChatWithLlama, checkLlamaHealth, clearChatHistory } from '@/api/llama/llama';
 import { convertToHtml } from '@/api/llama/format-helpers';
+import HtmlRender from '@/components/ui/html-render';
 
 type Message = {
     role: 'user' | 'assistant';
@@ -197,11 +198,9 @@ export default function AIChatComponent({activeText}: AIChatComponentProps) {
                         >
                             {message.role === 'assistant' ? (
                                 <>
-                                    <div
-                                        className="whitespace-pre-wrap markdown-content"
-                                        dangerouslySetInnerHTML={{
-                                            __html: convertToHtml(message.content)
-                                        }}
+                                    <HtmlRender
+                                      className="whitespace-pre-wrap markdown-content"
+                                      html={convertToHtml(message.content)}
                                     />
                                     {/* Yükleniyor animasyonu - isComplete false ise göster */}
                                     {message.isComplete === false && (

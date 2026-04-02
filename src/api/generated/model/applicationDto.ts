@@ -27,6 +27,8 @@ export interface ApplicationDto {
   candidateLastName?: string;
   candidateIdentityNumber?: string;
   candidatePhotoUrl?: string;
+  candidateIdCartUrl?: string;
+  candidateVoiceUrl?: string;
   username?: string;
   startedAt?: string;
   endedAt?: string;

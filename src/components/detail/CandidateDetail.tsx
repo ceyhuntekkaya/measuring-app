@@ -4,10 +4,16 @@ import React, {useState} from 'react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
-import {Clock, User as UserIcon, Phone, Mail, MapPin, Globe, Calendar, IdCard, Key, CheckCircle, XCircle, Camera} from 'lucide-react';
+import {Input} from "@/components/ui/input";
+import {Clock, User as UserIcon, Phone, Mail, MapPin, Globe, Calendar, IdCard, Key, CheckCircle, XCircle} from 'lucide-react';
 import type {CandidateDto} from '@/api/generated/model/candidateDto';
 import { formatDate } from '@/utils/date-formater';
+import { getSessionStateLabel } from '@/utils/sessionStateLabel';
 import LoadingComp from "@/components/ui/loading-comp";
+import siteConfig from "@/config/config.json";
+import ImageLightbox from "@/components/ui/image-lightbox";
+import {useResetPassword} from "@/api/generated/candidate-management/candidate-management";
+import {getErrorMessage, showNotification} from "@/lib/notification";
 
 interface CandidateDetailProps {
     candidate: CandidateDto;
@@ -28,7 +34,16 @@ const CandidateDetailPage: React.FC<CandidateDetailProps> = ({
                                                                  onViewApplications,
                                                                  onActivate,
                                                              }) => {
-    const [activeTab, setActiveTab] = useState("details");
+    const [activeTab, setActiveTab] = useState("candidate");
+    const UPLOAD_SERVE_BASE_URL = siteConfig.api.invokeUrl + "/upload/serve";
+    const resetPasswordMutation = useResetPassword();
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [isResettingPassword, setIsResettingPassword] = useState(false);
+    const [isPasswordPanelVisible, setIsPasswordPanelVisible] = useState(false);
+
+    const getApplicationExamName = () => candidate.application?.examName || candidate.examSession?.examTemplate || '';
+    const getApplicationSessionName = () => candidate.application?.examSessionName || candidate.examSession?.name || '';
 
     if (isLoading) {
         return (
@@ -36,13 +51,49 @@ const CandidateDetailPage: React.FC<CandidateDetailProps> = ({
         );
     }
 
+    const handleResetPasswordByUsername = async () => {
+        if (!candidate.username) {
+            showNotification.error("Kullanıcı adı bulunamadı");
+            return;
+        }
+
+        if (!newPassword || !confirmPassword) {
+            showNotification.error("Yeni şifre ve tekrar alanları zorunludur");
+            return;
+        }
+
+        if (newPassword.length < 6) {
+            showNotification.error("Yeni şifre en az 6 karakter olmalıdır");
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            showNotification.error("Yeni şifre ve tekrar aynı olmalıdır");
+            return;
+        }
+
+        try {
+            setIsResettingPassword(true);
+            await resetPasswordMutation.mutateAsync({
+                data: { username: candidate.username, newPassword },
+            });
+            showNotification.success("Şifre başarıyla güncellendi");
+            setNewPassword("");
+            setConfirmPassword("");
+            setIsPasswordPanelVisible(false);
+        } catch (error) {
+            const errorMessage = getErrorMessage(error);
+            showNotification.error(errorMessage || "Şifre güncellenirken bir hata oluştu");
+        } finally {
+            setIsResettingPassword(false);
+        }
+    };
+
     return (
-        <div className="container mx-auto py-4 space-y-4">
+        <div className="container mx-auto py-4 space-y-3">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Aday Detayı</h1>
-                    <p className="text-gray-500">{candidate.name} {candidate.lastName} ({candidate.username})</p>
-                    <p className="text-sm text-gray-400">T.C. Kimlik No: {candidate.identityNumber}</p>
+                    <h1 className="text-3xl font-bold tracking-tight">  {`${candidate.name || ''} ${candidate.lastName || ''}`.trim() || '—'}</h1>
                 </div>
                 <div className="flex space-x-3">
                     {onEdit && (
@@ -77,441 +128,605 @@ const CandidateDetailPage: React.FC<CandidateDetailProps> = ({
             <div className="border-b border-gray-200">
                 <nav className="flex -mb-px space-x-8">
                     <button
-                        onClick={() => setActiveTab("details")}
+                        onClick={() => setActiveTab("candidate")}
                         className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                            activeTab === "details"
+                            activeTab === "candidate"
                                 ? "border-blue-500 text-blue-600"
                                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                         }`}
                     >
-                        Kişisel Bilgiler
+                        Aday Bilgileri
                     </button>
                     <button
-                        onClick={() => setActiveTab("contact")}
+                        onClick={() => setActiveTab("exam")}
                         className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                            activeTab === "contact"
+                            activeTab === "exam"
                                 ? "border-blue-500 text-blue-600"
                                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                         }`}
                     >
-                        İletişim Bilgileri
-                    </button>
-                    <button
-                        onClick={() => setActiveTab("activity")}
-                        className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                            activeTab === "activity"
-                                ? "border-blue-500 text-blue-600"
-                                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                        }`}
-                    >
-                        Hesap Aktiviteleri
+                        Sınav Bilgileri
                     </button>
                 </nav>
             </div>
 
             {/* Sekme İçeriği */}
-            <div className="mt-6">
-                {/* Kişisel Bilgiler Sekmesi */}
-                {activeTab === "details" && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="mt-4">
+                {/* Aday Bilgileri Sekmesi */}
+                {activeTab === "candidate" && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Temel Bilgiler</CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="flex items-center space-x-4">
-                                    <div className="bg-gray-100 p-3 rounded-full">
-                                        {candidate.photoUrl ? (
-                                            <img
-                                                src={candidate.photoUrl}
-                                                alt={`${candidate.name} ${candidate.lastName}`}
-                                                className="h-12 w-12 rounded-full object-cover"
-                                            />
-                                        ) : (
-                                            <UserIcon className="h-6 w-6 text-gray-500"/>
-                                        )}
+                            <CardContent className="space-y-3">
+                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                    <div className="flex items-center space-x-3">
+                                        <UserIcon className="h-5 w-5 text-gray-600"/>
+                                        <span>Ad Soyad</span>
                                     </div>
-                                    <div>
-                                        <p className="font-medium">{candidate.name} {candidate.lastName}</p>
-                                        <p className="text-sm text-gray-500">Ad Soyad</p>
-                                    </div>
+                                    <p className="text-sm font-medium text-gray-900">
+                                        {`${candidate.name || ''} ${candidate.lastName || ''}`.trim() || '—'}
+                                    </p>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1">
-                                        <p className="text-sm text-gray-500">Kullanıcı Adı</p>
-                                        <p className="font-medium">{candidate.username}</p>
+                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                    <div className="flex items-center space-x-3">
+                                        <UserIcon className="h-5 w-5 text-gray-600"/>
+                                        <span>Kullanıcı Adı</span>
                                     </div>
-                                    <div className="space-y-1">
-                                        <p className="text-sm text-gray-500">Rol</p>
-                                        <Badge className="bg-blue-100 text-blue-800">
-                                            {candidate.role || 'CANDIDATE'}
-                                        </Badge>
-                                    </div>
+                                    <p className="text-sm font-medium text-gray-900">
+                                        {candidate.username || '—'}
+                                    </p>
                                 </div>
 
-                                <div className="flex items-center space-x-4">
-                                    <div className="bg-gray-100 p-3 rounded-full">
-                                        <IdCard className="h-6 w-6 text-gray-500"/>
+                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                    <div className="flex items-center space-x-3">
+                                        <Key className="h-5 w-5 text-blue-500"/>
+                                        <span>Rol</span>
                                     </div>
-                                    <div>
-                                        <p className="font-medium">{candidate.identityNumber}</p>
-                                        <p className="text-sm text-gray-500">T.C. Kimlik Numarası</p>
+                                    <Badge className="bg-blue-100 text-blue-800">
+                                        {candidate.role || 'CANDIDATE'}
+                                    </Badge>
+                                </div>
+
+                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                    <div className="flex items-center space-x-3">
+                                        <IdCard className="h-5 w-5 text-gray-600"/>
+                                        <span>Kimlik Numarası</span>
                                     </div>
+                                    <p className="text-sm font-medium text-gray-900">
+                                        {candidate.identityNumber || '—'}
+                                    </p>
                                 </div>
 
                                 {candidate.birthDate && (
-                                    <div className="flex items-center space-x-4">
-                                        <div className="bg-gray-100 p-3 rounded-full">
-                                            <Calendar className="h-6 w-6 text-gray-500"/>
+                                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                        <div className="flex items-center space-x-3">
+                                            <Calendar className="h-5 w-5 text-gray-600"/>
+                                            <span>Doğum Tarihi</span>
                                         </div>
-                                        <div>
-                                            <p className="font-medium">{formatDate(candidate.birthDate)}</p>
-                                            <p className="text-sm text-gray-500">Doğum Tarihi</p>
-                                        </div>
+                                        <p className="text-sm font-medium text-gray-900">
+                                            {formatDate(candidate.birthDate)}
+                                        </p>
                                     </div>
                                 )}
 
-                                {candidate.birthPlace && (
-                                    <div className="space-y-1">
-                                        <p className="text-sm text-gray-500">Doğum Yeri</p>
-                                        <p className="font-medium">{candidate.birthPlace}</p>
+                                {(candidate.birthPlace || candidate.fatherName) && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        {candidate.birthPlace && (
+                                            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                                <div className="flex items-center space-x-3">
+                                                    <MapPin className="h-5 w-5 text-gray-600"/>
+                                                    <span>Doğum Yeri</span>
+                                                </div>
+                                                <p className="text-sm font-medium text-gray-900">
+                                                    {candidate.birthPlace}
+                                                </p>
+                                            </div>
+                                        )}
+                                        {candidate.fatherName && (
+                                            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                                <div className="flex items-center space-x-3">
+                                                    <UserIcon className="h-5 w-5 text-gray-600"/>
+                                                    <span>Baba Adı</span>
+                                                </div>
+                                                <p className="text-sm font-medium text-gray-900">
+                                                    {candidate.fatherName}
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
-                                {candidate.fatherName && (
-                                    <div className="space-y-1">
-                                        <p className="text-sm text-gray-500">Baba Adı</p>
-                                        <p className="font-medium">{candidate.fatherName}</p>
+                                <div className="pt-2 border-t border-gray-200">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="text-sm font-semibold text-gray-900">Şifre Güncelleme</div>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setIsPasswordPanelVisible((v) => !v)}
+                                        >
+                                            {isPasswordPanelVisible ? "Kapat" : "Şifre Güncelle"}
+                                        </Button>
                                     </div>
-                                )}
+
+                                    {isPasswordPanelVisible && (
+                                        <div className="mt-3 p-4 bg-gray-50 rounded-md space-y-3">
+                                            <p className="text-sm text-gray-600">
+                                                Kullanıcı şifresini unuttuysa buradan yeni bir şifre belirleyebilirsiniz.
+                                            </p>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                <div className="space-y-1">
+                                                    <div className="text-xs font-semibold text-gray-700">Yeni Şifre</div>
+                                                    <Input
+                                                        type="password"
+                                                        value={newPassword}
+                                                        onChange={(e) => setNewPassword(e.target.value)}
+                                                        placeholder="Yeni şifre"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <div className="text-xs font-semibold text-gray-700">Yeni Şifre (Tekrar)</div>
+                                                    <Input
+                                                        type="password"
+                                                        value={confirmPassword}
+                                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                                        placeholder="Yeni şifre tekrar"
+                                                        error={Boolean(confirmPassword) && newPassword !== confirmPassword}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="flex justify-end">
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={handleResetPasswordByUsername}
+                                                    disabled={isResettingPassword || resetPasswordMutation.isPending}
+                                                >
+                                                    {isResettingPassword || resetPasswordMutation.isPending ? "Güncelleniyor..." : "Şifreyi Güncelle"}
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </CardContent>
                         </Card>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Hesap Durumu</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
-                                    <div className="flex items-center space-x-3">
-                                        {candidate.status === 'ACTIVE' ? (
-                                            <CheckCircle className="h-5 w-5 text-green-500"/>
-                                        ) : (
-                                            <XCircle className="h-5 w-5 text-red-500"/>
-                                        )}
-                                        <span>Durum</span>
-                                    </div>
-                                    <Badge
-                                        className={candidate.status === 'ACTIVE'
-                                            ? 'bg-green-100 text-green-800'
-                                            : candidate.status === 'DELETED'
-                                                ? 'bg-red-100 text-red-800'
-                                                : 'bg-gray-100 text-gray-800'}>
-                                        {candidate.status === 'ACTIVE' ? 'Aktif' :
-                                            candidate.status === 'DELETED' ? 'Silinmiş' :
-                                                candidate.status || 'Bilinmeyen'}
-                                    </Badge>
-                                </div>
+                        <div className="md:col-start-2 md:row-start-1 space-y-4">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>İletişim Bilgileri</CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-3">
+                                    {candidate.mobilePhone && (
+                                        <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                            <div className="flex items-center space-x-3">
+                                                <Phone className="h-5 w-5 text-gray-600"/>
+                                                <span>Cep Telefonu</span>
+                                            </div>
+                                            <p className="text-sm font-medium text-gray-900">
+                                                <a href={`tel:${candidate.mobilePhone}`} className="text-blue-600 hover:text-blue-800">
+                                                    {candidate.mobilePhone}
+                                                </a>
+                                            </p>
+                                        </div>
+                                    )}
 
+                                    {candidate.gsmPhone && (
+                                        <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                            <div className="flex items-center space-x-3">
+                                                <Phone className="h-5 w-5 text-gray-600"/>
+                                                <span>GSM Telefonu</span>
+                                            </div>
+                                            <p className="text-sm font-medium text-gray-900">
+                                                <a href={`tel:${candidate.gsmPhone}`} className="text-blue-600 hover:text-blue-800">
+                                                    {candidate.gsmPhone}
+                                                </a>
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {candidate.email && (
+                                        <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                            <div className="flex items-center space-x-3">
+                                                <Mail className="h-5 w-5 text-gray-600"/>
+                                                <span>E-posta</span>
+                                            </div>
+                                            <p className="text-sm font-medium text-gray-900">
+                                                <a href={`mailto:${candidate.email}`} className="text-blue-600 hover:text-blue-800">
+                                                    {candidate.email}
+                                                </a>
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {candidate.address && (
+                                        <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                            <div className="flex items-center space-x-3">
+                                                <MapPin className="h-5 w-5 text-gray-600"/>
+                                                <span>Adres</span>
+                                            </div>
+                                            <p className="text-sm font-medium text-gray-900 text-right">
+                                                {candidate.address}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {(candidate.city || candidate.country) && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            {candidate.city && (
+                                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                                    <div className="flex items-center space-x-3">
+                                                        <MapPin className="h-5 w-5 text-gray-600"/>
+                                                        <span>Şehir</span>
+                                                    </div>
+                                                    <p className="text-sm font-medium text-gray-900">
+                                                        {candidate.city}
+                                                    </p>
+                                                </div>
+                                            )}
+                                            {candidate.country && (
+                                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                                    <div className="flex items-center space-x-3">
+                                                        <MapPin className="h-5 w-5 text-gray-600"/>
+                                                        <span>Ülke</span>
+                                                    </div>
+                                                    <p className="text-sm font-medium text-gray-900">
+                                                        {candidate.country}
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {candidate.mainTongue && (
+                                        <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                            <div className="flex items-center space-x-3">
+                                                <Globe className="h-5 w-5 text-gray-600"/>
+                                                <span>Ana Dil</span>
+                                            </div>
+                                            <p className="text-sm font-medium text-gray-900">
+                                                {candidate.mainTongue}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {!candidate.mobilePhone &&
+                                        !candidate.gsmPhone &&
+                                        !candidate.email &&
+                                        !candidate.address &&
+                                        !candidate.city &&
+                                        !candidate.country &&
+                                        !candidate.mainTongue && (
+                                            <p className="text-gray-500 italic text-center py-4">
+                                                İletişim bilgisi bulunmamaktadır.
+                                            </p>
+                                        )}
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Hesap Durumu</CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-3">
+                                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                        <div className="flex items-center space-x-3">
+                                            {candidate.status === 'ACTIVE' ? (
+                                                <CheckCircle className="h-5 w-5 text-green-500"/>
+                                            ) : (
+                                                <XCircle className="h-5 w-5 text-red-500"/>
+                                            )}
+                                            <span>Durum</span>
+                                        </div>
+                                        <Badge
+                                            className={candidate.status === 'ACTIVE'
+                                                ? 'bg-green-100 text-green-800'
+                                                : candidate.status === 'DELETED'
+                                                    ? 'bg-red-100 text-red-800'
+                                                    : 'bg-gray-100 text-gray-800'}>
+                                            {candidate.status === 'ACTIVE' ? 'Aktif' :
+                                                candidate.status === 'DELETED' ? 'Silinmiş' :
+                                                    candidate.status || 'Bilinmeyen'}
+                                        </Badge>
+                                    </div>
+
+                                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                        <div className="flex items-center space-x-3">
+                                            <Key className={`h-5 w-5 ${candidate.activationCode ? 'text-yellow-500' : 'text-green-500'}`}/>
+                                            <span>Aktivasyon Durumu</span>
+                                        </div>
+                                        <Badge
+                                            className={candidate.activationCode
+                                                ? 'bg-yellow-100 text-yellow-800'
+                                                : 'bg-green-100 text-green-800'}>
+                                            {candidate.activationCode ? 'Bekliyor' : 'Aktifleştirildi'}
+                                        </Badge>
+                                    </div>
+
+                                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                        <div className="flex items-center space-x-3">
+                                            <Clock className="h-5 w-5 text-blue-500"/>
+                                            <span>Oluşturulma Tarihi</span>
+                                        </div>
+                                        <p className="text-sm font-medium">
+                                            {formatDate(candidate.createdAt || '')}
+                                        </p>
+                                    </div>
+
+                                    {candidate.lastLoginTime && (
+                                        <div className="flex justify-between items-center p-3 bg-blue-50 rounded-md">
+                                            <div className="flex items-center space-x-3">
+                                                <Clock className="h-5 w-5 text-blue-500"/>
+                                                <span>Son Giriş</span>
+                                            </div>
+                                            <p className="text-sm font-medium text-blue-600">
+                                                {formatDate(candidate.lastLoginTime)}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {candidate.deletedAt && (
+                                        <div className="flex justify-between items-center p-3 bg-red-50 rounded-md">
+                                            <div className="flex items-center space-x-3">
+                                                <XCircle className="h-5 w-5 text-red-500"/>
+                                                <span>Silinme Tarihi</span>
+                                            </div>
+                                            <p className="text-sm font-medium text-red-600">
+                                                {formatDate(candidate.deletedAt)}
+                                            </p>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        <Card className="md:col-span-2">
+                            <CardHeader>
+                                <CardTitle>Yüklenen Dosyalar</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    {[
+                                        {key: 'photoUrl' as const, title: 'Vesikalık Fotoğraf', kind: 'image'},
+                                        {key: 'idCartUrl' as const, title: 'Kimlik Fotoğrafı', kind: 'image'},
+                                        {key: 'voiceUrl' as const, title: 'Ses Kaydı', kind: 'audio'},
+                                    ].map(({key, title, kind}) => {
+                                        const path = candidate[key] || '';
+                                        const fullUrl = path ? `${UPLOAD_SERVE_BASE_URL}/${path}` : undefined;
+
+                                        return (
+                                            <div key={key} className="p-4 rounded-lg border bg-gray-50 space-y-3">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <div className="font-semibold text-gray-900">{title}</div>
+                                                    <Badge className={fullUrl ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
+                                                        {fullUrl ? 'Yüklendi' : 'Yok'}
+                                                    </Badge>
+                                                </div>
+
+                                                {fullUrl && kind === 'image' && (
+                                                    <ImageLightbox src={fullUrl} alt={title} title={title}>
+                                                        <img
+                                                            src={fullUrl}
+                                                            alt={title}
+                                                            className="w-full h-40 object-cover rounded border bg-white cursor-zoom-in"
+                                                        />
+                                                    </ImageLightbox>
+                                                )}
+
+                                                {fullUrl && kind === 'audio' && (
+                                                    <audio controls src={fullUrl} className="w-full" preload="metadata">
+                                                        Tarayıcınız ses oynatmayı desteklemiyor.
+                                                    </audio>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        
+
+                        
+                    </div>
+                )}
+
+                {/* Sınav Bilgileri Sekmesi */}
+                {activeTab === "exam" && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Card className="md:col-span-2">
+                            <CardHeader>
+                                <CardTitle>Katıldığı Sınav</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
                                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
                                     <div className="flex items-center space-x-3">
-                                        <Key className={`h-5 w-5 ${candidate.activationCode ? 'text-yellow-500' : 'text-green-500'}`}/>
-                                        <span>Aktivasyon Durumu</span>
+                                        <Key className="h-5 w-5 text-blue-500"/>
+                                        <span>Sınav</span>
                                     </div>
-                                    <Badge
-                                        className={candidate.activationCode
-                                            ? 'bg-yellow-100 text-yellow-800'
-                                            : 'bg-green-100 text-green-800'}>
-                                        {candidate.activationCode ? 'Bekliyor' : 'Aktifleştirildi'}
-                                    </Badge>
+                                    <p className="text-sm font-medium text-gray-900">
+                                        {getApplicationExamName() || '—'}
+                                    </p>
                                 </div>
 
                                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
                                     <div className="flex items-center space-x-3">
                                         <Clock className="h-5 w-5 text-blue-500"/>
-                                        <span>Oluşturulma Tarihi</span>
+                                        <span>Oturum</span>
                                     </div>
-                                    <p className="text-sm font-medium">
-                                        {formatDate(candidate.createdAt || '')}
+                                    <p className="text-sm font-medium text-gray-900">
+                                        {getApplicationSessionName() || '—'}
                                     </p>
                                 </div>
 
-                                {candidate.lastLoginTime && (
-                                    <div className="flex justify-between items-center p-3 bg-blue-50 rounded-md">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
                                         <div className="flex items-center space-x-3">
-                                            <Clock className="h-5 w-5 text-blue-500"/>
-                                            <span>Son Giriş</span>
+                                            <IdCard className="h-5 w-5 text-gray-600"/>
+                                            <span>Sınav ID</span>
                                         </div>
-                                        <p className="text-sm font-medium text-blue-600">
-                                            {formatDate(candidate.lastLoginTime)}
+                                        <p className="text-sm font-medium text-gray-900">
+                                            {candidate.application?.examId || '—'}
                                         </p>
                                     </div>
-                                )}
 
-                                {candidate.deletedAt && (
-                                    <div className="flex justify-between items-center p-3 bg-red-50 rounded-md">
+                                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
                                         <div className="flex items-center space-x-3">
+                                            <IdCard className="h-5 w-5 text-gray-600"/>
+                                            <span>Oturum ID</span>
+                                        </div>
+                                        <p className="text-sm font-medium text-gray-900">
+                                            {candidate.application?.examSessionId || candidate.examSessionId || '—'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                        <div className="flex items-center space-x-3">
+                                            <Calendar className="h-5 w-5 text-gray-600"/>
+                                            <span>Oturum Başlangıç</span>
+                                        </div>
+                                        <p className="text-sm font-medium text-gray-900">
+                                            {candidate.examSession?.beginAt ? formatDate(candidate.examSession.beginAt) : '—'}
+                                        </p>
+                                    </div>
+
+                                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                        <div className="flex items-center space-x-3">
+                                            <Calendar className="h-5 w-5 text-gray-600"/>
+                                            <span>Oturum Bitiş</span>
+                                        </div>
+                                        <p className="text-sm font-medium text-gray-900">
+                                            {candidate.examSession?.endAt ? formatDate(candidate.examSession.endAt) : '—'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    
+
+                                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                        <div className="flex items-center space-x-3">
+                                            <Key className="h-5 w-5 text-gray-600"/>
+                                            <span>Sınav Tipi</span>
+                                        </div>
+                                        <p className="text-sm font-medium text-gray-900">
+                                            {candidate.examSession?.examType?.name || '—'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Başvuru Durumu</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                    <div className="flex items-center space-x-3">
+                                        <Clock className="h-5 w-5 text-blue-500"/>
+                                        <span>Başlatıldı</span>
+                                    </div>
+                                    <p className="text-sm font-medium text-gray-900">
+                                        {candidate.application?.startedAt ? formatDate(candidate.application.startedAt) : '—'}
+                                    </p>
+                                </div>
+
+                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                    <div className="flex items-center space-x-3">
+                                        <Clock className="h-5 w-5 text-blue-500"/>
+                                        <span>Bitti</span>
+                                    </div>
+                                    <p className="text-sm font-medium text-gray-900">
+                                        {candidate.application?.endedAt ? formatDate(candidate.application.endedAt) : '—'}
+                                    </p>
+                                </div>
+
+                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                    <div className="flex items-center space-x-3">
+                                        <CheckCircle className="h-5 w-5 text-green-500"/>
+                                        <span>Tamamlandı</span>
+                                    </div>
+                                    <Badge className={(candidate.application?.isCompleted ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800')}>
+                                        {candidate.application?.isCompleted ? 'Evet' : 'Hayır'}
+                                    </Badge>
+                                </div>
+
+                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                    <div className="flex items-center space-x-3">
+                                        <CheckCircle className={`h-5 w-5 ${candidate.application?.isEvaluated ? 'text-green-500' : 'text-yellow-500'}`}/>
+                                        <span>Değerlendirildi</span>
+                                    </div>
+                                    <Badge className={(candidate.application?.isEvaluated ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800')}>
+                                        {candidate.application?.isEvaluated ? 'Evet' : 'Hayır'}
+                                    </Badge>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Sonuç</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                    <div className="flex items-center space-x-3">
+                                        <Key className="h-5 w-5 text-blue-500"/>
+                                        <span>Puan</span>
+                                    </div>
+                                    <p className="text-sm font-medium text-gray-900">
+                                        {candidate.application?.score ?? '—'}
+                                    </p>
+                                </div>
+
+                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                    <div className="flex items-center space-x-3">
+                                        {candidate.application?.isSuccessful ? (
+                                            <CheckCircle className="h-5 w-5 text-green-500"/>
+                                        ) : (
                                             <XCircle className="h-5 w-5 text-red-500"/>
-                                            <span>Silinme Tarihi</span>
+                                        )}
+                                        <span>Başarılı</span>
+                                    </div>
+                                    {candidate.application?.isSuccessful === undefined || candidate.application?.isSuccessful === null ? (
+                                        <p className="text-sm font-medium text-gray-900">—</p>
+                                    ) : (
+                                        <Badge className={candidate.application?.isSuccessful ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                                            {candidate.application?.isSuccessful ? 'Evet' : 'Hayır'}
+                                        </Badge>
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                        <div className="flex items-center space-x-3">
+                                            <Key className="h-5 w-5 text-gray-600"/>
+                                            <span>Sınav Türü</span>
                                         </div>
-                                        <p className="text-sm font-medium text-red-600">
-                                            {formatDate(candidate.deletedAt)}
+                                        <p className="text-sm font-medium text-gray-900">
+                                            {candidate.application?.examType || '—'}
                                         </p>
                                     </div>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </div>
-                )}
 
-                {/* İletişim Bilgileri Sekmesi */}
-                {activeTab === "contact" && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>İletişim</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {candidate.mobilePhone && (
-                                    <div className="flex items-center space-x-4">
-                                        <div className="bg-gray-100 p-3 rounded-full">
-                                            <Phone className="h-6 w-6 text-gray-500"/>
+                                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                        <div className="flex items-center space-x-3">
+                                            <Clock className="h-5 w-5 text-gray-600"/>
+                                            <span>Oturum Durumu</span>
                                         </div>
-                                        <div>
-                                            <p className="font-medium">
-                                                <a
-                                                    href={`tel:${candidate.mobilePhone}`}
-                                                    className="text-blue-600 hover:text-blue-800"
-                                                >
-                                                    {candidate.mobilePhone}
-                                                </a>
-                                            </p>
-                                            <p className="text-sm text-gray-500">Cep Telefonu</p>
-                                        </div>
+                                        <p className="text-sm font-medium text-gray-900">
+                                            {candidate.application?.sessionState
+                                                ? getSessionStateLabel(candidate.application.sessionState)
+                                                : '—'}
+                                        </p>
                                     </div>
-                                )}
-
-                                {candidate.gsmPhone && (
-                                    <div className="flex items-center space-x-4">
-                                        <div className="bg-gray-100 p-3 rounded-full">
-                                            <Phone className="h-6 w-6 text-gray-500"/>
-                                        </div>
-                                        <div>
-                                            <p className="font-medium">
-                                                <a
-                                                    href={`tel:${candidate.gsmPhone}`}
-                                                    className="text-blue-600 hover:text-blue-800"
-                                                >
-                                                    {candidate.gsmPhone}
-                                                </a>
-                                            </p>
-                                            <p className="text-sm text-gray-500">GSM Telefonu</p>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {candidate.email && (
-                                    <div className="flex items-center space-x-4">
-                                        <div className="bg-gray-100 p-3 rounded-full">
-                                            <Mail className="h-6 w-6 text-gray-500"/>
-                                        </div>
-                                        <div>
-                                            <p className="font-medium">
-                                                <a
-                                                    href={`mailto:${candidate.email}`}
-                                                    className="text-blue-600 hover:text-blue-800"
-                                                >
-                                                    {candidate.email}
-                                                </a>
-                                            </p>
-                                            <p className="text-sm text-gray-500">E-posta</p>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {!candidate.mobilePhone && !candidate.gsmPhone && !candidate.email && (
-                                    <p className="text-gray-500 italic text-center py-4">
-                                        İletişim bilgisi bulunmamaktadır.
-                                    </p>
-                                )}
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Adres ve Konum</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {candidate.address && (
-                                    <div className="flex items-start space-x-4">
-                                        <div className="bg-gray-100 p-3 rounded-full">
-                                            <MapPin className="h-6 w-6 text-gray-500"/>
-                                        </div>
-                                        <div>
-                                            <p className="font-medium">{candidate.address}</p>
-                                            <p className="text-sm text-gray-500">Adres</p>
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    {candidate.city && (
-                                        <div className="space-y-1">
-                                            <p className="text-sm text-gray-500">Şehir</p>
-                                            <p className="font-medium">{candidate.city}</p>
-                                        </div>
-                                    )}
-                                    {candidate.country && (
-                                        <div className="space-y-1">
-                                            <p className="text-sm text-gray-500">Ülke</p>
-                                            <p className="font-medium">{candidate.country}</p>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {candidate.mainTongue && (
-                                    <div className="flex items-center space-x-4">
-                                        <div className="bg-gray-100 p-3 rounded-full">
-                                            <Globe className="h-6 w-6 text-gray-500"/>
-                                        </div>
-                                        <div>
-                                            <p className="font-medium">{candidate.mainTongue}</p>
-                                            <p className="text-sm text-gray-500">Ana Dil</p>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {!candidate.address && !candidate.city && !candidate.country && !candidate.mainTongue && (
-                                    <p className="text-gray-500 italic text-center py-4">
-                                        Adres bilgisi bulunmamaktadır.
-                                    </p>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </div>
-                )}
-
-                {/* Hesap Aktiviteleri Sekmesi */}
-                {activeTab === "activity" && (
-                    <div className="grid grid-cols-1 gap-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Hesap Zaman Çizelgesi</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-4">
-                                    <div className="flex">
-                                        <div className="mr-4 flex-shrink-0">
-                                            <div className="flex items-center justify-center h-10 w-10 rounded-full bg-blue-100 text-blue-600">
-                                                <UserIcon className="h-5 w-5"/>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <p className="font-semibold">Hesap Oluşturuldu</p>
-                                            <p className="text-sm text-gray-500">{formatDate(candidate.createdAt || '')}</p>
-                                            {candidate.createdById && (
-                                                <p className="text-xs text-gray-400">Oluşturan ID: {candidate.createdById}</p>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {candidate.lastLoginTime && (
-                                        <div className="flex">
-                                            <div className="mr-4 flex-shrink-0">
-                                                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-green-100 text-green-600">
-                                                    <Clock className="h-5 w-5"/>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <p className="font-semibold">Son Giriş</p>
-                                                <p className="text-sm text-gray-500">{formatDate(candidate.lastLoginTime)}</p>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {candidate.status === 'DELETED' && candidate.deletedAt && (
-                                        <div className="flex">
-                                            <div className="mr-4 flex-shrink-0">
-                                                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-red-100 text-red-600">
-                                                    <XCircle className="h-5 w-5"/>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <p className="font-semibold">Hesap Silindi</p>
-                                                <p className="text-sm text-gray-500">{formatDate(candidate.deletedAt)}</p>
-                                                {candidate.deletedById && (
-                                                    <p className="text-xs text-gray-400">Silen ID: {candidate.deletedById}</p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
                             </CardContent>
                         </Card>
-
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Aktivasyon Durumu</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="p-4 bg-gray-50 rounded-md">
-                                    {candidate.activationCode ? (
-                                        <div className="space-y-3">
-                                            <div className="flex items-center justify-between">
-                                                <span className="font-medium">Aktivasyon Kodu</span>
-                                                <Badge className="bg-yellow-100 text-yellow-800">Onay Bekliyor</Badge>
-                                            </div>
-                                            <p className="text-sm text-gray-500">
-                                                Aday hesabını henüz aktifleştirmemiş. Aktivasyon kodu mevcut.
-                                            </p>
-                                            <div className="flex justify-end space-x-2">
-                                                <Button variant="outline" size="sm">
-                                                    Aktivasyon Kodu Yeniden Gönder
-                                                </Button>
-                                                {onActivate && (
-                                                    <Button variant="outline" size="sm" onClick={onActivate}>
-                                                        Manuel Aktifleştir
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-3">
-                                            <div className="flex items-center justify-between">
-                                                <span className="font-medium">Aktivasyon Durumu</span>
-                                                <Badge className="bg-green-100 text-green-800">Aktifleştirildi</Badge>
-                                            </div>
-                                            <p className="text-sm text-gray-500">
-                                                Aday hesabını aktifleştirmiş. Aktivasyon kodu kullanılmış.
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {candidate.photoUrl && (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Profil Fotoğrafı</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="flex items-center space-x-4">
-                                        <div className="bg-gray-100 p-3 rounded-full">
-                                            <Camera className="h-6 w-6 text-gray-500"/>
-                                        </div>
-                                        <div className="flex-1">
-                                            <img
-                                                src={candidate.photoUrl}
-                                                alt={`${candidate.name} ${candidate.lastName}`}
-                                                className="h-24 w-24 rounded-lg object-cover border"
-                                            />
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        )}
                     </div>
                 )}
             </div>

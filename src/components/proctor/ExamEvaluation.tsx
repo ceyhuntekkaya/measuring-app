@@ -8,6 +8,7 @@ import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Column, RecordType} from "@/types/ui/table";
 import {statusConverter} from "@/utils/enum-converter";
 import {getQuestionTypeLabel} from "@/utils/question-type-convert";
+import {getSessionStateLabel} from "@/utils/sessionStateLabel";
 import {EStatus, EQuestionType} from "@/types/exam/enum";
 import DynamicTable from "@/components/ui/dynamic-table";
 import {useGetApplicationEvaluationsBySession} from "@/api/generated/application-management/application-management";
@@ -47,6 +48,7 @@ import {
 import {useSaveEvaluation} from "@/api/generated/question-result-management/question-result-management";
 import { useQueryClient } from "@tanstack/react-query";
 import { showNotification, getErrorMessage } from "@/lib/notification";
+import MaybeHtml from "@/components/ui/maybe-html";
 import type {UploadedFileDto} from "@/api/generated/model";
 import { parseBlobResponse } from "@/utils/api-helpers/parse-blob-response";
 import type { ApiResponseListQuestionDto } from "@/api/generated/model";
@@ -730,36 +732,54 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
                                         selectedEvaluation.question.questionType === 'SHORT_ANSWER' ?
                                             <div> {(selectedEvaluation.question.questionTemplate as ShortAnswerTemplateDto).question}</div> :
                                             selectedEvaluation && selectedEvaluation.question.questionType === 'ESSAY' ?
-                                                <div>{(selectedEvaluation.question.questionTemplate as EssayTemplateDto).prompt}</div> :
+                                                <div>
+                                                    {(selectedEvaluation.question.questionTemplate as EssayTemplateDto).description && (
+                                                        <MaybeHtml className="text-gray-800" value={(selectedEvaluation.question.questionTemplate as EssayTemplateDto).description || ''} />
+                                                    )}
+                                                    {(selectedEvaluation.question.questionTemplate as EssayTemplateDto).instructions && (
+                                                        <p className="text-gray-800 text-sm whitespace-pre-wrap mt-2">{(selectedEvaluation.question.questionTemplate as EssayTemplateDto).instructions}</p>
+                                                    )}
+                                                </div> :
                                                 selectedEvaluation && selectedEvaluation.question.questionType === 'AUDIO_RESPONSE' ?
-                                                    <div>{(selectedEvaluation.question.questionTemplate as AudioResponseTemplateDto).prompt}</div> :
+                                                    <div>
+                                                        {(selectedEvaluation.question.questionTemplate as AudioResponseTemplateDto).description && (
+                                                            <MaybeHtml className="text-gray-800" value={(selectedEvaluation.question.questionTemplate as AudioResponseTemplateDto).description || ''} />
+                                                        )}
+                                                        {(selectedEvaluation.question.questionTemplate as AudioResponseTemplateDto).instructions && (
+                                                            <p className="text-gray-800 text-sm whitespace-pre-wrap mt-2">{(selectedEvaluation.question.questionTemplate as AudioResponseTemplateDto).instructions}</p>
+                                                        )}
+                                                    </div> :
                                                     selectedEvaluation && selectedEvaluation.question.questionType === 'VIDEO_RESPONSE' ?
-                                                        <div> {(selectedEvaluation.question.questionTemplate as VideoResponseTemplateDto).prompt}</div> :
+                                                        <div>
+                                                            {(selectedEvaluation.question.questionTemplate as VideoResponseTemplateDto).description && (
+                                                                <MaybeHtml className="text-gray-800" value={(selectedEvaluation.question.questionTemplate as VideoResponseTemplateDto).description || ''} />
+                                                            )}
+                                                            {(selectedEvaluation.question.questionTemplate as VideoResponseTemplateDto).instructions && (
+                                                                <p className="text-gray-800 text-sm whitespace-pre-wrap mt-2">{(selectedEvaluation.question.questionTemplate as VideoResponseTemplateDto).instructions}</p>
+                                                            )}
+                                                        </div> :
                                                         selectedEvaluation && selectedEvaluation.question.questionType === 'IMAGE_RESPONSE' ?
-                                                            <div> {(selectedEvaluation.question.questionTemplate as ImageResponseTemplateDto).prompt}</div> :
+                                                            <div>
+                                                                {(selectedEvaluation.question.questionTemplate as ImageResponseTemplateDto).description && (
+                                                                    <MaybeHtml className="text-gray-800" value={(selectedEvaluation.question.questionTemplate as ImageResponseTemplateDto).description || ''} />
+                                                                )}
+                                                                {(selectedEvaluation.question.questionTemplate as ImageResponseTemplateDto).instructions && (
+                                                                    <p className="text-gray-800 text-sm whitespace-pre-wrap mt-2">{(selectedEvaluation.question.questionTemplate as ImageResponseTemplateDto).instructions}</p>
+                                                                )}
+                                                            </div> :
                                                             <div></div>
                                         }
                                     </div>
                                 </div>
 
-                                <div>
-                                    <Label className="font-semibold">Rubrik:</Label>
-                                    <div className="mt-2 p-3 bg-white rounded-lg border">
-                                        {selectedEvaluation &&
-                                        selectedEvaluation.question.questionType === 'SHORT_ANSWER' ?
-                                            <div> {(selectedEvaluation.question.questionTemplate as ShortAnswerTemplateDto).rubric}</div> :
-                                            selectedEvaluation && selectedEvaluation.question.questionType === 'ESSAY' ?
-                                                <div>{(selectedEvaluation.question.questionTemplate as EssayTemplateDto).rubric}</div> :
-                                                selectedEvaluation && selectedEvaluation.question.questionType === 'AUDIO_RESPONSE' ?
-                                                    <div>{(selectedEvaluation.question.questionTemplate as AudioResponseTemplateDto).rubric}</div> :
-                                                    selectedEvaluation && selectedEvaluation.question.questionType === 'VIDEO_RESPONSE' ?
-                                                        <div> {(selectedEvaluation.question.questionTemplate as VideoResponseTemplateDto).rubric}</div> :
-                                                        selectedEvaluation && selectedEvaluation.question.questionType === 'IMAGE_RESPONSE' ?
-                                                            <div> {(selectedEvaluation.question.questionTemplate as ImageResponseTemplateDto).rubric}</div> :
-                                                            <div></div>
-                                        }
+                                {selectedEvaluation?.question.questionType === 'SHORT_ANSWER' && (
+                                    <div>
+                                        <Label className="font-semibold">Rubrik:</Label>
+                                        <div className="mt-2 p-3 bg-white rounded-lg border">
+                                            <div>{(selectedEvaluation.question.questionTemplate as ShortAnswerTemplateDto).rubric}</div>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -925,7 +945,7 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
                         }
                     }}
                 >
-                    {value as string}
+                    {getSessionStateLabel(value as string)}
 
                 </div>
             )

@@ -6,10 +6,10 @@ import {Alert, AlertDescription} from "@/components/ui/alert";
 import {Button} from "@/components/ui/button";
 import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
-import {Textarea} from "@/components/ui/textarea";
 import type {MatchingTemplateDto, MatchingPair} from "@/api/generated/model";
 import {Trash2, Plus} from "lucide-react";
 import Checkbox from "@/components/ui/checkbox";
+import HtmlEditor from "@/components/ui/html-editor";
 
 // Use ORVAL DTO types directly - only template-specific fields
 type MatchingTemplateFormData = Pick<MatchingTemplateDto, 'instructions' | 'options' | 'shuffleItems' | 'explanation'>;
@@ -181,11 +181,12 @@ const MatchingTemplateForm = forwardRef<MatchingTemplateFormHandle, MatchingTemp
                     {/* Talimatlar */}
                     <div className="space-y-2">
                         <Label htmlFor="instructions">Eşleştirme Talimatları *</Label>
-                        <Textarea
+                        <HtmlEditor
                             id="instructions"
-                            value={formData.instructions}
-                            onChange={(e) => handleChange('instructions', e.target.value)}
-                            className={`min-h-[100px] ${errors.instructions ? 'border-red-500' : ''}`}
+                            value={formData.instructions || ''}
+                            onChange={(html) => handleChange('instructions', html)}
+                            error={!!errors.instructions}
+                            minHeightClassName="min-h-[100px]"
                             placeholder="Öğrenciye eşleştirme yapması için talimatları giriniz"
                         />
                         {errors.instructions && (

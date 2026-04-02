@@ -35,6 +35,7 @@ import MultipleResponseQuestion from "@/components/template/MultipleResponseQues
 import OrderingQuestion from "@/components/template/OrderingQuestion";
 import Checkbox from "@/components/ui/checkbox";
 import FilePreview from "@/components/ui/file-preview";
+import HtmlRender from "@/components/ui/html-render";
 import {getQuestionTypeLabel} from "@/utils/question-type-convert";
 import {approvalStatusConverter} from "@/utils/enum-converter";
 import {hasCorrectAnswer} from "@/utils/question-validation";
@@ -248,7 +249,7 @@ export default function QuestionPage() {
                         selectedQuestionGroup?.headers?.map((header, key) => (
 
                             header.mediaType === EMediaType.TEXT ?
-                                <div key={key}>{header.content}</div> :
+                                <HtmlRender key={key} html={header.content || ''} /> :
 
 
                                 <div  key={key} className="flex justify-center">

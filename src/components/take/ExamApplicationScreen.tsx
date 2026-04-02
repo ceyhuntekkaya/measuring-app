@@ -4,6 +4,7 @@ import React, {useEffect, useRef, useState, useCallback} from 'react';
 import type {QuestionGroupDto, QuestionGroupHeaderDto, QuestionAnswerRequest, QuestionDto} from "@/api/generated/model";
 import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
+import HtmlRender from "@/components/ui/html-render";
 import MultipleChoiceQuestion from "@/components/template/MultipleChoiceQuestion";
 import {
     AudioResponseTemplateDto,
@@ -711,7 +712,7 @@ export default function ExamApplicationScreen({
                     <div className="mb-4 card">
                         <div className="card-body">
                             {material.content ? (
-                                <div dangerouslySetInnerHTML={{__html: processContent(material.content)}}/>
+                                <HtmlRender html={processContent(material.content)} />
                             ) : (
                                 <div className="alert alert-warning">
                                     <i className="bi bi-exclamation-triangle me-2"></i>

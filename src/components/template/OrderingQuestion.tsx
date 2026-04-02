@@ -3,6 +3,8 @@ import type {OrderingItem, OrderingTemplateDto} from '@/api/generated/model';
 import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
 import {difficultyConverter} from "@/utils/enum-converter";
+import HtmlRender from "@/components/ui/html-render";
+import MaybeHtml from "@/components/ui/maybe-html";
 
 interface OrderingQuestionProps {
     template: OrderingTemplateDto;
@@ -165,6 +167,14 @@ const OrderingQuestion: React.FC<OrderingQuestionProps> = ({
     const renderMedia = (item: OrderingItem) => {
         if (!item.mediaUrl) return null;
 
+        if ((item.mediaType || '').toLowerCase() === 'text') {
+            return (
+                <div className="mt-2 mb-2">
+                    <HtmlRender html={item.mediaUrl} />
+                </div>
+            );
+        }
+
         if (item.mediaType === 'image') {
             return (
                 <div className="mt-2 mb-2">
@@ -222,7 +232,7 @@ const OrderingQuestion: React.FC<OrderingQuestionProps> = ({
             <div className={`mt-2 p-2 rounded text-sm ${
                 isCorrect ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
             }`}>
-                <strong>Açıklama:</strong> {item.feedback}
+                <strong>Açıklama:</strong> <MaybeHtml value={item.feedback} />
             </div>
         );
     };
@@ -279,7 +289,7 @@ const OrderingQuestion: React.FC<OrderingQuestionProps> = ({
             {/* Instructions */}
             {template.instructions && (
                 <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
-                    <p className="text-blue-800 text-sm">{template.instructions}</p>
+                    <MaybeHtml className="text-blue-800 text-sm" value={template.instructions} />
                 </div>
             )}
 
@@ -343,7 +353,7 @@ const OrderingQuestion: React.FC<OrderingQuestionProps> = ({
                                 {/* Item Content */}
                                 <div className="flex-1 min-w-0">
                                     <div className="text-gray-800 font-medium break-words">
-                                        {item.text}
+                                        <MaybeHtml value={item.text} />
                                     </div>
 
                                     {/* Media */}
@@ -420,7 +430,7 @@ const OrderingQuestion: React.FC<OrderingQuestionProps> = ({
             {isSubmitted && showCorrectAnswer && template.explanation && (
                 <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
                     <h4 className="font-semibold text-yellow-800 mb-2">Genel Açıklama:</h4>
-                    <p className="text-yellow-700">{template.explanation}</p>
+                    <MaybeHtml className="text-yellow-700" value={template.explanation} />
                 </div>
             )}
 
@@ -451,7 +461,7 @@ const OrderingQuestion: React.FC<OrderingQuestionProps> = ({
                                     .map((item, idx) => (
                                         <div key={item.id} className="text-sm text-gray-600 flex items-start">
                                             <span className="font-medium text-gray-700 mr-2">{idx + 1}.</span>
-                                            <span>{item.text}</span>
+                                            <span><MaybeHtml value={item.text} /></span>
                                         </div>
                                     ))
                                 }

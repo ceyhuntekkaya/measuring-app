@@ -8,11 +8,8 @@
 import type { BaseQuestionTemplateDto } from "./baseQuestionTemplateDto";
 
 export type EssayTemplateDto = BaseQuestionTemplateDto & {
-  prompt?: string;
-  gradingCriteria?: string[];
   minWords?: number;
   maxWords?: number;
   requiredTopics?: string[];
-  rubric?: string;
   requiresManualGrading?: boolean;
 };

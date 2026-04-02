@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { NumberInput } from "@/components/ui/number-input";
 import type {OrderingTemplateDto, OrderingItem} from "@/api/generated/model";
 import { Trash2, Plus, ArrowUp, ArrowDown } from "lucide-react";
+import HtmlEditor from "@/components/ui/html-editor";
 
 interface OrderingTemplateFormProps {
     value?: OrderingTemplateDto | null;
@@ -193,11 +194,12 @@ const OrderingTemplateForm = forwardRef<OrderingTemplateFormHandle, OrderingTemp
                     {/* Talimatlar */}
                     <div className="space-y-2">
                         <Label htmlFor="instructions">Talimatlar *</Label>
-                        <Textarea
+                        <HtmlEditor
                             id="instructions"
-                            value={formData.instructions}
-                            onChange={(e) => handleChange('instructions', e.target.value)}
-                            className={`min-h-[100px] ${errors.instructions ? 'border-red-500' : ''}`}
+                            value={formData.instructions || ''}
+                            onChange={(html) => handleChange('instructions', html)}
+                            error={!!errors.instructions}
+                            minHeightClassName="min-h-[100px]"
                             placeholder="Sıralama talimatlarını giriniz"
                         />
                         {errors.instructions && (

@@ -80,6 +80,48 @@ export default function ApplicationPage() {
         );
     }, [handleSessionSelect]);
 
+    const renderSessionDateTimeCell = useCallback((_: unknown, record: RecordType) => {
+        const session = record as ExamSessionDto;
+
+        const begin = session.beginAt ? new Date(session.beginAt) : null;
+        const end = session.endAt ? new Date(session.endAt) : null;
+        const start = session.startDate ? new Date(session.startDate) : null;
+
+        const isValid = (d: Date | null) => !!d && !Number.isNaN(d.getTime());
+
+        const formatDate = (d: Date) =>
+            new Intl.DateTimeFormat('tr-TR', {year: 'numeric', month: '2-digit', day: '2-digit'}).format(d);
+        const formatTime = (d: Date) =>
+            new Intl.DateTimeFormat('tr-TR', {hour: '2-digit', minute: '2-digit'}).format(d);
+        const formatDateTime = (d: Date) =>
+            new Intl.DateTimeFormat('tr-TR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            }).format(d);
+
+        let text = '';
+        if (isValid(begin) && isValid(end)) {
+            const sameDay = begin!.toDateString() === end!.toDateString();
+            text = sameDay ? `${formatDate(begin!)} ${formatTime(begin!)} - ${formatTime(end!)}` : `${formatDateTime(begin!)} - ${formatDateTime(end!)}`;
+        } else if (isValid(begin)) {
+            text = formatDateTime(begin!);
+        } else if (isValid(start)) {
+            text = formatDate(start!);
+        }
+
+        return (
+            <div
+                className="font-medium cursor-pointer hover:text-blue-600"
+                onClick={() => handleSessionSelect(record)}
+            >
+                {text}
+            </div>
+        );
+    }, [handleSessionSelect]);
+
     const renderApplicationCell = useCallback((value: unknown, record: RecordType) => {
         return (
             <div
@@ -103,11 +145,11 @@ export default function ApplicationPage() {
             render: renderSessionCell
         },
         {
-            key: 'description',
-            header: 'Açıklama',
-            render: renderSessionCell
+            key: 'beginAt',
+            header: 'Oturum Tarih - Saat',
+            render: renderSessionDateTimeCell
         }
-    ], [renderSessionCell]);
+    ], [renderSessionCell, renderSessionDateTimeCell]);
 
     const columns: Column<RecordType>[] = useMemo(() => [
         {
@@ -153,18 +195,20 @@ export default function ApplicationPage() {
                     />
                 }
             />
-            <div className="p-6 pt-1">
-                <DynamicTable 
-                    columns={columnSessions} 
-                    data={examSessionsArray}
-                />
-            </div>
+            <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 lg:gap-3">
+                <div className="p-3 pt-1">
+                    <DynamicTable 
+                        columns={columnSessions} 
+                        data={examSessionsArray}
+                    />
+                </div>
 
-            <div className="p-6 pt-1">
-                <DynamicTable 
-                    columns={columns} 
-                    data={applicationsArray}
-                />
+                <div className="p-3 pt-1">
+                    <DynamicTable 
+                        columns={columns} 
+                        data={applicationsArray}
+                    />
+                </div>
             </div>
         </div>
     );

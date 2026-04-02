@@ -1,7 +1,7 @@
 'use client';
 
 import PageHeader from "@/components/layout/page-header";
-import React, {useEffect, useState, useMemo} from "react";
+import React, {useEffect, useState, useMemo, useCallback} from "react";
 import {useRouter} from "next/navigation";
 import {Column, RecordType} from "@/types/ui/table";
 import LoadingComp from "@/components/ui/loading-comp";
@@ -11,13 +11,18 @@ import {useGetAllCandidates} from "@/api/generated/candidate-management/candidat
 import type {CandidateDto, ApiResponseListCandidateDto} from "@/api/generated/model";
 import {useCreateApplication} from "@/api/generated/application-management/application-management";
 import {useGetAllExams} from "@/api/generated/exam-management/exam-management";
-import type { ApiResponseListExamDto, CreateApplicationRequest, ApiResponseExamSessionListResponse, ExamSessionDto } from "@/api/generated/model";
+import type {
+    ApiResponseListExamDto,
+    CreateApplicationRequest,
+    ApiResponseExamSessionListResponse,
+    ExamSessionDto,
+    ApplicationDto
+} from "@/api/generated/model";
 import type {ExamDto} from "@/api/generated/model";
 import {useGetUpcomingExamSessions} from "@/api/generated/exam-session-management/exam-session-management";
-import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
-import {Label} from "@/components/ui/label";
 import siteConfig from '@/config/config.json';
 import {useQueryClient} from "@tanstack/react-query";
+import {useGetApplicationsByExamSession} from "@/api/generated/application-management/application-management";
 
 
 export default function CandidatePage() {
@@ -91,6 +96,24 @@ export default function CandidatePage() {
         return ((sessionsData as unknown as ApiResponseExamSessionListResponse)?.data?.examSessions || []) as ExamSessionDto[];
     }, [sessionsData]);
 
+    const {data: applicationsData} = useGetApplicationsByExamSession(selectedExamSession?.id || '', {
+        query: {
+            enabled: !!selectedExamSession?.id,
+            refetchOnMount: true,
+            staleTime: 0,
+        }
+    });
+
+    const applicationsArray = useMemo(() => {
+        if (applicationsData && typeof applicationsData === 'object' && 'data' in applicationsData) {
+            const apiData = (applicationsData as { data?: unknown }).data;
+            if (Array.isArray(apiData)) {
+                return apiData as ApplicationDto[];
+            }
+        }
+        return (applicationsData as unknown as { data?: ApplicationDto[] })?.data || [];
+    }, [applicationsData]);
+
     const createApplicationMutation = useCreateApplication();
     const createApplication = async (data: CreateApplicationRequest) => {
         await createApplicationMutation.mutateAsync({ data });
@@ -115,12 +138,111 @@ export default function CandidatePage() {
         }
     }, [upcomingExamSessions, selectedExamSession]);
 
-    const handleExamSessionChange = (sessionId: string) => {
-        const session = upcomingExamSessions?.find(s => s.id === sessionId);
-        if (session) {
-            setSelectedExamSession(session);
+    const handleSessionSelect = useCallback((record: RecordType) => {
+        setSelectedExamSession(record as ExamSessionDto);
+    }, []);
+
+    const renderSessionCell = useCallback((value: unknown, record: RecordType) => {
+        return (
+            <div
+                className="font-medium cursor-pointer hover:text-blue-600"
+                onClick={() => handleSessionSelect(record)}
+            >
+                {String(value || '')}
+            </div>
+        );
+    }, [handleSessionSelect]);
+
+    const renderSessionDateTimeCell = useCallback((_: unknown, record: RecordType) => {
+        const session = record as ExamSessionDto;
+
+        const begin = session.beginAt ? new Date(session.beginAt) : null;
+        const end = session.endAt ? new Date(session.endAt) : null;
+        const start = session.startDate ? new Date(session.startDate) : null;
+
+        const isValid = (d: Date | null) => !!d && !Number.isNaN(d.getTime());
+
+        const formatDate = (d: Date) =>
+            new Intl.DateTimeFormat('tr-TR', {year: 'numeric', month: '2-digit', day: '2-digit'}).format(d);
+        const formatTime = (d: Date) =>
+            new Intl.DateTimeFormat('tr-TR', {hour: '2-digit', minute: '2-digit'}).format(d);
+        const formatDateTime = (d: Date) =>
+            new Intl.DateTimeFormat('tr-TR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            }).format(d);
+
+        let text = '';
+        if (isValid(begin) && isValid(end)) {
+            const sameDay = begin!.toDateString() === end!.toDateString();
+            text = sameDay
+                ? `${formatDate(begin!)} ${formatTime(begin!)} - ${formatTime(end!)}`
+                : `${formatDateTime(begin!)} - ${formatDateTime(end!)}`;
+        } else if (isValid(begin)) {
+            text = formatDateTime(begin!);
+        } else if (isValid(start)) {
+            text = formatDate(start!);
         }
-    };
+
+        return (
+            <div
+                className="font-medium cursor-pointer hover:text-blue-600"
+                onClick={() => handleSessionSelect(record)}
+            >
+                {text}
+            </div>
+        );
+    }, [handleSessionSelect]);
+
+    const columnSessions: Column<RecordType>[] = useMemo(() => [
+        {
+            key: 'name',
+            header: 'Ad',
+            render: renderSessionCell
+        },
+        {
+            key: 'code',
+            header: 'Kod',
+            render: renderSessionCell
+        },
+        {
+            key: 'beginAt',
+            header: 'Oturum Tarih - Saat',
+            render: renderSessionDateTimeCell
+        }
+    ], [renderSessionCell, renderSessionDateTimeCell]);
+
+    const renderApplicationCell = useCallback((value: unknown, record: RecordType) => {
+        return (
+            <div
+                className="font-medium cursor-pointer hover:text-blue-600"
+                onClick={() => router.push(`/admin/applications/${record.id}`)}
+            >
+                {String(value || '')}
+            </div>
+        );
+    }, [router]);
+
+    const columnsApplications: Column<RecordType>[] = useMemo(() => [
+        {
+            key: 'name',
+            header: 'Ad',
+            render: renderApplicationCell
+        },
+        {
+            key: 'code',
+            header: 'Kod',
+            render: renderApplicationCell
+        },
+        {
+            key: 'description',
+            header: 'Açıklama',
+            render: renderApplicationCell
+        }
+    ], [renderApplicationCell]);
 
 
     /*
@@ -315,60 +437,57 @@ export default function CandidatePage() {
                 />
             }/>
 
-            <div className="p-6 pt-1">
-                <div className="mb-6">
-                    <Label htmlFor="examType">Sınav Oturumu Seçin:</Label>
-                    <Select
-                        onValueChange={(value) => handleExamSessionChange(value as string)}
-                        value={selectedExamSession?.id || ''}
-                    >
-                        <SelectTrigger className={'border-red-500'}>
-                            <SelectValue placeholder="Sınav tipi seçin"/>
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectGroup>
-                                {upcomingExamSessions && upcomingExamSessions.map((session) => (
-                                    <SelectItem key={session.id} value={session.id || ''}>
-                                        {session.name} - {session.quota}
-                                    </SelectItem>
-                                ))}
-                            </SelectGroup>
-                        </SelectContent>
-                    </Select>
+            <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 lg:gap-3">
+                <div className="space-y-6">
+                    <div className="p-3 pt-1">
+                        <DynamicTable
+                            columns={columnSessions}
+                            data={upcomingExamSessions as unknown as RecordType[]}
+                        />
+                    </div>
+
+                    <div className="p-3 pt-1">
+                        <DynamicTable
+                            columns={columnsApplications}
+                            data={applicationsArray as unknown as RecordType[]}
+                        />
+                    </div>
                 </div>
 
-                {/* Application Atama Butonları */}
-                {selectedExamSession && (
-                    <div className="mb-4 flex gap-4">
-                        <button
-                            onClick={handleManualAssignment}
-                            disabled={selectedCandidates.length === 0}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        >
-                            Application Manuel Ata ({selectedCandidates.length})
-                        </button>
-                        <button
-                            onClick={handleAutoAssignment}
-                            disabled={selectedCandidates.length === 0}
-                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        >
-                            Application Otomatik Ata ({selectedCandidates.length})
-                        </button>
-                    </div>
-                )}
+                <div className="p-3 pt-1">
+                    {/* Application Atama Butonları */}
+                    {selectedExamSession && (
+                        <div className="mb-4 flex gap-4">
+                            <button
+                                onClick={handleManualAssignment}
+                                disabled={selectedCandidates.length === 0}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                            >
+                                Sınav Manuel Ata ({selectedCandidates.length})
+                            </button>
+                            <button
+                                onClick={handleAutoAssignment}
+                                disabled={selectedCandidates.length === 0}
+                                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                            >
+                                Sınav Otomatik Ata ({selectedCandidates.length})
+                            </button>
+                        </div>
+                    )}
 
-                {/* Candidate Tablosu */}
-                {filteredCandidates.length > 0 ? (
-                    <DynamicTable columns={columns} data={filteredCandidates as RecordType[]}/>
-                ) : selectedExamSession ? (
-                    <div className="text-center py-8 text-gray-500">
-                        Bu oturuma ait katılımcı bulunamadı.
-                    </div>
-                ) : (
-                    <div className="text-center py-8 text-gray-500">
-                        Lütfen bir sınav oturumu seçiniz.
-                    </div>
-                )}
+                    {/* Candidate Tablosu */}
+                    {filteredCandidates.length > 0 ? (
+                        <DynamicTable columns={columns} data={filteredCandidates as RecordType[]}/>
+                    ) : selectedExamSession ? (
+                        <div className="text-center py-8 text-gray-500">
+                            Bu oturuma ait katılımcı bulunamadı.
+                        </div>
+                    ) : (
+                        <div className="text-center py-8 text-gray-500">
+                            Lütfen bir sınav oturumu seçiniz.
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Exam Seçim Modalı */}

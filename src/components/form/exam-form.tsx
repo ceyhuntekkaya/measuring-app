@@ -256,7 +256,7 @@ const ExamForm: React.FC<ExamFormProps> = ({
             </CardHeader>
             <CardContent>
                 <form className="space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Sınav Adı */}
                         <div className="space-y-2">
                             <Label htmlFor="name">Sınav Adı *</Label>
@@ -345,7 +345,7 @@ const ExamForm: React.FC<ExamFormProps> = ({
                         </div>
 
                         {/* Sınav Tipi */}
-                        <div className="space-y-2 col-span-2">
+                        <div className="space-y-2 md:col-span-2">
                             <Label>Sınav Tipi *</Label>
                             <Select
                                 value={formData.examTypeId}

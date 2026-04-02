@@ -3,12 +3,13 @@ import type { HotSpotTemplateDto, HotSpotArea } from '@/api/generated/model';
 import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
 import {difficultyConverter} from "@/utils/enum-converter";
+import MaybeHtml from "@/components/ui/maybe-html";
 
 interface HotSpotQuestionProps {
     template: HotSpotTemplateDto;
     isPreview?: boolean;
     onAnswerChange?: (questionId:string, template: QuestionTemplateType, selectedOption: string, type: EQuestionType, mediaType: EMediaType, isEmptyAnswer: boolean) => void;
-    initialAnswer?: string[];
+    initialAnswer?: string[] | null;
     isSubmitted?: boolean;
     showCorrectAnswer?: boolean;
     questionId: string;
@@ -35,7 +36,12 @@ const HotSpotQuestion: React.FC<HotSpotQuestionProps> = ({
                                                              questionId,
                                                              showCorrectAnswer = false
                                                          }) => {
-    const [selectedSpots, setSelectedSpots] = useState<string[]>(initialAnswer);
+    const normalizedInitialAnswer = useMemo<string[]>(
+        () => (Array.isArray(initialAnswer) ? initialAnswer : []),
+        [initialAnswer]
+    );
+
+    const [selectedSpots, setSelectedSpots] = useState<string[]>(normalizedInitialAnswer);
     const [imageLoaded, setImageLoaded] = useState<boolean>(false);
     const [hoveredSpotId, setHoveredSpotId] = useState<string | null>(null);
     const [spotResults, setSpotResults] = useState<HotSpotResult[]>([]);
@@ -43,7 +49,10 @@ const HotSpotQuestion: React.FC<HotSpotQuestionProps> = ({
     const imageRef = useRef<HTMLImageElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
-    const stableInitialAnswer = useMemo(() => initialAnswer, [JSON.stringify(initialAnswer)]);
+    const stableInitialAnswer = useMemo(
+        () => normalizedInitialAnswer,
+        [JSON.stringify(normalizedInitialAnswer)]
+    );
 
     useEffect(() => {
         setSelectedSpots(stableInitialAnswer);
@@ -444,7 +453,7 @@ const HotSpotQuestion: React.FC<HotSpotQuestionProps> = ({
             {/* Instructions */}
             {template.instructions && (
                 <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
-                    <p className="text-blue-800 text-sm">{template.instructions}</p>
+                    <MaybeHtml className="text-blue-800 text-sm" value={template.instructions} />
                 </div>
             )}
 
@@ -596,7 +605,7 @@ const HotSpotQuestion: React.FC<HotSpotQuestionProps> = ({
                                         <p className={`text-sm mt-2 ${
                                             result.isCorrect ? 'text-green-700' : 'text-red-700'
                                         }`}>
-                                            <strong>Açıklama:</strong> {result.feedback}
+                                            <strong>Açıklama:</strong> <MaybeHtml value={result.feedback} />
                                         </p>
                                     )}
                                 </div>
@@ -619,7 +628,7 @@ const HotSpotQuestion: React.FC<HotSpotQuestionProps> = ({
             {isSubmitted && showCorrectAnswer && template.explanation && (
                 <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
                     <h4 className="font-semibold text-yellow-800 mb-2">Genel Açıklama:</h4>
-                    <p className="text-yellow-700">{template.explanation}</p>
+                    <MaybeHtml className="text-yellow-700" value={template.explanation} />
                 </div>
             )}
 

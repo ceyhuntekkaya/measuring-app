@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import Checkbox from "@/components/ui/checkbox";
 import type { MultipleResponseTemplateDto, ResponseOption } from "@/api/generated/model";
 import { Trash2, Plus } from "lucide-react";
+import HtmlEditor from "@/components/ui/html-editor";
 
 interface MultipleResponseTemplateFormProps {
     value?: MultipleResponseTemplateDto | null;
@@ -243,11 +244,12 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
                     {/* Soru Metni */}
                     <div className="space-y-2">
                         <Label htmlFor="question">Soru Metni *</Label>
-                        <Textarea
+                        <HtmlEditor
                             id="question"
-                            value={formData.question}
-                            onChange={(e) => handleChange('question', e.target.value)}
-                            className={`min-h-[100px] ${errors.question ? 'border-red-500' : ''}`}
+                            value={formData.question || ''}
+                            onChange={(html) => handleChange('question', html)}
+                            error={!!errors.question}
+                            minHeightClassName="min-h-[100px]"
                             placeholder="Soru metnini giriniz"
                         />
                         {errors.question && (
@@ -348,7 +350,9 @@ const MultipleResponseTemplateForm = forwardRef<MultipleResponseTemplateFormHand
                                     <Label>Seçenek Metni *</Label>
                                     <Textarea
                                         value={choice.text || ''}
-                                        onChange={(e) => updateChoice(index, 'text', e.target.value)}
+                                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                                          updateChoice(index, 'text', e.target.value)
+                                        }
                                         placeholder="Seçenek metnini giriniz"
                                         className="min-h-[60px]"
                                     />

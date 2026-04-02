@@ -8,12 +8,8 @@
 import type { BaseQuestionTemplateDto } from "./baseQuestionTemplateDto";
 
 export type AudioResponseTemplateDto = BaseQuestionTemplateDto & {
-  prompt?: string;
-  audioPromptUrl?: string;
   maxRecordingDuration?: number;
   minRecordingDuration?: number;
-  gradingCriteria?: string[];
-  rubric?: string;
   requiresManualGrading?: boolean;
   allowedFormats?: string;
 };

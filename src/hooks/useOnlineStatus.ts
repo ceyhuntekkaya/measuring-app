@@ -7,7 +7,6 @@ export function useOnlineStatus() {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const isOnline = (username: string): boolean => {
-        // WebSocket removed - always return false
         return false;
     };
 

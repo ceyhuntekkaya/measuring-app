@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import HtmlEditor from "@/components/ui/html-editor";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { NumberInput } from "@/components/ui/number-input";
 import type { ExamSectionDto, ExamTypeDto, CreateExamSectionRequest, UpdateExamSectionRequest } from "@/api/generated/model";
@@ -204,12 +204,12 @@ const ExamSectionForm: React.FC<ExamSectionFormProps> = ({
                     {/* Bölüm Açıklaması */}
                     <div className="space-y-2">
                         <Label htmlFor="sectionDescription">Bölüm Açıklaması</Label>
-                        <Textarea
+                        <HtmlEditor
                             id="sectionDescription"
                             value={formData.sectionDescription || ''}
-                            onChange={(e) => handleChange('sectionDescription', e.target.value)}
-                            className="min-h-[120px]"
+                            onChange={(html) => handleChange('sectionDescription', html)}
                             placeholder="Bölüm açıklamasını giriniz"
+                            minHeightClassName="min-h-[120px]"
                         />
                     </div>
 

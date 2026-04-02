@@ -6,13 +6,15 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import HtmlEditor from "@/components/ui/html-editor";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { NumberInput } from "@/components/ui/number-input";
 import type {ExamTypeDto} from "@/api/generated/model";
+import { ExamTypeDtoStatus } from "@/api/generated/model/examTypeDtoStatus";
 import {EExamType} from "@/types/exam/enum";
-import Checkbox from "@/components/ui/checkbox";
+import TextYesNoCheckbox from "@/components/ui/text-yes-no-checkbox";
+import TextSelect from "@/components/ui/text-select";
 import {examTypeConverter} from "@/utils/enum-converter";
 
 
@@ -39,6 +41,34 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
                                                        examType,
                                                        loading = false
                                                    }) => {
+    const statusLabelTr = (status: ExamTypeDtoStatus | string) => {
+        switch (status) {
+            case ExamTypeDtoStatus.ACTIVE:
+            case 'ACTIVE':
+                return 'Aktif';
+            case ExamTypeDtoStatus.PASSIVE:
+            case 'PASSIVE':
+                return 'Pasif';
+            case ExamTypeDtoStatus.CANCELLED:
+            case 'CANCELLED':
+                return 'İptal Edildi';
+            case ExamTypeDtoStatus.DELETED:
+            case 'DELETED':
+                return 'Silindi';
+            case ExamTypeDtoStatus.PENDING:
+            case 'PENDING':
+                return 'Beklemede';
+            case ExamTypeDtoStatus.SUSPENDED:
+            case 'SUSPENDED':
+                return 'Askıya Alındı';
+            case ExamTypeDtoStatus.REJECTED:
+            case 'REJECTED':
+                return 'Reddedildi';
+            default:
+                return String(status);
+        }
+    };
+
     const [formData, setFormData] = useState<ExamTypeDto>({
         name: '',
         examLevel: '',
@@ -48,6 +78,7 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
         isOrder: false,
         isShowEvaluation: false,
         isFinalized: false,
+        status: ExamTypeDtoStatus.ACTIVE,
         isGraded: false,
         screenRecordTime: 0,
         maximumScore: 100,
@@ -72,6 +103,7 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
                 isShowEvaluation: examType.isShowEvaluation || false,
                 isFinalized: examType.isFinalized || false,
                 isGraded: examType.isGraded || false,
+                status: examType.status || ExamTypeDtoStatus.ACTIVE,
                 screenRecordTime: examType.screenRecordTime || 0,
                 maximumScore: examType.maximumScore || 100,
                 durationInSeconds: examType.durationInSeconds || 3600,
@@ -93,6 +125,17 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
     const validateForm = (): boolean => {
         const newErrors: ExamTypeFormErrors = {};
 
+        const plainText = (html?: string) => {
+            const raw = (html ?? '').trim();
+            if (!raw) return '';
+            try {
+                const doc = new DOMParser().parseFromString(raw, 'text/html');
+                return (doc.body.textContent ?? '').replace(/\s+/g, ' ').trim();
+            } catch {
+                return raw.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+            }
+        };
+
         if (!formData.name || !formData.name.trim()) {
             newErrors.name = 'Sınav tipi adı zorunludur';
         } else if (formData.name.trim().length < 3) {
@@ -107,13 +150,14 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
             newErrors.examType = 'Sınav tipi seçimi zorunludur';
         }
 
-        if (!formData.infoScreen || !formData.infoScreen.trim()) {
+        if (!plainText(formData.infoScreen)) {
             newErrors.infoScreen = 'Bilgi ekranı zorunludur';
         }
 
-        if (!formData.description || !formData.description.trim()) {
+        const descriptionText = plainText(formData.description);
+        if (!descriptionText) {
             newErrors.description = 'Açıklama zorunludur';
-        } else if (formData.description.trim().length < 10) {
+        } else if (descriptionText.length < 10) {
             newErrors.description = 'Açıklama en az 10 karakter olmalıdır';
         }
 
@@ -177,13 +221,23 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
                         {/* Sınav Seviyesi */}
                         <div className="space-y-2">
                             <Label htmlFor="examLevel">Sınav Seviyesi *</Label>
-                            <Input
-                                id="examLevel"
-                                value={formData.examLevel}
-                                onChange={(e) => handleChange('examLevel', e.target.value)}
-                                className={errors.examLevel ? 'border-red-500' : ''}
-                                placeholder="Sınav seviyesini giriniz"
-                            />
+                            <Select
+                                onValueChange={(value) => handleChange('examLevel', value as string)}
+                                value={formData.examLevel || ''}
+                            >
+                                <SelectTrigger className={errors.examLevel ? 'border-red-500' : ''}>
+                                    <SelectValue placeholder="Sınav seviyesini seçin" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        {['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].map((level) => (
+                                            <SelectItem key={level} value={level}>
+                                                {level}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
                             {errors.examLevel && (
                                 <Alert variant="destructive">
                                     <AlertDescription>{errors.examLevel}</AlertDescription>
@@ -283,12 +337,13 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
                     {/* Bilgi Ekranı */}
                     <div className="space-y-2">
                         <Label htmlFor="infoScreen">Bilgi Ekranı *</Label>
-                        <Textarea
+                        <HtmlEditor
                             id="infoScreen"
-                            value={formData.infoScreen}
-                            onChange={(e) => handleChange('infoScreen', e.target.value)}
-                            className={`min-h-[100px] ${errors.infoScreen ? 'border-red-500' : ''}`}
+                            value={formData.infoScreen || ''}
+                            onChange={(html) => handleChange('infoScreen', html)}
+                            error={!!errors.infoScreen}
                             placeholder="Sınav öncesi gösterilecek bilgi metnini giriniz"
+                            minHeightClassName="min-h-[160px]"
                         />
                         {errors.infoScreen && (
                             <Alert variant="destructive">
@@ -300,12 +355,13 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
                     {/* Açıklama */}
                     <div className="space-y-2">
                         <Label htmlFor="description">Açıklama *</Label>
-                        <Textarea
+                        <HtmlEditor
                             id="description"
-                            value={formData.description}
-                            onChange={(e) => handleChange('description', e.target.value)}
-                            className={`min-h-[100px] ${errors.description ? 'border-red-500' : ''}`}
+                            value={formData.description || ''}
+                            onChange={(html) => handleChange('description', html)}
+                            error={!!errors.description}
                             placeholder="Sınav tipi hakkında açıklama giriniz"
+                            minHeightClassName="min-h-[160px]"
                         />
                         {errors.description && (
                             <Alert variant="destructive">
@@ -316,32 +372,47 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
 
                     {/* Checkbox'lar */}
                     <div className="grid grid-cols-3 gap-4">
-                        <div className="flex items-center space-x-2">
-                            <Checkbox
-                                id="isOrder"
-                                checked={formData.isOrder}
-                                onChange={(checked) => handleChange('isOrder', !!checked)}
-                            />
-                            <Label htmlFor="isOrder">Sıralı Sınav</Label>
-                        </div>
+                        <TextYesNoCheckbox
+                            id="isOrder"
+                            checked={formData.isOrder}
+                            onChange={(checked) => handleChange('isOrder', !!checked)}
+                            html="<b>Sıralı Sınav</b><div class='text-gray-600 text-xs mt-1'>Sorular belirlenen sırayla ilerler.</div>"
+                        />
 
-                        <div className="flex items-center space-x-2">
-                            <Checkbox
-                                id="isShowEvaluation"
-                                checked={formData.isShowEvaluation}
-                                onChange={(checked) => handleChange('isShowEvaluation', !!checked)}
-                            />
-                            <Label htmlFor="isShowEvaluation">Değerlendirme Göster</Label>
-                        </div>
+                        <TextYesNoCheckbox
+                            id="isShowEvaluation"
+                            checked={formData.isShowEvaluation}
+                            onChange={(checked) => handleChange('isShowEvaluation', !!checked)}
+                            html="<b>Değerlendirme Göster</b><div class='text-gray-600 text-xs mt-1'>Sınav sonrası değerlendirme ekranı gösterilir.</div>"
+                        />
 
-                        <div className="flex items-center space-x-2">
-                            <Checkbox
-                                id="isGraded"
-                                checked={formData.isGraded}
-                                onChange={(checked) => handleChange('isGraded', !!checked)}
-                            />
-                            <Label htmlFor="isGraded">Notlandırılabilir</Label>
-                        </div>
+                        <TextYesNoCheckbox
+                            id="isGraded"
+                            checked={formData.isGraded}
+                            onChange={(checked) => handleChange('isGraded', !!checked)}
+                            html="<b>Notlandırılabilir</b><div class='text-gray-600 text-xs mt-1'>Sınav puanlanabilir/notlandırılabilir olur.</div>"
+                        />
+                    </div>
+
+                    {/* Status & Finalize */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <TextSelect
+                            id="status"
+                            value={(formData.status || ExamTypeDtoStatus.ACTIVE) as string}
+                            onChange={(value) => handleChange('status', value as ExamTypeDto['status'])}
+                            placeholder="Durum seçin"
+                            html="<b>Durum</b><div class='text-gray-600 text-xs mt-1'>Sınav tipinin aktif/pasif durumunu belirler.</div>"
+                            options={Object.values(ExamTypeDtoStatus).map((s) => ({ value: s, label: statusLabelTr(s) }))}
+                        />
+
+                        <TextYesNoCheckbox
+                            id="isFinalized"
+                            checked={!!formData.isFinalized}
+                            onChange={(checked) => handleChange('isFinalized', !!checked)}
+                            html="<b>Kesinleştirildi</b><div class='text-gray-600 text-xs mt-1'>Taslak yerine kesinleşmiş olarak işaretler.</div>"
+                            yesLabel="Evet"
+                            noLabel="Hayır"
+                        />
                     </div>
 
                     {/* Submit Button */}

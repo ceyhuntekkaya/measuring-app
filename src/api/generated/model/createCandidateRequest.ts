@@ -71,6 +71,16 @@ export interface CreateCandidateRequest {
   photoUrl?: string;
   /**
    * @minLength 0
+   * @maxLength 255
+   */
+  idCartUrl?: string;
+  /**
+   * @minLength 0
+   * @maxLength 255
+   */
+  voiceUrl?: string;
+  /**
+   * @minLength 0
    * @maxLength 100
    */
   name: string;
@@ -80,8 +90,8 @@ export interface CreateCandidateRequest {
    */
   lastName: string;
   /**
-   * @minLength 10
-   * @maxLength 11
+   * @minLength 0
+   * @maxLength 20
    */
   identityNumber: string;
   role?: CreateCandidateRequestRole;

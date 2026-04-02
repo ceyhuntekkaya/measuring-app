@@ -3,6 +3,7 @@ import type { EssayTemplateDto } from '@/api/generated/model';
 import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
 import {difficultyConverter} from "@/utils/enum-converter";
+import MaybeHtml from "@/components/ui/maybe-html";
 
 interface EssayQuestionProps {
     template: EssayTemplateDto;
@@ -28,7 +29,6 @@ const EssayQuestion: React.FC<EssayQuestionProps> = ({
                                                          initialAnswer = null,
                                                          isSubmitted = false,
                                                          questionId,
-                                                         showCorrectAnswer = false
                                                      }) => {
     const [essayText, setEssayText] = useState<string>(initialAnswer?.text || '');
     const [wordCount, setWordCount] = useState<number>(0);
@@ -36,8 +36,6 @@ const EssayQuestion: React.FC<EssayQuestionProps> = ({
     const [isFocused, setIsFocused] = useState<boolean>(false);
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-    console.log(showCorrectAnswer)
 
     useEffect(() => {
         if (initialAnswer) {
@@ -206,12 +204,14 @@ const EssayQuestion: React.FC<EssayQuestionProps> = ({
                 </div>
             )}
             */}
-            {/* Prompt */}
-            {template.prompt && (
+            {(template.description || template.instructions) && (
                 <div className="mb-4 p-4 bg-purple-50 border-l-4 border-purple-400 rounded">
-                    {//<h4 className="font-semibold text-purple-800 mb-2">Kompozisyon İstemi:</h4>
-                         }
-                    <p className="text-purple-700 whitespace-pre-wrap">{template.prompt}</p>
+                    {template.description && (
+                        <MaybeHtml className="text-purple-700 whitespace-pre-wrap" value={template.description} />
+                    )}
+                    {template.instructions && (
+                        <p className="text-purple-700 text-sm whitespace-pre-wrap mt-2">{template.instructions}</p>
+                    )}
                 </div>
             )}
 

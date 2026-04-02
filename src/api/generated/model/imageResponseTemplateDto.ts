@@ -8,11 +8,8 @@
 import type { BaseQuestionTemplateDto } from "./baseQuestionTemplateDto";
 
 export type ImageResponseTemplateDto = BaseQuestionTemplateDto & {
-  prompt?: string;
   referenceImageUrl?: string;
   maxFileSize?: number;
-  gradingCriteria?: string[];
-  rubric?: string;
   requiresManualGrading?: boolean;
   allowedFormats?: string;
   requiresDrawing?: boolean;

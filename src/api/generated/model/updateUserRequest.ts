@@ -39,7 +39,7 @@ export interface UpdateUserRequest {
   mobilePhone?: string;
   /**
    * @minLength 0
-   * @maxLength 11
+   * @maxLength 20
    */
   identityNumber?: string;
   brandSet?: BrandDto[];

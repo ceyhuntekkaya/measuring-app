@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useEffect, useRef, useState, useMemo} from 'react';
+import React, {useEffect, useState, useMemo} from 'react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Alert, AlertDescription} from "@/components/ui/alert";
 import {Button} from "@/components/ui/button";
@@ -10,6 +10,9 @@ import {Textarea} from "@/components/ui/textarea";
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import type {CandidateDto, CreateCandidateRequest, UpdateCandidateRequest, ExamSessionDto, ExamTypeDto} from "@/api/generated/model";
 import {countries, languages} from "@/types/country";
+import { usernameCheck } from "../../api/generated/candidate-management/candidate-management";
+import { parseBlobResponse } from "@/utils/api-helpers/parse-blob-response";
+import {FileUpload} from "@/components/ui/file-upload";
 
 
 
@@ -26,6 +29,12 @@ interface CandidateFormErrors {
     birthDate?: string;
     examTypeId?: string,
     examSessionId?: string
+    address?: string;
+    country?: string;
+    city?: string;
+    mainTongue?: string;
+    fatherName?: string;
+    birthPlace?: string;
 }
 
 interface CandidateFormProps {
@@ -52,7 +61,6 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
         lastName: '',
         identityNumber: '',
         mobilePhone: '',
-        gsmPhone: '',
         email: '',
         address: '',
         country: 'Türkiye',
@@ -62,6 +70,8 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
         birthPlace: '',
         birthDate: '',
         photoUrl: '',
+        idCartUrl: '',
+        voiceUrl: '',
         examTypeId: '',
         examSessionId: ''
     });
@@ -69,7 +79,6 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
     const [confirmPassword, setConfirmPassword] = useState('');
     const [errors, setErrors] = useState<CandidateFormErrors>({});
     const [showPassword, setShowPassword] = useState(false);
-    const fileInputRef = useRef(null);
 
     function toISODateString(dateStr: string | null): string {
         if (!dateStr) return '';
@@ -88,7 +97,6 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
                 lastName: candidate.lastName || '',
                 identityNumber: candidate.identityNumber || '',
                 mobilePhone: candidate.mobilePhone || '',
-                gsmPhone: candidate.gsmPhone || '',
                 email: candidate.email || '',
                 address: candidate.address || '',
                 country: candidate.country || 'Türkiye',
@@ -98,6 +106,8 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
                 birthPlace: candidate.birthPlace || '',
                 birthDate: toISODateString(candidate.birthDate || ''),
                 photoUrl: candidate.photoUrl || '',
+                idCartUrl: candidate.idCartUrl || '',
+                voiceUrl: candidate.voiceUrl || '',
                 examTypeId: candidate.examSession?.examType?.id,
                 examSessionId: candidate.examSessionId || ''
             });
@@ -106,15 +116,67 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
         }
     }, [candidate, mode]);
 
-    // Auto-generate username based on name and lastname
+    const toAsciiUsernamePart = (value: string): string => {
+        // Türkçe karakterleri de sadeleştir
+        const trMap: Record<string, string> = {
+            'ç': 'c', 'Ç': 'c',
+            'ğ': 'g', 'Ğ': 'g',
+            'ı': 'i', 'İ': 'i',
+            'ö': 'o', 'Ö': 'o',
+            'ş': 's', 'Ş': 's',
+            'ü': 'u', 'Ü': 'u'
+        };
+
+        return value
+            .split('')
+            .map((ch) => trMap[ch] ?? ch)
+            .join('')
+            .toLowerCase()
+            .replace(/\s+/g, '')
+            .replace(/[^a-z0-9]/g, '');
+    };
+
+    // Auto-generate username based on name + lastname and validate/suggest via API.
     useEffect(() => {
-        if (mode === 'create' && formData.name && formData.lastName && !formData.username) {
-            const baseUsername = `${formData.name.toLowerCase()}.${formData.lastName.toLowerCase()}`.replace(/[^a-z.]/g, '');
-            setFormData(prev => ({
-                ...prev,
-                username: baseUsername
-            }));
-        }
+        let cancelled = false;
+
+        const run = async (): Promise<void> => {
+            if (mode !== 'create') return;
+            if (!formData.name.trim() || !formData.lastName.trim()) return;
+
+            const baseUsername =
+                `${toAsciiUsernamePart(formData.name)}.${toAsciiUsernamePart(formData.lastName)}`
+                    .replace(/\.+/g, '.')
+                    .replace(/^\./, '')
+                    .replace(/\.$/, '');
+
+            if (!baseUsername || baseUsername.length < 3) return;
+
+            try {
+                const res = await usernameCheck(baseUsername);
+                const parsed = await parseBlobResponse<{ success?: boolean; data?: string }>(res as unknown as Blob);
+                const suggested = (parsed?.data || baseUsername).trim();
+
+                if (cancelled) return;
+                setFormData((prev) => ({
+                    ...prev,
+                    username: suggested
+                }));
+            } catch {
+                if (cancelled) return;
+                // API hata verirse en azından base username ile devam et
+                setFormData((prev) => ({
+                    ...prev,
+                    username: prev.username || baseUsername
+                }));
+            }
+        };
+
+        run();
+
+        return () => {
+            cancelled = true;
+        };
     }, [formData.name, formData.lastName, mode]);
 
     // Filter sessions by selected exam type (compare as string - API may return id as number)
@@ -155,8 +217,37 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
         }));
     };
 
+    const validateIdentityNumber = (rawValue: string): string | null => {
+        const value = rawValue.trim();
+        if (!value) return 'Kimlik No zorunludur';
+
+        const onlyDigits = /^\d+$/.test(value);
+        if (onlyDigits) {
+            if (!/^\d{11}$/.test(value)) {
+                return 'TC Kimlik No 11 haneli sayı olmalıdır';
+            }
+            return null;
+        }
+
+        // Pasaport no: harf/rakam ve bazı karakterleri kabul edelim
+        // (backend tarafı farklı bir kural uygularsa orada da güncellenmeli)
+        if (!/^[A-Za-z0-9\-]{5,20}$/.test(value)) {
+            return 'Pasaport No geçersiz (5-20 karakter, harf/rakam ve - kabul edilir)';
+        }
+
+        return null;
+    };
+
     const validateForm = (): boolean => {
         const newErrors: CandidateFormErrors = {};
+
+        // Exam selection validations
+        if (!String(formData.examTypeId || '').trim()) {
+            newErrors.examTypeId = 'Sınav tipi zorunludur';
+        }
+        if (!String(formData.examSessionId || '').trim()) {
+            newErrors.examSessionId = 'Oturum seçimi zorunludur';
+        }
 
         // Username validation
         if (!formData.username.trim()) {
@@ -198,26 +289,27 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
         }
 
         // Identity number validation
-        if (!formData.identityNumber.trim()) {
-            newErrors.identityNumber = 'TC Kimlik No zorunludur';
-        } else if (!/^\d{11}$/.test(formData.identityNumber.trim())) {
-            newErrors.identityNumber = 'TC Kimlik No 11 haneli sayı olmalıdır';
-        }
+        const identityError = validateIdentityNumber(formData.identityNumber);
+        if (identityError) newErrors.identityNumber = identityError;
 
         // Mobile phone validation
-        if (formData.mobilePhone && !formData.mobilePhone.trim()) {
+        if (!formData.mobilePhone || !formData.mobilePhone.trim()) {
             newErrors.mobilePhone = 'Cep telefonu zorunludur';
-        } else if (formData.mobilePhone && !/^[\d\s\-\+\(\)]+$/.test(formData.mobilePhone)) {
+        } else if (!/^[\d\s\-\+\(\)]+$/.test(formData.mobilePhone.trim())) {
             newErrors.mobilePhone = 'Geçersiz telefon formatı';
         }
 
         // Email validation
-        if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+        if (!formData.email || !formData.email.trim()) {
+            newErrors.email = 'E-posta zorunludur';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
             newErrors.email = 'Geçersiz e-posta formatı';
         }
 
         // Birth date validation
-        if (formData.birthDate) {
+        if (!formData.birthDate) {
+            newErrors.birthDate = 'Doğum tarihi zorunludur';
+        } else {
             const birthDate = new Date(formData.birthDate);
             const today = new Date();
             const age = today.getFullYear() - birthDate.getFullYear();
@@ -230,6 +322,14 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
                 newErrors.birthDate = 'Geçersiz doğum tarihi';
             }
         }
+
+        // Remaining required fields (gsm + 3 upload alanı hariç tüm alanlar)
+        if (!formData.address || !formData.address.trim()) newErrors.address = 'Adres zorunludur';
+        if (!formData.country || !formData.country.trim()) newErrors.country = 'Ülke zorunludur';
+        if (!formData.city || !formData.city.trim()) newErrors.city = 'Şehir zorunludur';
+        if (!formData.mainTongue || !formData.mainTongue.trim()) newErrors.mainTongue = 'Ana dil zorunludur';
+        if (!formData.fatherName || !formData.fatherName.trim()) newErrors.fatherName = 'Baba adı zorunludur';
+        if (!formData.birthPlace || !formData.birthPlace.trim()) newErrors.birthPlace = 'Doğum yeri zorunludur';
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -245,19 +345,22 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
                 name: formData.name.trim(),
                 lastName: formData.lastName.trim(),
                 identityNumber: formData.identityNumber.trim(),
-                mobilePhone: formData.mobilePhone || '',
-                gsmPhone: formData.gsmPhone,
-                email: formData.email,
-                address: formData.address,
-                country: formData.country,
-                city: formData.city,
-                mainTongue: formData.mainTongue,
-                fatherName: formData.fatherName,
-                birthPlace: formData.birthPlace,
+                mobilePhone: formData.mobilePhone.trim(),
+                // GSM telefonu formda yok: her zaman null gönder
+                gsmPhone: null as unknown as string,
+                email: formData.email?.trim(),
+                address: formData.address?.trim(),
+                country: formData.country?.trim(),
+                city: formData.city?.trim(),
+                mainTongue: formData.mainTongue?.trim(),
+                fatherName: formData.fatherName?.trim(),
+                birthPlace: formData.birthPlace?.trim(),
                 birthDate: formData.birthDate
                     ? new Date(formData.birthDate + 'T00:00:00').toISOString()
                     : undefined,
                 photoUrl: formData.photoUrl,
+                idCartUrl: formData.idCartUrl,
+                voiceUrl: formData.voiceUrl,
                 examTypeId: formData.examTypeId,
                 examSessionId: formData.examSessionId
             };
@@ -277,7 +380,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
             <Card>
                 <CardHeader>
                     <CardTitle>
-                        Oturum Seçimi
+                    {mode === 'update' ? "Aday Güncelle" : "Yeni Aday Oluştur"}
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -347,363 +450,27 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
                 </CardContent>
             </Card>
             <Card>
-                <CardHeader>
-                    <CardTitle>
-                        {mode === 'update' ? "Aday Güncelle" : "Yeni Aday Oluştur"}
-                    </CardTitle>
-                </CardHeader>
+               
                 <CardContent>
                     <div className="space-y-6">
-                        {/* Kimlik Bilgileri */}
-                        <div>
-                            <div className="grid grid-cols-2 gap-4">
-                                {/* Ad */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="name">Ad *</Label>
-                                    <Input
-                                        id="name"
-                                        value={formData.name}
-                                        onChange={(e) => handleChange('name', e.target.value)}
-                                        className={errors.name ? 'border-red-500' : ''}
-                                        placeholder="Adınızı giriniz"
-                                    />
-                                    {errors.name && (
-                                        <Alert variant="destructive">
-                                            <AlertDescription>{errors.name}</AlertDescription>
-                                        </Alert>
-                                    )}
-                                </div>
-
-                                {/* Soyad */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="lastName">Soyad *</Label>
-                                    <Input
-                                        id="lastName"
-                                        value={formData.lastName}
-                                        onChange={(e) => handleChange('lastName', e.target.value)}
-                                        className={errors.lastName ? 'border-red-500' : ''}
-                                        placeholder="Soyadınızı giriniz"
-                                    />
-                                    {errors.lastName && (
-                                        <Alert variant="destructive">
-                                            <AlertDescription>{errors.lastName}</AlertDescription>
-                                        </Alert>
-                                    )}
-                                </div>
-
-                                {/* TC Kimlik No */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="identityNumber">Kimlik No *</Label>
-                                    <Input
-                                        id="identityNumber"
-                                        value={formData.identityNumber}
-                                        onChange={(e) => handleChange('identityNumber', e.target.value)}
-                                        className={errors.identityNumber ? 'border-red-500' : ''}
-                                        placeholder="12345678901"
-                                        maxLength={11}
-                                        disabled={mode === 'update'}
-                                    />
-                                    {errors.identityNumber && (
-                                        <Alert variant="destructive">
-                                            <AlertDescription>{errors.identityNumber}</AlertDescription>
-                                        </Alert>
-                                    )}
-                                </div>
-
-                                {/* Doğum Tarihi */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="birthDate">Doğum Tarihi</Label>
-                                    <Input
-                                        id="birthDate"
-                                        type="date"
-                                        value={formData.birthDate}
-                                        onChange={(e) => handleChange('birthDate', e.target.value)}
-                                        className={errors.birthDate ? 'border-red-500' : ''}
-                                        max={new Date(Date.now() - 16 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
-                                    />
-                                    {errors.birthDate && (
-                                        <Alert variant="destructive">
-                                            <AlertDescription>{errors.birthDate}</AlertDescription>
-                                        </Alert>
-                                    )}
-                                </div>
-
-                                {/* Baba Adı */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="fatherName">Baba Adı</Label>
-                                    <Input
-                                        id="fatherName"
-                                        value={formData.fatherName}
-                                        onChange={(e) => handleChange('fatherName', e.target.value)}
-                                        placeholder="Baba adını giriniz"
-                                    />
-                                </div>
-
-                                {/* Doğum Yeri */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="birthPlace">Doğum Yeri</Label>
-                                    <Input
-                                        id="birthPlace"
-                                        value={formData.birthPlace}
-                                        onChange={(e) => handleChange('birthPlace', e.target.value)}
-                                        placeholder="Doğum yerini giriniz"
-                                    />
+                        {mode === 'create' && !formData.examSessionId ? (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <div className="text-sm text-blue-800 font-medium">
+                                    Devam etmek için önce <span className="font-semibold">Sınav Tipi</span> ve <span className="font-semibold">Oturum</span> seçin.
                                 </div>
                             </div>
-                        </div>
-
-                        {/* Hesap Bilgileri */}
-                        <div>
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">Hesap Bilgileri</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                {/* Kullanıcı Adı */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="username">Kullanıcı Adı *</Label>
-                                    <Input
-                                        id="username"
-                                        value={formData.username}
-                                        onChange={(e) => handleChange('username', e.target.value)}
-                                        className={errors.username ? 'border-red-500' : ''}
-                                        placeholder="Kullanıcı adını giriniz"
-                                    />
-                                    {errors.username && (
-                                        <Alert variant="destructive">
-                                            <AlertDescription>{errors.username}</AlertDescription>
-                                        </Alert>
-                                    )}
-                                </div>
-
-                                {mode === 'create' && (
-                                    <>
-                                        {/* Şifre */}
-                                        <div className="space-y-2">
-                                            <Label htmlFor="password">Şifre *</Label>
-                                            <div className="relative">
-                                                <Input
-                                                    id="password"
-                                                    type={showPassword ? "text" : "password"}
-                                                    value={password}
-                                                    onChange={(e) => setPassword(e.target.value)}
-                                                    className={errors.password ? 'border-red-500' : ''}
-                                                    placeholder="Şifrenizi giriniz"
-                                                />
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="absolute right-0 top-0 h-full px-3"
-                                                    onClick={() => setShowPassword(!showPassword)}
-                                                >
-                                                    {showPassword ? "Gizle" : "Göster"}
-                                                </Button>
-                                            </div>
-                                            {errors.password && (
-                                                <Alert variant="destructive">
-                                                    <AlertDescription>{errors.password}</AlertDescription>
-                                                </Alert>
-                                            )}
-                                        </div>
-
-                                        {/* Şifre Tekrarı */}
-                                        <div className="space-y-2 col-span-2">
-                                            <Label htmlFor="confirmPassword">Şifre Tekrarı *</Label>
-                                            <Input
-                                                id="confirmPassword"
-                                                type="password"
-                                                value={confirmPassword}
-                                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                                className={errors.confirmPassword ? 'border-red-500' : ''}
-                                                placeholder="Şifrenizi tekrar giriniz"
-                                            />
-                                            {errors.confirmPassword && (
-                                                <Alert variant="destructive">
-                                                    <AlertDescription>{errors.confirmPassword}</AlertDescription>
-                                                </Alert>
-                                            )}
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* İletişim Bilgileri */}
-                        <div>
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">İletişim Bilgileri</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                {/* Cep Telefonu */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="mobilePhone">Cep Telefonu *</Label>
-                                    <Input
-                                        id="mobilePhone"
-                                        value={formData.mobilePhone}
-                                        onChange={(e) => handleChange('mobilePhone', e.target.value)}
-                                        className={errors.mobilePhone ? 'border-red-500' : ''}
-                                        placeholder="+90 555 123 4567"
-                                    />
-                                    {errors.mobilePhone && (
-                                        <Alert variant="destructive">
-                                            <AlertDescription>{errors.mobilePhone}</AlertDescription>
-                                        </Alert>
-                                    )}
-                                </div>
-
-                                {/* GSM Telefonu */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="gsmPhone">GSM Telefonu</Label>
-                                    <Input
-                                        id="gsmPhone"
-                                        value={formData.gsmPhone}
-                                        onChange={(e) => handleChange('gsmPhone', e.target.value)}
-                                        placeholder="+90 555 987 6543"
-                                    />
-                                </div>
-
-                                {/* E-posta */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="email">E-posta</Label>
-                                    <Input
-                                        id="email"
-                                        type="email"
-                                        value={formData.email}
-                                        onChange={(e) => handleChange('email', e.target.value)}
-                                        className={errors.email ? 'border-red-500' : ''}
-                                        placeholder="ornek@email.com"
-                                    />
-                                    {errors.email && (
-                                        <Alert variant="destructive">
-                                            <AlertDescription>{errors.email}</AlertDescription>
-                                        </Alert>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Lokasyon Bilgileri */}
-                        <div>
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">Lokasyon Bilgileri</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                {/* Ülke */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="country">Ülke</Label>
-                                    <Select
-                                        onValueChange={(value) => handleChange('country', value as string)}
-                                        value={formData.country || ''}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Ülke seçin"/>
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectGroup>
-                                                {countries.map((country) => (
-                                                    <SelectItem key={country.code} value={country.name}>
-                                                        {country.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectGroup>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                {/* Şehir */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="city">Şehir</Label>
-                                    <Input
-                                        id="city"
-                                        value={formData.city}
-                                        onChange={(e) => handleChange('city', e.target.value)}
-                                        placeholder="Şehir adını giriniz"
-                                    />
-                                </div>
-
-                                {/* Ana Dil */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="mainTongue">Ana Dil</Label>
-                                    <Select
-                                        onValueChange={(value) => handleChange('mainTongue', value as string)}
-                                        value={formData.mainTongue || ''}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Ana dil seçin"/>
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectGroup>
-                                                {languages.map((language) => (
-                                                    <SelectItem key={language.code} value={language.name}>
-                                                        {language.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectGroup>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                {/* Fotoğraf URL */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="photoUrl">Fotoğraf</Label>
-                                    <input
-                                        ref={fileInputRef}
-                                        type="file"
-                                        multiple={false}
-
-                                        onChange={(e) => handleChange('photoUrl', e.target.value)}
-                                        onClick={(event) => {
-                                            (event.target as HTMLInputElement).value = "";
-                                        }}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="photoUrl">Kimlik</Label>
-                                    <input
-                                        ref={fileInputRef}
-                                        type="file"
-                                        multiple={false}
-
-                                        onChange={(e) => handleChange('photoUrl', e.target.value)}
-                                        onClick={(event) => {
-                                            (event.target as HTMLInputElement).value = "";
-                                        }}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="photoUrl">Ses Kaydı</Label>
-                                    <input
-                                        ref={fileInputRef}
-                                        type="file"
-                                        multiple={false}
-
-                                        onChange={(e) => handleChange('photoUrl', e.target.value)}
-                                        onClick={(event) => {
-                                            (event.target as HTMLInputElement).value = "";
-                                        }}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Adres */}
-                            <div className="space-y-2 mt-4">
-                                <Label htmlFor="address">Adres</Label>
-                                <Textarea
-                                    id="address"
-                                    value={formData.address}
-                                    onChange={(e) => handleChange('address', e.target.value)}
-                                    className="min-h-[80px]"
-                                    placeholder="Adres bilgilerini giriniz"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Bilgi Mesajları */}
+                        ) : (
+                            <>
+                            {/* Bilgi Mesajları */}
                         {mode === 'create' && (
                             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                                 <div className="flex">
                                     <div className="ml-3">
-                                        <h3 className="text-sm font-medium text-blue-800">
-                                            Aday Oluşturma Bilgileri
-                                        </h3>
+                                       
                                         <div className="mt-2 text-sm text-blue-700">
-                                            <ul className="list-disc list-inside space-y-1">
+                                            <ul className="list-disc list-inside grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
                                                 <li>Kimlik No oluşturulduktan sonra değiştirilemez</li>
-                                                <li>Kullanıcı adı ad ve soyada göre otomatik oluşturulur</li>
+                                                <li>Kullanıcı adı ad ve soyada göre otomatik oluşturulur ve değiştirilemez</li>
                                                 <li>Güvenli bir şifre oluşturun (en az 6 karakter)</li>
                                                 <li>E-posta adresi sistem bildirimleri için kullanılır</li>
                                             </ul>
@@ -732,6 +499,360 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
                             </div>
                         )}
 
+                                {/* 2. satır: ad, soyad, baba adı */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="name">Ad *</Label>
+                                        <Input
+                                            id="name"
+                                            value={formData.name}
+                                            onChange={(e) => handleChange('name', e.target.value)}
+                                            className={errors.name ? 'border-red-500' : ''}
+                                            placeholder="Adınızı giriniz"
+                                        />
+                                        {errors.name && (
+                                            <Alert variant="destructive">
+                                                <AlertDescription>{errors.name}</AlertDescription>
+                                            </Alert>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="lastName">Soyad *</Label>
+                                        <Input
+                                            id="lastName"
+                                            value={formData.lastName}
+                                            onChange={(e) => handleChange('lastName', e.target.value)}
+                                            className={errors.lastName ? 'border-red-500' : ''}
+                                            placeholder="Soyadınızı giriniz"
+                                        />
+                                        {errors.lastName && (
+                                            <Alert variant="destructive">
+                                                <AlertDescription>{errors.lastName}</AlertDescription>
+                                            </Alert>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="fatherName">Baba Adı *</Label>
+                                        <Input
+                                            id="fatherName"
+                                            value={formData.fatherName}
+                                            onChange={(e) => handleChange('fatherName', e.target.value)}
+                                            placeholder="Baba adını giriniz"
+                                            className={errors.fatherName ? 'border-red-500' : ''}
+                                        />
+                                        {errors.fatherName && (
+                                            <Alert variant="destructive">
+                                                <AlertDescription>{errors.fatherName}</AlertDescription>
+                                            </Alert>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* 3. satır: kimlik no, doğum tarihi, doğum yeri */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="identityNumber">Kimlik No (TC / Pasaport) *</Label>
+                                        <Input
+                                            id="identityNumber"
+                                            value={formData.identityNumber}
+                                            onChange={(e) => handleChange('identityNumber', e.target.value)}
+                                            className={errors.identityNumber ? 'border-red-500' : ''}
+                                            placeholder="TC: 12345678901 veya Pasaport: U1234567"
+                                            maxLength={20}
+                                            disabled={mode === 'update'}
+                                        />
+                                        {errors.identityNumber && (
+                                            <Alert variant="destructive">
+                                                <AlertDescription>{errors.identityNumber}</AlertDescription>
+                                            </Alert>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="birthDate">Doğum Tarihi *</Label>
+                                        <Input
+                                            id="birthDate"
+                                            type="date"
+                                            lang="tr-TR"
+                                            value={formData.birthDate || ''}
+                                            onChange={(e) => handleChange('birthDate', e.target.value)}
+                                            className={errors.birthDate ? 'border-red-500' : ''}
+                                            max={new Date(Date.now() - 16 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+                                        />
+                                        {errors.birthDate && (
+                                            <Alert variant="destructive">
+                                                <AlertDescription>{errors.birthDate}</AlertDescription>
+                                            </Alert>
+                                        )}
+                                        
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="birthPlace">Doğum Yeri *</Label>
+                                        <Input
+                                            id="birthPlace"
+                                            value={formData.birthPlace}
+                                            onChange={(e) => handleChange('birthPlace', e.target.value)}
+                                            placeholder="Doğum yerini giriniz"
+                                            className={errors.birthPlace ? 'border-red-500' : ''}
+                                        />
+                                        {errors.birthPlace && (
+                                            <Alert variant="destructive">
+                                                <AlertDescription>{errors.birthPlace}</AlertDescription>
+                                            </Alert>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* 4. satır: kullanıcı adı, şifre, şifre tekrarı */}
+                                <div className={`grid grid-cols-1 ${mode === 'create' ? 'md:grid-cols-3' : 'md:grid-cols-1'} gap-4`}>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="username">Kullanıcı Adı *</Label>
+                                        <Input
+                                            id="username"
+                                            value={formData.username}
+                                            disabled
+                                            className={errors.username ? 'border-red-500' : ''}
+                                            placeholder="Otomatik oluşturulur"
+                                        />
+                                        {errors.username && (
+                                            <Alert variant="destructive">
+                                                <AlertDescription>{errors.username}</AlertDescription>
+                                            </Alert>
+                                        )}
+                                    </div>
+
+                                    {mode === 'create' && (
+                                        <>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="password">Şifre *</Label>
+                                                <div className="relative">
+                                                    <Input
+                                                        id="password"
+                                                        type={showPassword ? "text" : "password"}
+                                                        value={password}
+                                                        onChange={(e) => setPassword(e.target.value)}
+                                                        className={errors.password ? 'border-red-500' : ''}
+                                                        placeholder="Şifrenizi giriniz"
+                                                    />
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="absolute right-0 top-0 h-full px-3"
+                                                        onClick={() => setShowPassword(!showPassword)}
+                                                    >
+                                                        {showPassword ? "Gizle" : "Göster"}
+                                                    </Button>
+                                                </div>
+                                                {errors.password && (
+                                                    <Alert variant="destructive">
+                                                        <AlertDescription>{errors.password}</AlertDescription>
+                                                    </Alert>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label htmlFor="confirmPassword">Şifre Tekrarı *</Label>
+                                                <Input
+                                                    id="confirmPassword"
+                                                    type="password"
+                                                    value={confirmPassword}
+                                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                                    className={errors.confirmPassword ? 'border-red-500' : ''}
+                                                    placeholder="Şifrenizi tekrar giriniz"
+                                                />
+                                                {errors.confirmPassword && (
+                                                    <Alert variant="destructive">
+                                                        <AlertDescription>{errors.confirmPassword}</AlertDescription>
+                                                    </Alert>
+                                                )}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+
+                                {/* 5. satır: cep telefonu, eposta, anadil */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="mobilePhone">Cep Telefonu *</Label>
+                                        <Input
+                                            id="mobilePhone"
+                                            value={formData.mobilePhone}
+                                            onChange={(e) => handleChange('mobilePhone', e.target.value)}
+                                            className={errors.mobilePhone ? 'border-red-500' : ''}
+                                            placeholder="+90 555 123 4567"
+                                        />
+                                        {errors.mobilePhone && (
+                                            <Alert variant="destructive">
+                                                <AlertDescription>{errors.mobilePhone}</AlertDescription>
+                                            </Alert>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="email">E-posta *</Label>
+                                        <Input
+                                            id="email"
+                                            type="email"
+                                            value={formData.email}
+                                            onChange={(e) => handleChange('email', e.target.value)}
+                                            className={errors.email ? 'border-red-500' : ''}
+                                            placeholder="ornek@email.com"
+                                        />
+                                        {errors.email && (
+                                            <Alert variant="destructive">
+                                                <AlertDescription>{errors.email}</AlertDescription>
+                                            </Alert>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="mainTongue">Ana Dil *</Label>
+                                        <Select
+                                            onValueChange={(value) => handleChange('mainTongue', value as string)}
+                                            value={formData.mainTongue || ''}
+                                        >
+                                            <SelectTrigger className={errors.mainTongue ? 'border-red-500' : ''}>
+                                                <SelectValue placeholder="Ana dil seçin"/>
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    {languages.map((language) => (
+                                                        <SelectItem key={language.code} value={language.name}>
+                                                            {language.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                        {errors.mainTongue && (
+                                            <Alert variant="destructive">
+                                                <AlertDescription>{errors.mainTongue}</AlertDescription>
+                                            </Alert>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* 6. satır: ülke, şehir, adres */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="country">Ülke *</Label>
+                                        <Select
+                                            onValueChange={(value) => handleChange('country', value as string)}
+                                            value={formData.country || ''}
+                                        >
+                                            <SelectTrigger className={errors.country ? 'border-red-500' : ''}>
+                                                <SelectValue placeholder="Ülke seçin"/>
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    {countries.map((country) => (
+                                                        <SelectItem key={country.code} value={country.name}>
+                                                            {country.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                        {errors.country && (
+                                            <Alert variant="destructive">
+                                                <AlertDescription>{errors.country}</AlertDescription>
+                                            </Alert>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="city">Şehir *</Label>
+                                        <Input
+                                            id="city"
+                                            value={formData.city}
+                                            onChange={(e) => handleChange('city', e.target.value)}
+                                            placeholder="Şehir adını giriniz"
+                                            className={errors.city ? 'border-red-500' : ''}
+                                        />
+                                        {errors.city && (
+                                            <Alert variant="destructive">
+                                                <AlertDescription>{errors.city}</AlertDescription>
+                                            </Alert>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="address">Adres *</Label>
+                                        <Textarea
+                                            id="address"
+                                            value={formData.address}
+                                            onChange={(e) => handleChange('address', e.target.value)}
+                                            className={`min-h-[80px] ${errors.address ? 'border-red-500' : ''}`}
+                                            placeholder="Adres bilgilerini giriniz"
+                                        />
+                                        {errors.address && (
+                                            <Alert variant="destructive">
+                                                <AlertDescription>{errors.address}</AlertDescription>
+                                            </Alert>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* 7. satır: upload alanları */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="space-y-2">
+                                        <FileUpload
+                                            acceptedFileTypes={['image']}
+                                            maxFileSize={10}
+                                            entityId={(candidate?.id || formData.identityNumber || 'candidate_new') as string}
+                                            uploadType="photoUrl"
+                                            multiple={false}
+                                            labelText="Fotoğraf Yükle"
+                                            existingFileUrl={formData.photoUrl || ''}
+                                            onUploadComplete={(files) => {
+                                                if (files && files.length > 0) {
+                                                    handleChange('photoUrl', files[0].path ?? '');
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <FileUpload
+                                            acceptedFileTypes={['image']}
+                                            maxFileSize={10}
+                                            entityId={(candidate?.id || formData.identityNumber || 'candidate_new') as string}
+                                            uploadType="idCartUrl"
+                                            multiple={false}
+                                            labelText="Kimlik Fotoğrafı Yükle"
+                                            existingFileUrl={formData.idCartUrl || ''}
+                                            onUploadComplete={(files) => {
+                                                if (files && files.length > 0) {
+                                                    handleChange('idCartUrl', files[0].path ?? '');
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <FileUpload
+                                            acceptedFileTypes={['audio']}
+                                            maxFileSize={20}
+                                            entityId={(candidate?.id || formData.identityNumber || 'candidate_new') as string}
+                                            uploadType="voiceUrl"
+                                            multiple={false}
+                                            labelText="Ses Kaydı Yükle"
+                                            existingFileUrl={formData.voiceUrl || ''}
+                                            onUploadComplete={(files) => {
+                                                if (files && files.length > 0) {
+                                                    handleChange('voiceUrl', files[0].path ?? '');
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            </>
+                        )}
+
+                        
+
                         {/* Form Özeti */}
                         {(formData.name && formData.lastName && formData.identityNumber) && (
                             <div className="bg-gray-50 p-4 rounded-lg">
@@ -742,7 +863,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
                                             className="font-medium">Ad Soyad:</span> {formData.name} {formData.lastName}
                                     </div>
                                     <div>
-                                        <span className="font-medium">TC Kimlik:</span> {formData.identityNumber}
+                                        <span className="font-medium">Kimlik No:</span> {formData.identityNumber}
                                     </div>
                                     <div>
                                         <span className="font-medium">Kullanıcı Adı:</span> {formData.username}

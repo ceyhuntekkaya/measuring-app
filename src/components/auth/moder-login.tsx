@@ -203,7 +203,7 @@ export default function CorporateLoginPage() {
 
                     {/* Footer */}
                     <div className="text-center mt-8 text-white/50 text-xs">
-                        <p>© 2025 Genixo. All rights reserved..</p>
+                        <p>© 6 Genixo. All rights reserved..</p>
                         <p className="mt-1">Protected by a secure connection.</p>
                     </div>
                 </div>

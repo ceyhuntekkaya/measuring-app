@@ -6,6 +6,7 @@ import {difficultyConverter} from "@/utils/enum-converter";
 import {uploadVideoFile} from "@/services/api/upload-file";
 import type {UploadedFileDto} from "@/api/generated/model";
 import siteConfig from "@/config/config.json";
+import MaybeHtml from "@/components/ui/maybe-html";
 
 interface VideoResponseQuestionProps {
     template: VideoResponseTemplateDto;
@@ -33,9 +34,7 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                                                                          initialAnswer = null,
                                                                          questionId,
                                                                          isSubmitted = false,
-                                                                         showCorrectAnswer = false
                                                                      }) => {
-    console.log(showCorrectAnswer)
     const [videoAnswer, setVideoAnswer] = useState<VideoAnswerData | null>(initialAnswer);
     const [videoAnswerPath, setVideoAnswerPath] = useState<string>('');
     const [isRecording, setIsRecording] = useState<boolean>(false);
@@ -394,9 +393,14 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                 </div>
             )}
 
-            {template.prompt && (
+            {(template.description || template.instructions) && (
                 <div className="mb-4 p-4 bg-purple-50 border-l-4 border-purple-400 rounded">
-                    <p className="text-purple-700">{template.prompt}</p>
+                    {template.description && (
+                        <MaybeHtml className="text-purple-700" value={template.description} />
+                    )}
+                    {template.instructions && (
+                        <p className="text-purple-700 text-sm whitespace-pre-wrap mt-2">{template.instructions}</p>
+                    )}
                 </div>
             )}
 

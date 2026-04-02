@@ -36,6 +36,7 @@ import HotSpotQuestion from '@/components/template/HotSpotQuestion';
 import MultipleResponseQuestion from '@/components/template/MultipleResponseQuestion';
 import OrderingQuestion from '@/components/template/OrderingQuestion';
 import FilePreview from '@/components/ui/file-preview';
+import HtmlRender from '@/components/ui/html-render';
 
 interface ExamPreviewListProps {
     exam: ExamDto;
@@ -286,7 +287,7 @@ const ExamPreviewList: React.FC<ExamPreviewListProps> = ({ exam }) => {
                                     {questionGroup.headers.map((header, headerIndex) => (
                                         <div key={header.id || headerIndex} className="mb-2 last:mb-0">
                                             {header.mediaType === EMediaType.TEXT ? (
-                                                <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: header.content || '' }} />
+                                                <HtmlRender className="prose max-w-none" html={header.content || ''} />
                                             ) : (
                                                 <div className="flex justify-center">
                                                     <FilePreview size="medium" fileUrl={header.content || ''} alt="Header" />

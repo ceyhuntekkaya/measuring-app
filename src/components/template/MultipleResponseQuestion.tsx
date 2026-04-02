@@ -3,6 +3,8 @@ import type {MultipleResponseTemplateDto, ResponseOption} from '@/api/generated/
 import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
 import {difficultyConverter} from "@/utils/enum-converter";
+import HtmlRender from "@/components/ui/html-render";
+import MaybeHtml from "@/components/ui/maybe-html";
 
 interface MultipleResponseQuestionProps {
     template: MultipleResponseTemplateDto;
@@ -252,6 +254,13 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
         if (!mediaUrl) return null;
 
         const type = mediaType?.toLowerCase() || '';
+        if (type === 'text') {
+            return (
+                <div className="mt-2">
+                    <HtmlRender html={mediaUrl} />
+                </div>
+            );
+        }
         const isImage = type === 'image' || /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(mediaUrl);
         const isVideo = type === 'video' || /\.(mp4|webm|ogg)$/i.test(mediaUrl);
         const isAudio = type === 'audio' || /\.(mp3|wav|ogg)$/i.test(mediaUrl);
@@ -346,7 +355,7 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
 
         return (
             <div className={`mt-2 text-sm italic ${feedbackColor}`}>
-                <strong>Açıklama:</strong> {result.feedback}
+                <strong>Açıklama:</strong> <MaybeHtml value={result.feedback} />
             </div>
         );
     };
@@ -426,14 +435,14 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
             {/* Question Statement
             {template.statement && (
                 <div className="mb-6">
-                    <p className="text-gray-800 text-base leading-relaxed">{template.statement}</p>
+                    <MaybeHtml className="text-gray-800 text-base leading-relaxed" value={template.statement} />
                 </div>
             )}
             */}
             {/* Question Text */}
             {template.question && (
                 <div className="mb-4 p-4 bg-purple-50 border-l-4 border-purple-400 rounded">
-                    <p className="text-purple-800 font-medium">{template.question}</p>
+                    <MaybeHtml className="text-purple-800 font-medium" value={template.question} />
                 </div>
             )}
 
@@ -510,7 +519,7 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
                                 <div className="flex items-start justify-between">
                                     <div className="flex-1">
                                         <p className="text-gray-800 font-medium break-words">
-                                            {option.text}
+                                            <MaybeHtml value={option.text} />
                                         </p>
 
                                         {/* Media */}
@@ -537,7 +546,7 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
             {isSubmitted && showCorrectAnswer && template.explanation && (
                 <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
                     <h4 className="font-semibold text-yellow-800 mb-2">Genel Açıklama:</h4>
-                    <p className="text-yellow-700">{template.explanation}</p>
+                    <MaybeHtml className="text-yellow-700" value={template.explanation} />
                 </div>
             )}
 

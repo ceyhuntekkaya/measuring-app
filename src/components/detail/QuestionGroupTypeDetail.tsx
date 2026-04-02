@@ -3,7 +3,7 @@ import type { QuestionGroupTypeDto } from '@/api/generated/model/questionGroupTy
 import type { ExamTypeDto } from '@/api/generated/model/examTypeDto';
 import { EQuestionGroupTemplateLevel, EQuestionGroupType, EExamType } from '@/types/exam/enum';
 import {Button} from "@/components/ui/button";
-import { examTypeConverter, approvalStatusConverter, getApprovalStatusColor } from '@/utils/enum-converter';
+import { examTypeConverter } from '@/utils/enum-converter';
 
 interface QuestionGroupTypeDetailProps {
     selectedType: QuestionGroupTypeDto | null;
@@ -41,15 +41,6 @@ const QuestionGroupTypeDetail: React.FC<QuestionGroupTypeDetailProps> = ({ selec
         return groupType ? typeLabels[groupType] || groupType : 'Belirtilmedi';
     };
 
-
-    const getApprovalProgress = () => {
-        const current = selectedType.currentApprovalCount || 0;
-        const required = selectedType.requiredApprovalCount || 0;
-        return { current, required, percentage: required > 0 ? (current / required) * 100 : 0 };
-    };
-
-    const approvalProgress = getApprovalProgress();
-
     return (
         <div className="mx-auto p-4 space-y-4">
 
@@ -81,9 +72,7 @@ const QuestionGroupTypeDetail: React.FC<QuestionGroupTypeDetailProps> = ({ selec
                             {selectedType.name || 'İsimsiz Soru Grup Türü'}
                         </h1>
                         <div className="flex items-center space-x-4">
-              <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getApprovalStatusColor(selectedType.approvalStatus)}`}>
-                {approvalStatusConverter(selectedType.approvalStatus)}
-              </span>
+             
                             {selectedType.orderNumber && (
                                 <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
                   Sıra: {selectedType.orderNumber}
@@ -166,7 +155,7 @@ const QuestionGroupTypeDetail: React.FC<QuestionGroupTypeDetailProps> = ({ selec
                 </div>
             </div>
 
-            {/* Approval Status */}
+            {/* Approval Status
             <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Onay Durumu</h2>
                 <div className="space-y-4">
@@ -216,7 +205,7 @@ const QuestionGroupTypeDetail: React.FC<QuestionGroupTypeDetailProps> = ({ selec
                     )}
                 </div>
             </div>
-
+ */}
             {/* Exam Section Information */}
             {selectedType.examSection && (
                 <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">

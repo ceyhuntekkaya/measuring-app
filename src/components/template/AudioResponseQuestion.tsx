@@ -6,6 +6,7 @@ import {difficultyConverter} from "@/utils/enum-converter";
 import type {UploadedFileDto} from "@/api/generated/model";
 import {uploadAudioFile} from "@/services/api/upload-file";
 import siteConfig from "@/config/config.json";
+import MaybeHtml from "@/components/ui/maybe-html";
 
 interface AudioResponseQuestionProps {
     template: AudioResponseTemplateDto;
@@ -33,12 +34,10 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                                                                          initialAnswer = null,
                                                                          questionId,
                                                                          isSubmitted = false,
-                                                                         showCorrectAnswer = false
                                                                      }) => {
     const [audioAnswer, setAudioAnswer] = useState<AudioAnswerData | null>(initialAnswer);
 
 
-    console.log(showCorrectAnswer)
     const [audioAnswerPath, setAudioAnswerPath] = useState<string>('');
     const [isRecording, setIsRecording] = useState<boolean>(false);
     const [isPaused, setIsPaused] = useState<boolean>(false);
@@ -489,9 +488,14 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                 </div>
             )}
 
-            {template.prompt && (
+            {(template.description || template.instructions) && (
                 <div className="mb-4 p-4 bg-purple-50 border-l-4 border-purple-400 rounded">
-                    <p className="text-purple-700">{template.prompt}</p>
+                    {template.description && (
+                        <MaybeHtml className="text-purple-700" value={template.description} />
+                    )}
+                    {template.instructions && (
+                        <p className="text-purple-700 text-sm whitespace-pre-wrap mt-2">{template.instructions}</p>
+                    )}
                 </div>
             )}
 

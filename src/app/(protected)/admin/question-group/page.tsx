@@ -112,6 +112,23 @@ export default function QuestionGroupPage() {
             }
         },
         {
+            key: 'preview',
+            header: 'ÖN İZLEME',
+            render: (value, record) => {
+                const groupId = String(record.id || '');
+                return (
+                    <div>
+                        <Link
+                            className="btn btn-info"
+                            href={`/admin/question-group/${groupId}/preview`}
+                        >
+                            Ön İzleme
+                        </Link>
+                    </div>
+                );
+            }
+        },
+        {
             key: 'id',
             header: ' ',
             render: (value, record) => 
@@ -200,22 +217,20 @@ export default function QuestionGroupPage() {
     return (
         <div className="space-y-6">
             <PageHeader actions={
-                <ActionButtons
-                    onAdd={handleAdd}
-                    addButtonText="Yeni Soru Grubu"
-                />
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={handleAnalyzeAnswers}
+                        disabled={isAnalyzing || !questionGroups || questionGroups.length === 0}
+                        className="btn btn-primary"
+                    >
+                        {isAnalyzing ? 'Analiz Ediliyor...' : 'Cevap Durumunu Analiz Et'}
+                    </button>
+                    <ActionButtons
+                        onAdd={handleAdd}
+                        addButtonText="Yeni Soru Grubu"
+                    />
+                </div>
             }/>
-
-            <div className="p-6 pt-1">
-                <button
-                    onClick={handleAnalyzeAnswers}
-                    disabled={isAnalyzing || !questionGroups || questionGroups.length === 0}
-                    className="btn btn-primary"
-                >
-                    {isAnalyzing ? 'Analiz Ediliyor...' : 'Cevap Durumunu Analiz Et'}
-                </button>
-            </div>
-
 
             <div className="p-6 pt-1">
                 {questionGroups && questionGroups.length > 0 && (

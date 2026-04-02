@@ -44,6 +44,22 @@ import VideoResponseTemplateForm, {
     VideoResponseTemplateFormHandle
 } from "@/components/form/template/VideoResponseTemplateForm";
 import type {BaseQuestionTemplateFormData} from "@/components/form/QuestionForm";
+import {Label} from "@/components/ui/label";
+import {Textarea} from "@/components/ui/textarea";
+import HtmlEditor from "@/components/ui/html-editor";
+
+const STEM_QUESTION_TYPES: EQuestionType[] = [
+    EQuestionType.ESSAY,
+    EQuestionType.AUDIO_RESPONSE,
+    EQuestionType.VIDEO_RESPONSE,
+    EQuestionType.IMAGE_RESPONSE,
+];
+
+function hasStemText(description: string | undefined, instructions: string | undefined): boolean {
+    const d = (description || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    const i = (instructions || '').trim();
+    return d.length > 0 || i.length > 0;
+}
 
 interface BaseQuestionTemplateFormErrors {
     title?: string;
@@ -52,6 +68,7 @@ interface BaseQuestionTemplateFormErrors {
     points?: string;
     timeLimit?: string;
     questionType?: string;
+    description?: string;
 }
 
 // Validation handle interface for parent
@@ -87,7 +104,8 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
         AudioResponseTemplateFormHandle |
         DragAndDropTemplateFormHandle |
         EssayTemplateFormHandle |
-        ImageResponseTemplateFormHandle; // Diğerleri eklenecek
+        ImageResponseTemplateFormHandle |
+        VideoResponseTemplateFormHandle;
     const templateValidateRef = useRef<TemplateFormHandle>(null);
 
     // Value prop'u değiştiğinde form data'yı güncelle
@@ -164,6 +182,11 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
 
         if (!formData.questionType) {
             newErrors.questionType = 'Soru tipi seçilmelidir';
+        }
+
+        if (STEM_QUESTION_TYPES.includes(questionType) &&
+            !hasStemText(formData.description, formData.instructions)) {
+            newErrors.description = 'Soru metni (açıklama) veya talimatlar zorunludur';
         }
 
         setErrors(newErrors);
@@ -321,6 +344,46 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
     return (
         <div>
             <div className="space-y-0">
+                {STEM_QUESTION_TYPES.includes(questionType) && (
+                    <div className="space-y-4 mb-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="template-description">Soru metni (açıklama) *</Label>
+                            <HtmlEditor
+                                id="template-description"
+                                value={formData.description || ''}
+                                onChange={(html) =>
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        description: html,
+                                    }))
+                                }
+                                error={!!errors.description}
+                                minHeightClassName="min-h-[120px]"
+                                placeholder="Öğrenciye gösterilecek soru metnini giriniz"
+                            />
+                            {errors.description && (
+                                <Alert variant="destructive">
+                                    <AlertDescription>{errors.description}</AlertDescription>
+                                </Alert>
+                            )}
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="template-instructions">Talimatlar</Label>
+                            <Textarea
+                                id="template-instructions"
+                                value={formData.instructions || ''}
+                                onChange={(e) =>
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        instructions: e.target.value,
+                                    }))
+                                }
+                                className="min-h-[80px]"
+                                placeholder="Ek talimatlar (isteğe bağlı)"
+                            />
+                        </div>
+                    </div>
+                )}
                 <div className="mt-1">
                     {renderTemplateSpecificForm()}
                 </div>

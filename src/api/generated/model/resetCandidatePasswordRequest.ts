@@ -6,6 +6,12 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface MoveContentRequest {
-  newParentId?: string;
+export interface ResetCandidatePasswordRequest {
+  /** @minLength 1 */
+  username: string;
+  /**
+   * @minLength 6
+   * @maxLength 100
+   */
+  newPassword: string;
 }

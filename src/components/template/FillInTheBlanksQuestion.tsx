@@ -3,6 +3,7 @@ import type {FillInTheBlanksTemplateDto} from '@/api/generated/model';
 import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
 import {difficultyConverter} from "@/utils/enum-converter";
+import MaybeHtml from "@/components/ui/maybe-html";
 
 interface FillInTheBlanksQuestionProps {
     template: FillInTheBlanksTemplateDto;
@@ -382,7 +383,7 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
 
                             {result.feedback && (
                                 <div className="mt-2 text-sm italic text-red-700">
-                                    <strong>Açıklama:</strong> {result.feedback}
+                                    <strong>Açıklama:</strong> <MaybeHtml value={result.feedback} />
                                 </div>
                             )}
                         </div>
@@ -509,7 +510,7 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
             {isSubmitted && showCorrectAnswer && template.explanation && (
                 <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
                     <h4 className="font-semibold text-yellow-800 mb-2">Genel Açıklama:</h4>
-                    <p className="text-yellow-700">{template.explanation}</p>
+                    <MaybeHtml className="text-yellow-700" value={template.explanation} />
                 </div>
             )}
 

@@ -6,12 +6,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { NumberInput } from "@/components/ui/number-input";
 import type { HotSpotTemplateDto, HotSpotArea, HotSpotOptions } from "@/api/generated/model";
 import { Trash2, Plus } from "lucide-react";
 import Checkbox from "@/components/ui/checkbox";
+import HtmlEditor from "@/components/ui/html-editor";
 
 interface HotSpotTemplateFormProps {
     value?: HotSpotTemplateDto | null;
@@ -211,11 +211,12 @@ const HotSpotTemplateForm = forwardRef<HotSpotTemplateFormHandle, HotSpotTemplat
                     {/* Talimatlar */}
                     <div className="space-y-2">
                         <Label htmlFor="instructions">Talimatlar *</Label>
-                        <Textarea
+                        <HtmlEditor
                             id="instructions"
-                            value={formData.instructions}
-                            onChange={(e) => handleChange('instructions', e.target.value)}
-                            className={`min-h-[100px] ${errors.instructions ? 'border-red-500' : ''}`}
+                            value={formData.instructions || ''}
+                            onChange={(html) => handleChange('instructions', html)}
+                            error={!!errors.instructions}
+                            minHeightClassName="min-h-[100px]"
                             placeholder="Sıcak nokta talimatlarını giriniz"
                         />
                         {errors.instructions && (

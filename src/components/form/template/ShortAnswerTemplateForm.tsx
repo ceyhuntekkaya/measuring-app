@@ -10,6 +10,7 @@ import Checkbox from "@/components/ui/checkbox";
 import { NumberInput } from "@/components/ui/number-input";
 import type { ShortAnswerTemplateDto, AcceptableAnswer, ShortAnswerOptions } from "@/api/generated/model";
 import { Trash2, Plus } from "lucide-react";
+import HtmlEditor from "@/components/ui/html-editor";
 
 // Use ORVAL DTO types directly - only template-specific fields
 type ShortAnswerTemplateFormData = Pick<ShortAnswerTemplateDto, 'question' | 'options' | 'maxCharacters' | 'minCharacters' | 'rubric' | 'requiresManualGrading'>;
@@ -164,11 +165,12 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
             {/* Soru Metni */}
             <div className="space-y-2">
                 <Label htmlFor="question">Soru Metni *</Label>
-                <Textarea
+                <HtmlEditor
                     id="question"
-                    value={formData.question}
-                    onChange={(e) => handleChange('question', e.target.value)}
-                    className={`min-h-[100px] ${errors.question ? 'border-red-500' : ''}`}
+                    value={formData.question || ''}
+                    onChange={(html) => handleChange('question', html)}
+                    error={!!errors.question}
+                    minHeightClassName="min-h-[100px]"
                     placeholder="Soru metnini giriniz"
                 />
                 {errors.question && (

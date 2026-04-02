@@ -27,7 +27,7 @@ export default function ChatPanel({ onClose }: ChatPanelProps) {
             <div className="flex-1 flex items-center justify-center p-4 bg-gray-50">
                 <div className="text-center text-gray-500">
                     <p className="text-sm font-medium mb-2">Chat özelliği devre dışı</p>
-                    <p className="text-xs">WebSocket bağlantısı kaldırıldı</p>
+                    <p className="text-xs">Bu özellik şu an kapalı</p>
                 </div>
             </div>
         </div>

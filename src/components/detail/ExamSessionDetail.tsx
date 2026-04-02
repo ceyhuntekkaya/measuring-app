@@ -4,6 +4,7 @@ import React, {useState} from 'react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
+import {getSessionStateLabel} from "@/utils/sessionStateLabel";
 import {
     Clock, User, Hash, CheckCircle, XCircle,
     Users, Calendar, Activity, Info,
@@ -16,9 +17,6 @@ import LoadingComp from "@/components/ui/loading-comp";
 import ExamParticipants from "@/components/proctor/ExamParticipants";
 import ExamEvaluationPanel from "@/components/proctor/ExamEvaluation";
 import {useGetApplicationsByExamSession} from "@/api/generated/application-management/application-management";
-import {useAuth} from "@/hooks/use-auth";
-import {useExamWebSocket} from "@/hooks/useExamWebSocket";
-import {showNotification} from "@/lib/notification";
 
 interface ExamSessionDetailProps {
     examSession: ExamSessionDto;
@@ -58,38 +56,11 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                                                                  onViewStatistics,
                                                              }) => {
     const [activeTab, setActiveTab] = useState("general");
-    const {user} = useAuth();
 
     const {data: applicationsData} = useGetApplicationsByExamSession(examSession.id || '', {
         query: { enabled: !!examSession.id }
     });
     const examSessionApplications = (applicationsData as unknown as { data?: ApplicationDto[] })?.data || [];
-
-    // WebSocket bağlantısı - Sadece gözetmen (ADMIN/OBSERVER) ve sessionState IN_PROGRESS veya PAUSED ise
-    const isSupervisor = user && (user.roleSet?.includes('ADMIN') || user.roleSet?.includes('OBSERVER'));
-    const canConnect = !!(isSupervisor && 
-                      examSession.sessionState && 
-                      (examSession.sessionState === 'IN_PROGRESS' || examSession.sessionState === 'PAUSED'));
-    
-    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
-    const userName = user ? `${user.name || ''} ${user.lastName || ''}`.trim() : '';
-    const userRole = user?.roleSet?.includes('ADMIN') ? 'ADMIN' : 
-                     user?.roleSet?.includes('OBSERVER') ? 'OBSERVER' : 'LEARNER';
-
-    useExamWebSocket({
-        sessionId: examSession.id || '',
-        userRole: userRole as 'ADMIN' | 'OBSERVER' | 'LEARNER',
-        token: token || '',
-        userName: userName,
-        autoConnect: !!(canConnect && token && examSession.id),
-        onConnectionEvent: (event) => {
-            if (event.eventType === 'CONNECTED') {
-                showNotification.info(`${event.userName} odaya katıldı`);
-            } else if (event.eventType === 'DISCONNECTED') {
-                showNotification.info(`${event.userName} odadan ayrıldı`);
-            }
-        }
-    });
 
 
 
@@ -281,7 +252,7 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                                     <div className="flex items-center space-x-2">
                                         <Activity className="h-4 w-4 text-gray-400"/>
                                         <div>
-                                            <p className="text-sm text-gray-500">Session State</p>
+                                            <p className="text-sm text-gray-500">Oturum Durumu</p>
                                             <div className="font-medium">
                                                 <Badge variant={
                                                     examSession.sessionState === 'IN_PROGRESS' ? 'default' :
@@ -290,7 +261,7 @@ const ExamSessionDetail: React.FC<ExamSessionDetailProps> = ({
                                                     examSession.sessionState === 'CANCELLED' ? 'destructive' :
                                                     'outline'
                                                 }>
-                                                    {examSession.sessionState || 'NOT_SET'}
+                                                    {getSessionStateLabel(examSession.sessionState)}
                                                 </Badge>
                                             </div>
                                         </div>

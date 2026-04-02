@@ -3,6 +3,8 @@ import type { DragAndDropTemplateDto } from '@/api/generated/model';
 import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
 import {difficultyConverter} from "@/utils/enum-converter";
+import HtmlRender from "@/components/ui/html-render";
+import MaybeHtml from "@/components/ui/maybe-html";
 
 interface DragAndDropQuestionProps {
     template: DragAndDropTemplateDto;
@@ -23,6 +25,7 @@ interface DraggableItem {
     text: string;
     correctZoneId?: string;
     mediaUrl?: string;
+    mediaType?: string;
     feedback?: string;
 }
 
@@ -139,17 +142,6 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
 
         const zone = options?.dropZones?.find(z => z.id === targetZoneId);
 
-        // Check if zone has max items limit
-        if (!template.allowMultipleItemsPerZone && zone?.maxItems) {
-            const currentPlacements = placements || {};
-            const currentItems = currentPlacements[targetZoneId] || [];
-            if (currentItems.length >= zone.maxItems && !currentItems.includes(draggedItemId)) {
-                setDraggedItemId(null);
-                setDragOverZoneId(null);
-                return;
-            }
-        }
-
         const currentPlacements = placements || {};
         const newPlacements = { ...currentPlacements };
 
@@ -166,12 +158,32 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
             newPlacements[targetZoneId] = [];
         }
 
-        // Check if item is already in this zone
-        if (!newPlacements[targetZoneId].includes(draggedItemId)) {
-            if (template.allowMultipleItemsPerZone) {
-                newPlacements[targetZoneId].push(draggedItemId);
+        const targetItems = newPlacements[targetZoneId] || [];
+        const alreadyInTarget = targetItems.includes(draggedItemId);
+
+        // Eğer zone.maxItems > 1 ise, "çoklu öğe" modunu otomatik aktif say
+        const shouldAllowMultipleInThisZone =
+            !!template.allowMultipleItemsPerZone || ((zone?.maxItems ?? 1) > 1);
+
+        const maxItemsForZone = zone?.maxItems ?? (shouldAllowMultipleInThisZone ? undefined : 1);
+
+        // Max item limit (eğer tanımlıysa) aşılıyorsa yeni item ekleme
+        if (
+            !alreadyInTarget &&
+            maxItemsForZone !== undefined &&
+            maxItemsForZone !== null &&
+            targetItems.length >= maxItemsForZone
+        ) {
+            setDraggedItemId(null);
+            setDragOverZoneId(null);
+            return;
+        }
+
+        if (!alreadyInTarget) {
+            if (shouldAllowMultipleInThisZone) {
+                newPlacements[targetZoneId] = [...targetItems, draggedItemId];
             } else {
-                // Replace existing item
+                // Tek öğe modu: mevcut varsa değiştir
                 newPlacements[targetZoneId] = [draggedItemId];
             }
         }
@@ -305,8 +317,16 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
         return baseStyle + "border-blue-400 bg-blue-50 text-gray-800";
     };
 
-    const renderMedia = (mediaUrl?: string): React.ReactNode => {
+    const renderMedia = (mediaUrl?: string, mediaType?: string): React.ReactNode => {
         if (!mediaUrl) return null;
+
+        if ((mediaType || '').toLowerCase() === 'text') {
+            return (
+                <div className="mt-2">
+                    <HtmlRender html={mediaUrl} />
+                </div>
+            );
+        }
 
         const isImage = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(mediaUrl);
         const isVideo = /\.(mp4|webm|ogg)$/i.test(mediaUrl);
@@ -399,7 +419,7 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
             {/* Instructions */}
             {template.instructions && (
                 <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
-                    <p className="text-blue-800 text-sm">{template.instructions}</p>
+                    <MaybeHtml className="text-blue-800 text-sm" value={template.instructions} />
                 </div>
             )}
 
@@ -485,8 +505,8 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
                                             )}
 
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-gray-800 font-medium break-words">{item.text}</p>
-                                                {item.mediaUrl && renderMedia(item.mediaUrl)}
+                                                <p className="text-gray-800 font-medium break-words"><MaybeHtml value={item.text} /></p>
+                                                {item.mediaUrl && renderMedia(item.mediaUrl, item.mediaType)}
                                             </div>
                                         </div>
                                     </div>
@@ -535,7 +555,7 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-center space-x-2">
-                                                            <p className="text-gray-800 font-medium break-words">{item.text}</p>
+                                                            <p className="text-gray-800 font-medium break-words"><MaybeHtml value={item.text} /></p>
                                                             {isSubmitted && showCorrectAnswer && result && (
                                                                 <span>
                                                                     {result.isCorrect ? (
@@ -550,12 +570,12 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        {item.mediaUrl && renderMedia(item.mediaUrl)}
+                                                        {item.mediaUrl && renderMedia(item.mediaUrl, item.mediaType)}
 
                                                         {/* Feedback */}
                                                         {isSubmitted && showCorrectAnswer && result && !result.isCorrect && item.feedback && (
                                                             <p className="text-red-700 text-sm italic mt-2">
-                                                                <strong>Açıklama:</strong> {item.feedback}
+                                                                <strong>Açıklama:</strong> <MaybeHtml value={item.feedback} />
                                                             </p>
                                                         )}
 
@@ -609,7 +629,7 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
             {isSubmitted && showCorrectAnswer && template.explanation && (
                 <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
                     <h4 className="font-semibold text-yellow-800 mb-2">Genel Açıklama:</h4>
-                    <p className="text-yellow-700">{template.explanation}</p>
+                    <MaybeHtml className="text-yellow-700" value={template.explanation} />
                 </div>
             )}
 

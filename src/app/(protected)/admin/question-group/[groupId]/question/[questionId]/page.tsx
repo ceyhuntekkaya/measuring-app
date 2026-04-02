@@ -39,7 +39,8 @@ export default function AdminPage() {
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: ['/questions'] });
                 queryClient.invalidateQueries({ queryKey: [`/questions/${questionId}`] });
-                queryClient.invalidateQueries({ queryKey: [`/question-groups/${groupId}/questions`] });
+                // Orval queryKey: `/questions/group/${questionGroupId}`
+                queryClient.invalidateQueries({ queryKey: [`/questions/group/${groupId}`] });
                 showNotification.success('Soru başarıyla güncellendi!');
                 router.push(`/admin/question-group/${groupId}/question`);
             },

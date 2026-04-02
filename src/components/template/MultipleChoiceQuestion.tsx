@@ -5,6 +5,8 @@ import {
 } from "@/types/exam/enum";
 import {difficultyConverter} from "@/utils/enum-converter";
 import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
+import HtmlRender from "@/components/ui/html-render";
+import MaybeHtml from "@/components/ui/maybe-html";
 
 
 interface MultipleChoiceQuestionProps {
@@ -142,6 +144,12 @@ const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
         if (!option.mediaUrl) return null;
 
         switch (option.mediaType) {
+            case EMediaType.TEXT:
+                return (
+                    <div className="mb-2">
+                        <HtmlRender html={option.mediaUrl} />
+                    </div>
+                );
             case EMediaType.IMAGE:
                 return (
                     <img
@@ -178,7 +186,7 @@ const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
 
         return (
             <div className="mt-2 text-sm italic text-gray-600">
-                <strong>Açıklama:</strong> {option.feedback}
+                <strong>Açıklama:</strong> <MaybeHtml value={option.feedback} />
             </div>
         );
     };
@@ -199,14 +207,14 @@ const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
             {/* Question Text */}
             {template.question && (
                 <div className="mb-1">
-                    <p className="text-gray-800 text-base leading-relaxed">{template.question}</p>
+                    <MaybeHtml className="text-gray-800 text-base leading-relaxed" value={template.question} />
                 </div>
             )}
 
             {/* Instructions */}
             {template.instructions && (
                 <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
-                    <p className="text-blue-800 text-sm">{template.instructions}</p>
+                    <MaybeHtml className="text-blue-800 text-sm" value={template.instructions} />
                 </div>
             )}
 
@@ -239,7 +247,7 @@ const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
 
                                 {/* Option Text */}
                                 <div className="text-gray-800">
-                                    {option.text}
+                                    <MaybeHtml value={option.text} />
                                 </div>
 
                                 {/* Feedback */}
@@ -278,7 +286,7 @@ const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
             {isSubmitted && showCorrectAnswer && template.explanation && (
                 <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
                     <h4 className="font-semibold text-yellow-800 mb-2">Genel Açıklama:</h4>
-                    <p className="text-yellow-700">{template.explanation}</p>
+                    <MaybeHtml className="text-yellow-700" value={template.explanation} />
                 </div>
             )}
 

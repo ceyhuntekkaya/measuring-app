@@ -37,6 +37,7 @@ interface SelectProps {
 }
 
 interface SelectTriggerProps {
+    id?: string;
     className?: string;
     children: ReactNode;
 }
@@ -60,6 +61,7 @@ interface SelectItemProps {
     value: SelectValue;
     children: ReactNode;
     className?: string;
+    disabled?: boolean;
 }
 
 const collectSelectItems = (children: ReactNode): Record<string, React.ReactNode> => {
@@ -220,12 +222,13 @@ export const Select: React.FC<SelectProps> = ({
     );
 };
 
-export const SelectTrigger: React.FC<SelectTriggerProps> = ({ className = '', children }) => {
+export const SelectTrigger: React.FC<SelectTriggerProps> = ({ id, className = '', children }) => {
     const { open, setOpen, disabled } = useContext(SelectContext);
 
     return (
         <button
             type="button"
+            id={id}
             onClick={() => !disabled && setOpen(!open)}
             className={`w-full flex items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                 disabled ? 'bg-gray-100 cursor-not-allowed' : 'hover:border-gray-400'
@@ -271,7 +274,7 @@ export const SelectContent: React.FC<SelectContentProps> = ({ children, classNam
         onSearch,
         sortable,
         sortDirection,
-        toggleSort
+        toggleSort,
     } = useContext(SelectContext);
     const ref = useRef<HTMLDivElement>(null);
 
@@ -377,7 +380,7 @@ export const SelectGroup: React.FC<SelectGroupProps> = ({ label, children, class
     );
 };
 
-export const SelectItem: React.FC<SelectItemProps> = ({ value, children, className = '' }) => {
+export const SelectItem: React.FC<SelectItemProps> = ({ value, children, className = '', disabled = false }) => {
     const { onValueChange, value: selectedValue, multiple, registerOption } = useContext(SelectContext);
     const isSelected = multiple
         ? (selectedValue as SelectValues).includes(value)
@@ -389,11 +392,15 @@ export const SelectItem: React.FC<SelectItemProps> = ({ value, children, classNa
 
     return (
         <div
-            onClick={() => onValueChange(value)}
-            className={`px-3 py-2 text-sm cursor-pointer flex items-center justify-between ${
-                isSelected
-                    ? 'bg-blue-50 text-blue-600'
-                    : 'text-gray-900 hover:bg-gray-100'
+            onClick={() => !disabled && onValueChange(value)}
+            className={`px-3 py-2 text-sm flex items-center justify-between ${
+                disabled
+                    ? 'text-gray-400 cursor-not-allowed opacity-60'
+                    : `cursor-pointer ${
+                          isSelected
+                              ? 'bg-blue-50 text-blue-600'
+                              : 'text-gray-900 hover:bg-gray-100'
+                      }`
             } ${className}`}
         >
             <span>{children}</span>

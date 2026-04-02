@@ -6,10 +6,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { NumberInput } from "@/components/ui/number-input";
 import type { QuestionGroupTypeDto, ExamSectionDto, CreateQuestionGroupTypeRequest, UpdateQuestionGroupTypeRequest } from "@/api/generated/model";
 import {EQuestionGroupTemplateLevel, EQuestionGroupType} from "@/types/exam/enum";
+import TextSelect from "@/components/ui/text-select";
 
 
 
@@ -203,21 +203,18 @@ const QuestionGroupTypeForm: React.FC<QuestionGroupTypeFormProps> = ({
 
                         {/* Seviye */}
                         <div className="space-y-2">
-                            <Label htmlFor="level">Seviye *</Label>
-                            <Select
-                                onValueChange={(value) => handleChange('level', value as CreateQuestionGroupTypeRequest['level'])}
+                            <TextSelect
+                                id="level"
                                 value={formData.level || ''}
-                            >
-                                <SelectTrigger className={errors.level ? 'border-red-500' : ''}>
-                                    <SelectValue placeholder="Seviye seçin" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectGroup>
-                                        <SelectItem value="GROUP">{getLevelDisplayName('GROUP')}</SelectItem>
-                                        <SelectItem value="QUESTION">{getLevelDisplayName('QUESTION')}</SelectItem>
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
+                                onChange={(value) => handleChange('level', value as CreateQuestionGroupTypeRequest['level'])}
+                                placeholder="Seviye seçin"
+                                html="<b>Seviye *</b><div class='text-gray-600 text-xs mt-1'>Soru grubu şablonunun seviyesini belirler.</div>"
+                                className={errors.level ? 'border-red-500' : ''}
+                                options={[
+                                    { value: 'GROUP', label: getLevelDisplayName('GROUP') },
+                                    { value: 'QUESTION', label: getLevelDisplayName('QUESTION') },
+                                ]}
+                            />
                             {errors.level && (
                                 <Alert variant="destructive">
                                     <AlertDescription>{errors.level}</AlertDescription>
@@ -227,26 +224,23 @@ const QuestionGroupTypeForm: React.FC<QuestionGroupTypeFormProps> = ({
 
                         {/* Grup Tipi */}
                         <div className="space-y-2">
-                            <Label htmlFor="groupType">Grup Tipi *</Label>
-                            <Select
-                                onValueChange={(value) => handleChange('groupType', value as CreateQuestionGroupTypeRequest['groupType'])}
+                            <TextSelect
+                                id="groupType"
                                 value={formData.groupType || ''}
-                            >
-                                <SelectTrigger className={errors.groupType ? 'border-red-500' : ''}>
-                                    <SelectValue placeholder="Grup tipi seçin" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectGroup>
-                                        <SelectItem value="LISTENING">{getGroupTypeDisplayName('LISTENING')}</SelectItem>
-                                        <SelectItem value="READING">{getGroupTypeDisplayName('READING')}</SelectItem>
-                                        <SelectItem value="SPEAKING">{getGroupTypeDisplayName('SPEAKING')}</SelectItem>
-                                        <SelectItem value="WRITING">{getGroupTypeDisplayName('WRITING')}</SelectItem>
-                                        <SelectItem value="GRAMMAR">{getGroupTypeDisplayName('GRAMMAR')}</SelectItem>
-                                        <SelectItem value="VOCABULARY">{getGroupTypeDisplayName('VOCABULARY')}</SelectItem>
-                                        <SelectItem value="GENERAL">{getGroupTypeDisplayName('GENERAL')}</SelectItem>
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
+                                onChange={(value) => handleChange('groupType', value as CreateQuestionGroupTypeRequest['groupType'])}
+                                placeholder="Grup tipi seçin"
+                                html="<b>Grup Tipi *</b><div class='text-gray-600 text-xs mt-1'>Bu grup tipinin hangi beceri alanına ait olduğunu belirler.</div>"
+                                className={errors.groupType ? 'border-red-500' : ''}
+                                options={[
+                                    { value: 'LISTENING', label: getGroupTypeDisplayName('LISTENING') },
+                                    { value: 'READING', label: getGroupTypeDisplayName('READING') },
+                                    { value: 'SPEAKING', label: getGroupTypeDisplayName('SPEAKING') },
+                                    { value: 'WRITING', label: getGroupTypeDisplayName('WRITING') },
+                                    { value: 'GRAMMAR', label: getGroupTypeDisplayName('GRAMMAR') },
+                                    { value: 'VOCABULARY', label: getGroupTypeDisplayName('VOCABULARY') },
+                                    { value: 'GENERAL', label: getGroupTypeDisplayName('GENERAL') },
+                                ]}
+                            />
                             {errors.groupType && (
                                 <Alert variant="destructive">
                                     <AlertDescription>{errors.groupType}</AlertDescription>

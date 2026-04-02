@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import {useRouter} from 'next/navigation';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import LoadingComp from '@/components/ui/loading-comp';
 import {useGetAllBranches} from "@/api/generated/branch-management/branch-management";
 import {useGetAllBrands} from "@/api/generated/brand-management/brand-management";
@@ -17,6 +17,7 @@ import { showNotification, getErrorMessage } from "@/lib/notification";
 import type { CreateExamRequest, UpdateExamRequest } from "@/api/generated/model";
 import {useGetQuestionGroupsByExamType} from "@/api/generated/question-group-management/question-group-management";
 import type {BranchDto} from "@/api/generated/model";
+import PageHeader from "@/components/layout/page-header";
 
 
 export default function ExamFormPage() {
@@ -117,7 +118,7 @@ export default function ExamFormPage() {
 
     // Handle cancel
     const handleCancel = () => {
-        router.push('/exams');
+        router.push('/admin/exams');
     };
 
     // Loading state
@@ -128,28 +129,10 @@ export default function ExamFormPage() {
 
 
     return (
-        <div className="container mx-auto py-6 space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => router.back()}
-                        className="flex items-center gap-2"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        Geri
-                    </Button>
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight">
-                            Yeni Sınav Oluştur
-                        </h1>
-
-                    </div>
-                </div>
-
-                <div className="flex space-x-3">
+        <div className="space-y-6">
+            <PageHeader
+                title="Yeni Sınav Oluştur"
+                actions={
                     <Button
                         variant="outline"
                         onClick={handleCancel}
@@ -158,27 +141,10 @@ export default function ExamFormPage() {
                         <X className="h-4 w-4" />
                         İptal
                     </Button>
-                </div>
-            </div>
+                }
+            />
 
-            {/* Breadcrumb */}
-            <nav className="text-sm text-gray-500">
-                <ol className="flex items-center space-x-2">
-                    <li>
-                        <button
-                            onClick={() => router.push('/exams')}
-                            className="hover:text-gray-700"
-                        >
-                            Sınavlar
-                        </button>
-                    </li>
-                    <li>/</li>
-                    <li>Yeni Sınav</li>
-                </ol>
-            </nav>
-
-            {/* Form */}
-            <div className="max-w-4xl">
+            <div className="p-1">
                 <ExamForm
                     exam={null}
                     onSubmit={handleSubmit}

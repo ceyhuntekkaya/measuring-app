@@ -65,6 +65,16 @@ export interface UpdateCandidateRequest {
   photoUrl?: string;
   /**
    * @minLength 0
+   * @maxLength 255
+   */
+  idCartUrl?: string;
+  /**
+   * @minLength 0
+   * @maxLength 255
+   */
+  voiceUrl?: string;
+  /**
+   * @minLength 0
    * @maxLength 100
    */
   name?: string;

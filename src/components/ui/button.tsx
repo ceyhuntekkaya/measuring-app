@@ -42,7 +42,7 @@ const useAuth = () => {
 export interface ButtonProps
     extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: "primary" | "secondary" | "outline" | "ghost" | "destructive";
-    size?: "sm" | "md" | "lg";
+    size?: "sm" | "md" | "lg" | "icon";
     requiredPermissions?: Permission[];
     requiredDepartments?: Department[];
     requiredRoles?: Role[];
@@ -57,6 +57,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
          requiredPermissions,
          requiredDepartments,
          requiredRoles,
+         children,
          ...props
      }, ref) => {
         const { hasPermission, hasAnyDepartment, user } = useAuth();
@@ -103,7 +104,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         const sizes = {
             sm: "h-8 px-3 text-sm",
             md: "h-10 px-4",
-            lg: "h-12 px-6 text-lg"
+            lg: "h-12 px-6 text-lg",
+            icon: "h-8 w-8 px-0"
         };
 
         return (
@@ -118,7 +120,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         `}
                 ref={ref}
                 {...props}
-            />
+            >
+                {children}
+            </button>
         );
     }
 );

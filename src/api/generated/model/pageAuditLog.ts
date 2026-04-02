@@ -12,11 +12,11 @@ import type { SortObject } from "./sortObject";
 export interface PageAuditLog {
   totalElements?: number;
   totalPages?: number;
-  sort?: SortObject;
+  pageable?: PageableObject;
+  numberOfElements?: number;
   first?: boolean;
   last?: boolean;
-  numberOfElements?: number;
-  pageable?: PageableObject;
+  sort?: SortObject;
   size?: number;
   content?: AuditLog[];
   number?: number;

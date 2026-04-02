@@ -3,6 +3,7 @@ import type { ExamSectionDto, ExamTypeDto } from '@/api/generated/model';
 import {Button} from "@/components/ui/button";
 import { examTypeConverter } from '@/utils/enum-converter';
 import { EExamType } from '@/types/exam/enum';
+import HtmlRender from '@/components/ui/html-render';
 
 interface ExamSectionDetailProps {
     selectedExamSection: ExamSectionDto | null;
@@ -18,6 +19,8 @@ const ExamSectionDetail: React.FC<ExamSectionDetailProps> = ({ selectedExamSecti
             </div>
         );
     }
+
+    const sectionDescriptionHtml = (selectedExamSection.sectionDescription || '').trim();
 
     const formatDuration = (seconds?: number) => {
         if (!seconds) return 'Belirtilmedi';
@@ -145,6 +148,16 @@ const ExamSectionDetail: React.FC<ExamSectionDetailProps> = ({ selectedExamSecti
                         )}
                     </div>
                 </div>
+
+                {sectionDescriptionHtml && (
+                    <div className="mt-3 p-4 bg-gray-50 rounded-lg">
+                        <div className="text-sm font-medium text-gray-500 mb-2">Bölüm Açıklaması</div>
+                        <HtmlRender
+                          className="prose prose-sm max-w-none text-gray-900 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6"
+                          html={sectionDescriptionHtml}
+                        />
+                    </div>
+                )}
             </div>
 
             {/* Exam Type Information */}
@@ -194,7 +207,10 @@ const ExamSectionDetail: React.FC<ExamSectionDetailProps> = ({ selectedExamSecti
                                 {examType.description && (
                                     <div className="mt-4 p-3 bg-white/70 rounded-lg border border-blue-200">
                                         <div className="text-sm font-medium text-blue-600 mb-1">Açıklama</div>
-                                        <div className="text-blue-900">{examType.description}</div>
+                                        <HtmlRender
+                                          className="prose prose-sm max-w-none text-blue-900 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6"
+                                          html={examType.description}
+                                        />
                                     </div>
                                 )}
                             </div>

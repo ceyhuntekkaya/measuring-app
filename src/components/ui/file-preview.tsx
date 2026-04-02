@@ -1,6 +1,7 @@
 import * as React from 'react';
 import siteConfig from '@/config/config.json';
 import {detectFileType} from "@/utils/detectFileType";
+import ImageLightbox from "@/components/ui/image-lightbox";
 
 const API_URL = siteConfig.api.invokeUrl + "/upload/serve/";
 
@@ -32,11 +33,13 @@ const FilePreview: React.FC<FilePreviewProps> = ({
     return (
         <div className={`${sizeClasses[size]} bg-gray-100 flex items-center justify-center rounded-lg overflow-hidden`}>
             {fileType === "image" ? (
-                <img
-                    src={fullUrl}
-                    alt={alt}
-                    className="w-full h-full object-cover"
-                />
+                <ImageLightbox src={fullUrl} alt={alt} title="Görsel Önizleme">
+                    <img
+                        src={fullUrl}
+                        alt={alt}
+                        className="w-full h-full object-cover cursor-zoom-in"
+                    />
+                </ImageLightbox>
             ) : fileType === "video" ? (
                 <video
                     src={fullUrl}

@@ -4,9 +4,9 @@ import React, {forwardRef, useEffect, useImperativeHandle, useState} from 'react
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { TrueFalseTemplateDto, TrueFalseOptions } from "@/api/generated/model";
+import HtmlEditor from "@/components/ui/html-editor";
 
 // Use ORVAL DTO types directly - only template-specific fields
 type TrueFalseTemplateFormData = Pick<TrueFalseTemplateDto, 'statement' | 'options' | 'correctAnswer' | 'explanation'>;
@@ -127,11 +127,12 @@ const TrueFalseTemplateForm = forwardRef<TrueFalseTemplateFormHandle, TrueFalseT
             {/* İfade Metni */}
             <div className="space-y-2">
                 <Label htmlFor="statement">İfade Metni *</Label>
-                <Textarea
+                <HtmlEditor
                     id="statement"
-                    value={formData.statement}
-                    onChange={(e) => handleChange('statement', e.target.value)}
-                    className={`min-h-[100px] ${errors.statement ? 'border-red-500' : ''}`}
+                    value={formData.statement || ''}
+                    onChange={(html) => handleChange('statement', html)}
+                    error={!!errors.statement}
+                    minHeightClassName="min-h-[100px]"
                     placeholder="Değerlendirilecek ifadeyi giriniz"
                 />
                 {errors.statement && (

@@ -3,6 +3,7 @@ import type { ShortAnswerTemplateDto, AcceptableAnswer } from '@/api/generated/m
 import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
 import {difficultyConverter} from "@/utils/enum-converter";
+import MaybeHtml from "@/components/ui/maybe-html";
 
 interface ShortAnswerQuestionProps {
     template: ShortAnswerTemplateDto;
@@ -141,14 +142,14 @@ const ShortAnswerQuestion: React.FC<ShortAnswerQuestionProps> = ({
             {/* Question Text */}
             {template.question && (
                 <div className="mb-1">
-                    <p className="text-gray-800 text-base leading-relaxed">{template.question}</p>
+                    <MaybeHtml className="text-gray-800 text-base leading-relaxed" value={template.question} />
                 </div>
             )}
 
             {/* Instructions */}
             {template.instructions && (
                 <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
-                    <p className="text-blue-800 text-sm">{template.instructions}</p>
+                    <MaybeHtml className="text-blue-800 text-sm" value={template.instructions} />
                 </div>
             )}
 
@@ -344,7 +345,9 @@ const ShortAnswerQuestion: React.FC<ShortAnswerQuestionProps> = ({
                                             <div><strong>Puan:</strong> {acceptable.score}</div>
                                         )}
                                         {acceptable.feedback && (
-                                            <div><strong>Geri Bildirim:</strong> {acceptable.feedback}</div>
+                                            <div>
+                                                <strong>Geri Bildirim:</strong> <MaybeHtml value={acceptable.feedback} />
+                                            </div>
                                         )}
                                     </div>
                                 ))}

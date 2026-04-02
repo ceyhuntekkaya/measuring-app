@@ -30,6 +30,8 @@ export interface CandidateDto {
   birthDate?: string;
   activationCode?: string;
   photoUrl?: string;
+  idCartUrl?: string;
+  voiceUrl?: string;
   name?: string;
   lastName?: string;
   identityNumber?: string;

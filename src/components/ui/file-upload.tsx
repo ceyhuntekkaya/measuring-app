@@ -6,6 +6,8 @@ import {Alert, AlertDescription} from "@/components/ui/alert";
 import siteConfig from '@/config/config.json';
 import {Progress} from "@/components/ui/progress";
 import type {UploadedFileDto} from "@/api/generated/model";
+import FilePreview from "@/components/ui/file-preview";
+import ImageLightbox from "@/components/ui/image-lightbox";
 
 const API_URL = siteConfig.api.invokeUrl;
 
@@ -26,6 +28,7 @@ export interface FileUploadProps {
     id?: string;
     entityId: string;
     uploadType: string
+    existingFileUrl?: string;
 }
 
 interface FileWithPreview {
@@ -46,7 +49,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
                                                    className = "",
                                                    id = "file-upload",
                                                    entityId,
-                                                   uploadType
+                                                   uploadType,
+                                                   existingFileUrl
                                                }) => {
     const [selectedFiles, setSelectedFiles] = React.useState<FileWithPreview[]>([]);
     const [isDragging, setIsDragging] = React.useState(false);
@@ -324,6 +328,18 @@ const FileUpload: React.FC<FileUploadProps> = ({
             </div>
 
             {/* Selected Files Preview */}
+            {selectedFiles.length === 0 && !!existingFileUrl && (
+                <div className="mt-4 space-y-2">
+                    <p className="text-sm font-semibold text-gray-700">Yüklü Dosya</p>
+                    <div className="flex items-start gap-3">
+                        <FilePreview size="medium" fileUrl={existingFileUrl} alt="Yüklü dosya" />
+                        <div className="text-xs text-gray-500 break-all">
+                          
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {selectedFiles.length > 0 && (
                 <div className="mt-4 space-y-3">
                     <div className="flex items-center justify-between">
@@ -349,11 +365,13 @@ const FileUpload: React.FC<FileUploadProps> = ({
                                 {/* Preview */}
                                 <div className="aspect-square bg-gray-100 flex items-center justify-center">
                                     {file.type.startsWith('image/') ? (
-                                        <img
-                                            src={preview}
-                                            alt={file.name}
-                                            className="w-full h-full object-cover"
-                                        />
+                                        <ImageLightbox src={preview} alt={file.name} title={file.name}>
+                                            <img
+                                                src={preview}
+                                                alt={file.name}
+                                                className="w-full h-full object-cover cursor-zoom-in"
+                                            />
+                                        </ImageLightbox>
                                     ) : file.type.startsWith('video/') ? (
                                         <video
                                             src={preview}

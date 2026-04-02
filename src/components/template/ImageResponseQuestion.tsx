@@ -6,6 +6,7 @@ import {difficultyConverter} from "@/utils/enum-converter";
 import type {UploadedFileDto} from "@/api/generated/model";
 import {uploadFile} from "@/services/api/upload-file";
 import siteConfig from "@/config/config.json";
+import MaybeHtml from "@/components/ui/maybe-html";
 
 interface ImageResponseQuestionProps {
     template: ImageResponseTemplateDto;
@@ -39,11 +40,9 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                                                                          initialAnswer = null,
                                                                          isSubmitted = false,
                                                                          questionId,
-                                                                         showCorrectAnswer = false
                                                                      }) => {
     const [imageAnswer, setImageAnswer] = useState<ImageAnswerData | null>(initialAnswer);
 
-    console.log(showCorrectAnswer)
     const [isDrawing, setIsDrawing] = useState<boolean>(false);
     const [currentTool, setCurrentTool] = useState<'pen' | 'eraser'>('pen');
     const [currentColor, setCurrentColor] = useState<string>('#000000');
@@ -211,9 +210,9 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
             }
         }
 
-        // Validate file size
-        if (template.maxFileSize && file.size > template.maxFileSize *  (1024 * 1024)) {
-            const maxSizeMB = (template.maxFileSize ).toFixed(2);
+        // Validate file size (maxFileSize from API is bytes)
+        if (template.maxFileSize && file.size > template.maxFileSize) {
+            const maxSizeMB = (template.maxFileSize / (1024 * 1024)).toFixed(2);
             setError(`Dosya boyutu çok büyük. Maksimum boyut: ${maxSizeMB} MB`);
             return;
         }
@@ -441,12 +440,14 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                 </div>
             )}*/}
 
-            {/* Prompt */}
-            {template.prompt && (
+            {(template.description || template.instructions) && (
                 <div className="mb-4 p-4 bg-purple-50 border-l-4 border-purple-400 rounded">
-                    {//<h4 className="font-semibold text-purple-800 mb-2">Soru İstemi:</h4>
-                    }
-                    <p className="text-purple-700">{template.prompt}</p>
+                    {template.description && (
+                        <MaybeHtml className="text-purple-700" value={template.description} />
+                    )}
+                    {template.instructions && (
+                        <p className="text-purple-700 text-sm whitespace-pre-wrap mt-2">{template.instructions}</p>
+                    )}
                 </div>
             )}
 

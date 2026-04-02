@@ -31,12 +31,14 @@ export default function AdminLayout({
                         <Sidebar isOpen={isSidebarOpen} onCloseAction={handleSidebarClose}/>
                         <div className='flex-1'>
                             <Header/>
-                            <main className='p-3'>
+                            <main className='relative z-10 p-3'>
                                 <div className='p-1 min-h-[calc(100vh-7rem)] bg-white rounded-lg shadow-md'>
                                     {children}
                                 </div>
                             </main>
-                            <Footer/>
+                            <div className="relative z-0">
+                                <Footer/>
+                            </div>
                         </div>
                     </div>
                 </div>

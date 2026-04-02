@@ -8,12 +8,8 @@
 import type { BaseQuestionTemplateDto } from "./baseQuestionTemplateDto";
 
 export type VideoResponseTemplateDto = BaseQuestionTemplateDto & {
-  prompt?: string;
-  videoPromptUrl?: string;
   maxRecordingDuration?: number;
   minRecordingDuration?: number;
-  gradingCriteria?: string[];
-  rubric?: string;
   requiresManualGrading?: boolean;
   allowedFormats?: string;
   allowScreenRecording?: boolean;

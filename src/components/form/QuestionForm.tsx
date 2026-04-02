@@ -7,6 +7,7 @@ import {Button} from "@/components/ui/button";
 import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
 import {Textarea} from "@/components/ui/textarea";
+import HtmlEditor from "@/components/ui/html-editor";
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {NumberInput} from "@/components/ui/number-input";
 import type {CreateQuestionRequest} from "@/api/generated/model";
@@ -331,13 +332,12 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                 ...questionTemplate, // Template-specific field'ları koru (correctOptionIndex, correctOptionIndices, vb.)
                 // Base template fields (eğer baseFormData'da varsa override et)
                 ...(baseFormData.title && { title: baseFormData.title }),
-                // Açıklama ve Talimatlar her zaman boş string olarak gönderiliyor (UI'dan kaldırıldı)
-                description: '', // UI'dan kaldırıldı, her zaman boş string
+                ...(baseFormData.description !== undefined && { description: baseFormData.description }),
+                ...(baseFormData.instructions !== undefined && { instructions: baseFormData.instructions }),
                 ...(baseFormData.subject && { subject: baseFormData.subject }),
                 ...(baseFormData.difficulty && { difficulty: baseFormData.difficulty }),
                 ...(baseFormData.points !== undefined && { points: baseFormData.points }),
                 ...(baseFormData.timeLimit !== undefined && { timeLimit: baseFormData.timeLimit }),
-                instructions: '', // UI'dan kaldırıldı, her zaman boş string
                 ...(baseFormData.tags && { tags: baseFormData.tags }),
                 ...(baseFormData.isActive !== undefined && { isActive: baseFormData.isActive }),
                 questionType: baseFormData.questionType as EQuestionType,
@@ -397,6 +397,10 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
         if(question){
             finalData.id = question.id;
         }
+        console.debug(
+            '[QuestionForm] submitting questionTemplate.instructions:',
+            finalData.questionTemplate?.instructions
+        );
         onSubmit(finalData);
     };
 
@@ -464,12 +468,21 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 
                             <div className="col-span-5">
                                 <Label>İçerik</Label>
-                                <Textarea
+                                {part.mediaType === EMediaType.TEXT ? (
+                                  <HtmlEditor
+                                    value={part.content || ''}
+                                    onChange={(nextHtml) => updatePart(index, 'content', nextHtml)}
+                                    placeholder="Parça içeriğini giriniz"
+                                    minHeightClassName="min-h-[120px]"
+                                  />
+                                ) : (
+                                  <Textarea
                                     value={part.content || ''}
                                     onChange={(e) => updatePart(index, 'content', e.target.value)}
                                     placeholder="Parça içeriğini giriniz"
-                                    className="min-h-[60px]"
-                                />
+                                    className="min-h-[120px]"
+                                  />
+                                )}
                             </div>
 
                             <div className="col-span-1">
@@ -542,12 +555,21 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 
                             <div className="col-span-3">
                                 <Label>İçerik</Label>
-                                <Textarea
+                                {option.mediaType === EMediaType.TEXT ? (
+                                  <HtmlEditor
+                                    value={option.content || ''}
+                                    onChange={(nextHtml) => updateOption(index, 'content', nextHtml)}
+                                    placeholder="Seçenek içeriğini giriniz"
+                                    minHeightClassName="min-h-[120px]"
+                                  />
+                                ) : (
+                                  <Textarea
                                     value={option.content}
                                     onChange={(e) => updateOption(index, 'content', e.target.value)}
                                     placeholder="Seçenek içeriğini giriniz"
-                                    className="min-h-[60px]"
-                                />
+                                    className="min-h-[120px]"
+                                  />
+                                )}
                             </div>
 
                             <div className="col-span-3">

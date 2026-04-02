@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import {useParams, useRouter} from 'next/navigation';
 import { Card, CardContent,  } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import LoadingComp from '@/components/ui/loading-comp';
 import {useGetAllBranches} from "@/api/generated/branch-management/branch-management";
 import {useGetAllBrands} from "@/api/generated/brand-management/brand-management";
@@ -16,6 +16,7 @@ import {useGetExamById} from "@/api/generated/exam-management/exam-management";
 import type { ApiResponseExamDto, CreateExamRequest, UpdateExamRequest } from "@/api/generated/model";
 import {useGetQuestionGroupsByExamType} from "@/api/generated/question-group-management/question-group-management";
 import type {BranchDto} from "@/api/generated/model";
+import PageHeader from "@/components/layout/page-header";
 
 
 export default function ExamFormPage() {
@@ -114,9 +115,9 @@ export default function ExamFormPage() {
     // Handle cancel
     const handleCancel = () => {
         if (isEdit && examId) {
-            router.push(`/exams/${examId}`);
+            router.push(`/admin/exams/${examId}`);
         } else {
-            router.push('/exams');
+            router.push('/admin/exams');
         }
     };
 
@@ -128,7 +129,8 @@ export default function ExamFormPage() {
     // Error state - if editing but no exam found
     if (isEdit && !selectedExam) {
         return (
-            <div className="container mx-auto py-4">
+            <div className="space-y-6">
+                <PageHeader title="Sınav Bulunamadı" />
                 <Card>
                     <CardContent className="text-center py-8">
                         <h2 className="text-xl font-semibold text-gray-900 mb-2">
@@ -137,7 +139,7 @@ export default function ExamFormPage() {
                         <p className="text-gray-600 mb-4">
                             Düzenlemek istediğiniz sınav bulunamadı veya erişim yetkiniz bulunmuyor.
                         </p>
-                        <Button onClick={() => router.push('/exams')}>
+                        <Button onClick={() => router.push('/admin/exams')}>
                             Sınav Listesine Dön
                         </Button>
                     </CardContent>
@@ -147,61 +149,22 @@ export default function ExamFormPage() {
     }
 
     return (
-        <div className="container mx-auto py-4 space-y-4">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => router.back()}
-                        className="flex items-center gap-2"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        Geri
-                    </Button>
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight">
-                            {isEdit ? 'Sınav Düzenle' : 'Yeni Sınav Oluştur'}
-                        </h1>
-                        {isEdit && selectedExam && (
-                            <p className="text-gray-500">
-                                {selectedExam.name} ({selectedExam.code})
-                            </p>
-                        )}
-                    </div>
-                </div>
-
-                <div className="flex space-x-3">
+        <div className="space-y-6">
+            <PageHeader
+                title="Sınav Detayı"
+                actions={
                     <Button
                         variant="outline"
                         onClick={handleCancel}
                         className="flex items-center gap-2"
                     >
                         <X className="h-4 w-4" />
-                        İptal
+                        Kapat
                     </Button>
-                </div>
-            </div>
+                }
+            />
 
-            {/* Breadcrumb */}
-            <nav className="text-sm text-gray-500">
-                <ol className="flex items-center space-x-2">
-                    <li>
-                        <button
-                            onClick={() => router.push('/exams')}
-                            className="hover:text-gray-700"
-                        >
-                            Sınavlar
-                        </button>
-                    </li>
-                    <li>/</li>
-                    <li>{isEdit ? 'Düzenle' : 'Yeni Sınav'}</li>
-                </ol>
-            </nav>
-
-            {/* Form */}
-            <div className="max-w-4xl">
+            <div className="p-1">
                 <ExamForm
                     exam={selectedExam}
                     onSubmit={handleSubmit}
@@ -214,9 +177,6 @@ export default function ExamFormPage() {
                     onBrandChange={handleBrandChange}
                 />
             </div>
-
-
-
         </div>
     );
 };

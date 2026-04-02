@@ -848,7 +848,7 @@ export const useSearchUsers = <TError = ErrorType<unknown>, TContext = unknown>(
  * Reset user password by email
  * @summary Reset password
  */
-export const resetPassword = (
+export const resetPassword1 = (
   resetPasswordRequest: BodyType<ResetPasswordRequest>,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
@@ -866,24 +866,24 @@ export const resetPassword = (
   );
 };
 
-export const getResetPasswordMutationOptions = <
+export const getResetPassword1MutationOptions = <
   TError = ErrorType<Blob>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof resetPassword>>,
+    Awaited<ReturnType<typeof resetPassword1>>,
     TError,
     { data: BodyType<ResetPasswordRequest> },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof resetPassword>>,
+  Awaited<ReturnType<typeof resetPassword1>>,
   TError,
   { data: BodyType<ResetPasswordRequest> },
   TContext
 > => {
-  const mutationKey = ["resetPassword"];
+  const mutationKey = ["resetPassword1"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -893,30 +893,30 @@ export const getResetPasswordMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof resetPassword>>,
+    Awaited<ReturnType<typeof resetPassword1>>,
     { data: BodyType<ResetPasswordRequest> }
   > = (props) => {
     const { data } = props ?? {};
 
-    return resetPassword(data, requestOptions);
+    return resetPassword1(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type ResetPasswordMutationResult = NonNullable<
-  Awaited<ReturnType<typeof resetPassword>>
+export type ResetPassword1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof resetPassword1>>
 >;
-export type ResetPasswordMutationBody = BodyType<ResetPasswordRequest>;
-export type ResetPasswordMutationError = ErrorType<Blob>;
+export type ResetPassword1MutationBody = BodyType<ResetPasswordRequest>;
+export type ResetPassword1MutationError = ErrorType<Blob>;
 
 /**
  * @summary Reset password
  */
-export const useResetPassword = <TError = ErrorType<Blob>, TContext = unknown>(
+export const useResetPassword1 = <TError = ErrorType<Blob>, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof resetPassword>>,
+      Awaited<ReturnType<typeof resetPassword1>>,
       TError,
       { data: BodyType<ResetPasswordRequest> },
       TContext
@@ -925,12 +925,12 @@ export const useResetPassword = <TError = ErrorType<Blob>, TContext = unknown>(
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof resetPassword>>,
+  Awaited<ReturnType<typeof resetPassword1>>,
   TError,
   { data: BodyType<ResetPasswordRequest> },
   TContext
 > => {
-  return useMutation(getResetPasswordMutationOptions(options), queryClient);
+  return useMutation(getResetPassword1MutationOptions(options), queryClient);
 };
 /**
  * Create multiple users

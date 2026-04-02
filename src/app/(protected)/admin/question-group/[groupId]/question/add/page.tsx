@@ -19,7 +19,8 @@ export default function AdminPage() {
         mutation: {
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: ['/questions'] });
-                queryClient.invalidateQueries({ queryKey: [`/question-groups/${groupId}/questions`] });
+                // Orval queryKey: `/questions/group/${questionGroupId}`
+                queryClient.invalidateQueries({ queryKey: [`/questions/group/${groupId}`] });
                 showNotification.success('Soru başarıyla eklendi!');
                 router.push(`/admin/question-group/${groupId}/question`);
             },

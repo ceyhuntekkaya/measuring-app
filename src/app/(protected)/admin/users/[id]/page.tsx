@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useGetUserById, useDeleteUser, useActivateUser, useResetPassword } from '@/api/generated/user-management/user-management';
+import { useGetUserById, useDeleteUser, useActivateUser, useResetPassword1 } from '@/api/generated/user-management/user-management';
 import { useGetAllBrands } from '@/api/generated/brand-management/brand-management';
 import { useQueryClient } from '@tanstack/react-query';
 import type { ApiResponseListBrandDto, ApiResponseUserDto } from '@/api/generated/model';
@@ -34,7 +34,7 @@ const UserDetailPageContainer: React.FC = () => {
     
     const deleteUserMutation = useDeleteUser();
     const activateUserMutation = useActivateUser();
-    const resetPasswordMutation = useResetPassword();
+    const resetPasswordMutation = useResetPassword1();
 
     const { data: brandsData } = useGetAllBrands();
     const brands = (brandsData as unknown as ApiResponseListBrandDto)?.data || null;
