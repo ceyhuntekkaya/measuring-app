@@ -9,9 +9,5 @@ import type { BaseQuestionTemplateDto } from "./baseQuestionTemplateDto";
 import type { MultipleChoiceOptions } from "./multipleChoiceOptions";
 
 export type MultipleChoiceTemplateDto = BaseQuestionTemplateDto & {
-  question?: string;
   options?: MultipleChoiceOptions;
-  correctOptionIndex?: number;
-  explanation?: string;
-  shuffleOptions?: boolean;
 };

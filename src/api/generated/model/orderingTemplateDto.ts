@@ -10,6 +10,4 @@ import type { OrderingOptions } from "./orderingOptions";
 
 export type OrderingTemplateDto = BaseQuestionTemplateDto & {
   options?: OrderingOptions;
-  shuffleItems?: boolean;
-  explanation?: string;
 };

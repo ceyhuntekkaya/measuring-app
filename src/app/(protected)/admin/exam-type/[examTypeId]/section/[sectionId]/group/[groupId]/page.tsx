@@ -19,10 +19,10 @@ export default function QuestionGroupTypeDetailPage() {
     const router = useRouter();
     const queryClient = useQueryClient();
 
-    const {data, isLoading: loading} = useGetQuestionGroupTypeById(groupId, {
+    const {data, isLoading: loading} = useGetQuestionGroupTypeById<ApiResponseQuestionGroupTypeDto>(groupId, {
         query: { enabled: !!groupId }
     });
-    const selectedType = (data as unknown as ApiResponseQuestionGroupTypeDto)?.data || null;
+    const selectedType = data?.data || null;
     
     const { mutate: deleteQuestionGroupType } = useDeleteQuestionGroupType({
         mutation: {

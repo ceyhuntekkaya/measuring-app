@@ -167,12 +167,8 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
                 if (authData.user) {
                     setUser(authData.user as unknown as User);
                     const path = authData.user.roleSet?.includes('ADMIN') ? '/admin' :
-                        authData.user.roleSet?.includes('USER') ? '/admin' :
-                            authData.user.roleSet?.includes('LEARNER') ? '/learner' :
-                                authData.user.roleSet?.includes('INSTRUCTOR') ? '/instructor' :
-                                    authData.user.roleSet?.includes('OBSERVER') ? '/observer' :
-                                        authData.user.roleSet?.includes('COMPANY') ? '/company' :
-                                            '/app';
+                        authData.user.roleSet?.includes('LEARNER') ? '/learner' :
+                            '/app';
                     router.replace(path);
                 }
             }
@@ -299,9 +295,10 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
         if (user?.roleSet?.includes('LEARNER')) return '/learner';
         if (user?.roleSet?.includes('ADMIN')) return '/admin';
         if (user?.roleSet?.includes('USER')) return '/app';
-        if (user?.roleSet?.includes('OBSERVER')) return '/observer';
-        if (user?.roleSet?.includes('INSTRUCTOR')) return '/instructor';
-        if (user?.roleSet?.includes('COMPANY')) return '/company';
+        if (user?.roleSet?.includes('MANAGER')) return '/app';
+        if (user?.roleSet?.includes('WRITER')) return '/app';
+        if (user?.roleSet?.includes('REFEREE')) return '/app';
+        if (user?.roleSet?.includes('OBSERVER')) return '/app';
         return '/app';
     };
 

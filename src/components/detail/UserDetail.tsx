@@ -571,9 +571,7 @@ const UserDetailPage: React.FC<UserDetailProps> = ({
                                         <div>
                                             <p className="font-semibold">Kullanıcı Oluşturuldu</p>
                                             <p className="text-sm text-gray-500">{formatDate(user.createdAt || '')}</p>
-                                            {user.createdById && (
-                                                <p className="text-xs text-gray-400">Oluşturan ID: {user.createdById}</p>
-                                            )}
+                                         
                                         </div>
                                     </div>
 
@@ -592,7 +590,7 @@ const UserDetailPage: React.FC<UserDetailProps> = ({
                                         </div>
                                     )}
 
-                                    {user.status === 'DELETED' && user.deletedAt && (
+                                    {user.status === 'DELETED' && (
                                         <div className="flex">
                                             <div className="mr-4 flex-shrink-0">
                                                 <div className="flex items-center justify-center h-10 w-10 rounded-full bg-red-100 text-red-600">
@@ -601,10 +599,7 @@ const UserDetailPage: React.FC<UserDetailProps> = ({
                                             </div>
                                             <div>
                                                 <p className="font-semibold">Kullanıcı Silindi</p>
-                                                <p className="text-sm text-gray-500">{formatDate(user.deletedAt)}</p>
-                                                {user.deletedById && (
-                                                    <p className="text-xs text-gray-400">Silen ID: {user.deletedById}</p>
-                                                )}
+                                               
                                             </div>
                                         </div>
                                     )}

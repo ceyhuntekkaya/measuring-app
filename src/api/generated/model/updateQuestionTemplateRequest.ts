@@ -9,16 +9,6 @@
 export interface UpdateQuestionTemplateRequest {
   id: string;
   title?: string;
-  description?: string;
-  subject?: string;
-  /** @pattern EASY|MEDIUM|HARD */
-  difficulty?: string;
-  /** @minimum 1 */
-  points?: number;
-  /** @minimum 1 */
-  timeLimit?: number;
-  instructions?: string;
-  tags?: string[];
   isActive?: boolean;
   templateData?: unknown;
 }

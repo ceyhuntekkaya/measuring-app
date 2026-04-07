@@ -12,10 +12,7 @@ import type { ExamSessionDto } from "./examSessionDto";
 export interface CandidateDto {
   id?: string;
   createdAt?: string;
-  deletedAt?: string;
   status?: CandidateDtoStatus;
-  createdById?: string;
-  deletedById?: string;
   username?: string;
   lastLoginTime?: string;
   mobilePhone?: string;

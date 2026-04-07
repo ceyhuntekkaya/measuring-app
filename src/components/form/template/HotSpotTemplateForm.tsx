@@ -7,11 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { NumberInput } from "@/components/ui/number-input";
 import type { HotSpotTemplateDto, HotSpotArea, HotSpotOptions } from "@/api/generated/model";
 import { Trash2, Plus } from "lucide-react";
 import Checkbox from "@/components/ui/checkbox";
-import HtmlEditor from "@/components/ui/html-editor";
 
 interface HotSpotTemplateFormProps {
     value?: HotSpotTemplateDto | null;
@@ -20,7 +18,7 @@ interface HotSpotTemplateFormProps {
 }
 
 // Use ORVAL DTO types directly - only template-specific fields
-type HotSpotTemplateFormData = Pick<HotSpotTemplateDto, 'instructions' | 'imageUrl' | 'options' | 'maxSelections' | 'allowMultipleSpots' | 'explanation'>;
+type HotSpotTemplateFormData = Pick<HotSpotTemplateDto,  'imageUrl' | 'options' >;
 
 interface HotSpotTemplateFormErrors {
     instructions?: string;
@@ -40,16 +38,12 @@ const HotSpotTemplateForm = forwardRef<HotSpotTemplateFormHandle, HotSpotTemplat
                                                                                                  onChange,
                                                                                              }, ref) => {
     const [formData, setFormData] = useState<HotSpotTemplateFormData>({
-        instructions: '',
         imageUrl: '',
         options: {
             backgroundImageUrl: '',
             hotSpots: [],
             selectionType: 'SINGLE'
         },
-        maxSelections: 1,
-        allowMultipleSpots: false,
-        explanation: ''
     });
 
     const [errors, setErrors] = useState<HotSpotTemplateFormErrors>({});
@@ -58,16 +52,12 @@ const HotSpotTemplateForm = forwardRef<HotSpotTemplateFormHandle, HotSpotTemplat
     useEffect(() => {
         if (value) {
             setFormData({
-                instructions: value.instructions || '',
                 imageUrl: value.imageUrl || '',
                 options: value.options || {
                     backgroundImageUrl: '',
                     hotSpots: [],
                     selectionType: 'SINGLE'
                 },
-                maxSelections: value.maxSelections,
-                allowMultipleSpots: value.allowMultipleSpots ?? false,
-                explanation: '' // UI'dan kaldırıldı, her zaman boş string
             });
         }
     }, []);
@@ -75,7 +65,7 @@ const HotSpotTemplateForm = forwardRef<HotSpotTemplateFormHandle, HotSpotTemplat
     // Form data değiştiğinde parent'a bildir (Anlık güncelleme)
     useEffect(() => {
         // İlk render'da boş form için onChange tetikleme
-        if (formData.instructions || formData.imageUrl || (formData.options?.hotSpots ?? []).length > 0) {
+        if ( formData.imageUrl || (formData.options?.hotSpots ?? []).length > 0) {
             // Background image URL'yi sync et
             const optionsWithImage: HotSpotOptions = {
                 ...formData.options,
@@ -84,12 +74,8 @@ const HotSpotTemplateForm = forwardRef<HotSpotTemplateFormHandle, HotSpotTemplat
 
             const templateData: HotSpotTemplateDto = {
                 ...value,
-                instructions: formData.instructions,
                 imageUrl: formData.imageUrl,
                 options: optionsWithImage,
-                maxSelections: formData.maxSelections,
-                allowMultipleSpots: formData.allowMultipleSpots,
-                explanation: '' // UI'dan kaldırıldı, her zaman boş string
             };
 
             onChange(templateData);
@@ -163,9 +149,7 @@ const HotSpotTemplateForm = forwardRef<HotSpotTemplateFormHandle, HotSpotTemplat
     const validateForm = (): boolean => {
         const newErrors: HotSpotTemplateFormErrors = {};
 
-        if (!formData.instructions?.trim()) {
-            newErrors.instructions = 'Talimatlar zorunludur';
-        }
+        
 
         if (!formData.imageUrl?.trim() && !formData.options?.backgroundImageUrl?.trim()) {
             newErrors.imageUrl = 'Arkaplan resmi URL\'si zorunludur';
@@ -187,9 +171,7 @@ const HotSpotTemplateForm = forwardRef<HotSpotTemplateFormHandle, HotSpotTemplat
             }
         }
 
-        if (formData.maxSelections && formData.maxSelections <= 0) {
-            newErrors.maxSelections = 'Maksimum seçim sayısı 0\'dan büyük olmalıdır';
-        }
+       
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -208,23 +190,7 @@ const HotSpotTemplateForm = forwardRef<HotSpotTemplateFormHandle, HotSpotTemplat
             </CardHeader>
             <CardContent>
                 <div className="space-y-6">
-                    {/* Talimatlar */}
-                    <div className="space-y-2">
-                        <Label htmlFor="instructions">Talimatlar *</Label>
-                        <HtmlEditor
-                            id="instructions"
-                            value={formData.instructions || ''}
-                            onChange={(html) => handleChange('instructions', html)}
-                            error={!!errors.instructions}
-                            minHeightClassName="min-h-[100px]"
-                            placeholder="Sıcak nokta talimatlarını giriniz"
-                        />
-                        {errors.instructions && (
-                            <Alert variant="destructive">
-                                <AlertDescription>{errors.instructions}</AlertDescription>
-                            </Alert>
-                        )}
-                    </div>
+                   
 
                     {/* Arkaplan Resmi */}
                     <div className="space-y-2">
@@ -267,36 +233,8 @@ const HotSpotTemplateForm = forwardRef<HotSpotTemplateFormHandle, HotSpotTemplat
                             </Select>
                         </div>
 
-                        {/* Maksimum Seçim */}
-                        <div className="space-y-2">
-                            <Label htmlFor="maxSelections">Maksimum Seçim</Label>
-                            <NumberInput
-                                id="maxSelections"
-                                inputType={"number"}
-                                value={formData.maxSelections || 1}
-                                onChange={(val) => handleChange('maxSelections', val || undefined)}
-                                minValue={1}
-                                decimalPlaces={0}
-                                className={errors.maxSelections ? 'border-red-500' : ''}
-                            />
-                            {errors.maxSelections && (
-                                <Alert variant="destructive">
-                                    <AlertDescription>{errors.maxSelections}</AlertDescription>
-                                </Alert>
-                            )}
-                        </div>
+                      
 
-                        {/* Çoklu Spot İzni */}
-                        <div className="space-y-2">
-                            <div className="flex items-center space-x-2 mt-6">
-                                <Checkbox
-                                    id="allowMultipleSpots"
-                                    checked={formData.allowMultipleSpots}
-                                    onChange={(checked) => handleChange('allowMultipleSpots', !!checked)}
-                                />
-                                <Label htmlFor="allowMultipleSpots">Çoklu Spot İzni</Label>
-                            </div>
-                        </div>
                     </div>
 
                     {/* Sıcak Noktalar */}

@@ -20,8 +20,8 @@ export default function ExamTypeAdd() {
     const router = useRouter();
     const queryClient = useQueryClient();
     
-    const { data, isLoading } = useGetExamTypeById(examTypeId);
-    const selectedExamType = (data as unknown as ApiResponseExamTypeDto)?.data as ExamTypeDto | undefined;
+    const { data, isLoading } = useGetExamTypeById<ApiResponseExamTypeDto>(examTypeId);
+    const selectedExamType = data?.data as ExamTypeDto | undefined;
 
     const { mutate: updateExamType } = useUpdateExamType({
         mutation: {

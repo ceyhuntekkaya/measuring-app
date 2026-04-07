@@ -8,10 +8,5 @@
 import type { BaseQuestionTemplateDto } from "./baseQuestionTemplateDto";
 
 export type ImageResponseTemplateDto = BaseQuestionTemplateDto & {
-  referenceImageUrl?: string;
   maxFileSize?: number;
-  requiresManualGrading?: boolean;
-  allowedFormats?: string;
-  requiresDrawing?: boolean;
-  allowsUpload?: boolean;
 };

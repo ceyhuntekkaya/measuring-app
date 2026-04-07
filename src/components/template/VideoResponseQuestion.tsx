@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { VideoResponseTemplateDto } from '@/api/generated/model';
 import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
-import {difficultyConverter} from "@/utils/enum-converter";
 import {uploadVideoFile} from "@/services/api/upload-file";
 import type {UploadedFileDto} from "@/api/generated/model";
 import siteConfig from "@/config/config.json";
@@ -35,6 +34,10 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                                                                          questionId,
                                                                          isSubmitted = false,
                                                                      }) => {
+    // ORVAL VideoResponseTemplateDto exposes only min/max recording duration (+ base fields)
+    const allowScreenRecording = false;
+    const requiresManualGrading = false;
+
     const [videoAnswer, setVideoAnswer] = useState<VideoAnswerData | null>(initialAnswer);
     const [videoAnswerPath, setVideoAnswerPath] = useState<string>('');
     const [isRecording, setIsRecording] = useState<boolean>(false);
@@ -191,7 +194,7 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                 audio: true
             };
 
-            if (template.allowScreenRecording) {
+            if (allowScreenRecording) {
                 constraints.video = {
                     width: { ideal: 1920 },
                     height: { ideal: 1080 }
@@ -388,7 +391,7 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                 <div className="mb-4">
                     <h3 className="text-lg font-semibold text-gray-800">{template.title}</h3>
                     {template.description && (
-                        <p className="text-gray-600 mt-1">{template.description}</p>
+                        <MaybeHtml className="text-gray-600 mt-1" value={template.description} />
                     )}
                 </div>
             )}
@@ -399,7 +402,7 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                         <MaybeHtml className="text-purple-700" value={template.description} />
                     )}
                     {template.instructions && (
-                        <p className="text-purple-700 text-sm whitespace-pre-wrap mt-2">{template.instructions}</p>
+                        <MaybeHtml className="text-purple-700 text-sm whitespace-pre-wrap mt-2" value={template.instructions} />
                     )}
                 </div>
             )}
@@ -581,7 +584,7 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                 {!videoAnswer && !isRecording && (
                     <div className="mt-4 text-center">
                         <p className="text-sm text-gray-600">
-                            {template.allowScreenRecording
+                            {allowScreenRecording
                                 ? 'Kamera veya ekran kaydı yapabilirsiniz'
                                 : 'Kamera ile video kaydı yapın'
                             }
@@ -611,7 +614,7 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                             Video yanıtınız başarıyla gönderildi
                         </p>
                     </div>
-                    {template.requiresManualGrading && (
+                    {requiresManualGrading && (
                         <p className="text-green-700 text-sm mt-2">
                             Değerlendirme tamamlandığında sonuçları görebileceksiniz.
                         </p>
@@ -624,17 +627,10 @@ const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
                 <div className="mt-4 p-4 bg-gray-50 rounded border">
                     <h4 className="font-semibold text-gray-700 mb-2">Soru Bilgileri:</h4>
                     <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                        {template.subject && <div><strong>Konu:</strong> {template.subject}</div>}
-                        {template.difficulty && <div><strong>Zorluk:</strong> {difficultyConverter(template.difficulty)}</div>}
-                        {template.points && <div><strong>Puan:</strong> {template.points}</div>}
-                        {template.timeLimit && <div><strong>Süre:</strong> {template.timeLimit} saniye</div>}
                         {template.minRecordingDuration && <div><strong>Min. Kayıt:</strong> {formatTime(template.minRecordingDuration)}</div>}
                         {template.maxRecordingDuration && <div><strong>Maks. Kayıt:</strong> {formatTime(template.maxRecordingDuration)}</div>}
-                        {template.requiresManualGrading !== undefined && <div><strong>Manuel Değerlendirme:</strong> {template.requiresManualGrading ? 'Evet' : 'Hayır'}</div>}
-                        {template.allowScreenRecording !== undefined && <div><strong>Ekran Kaydı:</strong> {template.allowScreenRecording ? 'İzinli' : 'İzinsiz'}</div>}
-                        {template.tags && template.tags.length > 0 && (
-                            <div className="col-span-2"><strong>Etiketler:</strong> {template.tags.join(', ')}</div>
-                        )}
+                        <div><strong>Manuel Değerlendirme:</strong> {requiresManualGrading ? 'Evet' : 'Hayır'}</div>
+                        <div><strong>Ekran Kaydı:</strong> {allowScreenRecording ? 'İzinli' : 'İzinsiz'}</div>
                     </div>
                 </div>
             )}

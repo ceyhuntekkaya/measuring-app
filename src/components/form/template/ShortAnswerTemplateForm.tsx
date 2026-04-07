@@ -1,19 +1,17 @@
 'use client';
 
 import React, {forwardRef, useEffect, useImperativeHandle, useState} from 'react';
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import Checkbox from "@/components/ui/checkbox";
 import { NumberInput } from "@/components/ui/number-input";
 import type { ShortAnswerTemplateDto, AcceptableAnswer, ShortAnswerOptions } from "@/api/generated/model";
 import { Trash2, Plus } from "lucide-react";
-import HtmlEditor from "@/components/ui/html-editor";
 
-// Use ORVAL DTO types directly - only template-specific fields
-type ShortAnswerTemplateFormData = Pick<ShortAnswerTemplateDto, 'question' | 'options' | 'maxCharacters' | 'minCharacters' | 'rubric' | 'requiresManualGrading'>;
+type ShortAnswerTemplateFormData = {
+    options: ShortAnswerOptions;
+};
 
 interface ShortAnswerTemplateFormErrors {
     question?: string;
@@ -37,17 +35,12 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
                                                                                                  onChange,
                                                                                              }, ref) => {
     const [formData, setFormData] = useState<ShortAnswerTemplateFormData>({
-        question: '',
         options: {
             acceptableAnswers: [],
             caseSensitive: false,
             exactMatch: false,
             placeholder: '' // UI'dan kaldırıldı, her zaman boş string
         },
-        maxCharacters: 500,
-        minCharacters: 1,
-        rubric: '',
-        requiresManualGrading: false
     });
 
     const [errors, setErrors] = useState<ShortAnswerTemplateFormErrors>({});
@@ -55,7 +48,6 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
     useEffect(() => {
         if (value) {
             setFormData({
-                question: value.question || '',
                 options: {
                     ...(value.options || {
                         acceptableAnswers: [],
@@ -63,11 +55,7 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
                         exactMatch: false
                     }),
                     placeholder: '' // UI'dan kaldırıldı, her zaman boş string
-                },
-                maxCharacters: value.maxCharacters || 500,
-                minCharacters: value.minCharacters || 1,
-                rubric: value.rubric || '',
-                requiresManualGrading: value.requiresManualGrading || false
+                }
             });
         }
     }, []);
@@ -81,15 +69,10 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
 
         // Her zaman onChange'i çağır, validation sadece submit için
         onChange({
-            question: updatedData.question,
             options: {
                 ...updatedData.options,
                 placeholder: '' // UI'dan kaldırıldı, her zaman boş string
-            },
-            maxCharacters: updatedData.maxCharacters,
-            minCharacters: updatedData.minCharacters,
-            rubric: updatedData.rubric,
-            requiresManualGrading: false // UI'dan kaldırıldı, her zaman false olarak gönderiliyor
+            }
         });
     };
 
@@ -136,18 +119,6 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
     const validateForm = (): boolean => {
         const newErrors: ShortAnswerTemplateFormErrors = {};
 
-        if (!formData.question?.trim()) {
-            newErrors.question = 'Soru metni zorunludur';
-        }
-
-        if ((formData.minCharacters ?? 0) <= 0) {
-            newErrors.minCharacters = 'Minimum karakter sayısı 0\'dan büyük olmalıdır';
-        }
-
-        if ((formData.maxCharacters ?? 0) <= (formData.minCharacters ?? 0)) {
-            newErrors.maxCharacters = 'Maksimum karakter sayısı minimum karakter sayısından büyük olmalıdır';
-        }
-
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -162,74 +133,7 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
         <div className="space-y-6">
             <h3 className="text-lg font-semibold">Kısa Cevap Soru Ayarları</h3>
 
-            {/* Soru Metni */}
-            <div className="space-y-2">
-                <Label htmlFor="question">Soru Metni *</Label>
-                <HtmlEditor
-                    id="question"
-                    value={formData.question || ''}
-                    onChange={(html) => handleChange('question', html)}
-                    error={!!errors.question}
-                    minHeightClassName="min-h-[100px]"
-                    placeholder="Soru metnini giriniz"
-                />
-                {errors.question && (
-                    <Alert variant="destructive">
-                        <AlertDescription>{errors.question}</AlertDescription>
-                    </Alert>
-                )}
-            </div>
-
-            {/* Karakter Sınırları */}
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label htmlFor="minCharacters">Minimum Karakter Sayısı</Label>
-                    <NumberInput
-                        id="minCharacters"
-                        inputType={"number"}
-                        value={formData.minCharacters}
-                        onChange={(value) => handleChange('minCharacters', value)}
-                        minValue={1}
-                        decimalPlaces={0}
-                        className={errors.minCharacters ? 'border-red-500' : ''}
-                    />
-                    {errors.minCharacters && (
-                        <Alert variant="destructive">
-                            <AlertDescription>{errors.minCharacters}</AlertDescription>
-                        </Alert>
-                    )}
-                </div>
-
-                <div className="space-y-2">
-                    <Label htmlFor="maxCharacters">Maksimum Karakter Sayısı</Label>
-                    <NumberInput
-                        id="maxCharacters"
-                        inputType={"number"}
-                        value={formData.maxCharacters}
-                        onChange={(value) => handleChange('maxCharacters', value)}
-                        minValue={1}
-                        decimalPlaces={0}
-                        className={errors.maxCharacters ? 'border-red-500' : ''}
-                    />
-                    {errors.maxCharacters && (
-                        <Alert variant="destructive">
-                            <AlertDescription>{errors.maxCharacters}</AlertDescription>
-                        </Alert>
-                    )}
-                </div>
-            </div>
-
-            {/* Placeholder - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
-            {/* <div className="space-y-2">
-                <Label htmlFor="placeholder">Placeholder Metni</Label>
-                <Input
-                    id="placeholder"
-                    value={formData.options.placeholder || ''}
-                    onChange={(e) => updateOptions('placeholder', e.target.value)}
-                    placeholder="Cevap alanında görünecek placeholder metni"
-                />
-            </div> */}
-
+          
             {/* Ayarlar */}
             <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center space-x-2">
@@ -298,15 +202,7 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
                             />
                         </div>
 
-                        {/* Geri Bildirim - YORUM SATIRI: UI'dan kaldırıldı, belki sonra tekrar gösterilebilir */}
-                        {/* <div className="col-span-4">
-                            <Label>Geri Bildirim</Label>
-                            <Input
-                                value={answer.feedback || ''}
-                                onChange={(e) => updateAcceptableAnswer(index, 'feedback', e.target.value)}
-                                placeholder="Geri bildirim (opsiyonel)"
-                            />
-                        </div> */}
+                       
 
                         <div className="col-span-1">
                             <Button
@@ -322,19 +218,7 @@ const ShortAnswerTemplateForm = forwardRef<ShortAnswerTemplateFormHandle, ShortA
                 ))}
             </div>
 
-            {/* Değerlendirme Rubriği - Sadece Manuel Değerlendirme seçili ise görünür */}
-            {formData.requiresManualGrading && (
-                <div className="space-y-2">
-                    <Label htmlFor="rubric">Değerlendirme Rubriği</Label>
-                    <Textarea
-                        id="rubric"
-                        value={formData.rubric}
-                        onChange={(e) => handleChange('rubric', e.target.value)}
-                        className="min-h-[120px]"
-                        placeholder="Manuel değerlendirme için rubrik kriterleri (opsiyonel)"
-                    />
-                </div>
-            )}
+            
         </div>
     );
 });

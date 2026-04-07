@@ -16,8 +16,8 @@ export default function ExamTypeDetailPage() {
     const examTypeId = params.examTypeId as string;
     const router = useRouter();
     const queryClient = useQueryClient();
-    const { data, isLoading, error } = useGetExamTypeById(examTypeId);
-    const selectedExamType = (data as unknown as ApiResponseExamTypeDto)?.data as ExamTypeDto | undefined;
+    const { data, isLoading, error } = useGetExamTypeById<ApiResponseExamTypeDto>(examTypeId);
+    const selectedExamType = data?.data as ExamTypeDto | undefined;
 
     const { mutate: deleteExamType } = useDeleteExamType({
         mutation: {

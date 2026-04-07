@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { EssayTemplateDto } from '@/api/generated/model';
 import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
-import {difficultyConverter} from "@/utils/enum-converter";
 import MaybeHtml from "@/components/ui/maybe-html";
 
 interface EssayQuestionProps {
@@ -192,7 +191,7 @@ const EssayQuestion: React.FC<EssayQuestionProps> = ({
                 <div className="mb-4">
                     <h3 className="text-lg font-semibold text-gray-800">{template.title}</h3>
                     {template.description && (
-                        <p className="text-gray-600 mt-1">{template.description}</p>
+                        <MaybeHtml className="text-gray-600 mt-1" value={template.description} />
                     )}
                 </div>
             )}
@@ -210,7 +209,7 @@ const EssayQuestion: React.FC<EssayQuestionProps> = ({
                         <MaybeHtml className="text-purple-700 whitespace-pre-wrap" value={template.description} />
                     )}
                     {template.instructions && (
-                        <p className="text-purple-700 text-sm whitespace-pre-wrap mt-2">{template.instructions}</p>
+                        <MaybeHtml className="text-purple-700 text-sm whitespace-pre-wrap mt-2" value={template.instructions} />
                     )}
                 </div>
             )}
@@ -241,52 +240,7 @@ const EssayQuestion: React.FC<EssayQuestionProps> = ({
                 </div>
             )}
 
-            {/* Required Topics
-            {template.requiredTopics && template.requiredTopics.length > 0 && (
-                <div className="mb-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
-                    <h4 className="font-semibold text-yellow-800 mb-2">İşlenmesi Gereken Konular:</h4>
-                    <ul className="list-disc list-inside space-y-1">
-                        {template.requiredTopics.map((topic, index) => (
-                            <li key={index} className="text-yellow-700 text-sm">{topic}</li>
-                        ))}
-                    </ul>
-                </div>
-            )}
-            */}
-            {/* Grading Criteria
-            {template.gradingCriteria && template.gradingCriteria.length > 0 && (
-                <div className="mb-4 p-4 bg-green-50 border-l-4 border-green-400 rounded">
-                    <h4 className="font-semibold text-green-800 mb-2">Değerlendirme Kriterleri:</h4>
-                    <ul className="list-disc list-inside space-y-1">
-                        {template.gradingCriteria.map((criterion, index) => (
-                            <li key={index} className="text-green-700 text-sm">{criterion}</li>
-                        ))}
-                    </ul>
-                </div>
-            )}
-            */}
-            {/* Rubric
-            {template.rubric && (
-                <div className="mb-4 p-4 bg-indigo-50 border-l-4 border-indigo-400 rounded">
-                    <h4 className="font-semibold text-indigo-800 mb-2">Değerlendirme Rubriği:</h4>
-                    <p className="text-indigo-700 text-sm whitespace-pre-wrap">{template.rubric}</p>
-                </div>
-            )}
-            */}
-            {/* Manual Grading Notice
-            {template.requiresManualGrading && (
-                <div className="mb-4 p-3 bg-orange-50 border-l-4 border-orange-400 rounded">
-                    <div className="flex items-start space-x-2">
-                        <svg className="w-5 h-5 text-orange-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                        </svg>
-                        <p className="text-orange-800 text-sm">
-                            Bu kompozisyon manuel değerlendirme gerektirir. Yanıtınız öğretmeniniz tarafından değerlendirilecektir.
-                        </p>
-                    </div>
-                </div>
-            )}
-            */}
+            
             {/* Essay Text Area */}
             <div className={`border-2 rounded-lg transition-all duration-200 ${
                 isFocused
@@ -391,11 +345,9 @@ const EssayQuestion: React.FC<EssayQuestionProps> = ({
                                 <p>• Kelime Sayısı: {wordCount}</p>
                                 <p>• Karakter Sayısı: {characterCount}</p>
                             </div>
-                            {template.requiresManualGrading && (
-                                <p className="text-green-700 text-sm mt-2">
-                                    Değerlendirme tamamlandığında sonuçları görebileceksiniz.
-                                </p>
-                            )}
+                            <p className="text-green-700 text-sm mt-2">
+                                Değerlendirme tamamlandığında sonuçları görebileceksiniz.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -406,60 +358,12 @@ const EssayQuestion: React.FC<EssayQuestionProps> = ({
                 <div className="mt-4 p-4 bg-gray-50 rounded border">
                     <h4 className="font-semibold text-gray-700 mb-2">Soru Bilgileri:</h4>
                     <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                        {template.subject && (
-                            <div><strong>Konu:</strong> {template.subject}</div>
-                        )}
-                        {template.difficulty && (
-                            <div><strong>Zorluk:</strong> {difficultyConverter(template.difficulty)}</div>
-                        )}
-                        {template.points && (
-                            <div><strong>Puan:</strong> {template.points}</div>
-                        )}
-                        {template.timeLimit && (
-                            <div><strong>Süre:</strong> {template.timeLimit} saniye</div>
-                        )}
-                        {template.minWords && (
-                            <div><strong>Min. Kelime:</strong> {template.minWords}</div>
-                        )}
-                        {template.maxWords && (
-                            <div><strong>Maks. Kelime:</strong> {template.maxWords}</div>
-                        )}
-                        {template.requiredTopics && template.requiredTopics.length > 0 && (
-                            <div><strong>Konu Sayısı:</strong> {template.requiredTopics.length}</div>
-                        )}
-                        {template.requiresManualGrading !== undefined && (
-                            <div><strong>Manuel Değerlendirme:</strong> {template.requiresManualGrading ? 'Evet' : 'Hayır'}</div>
-                        )}
-                        {template.tags && template.tags.length > 0 && (
-                            <div className="col-span-2">
-                                <strong>Etiketler:</strong> {template.tags.join(', ')}
-                            </div>
-                        )}
+                        {/* Metadata fields removed (DTO doesn't expose them) */}
                     </div>
                 </div>
             )}
 
-            {/* Development Notes - Comment for future exam implementation */}
-            {/*
-        TODO: Real exam implementation
-        - Integrate with exam session management
-        - Implement auto-save functionality (every 30 seconds)
-        - Add spell check and grammar suggestions
-        - Support for rich text formatting (bold, italic, lists)
-        - Implement word processor features (undo/redo)
-        - Add plagiarism detection
-        - Support for citations and references
-        - Implement AI-based writing suggestions
-        - Add readability score calculation
-        - Support for multiple drafts
-        - Implement collaborative editing (optional)
-        - Add accessibility features for screen readers
-        - Support for voice typing
-        - Implement keyword highlighting for required topics
-        - Add writing time tracking
-        - Support for templates and outlines
-        - Implement sentiment analysis (optional)
-      */}
+          
         </div>
     );
 };

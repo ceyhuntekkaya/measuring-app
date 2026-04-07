@@ -11,7 +11,7 @@ import {Trash2, Plus} from "lucide-react";
 import {EMediaType} from "@/types/exam/enum";
 
 // Use ORVAL DTO types directly - only template-specific fields
-type MultipleChoiceTemplateFormData = Pick<MultipleChoiceTemplateDto, 'question' | 'options' | 'correctOptionIndex' | 'explanation' | 'shuffleOptions'>;
+type MultipleChoiceTemplateFormData = Pick<MultipleChoiceTemplateDto, 'options' | 'correctOptionIndex'>;
 
 interface MultipleChoiceTemplateFormErrors {
     question?: string;
@@ -37,11 +37,8 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
                                                                                                                                                                  onChange,
                                                                                                                                                              }, ref) => {
     const [formData, setFormData] = useState<MultipleChoiceTemplateFormData>({
-        question: '',
         options: {choices: []},
         correctOptionIndex: 0,
-        explanation: '',
-        shuffleOptions: false
     });
 
     const [errors, setErrors] = useState<MultipleChoiceTemplateFormErrors>({});
@@ -98,14 +95,11 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
             })) || [];
             
             setFormData({
-                question: value.question || '',
                 options: {
                     ...(value.options || {}),
                     choices: choices
                 },
                 correctOptionIndex: correctIndex,
-                explanation: '', // UI'dan kaldırıldı, her zaman boş string
-                shuffleOptions: value.shuffleOptions || false
             });
         }
     }, []);
@@ -151,11 +145,8 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
         // ÖNEMLİ: value'dan gelen id ve diğer base field'ları koru (update modu için gerekli)
         onChange({
             ...(value || {}), // id ve diğer base field'ları koru (value null ise boş obje)
-            question: updatedData.question,
             options: updatedData.options,
             correctOptionIndex: updatedData.correctOptionIndex,
-            explanation: '', // UI'dan kaldırıldı, her zaman boş string
-            shuffleOptions: updatedData.shuffleOptions
         });
     };
 
@@ -203,11 +194,8 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
         // ÖNEMLİ: value'dan gelen id ve diğer base field'ları koru (update modu için gerekli)
         onChange({
             ...(value || {}), // id ve diğer base field'ları koru (value null ise boş obje)
-            question: updatedData.question,
             options: updatedData.options,
             correctOptionIndex: updatedData.correctOptionIndex,
-            explanation: '', // UI'dan kaldırıldı, her zaman boş string
-            shuffleOptions: updatedData.shuffleOptions
         });
     };
 
@@ -228,9 +216,7 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
     const validateForm = (): boolean => {
         const newErrors: MultipleChoiceTemplateFormErrors = {};
 
-        if (!formData.question?.trim()) {
-            newErrors.question = 'Soru metni zorunludur';
-        }
+        
 
         if (!formData.options?.choices || formData.options.choices.length < 2) {
             newErrors.options = 'En az 2 seçenek olmalıdır';
@@ -258,21 +244,7 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
         <div className="space-y-6">
             <h3 className="text-lg font-semibold">Çoktan Seçmeli Soru Ayarları</h3>
 
-            {/* Soru Metni */}
-            <div className="space-y-2">
-                <Label htmlFor="question">Soru Metni *</Label>
-                <HtmlEditor
-                    value={formData.question || ''}
-                    onChange={(nextHtml) => handleChange('question', nextHtml)}
-                    placeholder="Soru metnini giriniz"
-                    minHeightClassName={`min-h-[100px] ${errors.question ? 'border border-red-500 rounded-md' : ''}`}
-                />
-                {errors.question && (
-                    <Alert variant="destructive">
-                        <AlertDescription>{errors.question}</AlertDescription>
-                    </Alert>
-                )}
-            </div>
+          
 
             {/* Seçenekler */}
             <div className="space-y-4">
@@ -338,20 +310,6 @@ const MultipleChoiceTemplateForm = forwardRef<MultipleChoiceTemplateFormHandle, 
                         <AlertDescription>{errors.options}</AlertDescription>
                     </Alert>
                 )}
-            </div>
-
-          
-
-            {/* Seçenekleri Karıştır */}
-            <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                    <Checkbox
-                        id="shuffleOptions"
-                        checked={formData.shuffleOptions}
-                        onChange={(checked) => handleChange('shuffleOptions', !!checked)}
-                    />
-                    <Label htmlFor="shuffleOptions">Seçenekleri Karıştır</Label>
-                </div>
             </div>
         </div>
     );

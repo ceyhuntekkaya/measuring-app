@@ -14,18 +14,15 @@ import type {CreateQuestionRequest} from "@/api/generated/model";
 import type {QuestionDto} from "@/api/generated/model";
 import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EDifficulty, EMediaType, EQuestionType} from "@/types/exam/enum";
+import {BaseQuestionTemplateDtoStatus} from "@/api/generated/model/baseQuestionTemplateDtoStatus";
 
 // Custom form data type for base template (UI only)
 export interface BaseQuestionTemplateFormData {
     title: string;
     description?: string;
-    subject: string;
-    difficulty: EDifficulty;
-    points: number;
-    timeLimit: number;
     instructions?: string;
-    tags: string[];
     isActive: boolean;
+    status?: BaseQuestionTemplateDtoStatus;
     questionType: EQuestionType | '';
     templateData?: QuestionTemplateType | null;
 }
@@ -66,7 +63,8 @@ interface QuestionFormErrors {
     questionType?: string;
     orderNumber?: string;
     maximumScore?: string;
-    durationInSeconds?: string;
+    timeLimit?: string;
+    difficulty?: string;
     questionTemplate?: string;
     parts?: string;
     options?: string;
@@ -98,7 +96,8 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
         orderNumber: undefined,
         isAutomaticallyEvaluated: true,
         maximumScore: undefined,
-        durationInSeconds: undefined
+        timeLimit: 300,
+        difficulty: EDifficulty.EASY
     });
     
     // UI-only state for template
@@ -112,13 +111,9 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
     const [baseFormData, setBaseFormData] = useState<BaseQuestionTemplateFormData>({
         title: '',
         description: '',
-        subject: 'NOT_SET',
-        difficulty: EDifficulty.EASY,
-        points: 10,
-        timeLimit: 300,
         instructions: '',
-        tags: [],
         isActive: true,
+        status: BaseQuestionTemplateDtoStatus.ACTIVE,
         questionType: '',
         templateData: null
     });
@@ -153,7 +148,8 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                 orderNumber: question.orderNumber,
                 isAutomaticallyEvaluated: question.isAutomaticallyEvaluated ?? true,
                 maximumScore: question.maximumScore,
-                durationInSeconds: question.durationInSeconds
+                timeLimit: question.timeLimit ?? 300,
+                difficulty: (question.difficulty as EDifficulty) || EDifficulty.EASY
             });
             setQuestionTemplate(question.questionTemplate || null);
             setParts([]);
@@ -166,17 +162,17 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                     ...question.questionTemplate,
                     id: question.questionTemplate.id // id'yi açıkça koru
                 };
+
+                const templateStatus =
+                    ('status' in question.questionTemplate ? question.questionTemplate.status : undefined) ??
+                    BaseQuestionTemplateDtoStatus.ACTIVE;
                 
                 setBaseFormData({
                     title: question.questionTemplate.title || '',
                     description: question.questionTemplate.description || '',
-                    subject: question.questionTemplate.subject || 'NOT_SET',
-                    difficulty: (question.questionTemplate.difficulty as EDifficulty) || EDifficulty.EASY,
-                    points: question.questionTemplate.points || 10,
-                    timeLimit: question.questionTemplate.timeLimit || 300,
                     instructions: question.questionTemplate.instructions || '',
-                    tags: question.questionTemplate.tags || [],
                     isActive: question.questionTemplate.isActive ?? true,
+                    status: templateStatus,
                     questionType: (question.questionType as EQuestionType) || '',
                     templateData: templateDataWithId // id'yi içeren template data
                 });
@@ -193,7 +189,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                 templateData: null // Yeni tip seçildiğinde template data'yı temizle
             }));
         }
-    }, [formData.questionType]);
+    }, [formData.questionType, baseFormData.questionType]);
 
     const handleChange = <T extends keyof Omit<CreateQuestionRequest, 'questionTemplate'>>(
         name: T,
@@ -206,12 +202,6 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 
         if(name === "name"){
             handleBaseFormUpdate("title", value as string)
-        }
-        if(name === "maximumScore"){
-            handleBaseFormUpdate("points", value as number)
-        }
-        if(name === "durationInSeconds"){
-            handleBaseFormUpdate("timeLimit", value as number)
         }
 
         // Hata varsa temizle
@@ -305,8 +295,8 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
             newErrors.maximumScore = 'Maksimum puan negatif olamaz';
         }
 
-        if (formData.durationInSeconds !== undefined && formData.durationInSeconds < 0) {
-            newErrors.durationInSeconds = 'Süre negatif olamaz';
+        if (formData.timeLimit === undefined || formData.timeLimit < 1) {
+            newErrors.timeLimit = 'Süre en az 1 saniye olmalıdır';
         }
 
         setErrors(newErrors);
@@ -329,19 +319,13 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
             const templateId = questionTemplate.id; // id'yi önce sakla
             
             finalQuestionTemplate = {
-                ...questionTemplate, // Template-specific field'ları koru (correctOptionIndex, correctOptionIndices, vb.)
-                // Base template fields (eğer baseFormData'da varsa override et)
+                ...questionTemplate,
                 ...(baseFormData.title && { title: baseFormData.title }),
                 ...(baseFormData.description !== undefined && { description: baseFormData.description }),
                 ...(baseFormData.instructions !== undefined && { instructions: baseFormData.instructions }),
-                ...(baseFormData.subject && { subject: baseFormData.subject }),
-                ...(baseFormData.difficulty && { difficulty: baseFormData.difficulty }),
-                ...(baseFormData.points !== undefined && { points: baseFormData.points }),
-                ...(baseFormData.timeLimit !== undefined && { timeLimit: baseFormData.timeLimit }),
-                ...(baseFormData.tags && { tags: baseFormData.tags }),
                 ...(baseFormData.isActive !== undefined && { isActive: baseFormData.isActive }),
+                ...(baseFormData.status !== undefined && { status: baseFormData.status }),
                 questionType: baseFormData.questionType as EQuestionType,
-                // ÖNEMLİ: id'yi en son ekle ki override edilmesin (update modu için gerekli)
                 ...(templateId && { id: templateId })
             } as CreateQuestionRequest['questionTemplate'];
         }
@@ -358,7 +342,8 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
             orderNumber: formData.orderNumber,
             isAutomaticallyEvaluated: formData.isAutomaticallyEvaluated,
             maximumScore: formData.maximumScore,
-            durationInSeconds: formData.durationInSeconds,
+            timeLimit: formData.timeLimit,
+            difficulty: formData.difficulty,
             questionTemplate: finalQuestionTemplate
         };
     };
@@ -616,9 +601,6 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
         )
     }
 
-
-
-
     return (
         <Card className="w-full">
             <CardHeader>
@@ -710,41 +692,72 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                                 )}
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="durationInSeconds">Süre (saniye)</Label>
+                                <Label htmlFor="timeLimit">Süre (saniye) *</Label>
                                 <NumberInput
-                                    id="durationInSeconds"
+                                    id="timeLimit"
                                     inputType={"number"}
-                                    value={formData.durationInSeconds}
-                                    onChange={(value) => handleChange('durationInSeconds', value)}
-                                    minValue={0}
+                                    value={formData.timeLimit}
+                                    onChange={(value) => handleChange('timeLimit', value)}
+                                    minValue={1}
                                     decimalPlaces={0}
                                     unit="sn"
                                     placeholder="Süre giriniz"
-                                    className={errors.durationInSeconds ? 'border-red-500' : ''}
+                                    className={errors.timeLimit ? 'border-red-500' : ''}
                                 />
-                                {errors.durationInSeconds && (
+                                {errors.timeLimit && (
                                     <Alert variant="destructive">
-                                        <AlertDescription>{errors.durationInSeconds}</AlertDescription>
+                                        <AlertDescription>{errors.timeLimit}</AlertDescription>
                                     </Alert>
                                 )}
                             </div>
-                            {
-                                /*
-                                 <div className="space-y-2">
-                                <div className="flex items-center space-x-2 mt-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="difficulty">Zorluk</Label>
+                                <Select
+                                    value={formData.difficulty ?? EDifficulty.EASY}
+                                    onValueChange={(value) => handleChange('difficulty', value as EDifficulty)}
+                                >
+                                    <SelectTrigger className={errors.difficulty ? 'border-red-500' : ''}>
+                                        <SelectValue placeholder="Zorluk"/>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            {Object.entries(EDifficulty).map(([key, value]) => (
+                                                <SelectItem key={key} value={value}>
+                                                    {value}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-2 md:col-span-2">
+                                <Label>Otomatik Değerlendirme</Label>
+                                <div className="flex items-center gap-2 h-10 px-3 border rounded-md">
                                     <Checkbox
-                                        id="isAutomaticallyEvaluated"
-                                        checked={formData.isAutomaticallyEvaluated}
+                                        checked={formData.isAutomaticallyEvaluated ?? true}
                                         onChange={(checked) => handleChange('isAutomaticallyEvaluated', !!checked)}
                                     />
-                                    <Label htmlFor="isAutomaticallyEvaluated">Otomatik Değerlendir</Label>
+                                    <span className="text-sm">Bu soru otomatik değerlendirilsin</span>
                                 </div>
                             </div>
-                                 */
-                            }
+                            
 
                         </div>
                     </div>
+
+                    {question && (
+                        <div className="grid grid-cols-1 md:grid-cols-6 gap-2">
+                            <div className="space-y-2 md:col-span-2">
+                                <Label>Durum</Label>
+                                <Input value={question.status || ''} disabled />
+                            </div>
+                            <div className="space-y-2 md:col-span-2">
+                                <Label>Oluşturulma Tarihi</Label>
+                                <Input value={question.createdAt || ''} disabled />
+                            </div>
+                        </div>
+                    )}
 
                     {
                         formData.questionGroupId && formData.questionGroupId === "yedek_alani" &&

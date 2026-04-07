@@ -3,7 +3,7 @@
 import { useProtectedRoute } from '@/hooks/use-auth';
 
 export default function UserDashboard() {
-    const { user, isAuthorized } = useProtectedRoute('USER', ['APPROVAL']);
+    const { user, isAuthorized } = useProtectedRoute('USER', ['VIEW']);
 
     if (!isAuthorized) {
         return null;

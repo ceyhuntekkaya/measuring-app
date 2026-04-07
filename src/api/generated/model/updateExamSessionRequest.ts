@@ -11,10 +11,7 @@ import type { UpdateExamSessionRequestStatus } from "./updateExamSessionRequestS
 export interface UpdateExamSessionRequest {
   id?: string;
   createdAt?: string;
-  deletedAt?: string;
   status?: UpdateExamSessionRequestStatus;
-  createdById?: string;
-  deletedById?: string;
   name?: string;
   description?: string;
   quota?: number;

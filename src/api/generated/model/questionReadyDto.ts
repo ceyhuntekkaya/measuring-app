@@ -28,7 +28,8 @@ export interface QuestionReadyDto {
   orderNumber?: number;
   isAutomaticallyEvaluated?: boolean;
   maximumScore?: number;
-  durationInSeconds?: number;
+  timeLimit?: number;
+  difficulty?: string;
   template?:
     | AudioResponseTemplateDto
     | DragAndDropTemplateDto

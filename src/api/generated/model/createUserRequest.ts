@@ -50,7 +50,6 @@ export interface CreateUserRequest {
   authoritySet?: CreateUserRequestAuthoritySetItem[];
   id?: string;
   createdAt?: number;
-  deletedAt?: number;
   status?: CreateUserRequestStatus;
   lastLoginTime?: number;
   activationCode?: string;

@@ -5,9 +5,15 @@
  * API documentation for Measuring Parent application
  * OpenAPI spec version: 1.0.0
  */
+import type { UpdateExamSectionRequestQuestionSkillType } from "./updateExamSectionRequestQuestionSkillType";
 
 export interface UpdateExamSectionRequest {
   name?: string;
   orderNumber?: number;
   sectionDescription?: string;
+  isOrder?: boolean;
+  hasTotalTime?: boolean;
+  totalTime?: number;
+  minScore?: number;
+  questionSkillType?: UpdateExamSectionRequestQuestionSkillType;
 }

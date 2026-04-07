@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 
 import { NumberInput } from "@/components/ui/number-input";
 import type {ExamTypeDto} from "@/api/generated/model";
+import { ExamTypeDtoDepartment } from "@/api/generated/model/examTypeDtoDepartment";
 import { ExamTypeDtoStatus } from "@/api/generated/model/examTypeDtoStatus";
 import {EExamType} from "@/types/exam/enum";
 import TextYesNoCheckbox from "@/components/ui/text-yes-no-checkbox";
@@ -49,21 +50,9 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
             case ExamTypeDtoStatus.PASSIVE:
             case 'PASSIVE':
                 return 'Pasif';
-            case ExamTypeDtoStatus.CANCELLED:
-            case 'CANCELLED':
-                return 'İptal Edildi';
             case ExamTypeDtoStatus.DELETED:
             case 'DELETED':
                 return 'Silindi';
-            case ExamTypeDtoStatus.PENDING:
-            case 'PENDING':
-                return 'Beklemede';
-            case ExamTypeDtoStatus.SUSPENDED:
-            case 'SUSPENDED':
-                return 'Askıya Alındı';
-            case ExamTypeDtoStatus.REJECTED:
-            case 'REJECTED':
-                return 'Reddedildi';
             default:
                 return String(status);
         }
@@ -83,6 +72,7 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
         screenRecordTime: 0,
         maximumScore: 100,
         durationInSeconds: 3600,
+        examLanguage: '',
         questionGroupTypes: []
     });
 
@@ -107,6 +97,8 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
                 screenRecordTime: examType.screenRecordTime || 0,
                 maximumScore: examType.maximumScore || 100,
                 durationInSeconds: examType.durationInSeconds || 3600,
+                examLanguage: examType.examLanguage || '',
+                department: examType.department,
                 questionGroupTypes: examType.questionGroupTypes || []
             });
         }
@@ -181,6 +173,23 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
+    };
+
+    const departmentLabel = (d: string) => {
+        const labels: Record<string, string> = {
+            TURKISH: 'Türkçe',
+            ENGLISH: 'İngilizce',
+            GERMAN: 'Almanca',
+            CHINESE: 'Çince',
+            ARABIC: 'Arapça',
+            FRENCH: 'Fransızca',
+            JAPANESE: 'Japonca',
+            RUSSIAN: 'Rusça',
+            KOREAN: 'Korece',
+            GREEK: 'Yunanca',
+            PERSIAN: 'Farsça',
+        };
+        return labels[d] ?? d;
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -331,6 +340,37 @@ const ExamTypeForm: React.FC<ExamTypeFormProps> = ({
                                     <AlertDescription>{errors.screenRecordTime}</AlertDescription>
                                 </Alert>
                             )}
+                        </div>
+
+                        {/* Sınav dili (serbest metin) */}
+                        <div className="space-y-2">
+                            <Label htmlFor="examLanguage">Sınav dili</Label>
+                            <Input
+                                id="examLanguage"
+                                value={formData.examLanguage || ''}
+                                onChange={(e) => handleChange('examLanguage', e.target.value)}
+                                placeholder="Örn. Türkçe, İngilizce"
+                            />
+                        </div>
+
+                        {/* Bölüm (dil enstitüsü) */}
+                        <div className="space-y-2">
+                            <TextSelect
+                                id="department"
+                                value={(formData.department || '') as string}
+                                onChange={(value) =>
+                                    handleChange(
+                                        'department',
+                                        (value || undefined) as ExamTypeDto['department']
+                                    )
+                                }
+                                placeholder="Bölüm seçin (isteğe bağlı)"
+                                html="<b>Bölüm</b><div class='text-gray-600 text-xs mt-1'>Dil / enstitü bölümü.</div>"
+                                options={Object.values(ExamTypeDtoDepartment).map((d) => ({
+                                    value: d,
+                                    label: departmentLabel(d),
+                                }))}
+                            />
                         </div>
                     </div>
 

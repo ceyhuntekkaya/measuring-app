@@ -12,11 +12,11 @@ import type { UserDto } from "./userDto";
 export interface PageUserDto {
   totalElements?: number;
   totalPages?: number;
-  pageable?: PageableObject;
   numberOfElements?: number;
   first?: boolean;
   last?: boolean;
   sort?: SortObject;
+  pageable?: PageableObject;
   size?: number;
   content?: UserDto[];
   number?: number;

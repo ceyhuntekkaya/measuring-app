@@ -83,9 +83,9 @@ export default function ApprovalsPage() {
                     return <div className="text-gray-400">Soru yok</div>;
                 }
                 
-                // ApprovalStatus'e göre grupla
+                // Status'e göre grupla
                 const statusCounts = questions.reduce((acc: Record<string, number>, question: QuestionDto) => {
-                    const status = question.approvalStatus || 'PENDING';
+                    const status = question.status || 'ACTIVE';
                     acc[status] = (acc[status] || 0) + 1;
                     return acc;
                 }, {} as Record<string, number>);
@@ -95,7 +95,7 @@ export default function ApprovalsPage() {
                     <div className="space-y-1 text-sm">
                         {Object.entries(statusCounts).map(([status, count]) => (
                             <div key={status}>
-                                {count} {approvalStatusConverter(status)} Soru
+                                {count} {statusConverter(status as EStatus)} Soru
                             </div>
                         ))}
                     </div>

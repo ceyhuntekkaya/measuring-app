@@ -36,10 +36,7 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
                                                                                                          }, ref) => {
     const [formData, setFormData] = useState<DragAndDropTemplateDto>({
         instructions: '',
-        options: undefined,
-        allowMultipleItemsPerZone: false,
-        shuffleDraggableItems: true,
-        explanation: '' // UI'dan kaldırıldı, her zaman boş string
+        options: undefined
     });
 
     const [draggableItems, setDraggableItems] = useState<DraggableItem[]>([]);
@@ -53,10 +50,7 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
             isSyncingFromValueRef.current = true;
             setFormData({
                 instructions: value.instructions || '',
-                options: value.options || undefined,
-                allowMultipleItemsPerZone: value.allowMultipleItemsPerZone || false,
-                shuffleDraggableItems: value.shuffleDraggableItems ?? true,
-                explanation: '' // UI'dan kaldırıldı, her zaman boş string
+                options: value.options || undefined
             });
 
             // Parse options to get draggable items and drop zones
@@ -95,10 +89,7 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
             const templateData: DragAndDropTemplateDto = {
                 ...value,
                 instructions: formData.instructions,
-                options: dragAndDropOptions,
-                allowMultipleItemsPerZone: formData.allowMultipleItemsPerZone,
-                shuffleDraggableItems: formData.shuffleDraggableItems,
-                explanation: '' // UI'dan kaldırıldı, her zaman boş string
+                options: dragAndDropOptions
             };
 
             onChange(templateData);
@@ -249,26 +240,6 @@ const DragAndDropTemplateForm = forwardRef<DragAndDropTemplateFormHandle, DragAn
                                 <AlertDescription>{errors.instructions}</AlertDescription>
                             </Alert>
                         )}
-                    </div>
-
-                    {/* Ayarlar */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="flex items-center space-x-2">
-                            <Checkbox
-                                id="allowMultipleItemsPerZone"
-                                checked={formData.allowMultipleItemsPerZone}
-                                onChange={(checked) => handleChange('allowMultipleItemsPerZone', !!checked)}
-                            />
-                            <Label htmlFor="allowMultipleItemsPerZone">Her Bölgeye Çoklu Öğe İzni</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <Checkbox
-                                id="shuffleDraggableItems"
-                                checked={formData.shuffleDraggableItems}
-                                onChange={(checked) => handleChange('shuffleDraggableItems', !!checked)}
-                            />
-                            <Label htmlFor="shuffleDraggableItems">Sürüklenebilir Öğeleri Karıştır</Label>
-                        </div>
                     </div>
 
                     {/* Sürüklenebilir Öğeler */}

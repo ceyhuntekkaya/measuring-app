@@ -14,10 +14,7 @@ import type { QuestionGroupDto } from "./questionGroupDto";
 export interface ExamDto {
   id?: string;
   createdAt?: string;
-  deletedAt?: string;
   status?: ExamDtoStatus;
-  createdById?: string;
-  deletedById?: string;
   name?: string;
   code?: string;
   examType?: ExamTypeDto;

@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/ui/number-input";
 import type { EssayTemplateDto } from "@/api/generated/model";
 
-type EssayTemplateFormData = Pick<EssayTemplateDto, 'minWords' | 'maxWords' | 'requiresManualGrading'>;
+type EssayTemplateFormData = Pick<EssayTemplateDto, 'minWords' | 'maxWords'>;
 
 interface EssayTemplateFormErrors {
     minWords?: string;
@@ -32,7 +32,6 @@ const EssayTemplateForm = forwardRef<EssayTemplateFormHandle, EssayTemplateFormP
     const [formData, setFormData] = useState<EssayTemplateFormData>({
         minWords: 50,
         maxWords: 1000,
-        requiresManualGrading: true,
     });
 
     const [errors, setErrors] = useState<EssayTemplateFormErrors>({});
@@ -42,7 +41,6 @@ const EssayTemplateForm = forwardRef<EssayTemplateFormHandle, EssayTemplateFormP
             setFormData({
                 minWords: value.minWords ?? 50,
                 maxWords: value.maxWords ?? 1000,
-                requiresManualGrading: value.requiresManualGrading ?? true,
             });
         }
     }, [value?.id]);
@@ -52,9 +50,8 @@ const EssayTemplateForm = forwardRef<EssayTemplateFormHandle, EssayTemplateFormP
             ...(value || {}),
             minWords: formData.minWords,
             maxWords: formData.maxWords,
-            requiresManualGrading: formData.requiresManualGrading,
         });
-    }, [formData.minWords, formData.maxWords, formData.requiresManualGrading]);
+    }, [formData.minWords, formData.maxWords]);
 
     const handleChange = <T extends keyof EssayTemplateFormData>(
         field: T,

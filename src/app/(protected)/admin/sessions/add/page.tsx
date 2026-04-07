@@ -38,20 +38,20 @@ export default function SessionAdd() {
         createExamSession({ data });
     };
 
-    const { data: brandsData } = useGetAllBrands();
-    const brands = (brandsData as unknown as ApiResponseListBrandDto)?.data || null;
+    const { data: brandsData } = useGetAllBrands<ApiResponseListBrandDto>();
+    const brands = brandsData?.data || null;
 
     const [selectedBrandId, setSelectedBrandId] = React.useState<string | null>(null);
-    const { data: branchesData } = useGetBranchesByBrand(selectedBrandId || '', {
+    const { data: branchesData } = useGetBranchesByBrand<ApiResponseListBranchDto>(selectedBrandId || '', {
         query: { enabled: !!selectedBrandId }
     });
-    const brandBranches = (branchesData as unknown as ApiResponseListBranchDto)?.data || null;
+    const brandBranches = branchesData?.data || null;
 
-    const { data: usersData } = useGetUsersByDepartment('SUPERVISOR', {});
-    const users = (usersData as unknown as ApiResponseListUserDto)?.data || null;
+    const { data: usersData } = useGetUsersByDepartment('ENGLISH', {});
+    const users = (usersData as ApiResponseListUserDto | undefined)?.data || null;
 
     const { data: examTypesData } = useGetAllExamTypes(undefined);
-    const examTypes = (examTypesData as unknown as ApiResponseExamTypeListResponse)?.data || null;
+    const examTypes = (examTypesData as ApiResponseExamTypeListResponse | undefined)?.data || null;
 
 
     useEffect(() => {

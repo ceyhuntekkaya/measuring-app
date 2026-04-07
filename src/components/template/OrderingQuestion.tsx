@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import type {OrderingItem, OrderingTemplateDto} from '@/api/generated/model';
 import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
-import {difficultyConverter} from "@/utils/enum-converter";
 import HtmlRender from "@/components/ui/html-render";
 import MaybeHtml from "@/components/ui/maybe-html";
 
@@ -25,6 +24,9 @@ const OrderingQuestion: React.FC<OrderingQuestionProps> = ({
                                                                questionId,
                                                                showCorrectAnswer = false
                                                            }) => {
+    // ORVAL OrderingTemplateDto currently exposes only `options` (+ base fields)
+    const shuffleItems = false;
+
     const [orderedItems, setOrderedItems] = useState<string[]>([]);
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
     const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -35,7 +37,7 @@ const OrderingQuestion: React.FC<OrderingQuestionProps> = ({
             setOrderedItems(initialAnswer);
         } else if (template.options?.items) {
             const items = [...template.options.items];
-            if (template.shuffleItems && !isSubmitted) {
+            if (shuffleItems && !isSubmitted) {
                 // Shuffle items for initial display
                 const shuffled = items.sort(() => Math.random() - 0.5);
                 const itemIds = shuffled.map(item => item.id || '');
@@ -45,7 +47,7 @@ const OrderingQuestion: React.FC<OrderingQuestionProps> = ({
                 setOrderedItems(itemIds);
             }
         }
-    }, [initialAnswer, template.options?.items, template.shuffleItems, isSubmitted]);
+    }, [initialAnswer, template.options?.items, shuffleItems, isSubmitted]);
 
     const handleDragStart = (index: number) => {
         if (isSubmitted && !isPreview) return;
@@ -274,7 +276,7 @@ const OrderingQuestion: React.FC<OrderingQuestionProps> = ({
                 <div className="mb-4">
                     <h3 className="text-lg font-semibold text-gray-800">{template.title}</h3>
                     {template.description && (
-                        <p className="text-gray-600 mt-1">{template.description}</p>
+                        <MaybeHtml className="text-gray-600 mt-1" value={template.description} />
                     )}
                 </div>
             )}
@@ -286,12 +288,7 @@ const OrderingQuestion: React.FC<OrderingQuestionProps> = ({
                 </div>
             )}
             */}
-            {/* Instructions */}
-            {template.instructions && (
-                <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
-                    <MaybeHtml className="text-blue-800 text-sm" value={template.instructions} />
-                </div>
-            )}
+            {/* Instructions removed (DTO doesn't expose it) */}
 
             {/* Ordering Type Info
             {template.options?.orderingType && (
@@ -426,13 +423,7 @@ const OrderingQuestion: React.FC<OrderingQuestionProps> = ({
             {!isPreview && (
                 <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
             )}
-            {/* Overall Explanation */}
-            {isSubmitted && showCorrectAnswer && template.explanation && (
-                <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
-                    <h4 className="font-semibold text-yellow-800 mb-2">Genel Açıklama:</h4>
-                    <MaybeHtml className="text-yellow-700" value={template.explanation} />
-                </div>
-            )}
+            {/* Overall explanation removed (DTO doesn't expose it) */}
 
             {/* Answer Summary (for submitted state) */}
             {isSubmitted && showCorrectAnswer && (
@@ -476,55 +467,16 @@ const OrderingQuestion: React.FC<OrderingQuestionProps> = ({
                 <div className="mt-4 p-4 bg-gray-50 rounded border">
                     <h4 className="font-semibold text-gray-700 mb-2">Soru Bilgileri:</h4>
                     <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                        {template.subject && (
-                            <div><strong>Konu:</strong> {template.subject}</div>
-                        )}
-                        {template.difficulty && (
-                            <div><strong>Zorluk:</strong> {difficultyConverter(template.difficulty)}</div>
-                        )}
-                        {template.points && (
-                            <div><strong>Puan:</strong> {template.points}</div>
-                        )}
-                        {template.timeLimit && (
-                            <div><strong>Süre:</strong> {template.timeLimit} saniye</div>
-                        )}
                         {template.options?.orderingType && (
                             <div><strong>Sıralama Türü:</strong> {template.options.orderingType}</div>
                         )}
-                        {template.shuffleItems !== undefined && (
-                            <div><strong>Karıştırma:</strong> {template.shuffleItems ? 'Evet' : 'Hayır'}</div>
-                        )}
                         {template.options?.items && (
                             <div><strong>Öğe Sayısı:</strong> {template.options.items.length}</div>
-                        )}
-                        {template.tags && template.tags.length > 0 && (
-                            <div className="col-span-2">
-                                <strong>Etiketler:</strong> {template.tags.join(', ')}
-                            </div>
                         )}
                     </div>
                 </div>
             )}
 
-            {/* Development Notes - Comment for future exam implementation */}
-            {/*
-        TODO: Real exam implementation
-        - Integrate with exam session management
-        - Add timer functionality for individual questions
-        - Save answers to backend with proper validation
-        - Handle exam submission and auto-save
-        - Add progress tracking within exam context
-        - Implement navigation between questions
-        - Add exam state management (paused, resumed, etc.)
-        - Security measures for exam integrity
-        - Handle network issues and offline scenarios
-        - Implement proper scoring logic
-        - Add accessibility features for screen readers and keyboard navigation
-        - Support for multiple languages/localization
-        - Add touch device support for mobile
-        - Implement undo/redo functionality
-        - Add animation for drag and drop feedback
-      */}
         </div>
     );
 };

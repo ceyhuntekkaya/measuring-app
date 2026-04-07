@@ -36,7 +36,7 @@ export default function CandidatePage() {
 
     const LINK_URL = siteConfig.api.linkUrl;
 
-    const {data: candidatesData, isLoading: loading} = useGetAllCandidates({
+    const {data: candidatesData, isLoading: loading} = useGetAllCandidates<ApiResponseListCandidateDto>({
         query: {
             refetchOnMount: true,
             refetchOnWindowFocus: false,
@@ -44,34 +44,18 @@ export default function CandidatePage() {
         }
     });
     
-    const candidates = useMemo(() => {
-        if (candidatesData && typeof candidatesData === 'object' && 'data' in candidatesData) {
-            const apiData = (candidatesData as { data?: unknown }).data;
-            if (Array.isArray(apiData)) {
-                return apiData as CandidateDto[];
-            }
-        }
-        return (candidatesData as unknown as ApiResponseListCandidateDto)?.data || null;
-    }, [candidatesData]);
+    const candidates = useMemo(() => candidatesData?.data || null, [candidatesData]);
 
-    const { data: examsData } = useGetAllExams({
+    const { data: examsData } = useGetAllExams<ApiResponseListExamDto>({
         query: {
             refetchOnMount: true,
             staleTime: 0,
         }
     });
     
-    const exams = useMemo(() => {
-        if (examsData && typeof examsData === 'object' && 'data' in examsData) {
-            const apiData = (examsData as { data?: unknown }).data;
-            if (Array.isArray(apiData)) {
-                return apiData as ExamDto[];
-            }
-        }
-        return (examsData as unknown as ApiResponseListExamDto)?.data || null;
-    }, [examsData]);
+    const exams = useMemo(() => examsData?.data || null, [examsData]);
 
-    const { data: sessionsData } = useGetUpcomingExamSessions({
+    const { data: sessionsData } = useGetUpcomingExamSessions<ApiResponseExamSessionListResponse>({
         query: {
             refetchOnMount: true,
             refetchOnWindowFocus: false,
@@ -80,20 +64,17 @@ export default function CandidatePage() {
     });
     
     const upcomingExamSessions = useMemo(() => {
-        if (sessionsData && typeof sessionsData === 'object' && 'data' in sessionsData) {
-            const apiData = (sessionsData as { data?: unknown }).data;
-            // Nested yapı: { data: { examSessions: [...] } }
-            if (apiData && typeof apiData === 'object' && apiData !== null && 'examSessions' in apiData) {
-                const examSessions = (apiData as { examSessions?: unknown }).examSessions;
-                return Array.isArray(examSessions) ? examSessions : [];
-            }
-            // Direct array: { data: [...] }
-            if (Array.isArray(apiData)) {
-                return apiData;
-            }
+        const apiData = sessionsData?.data as unknown;
+        if (Array.isArray(apiData)) return apiData as ExamSessionDto[];
+        if (
+            apiData &&
+            typeof apiData === 'object' &&
+            'examSessions' in apiData &&
+            Array.isArray((apiData as { examSessions?: unknown }).examSessions)
+        ) {
+            return (apiData as { examSessions: ExamSessionDto[] }).examSessions;
         }
-        // Fallback
-        return ((sessionsData as unknown as ApiResponseExamSessionListResponse)?.data?.examSessions || []) as ExamSessionDto[];
+        return [] as ExamSessionDto[];
     }, [sessionsData]);
 
     const {data: applicationsData} = useGetApplicationsByExamSession(selectedExamSession?.id || '', {

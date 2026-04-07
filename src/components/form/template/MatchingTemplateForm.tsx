@@ -8,11 +8,10 @@ import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
 import type {MatchingTemplateDto, MatchingPair} from "@/api/generated/model";
 import {Trash2, Plus} from "lucide-react";
-import Checkbox from "@/components/ui/checkbox";
 import HtmlEditor from "@/components/ui/html-editor";
 
 // Use ORVAL DTO types directly - only template-specific fields
-type MatchingTemplateFormData = Pick<MatchingTemplateDto, 'instructions' | 'options' | 'shuffleItems' | 'explanation'>;
+type MatchingTemplateFormData = Pick<MatchingTemplateDto, 'instructions' | 'options'>;
 
 interface MatchingTemplateFormErrors {
     instructions?: string;
@@ -38,8 +37,6 @@ const MatchingTemplateForm = forwardRef<MatchingTemplateFormHandle, MatchingTemp
     const [formData, setFormData] = useState<MatchingTemplateFormData>({
         instructions: '',
         options: {pairs: [], distractors: []},
-        shuffleItems: true,
-        explanation: ''
     });
 
     const [errors, setErrors] = useState<MatchingTemplateFormErrors>({});
@@ -51,8 +48,6 @@ const MatchingTemplateForm = forwardRef<MatchingTemplateFormHandle, MatchingTemp
             setFormData({
                 instructions: value.instructions || '',
                 options: value.options || {pairs: [], distractors: []},
-                shuffleItems: value.shuffleItems ?? true,
-                explanation: '' // UI'dan kaldırıldı, her zaman boş string
             });
         }
     }, []);
@@ -65,8 +60,6 @@ const MatchingTemplateForm = forwardRef<MatchingTemplateFormHandle, MatchingTemp
                 ...value,
                 instructions: formData.instructions,
                 options: formData.options,
-                shuffleItems: formData.shuffleItems,
-                explanation: '' // UI'dan kaldırıldı, her zaman boş string
             };
             onChange(templateData);
         }
@@ -337,32 +330,7 @@ const MatchingTemplateForm = forwardRef<MatchingTemplateFormHandle, MatchingTemp
                         )}
                     </div>
 
-                    {/* Ayarlar */}
-                    <div className="space-y-2">
-                        <div className="flex items-center space-x-2">
-                            <Checkbox
-                                id="shuffleItems"
-                                checked={formData.shuffleItems}
-                                onChange={(checked) => handleChange('shuffleItems', !!checked)}
-                            />
-                            <Label htmlFor="shuffleItems">Öğeleri Karıştır</Label>
-                        </div>
-                        <p className="text-sm text-gray-600">
-                            Bu seçenek işaretlendiğinde, eşleştirme öğeleri rastgele sırada gösterilir.
-                        </p>
-                    </div>
-
-                    {/* Açıklama - YORUM SATIRI: UI'dan kaldırıldı, API'ye boş string gönderiliyor */}
-                    {/* <div className="space-y-2">
-                        <Label htmlFor="explanation">Açıklama</Label>
-                        <Textarea
-                            id="explanation"
-                            value={formData.explanation}
-                            onChange={(e) => handleChange('explanation', e.target.value)}
-                            className="min-h-[100px]"
-                            placeholder="Soru açıklaması (opsiyonel)"
-                        />
-                    </div> */}
+                    {/* Açıklama alanı kaldırıldı (DTO'da yok) */}
 
                     {/* KAYDET BUTONU KALDIRILDI - Parent component'te olacak */}
                 </div>

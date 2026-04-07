@@ -183,17 +183,7 @@ const BrandDetailPage: React.FC<BrandDetailProps> = ({
                                     </p>
                                 </div>
 
-                                {brand.deletedAt && (
-                                    <div className="flex justify-between items-center p-3 bg-red-50 rounded-md">
-                                        <div className="flex items-center space-x-3">
-                                            <XCircle className="h-5 w-5 text-red-500"/>
-                                            <span>Silinme Tarihi</span>
-                                        </div>
-                                        <p className="text-sm font-medium text-red-600">
-                                            {formatDate(brand.deletedAt)}
-                                        </p>
-                                    </div>
-                                )}
+                                
                             </CardContent>
                         </Card>
                     </div>
@@ -333,13 +323,11 @@ const BrandDetailPage: React.FC<BrandDetailProps> = ({
                                         <div>
                                             <p className="font-semibold">Marka Oluşturuldu</p>
                                             <p className="text-sm text-gray-500">{formatDate(brand.createdAt || '')}</p>
-                                            {brand.createdById && (
-                                                <p className="text-xs text-gray-400">Oluşturan ID: {brand.createdById}</p>
-                                            )}
+                                           
                                         </div>
                                     </div>
 
-                                    {brand.status === 'DELETED' && brand.deletedAt && (
+                                    {brand.status === 'DELETED' &&  (
                                         <div className="flex">
                                             <div className="mr-4 flex-shrink-0">
                                                 <div className="flex items-center justify-center h-10 w-10 rounded-full bg-red-100 text-red-600">
@@ -348,10 +336,8 @@ const BrandDetailPage: React.FC<BrandDetailProps> = ({
                                             </div>
                                             <div>
                                                 <p className="font-semibold">Marka Silindi</p>
-                                                <p className="text-sm text-gray-500">{formatDate(brand.deletedAt)}</p>
-                                                {brand.deletedById && (
-                                                    <p className="text-xs text-gray-400">Silen ID: {brand.deletedById}</p>
-                                                )}
+                                           
+                                                
                                             </div>
                                         </div>
                                     )}

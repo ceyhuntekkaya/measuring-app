@@ -38,6 +38,9 @@ const ExamSectionDetail: React.FC<ExamSectionDetailProps> = ({ selectedExamSecti
 
     const examType = selectedExamSection.examType as ExamTypeDto | undefined;
 
+    const yn = (v?: boolean) =>
+        v === true ? 'Evet' : v === false ? 'Hayır' : 'Belirtilmedi';
+
     return (
         <div className="mx-auto p-4 space-y-4">
 
@@ -158,6 +161,40 @@ const ExamSectionDetail: React.FC<ExamSectionDetailProps> = ({ selectedExamSecti
                         />
                     </div>
                 )}
+
+                <div className="mt-6">
+                    <h3 className="text-md font-semibold text-gray-900 mb-3">Bölüm ayarları</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                        <div className="p-4 bg-gray-50 rounded-lg">
+                            <div className="text-sm font-medium text-gray-500 mb-1">Soru / beceri tipi</div>
+                            <div className="text-lg font-semibold text-gray-900 break-words">
+                                {selectedExamSection.questionSkillType?.trim() || '—'}
+                            </div>
+                        </div>
+                        <div className="p-4 bg-gray-50 rounded-lg">
+                            <div className="text-sm font-medium text-gray-500 mb-1">Sıralı bölüm</div>
+                            <div className="text-lg font-semibold text-gray-900">{yn(selectedExamSection.isOrder)}</div>
+                        </div>
+                        <div className="p-4 bg-gray-50 rounded-lg">
+                            <div className="text-sm font-medium text-gray-500 mb-1">Toplam süre tanımlı</div>
+                            <div className="text-lg font-semibold text-gray-900">{yn(selectedExamSection.hasTotalTime)}</div>
+                        </div>
+                        <div className="p-4 bg-gray-50 rounded-lg">
+                            <div className="text-sm font-medium text-gray-500 mb-1">Toplam süre</div>
+                            <div className="text-lg font-semibold text-gray-900">
+                                {selectedExamSection.hasTotalTime && selectedExamSection.totalTime != null
+                                    ? `${selectedExamSection.totalTime} sn`
+                                    : '—'}
+                            </div>
+                        </div>
+                        <div className="p-4 bg-gray-50 rounded-lg">
+                            <div className="text-sm font-medium text-gray-500 mb-1">Minimum puan</div>
+                            <div className="text-lg font-semibold text-gray-900">
+                                {selectedExamSection.minScore != null ? String(selectedExamSection.minScore) : '—'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* Exam Type Information */}
@@ -174,7 +211,7 @@ const ExamSectionDetail: React.FC<ExamSectionDetailProps> = ({ selectedExamSecti
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     <div>
                                         <div className="text-sm font-medium text-blue-600">Tür</div>
                                         <div className="text-blue-900 font-semibold">
@@ -190,9 +227,23 @@ const ExamSectionDetail: React.FC<ExamSectionDetailProps> = ({ selectedExamSecti
                                     </div>
 
                                     <div>
+                                        <div className="text-sm font-medium text-blue-600">Sınav dili</div>
+                                        <div className="text-blue-900 font-semibold">
+                                            {examType.examLanguage?.trim() || '—'}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div className="text-sm font-medium text-blue-600">Bölüm</div>
+                                        <div className="text-blue-900 font-semibold">
+                                            {examType.department || '—'}
+                                        </div>
+                                    </div>
+
+                                    <div>
                                         <div className="text-sm font-medium text-blue-600">Maksimum Puan</div>
                                         <div className="text-blue-900 font-semibold">
-                                            {examType.maximumScore || 'Belirtilmedi'}
+                                            {examType.maximumScore ?? 'Belirtilmedi'}
                                         </div>
                                     </div>
 

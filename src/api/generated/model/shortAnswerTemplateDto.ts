@@ -9,10 +9,5 @@ import type { BaseQuestionTemplateDto } from "./baseQuestionTemplateDto";
 import type { ShortAnswerOptions } from "./shortAnswerOptions";
 
 export type ShortAnswerTemplateDto = BaseQuestionTemplateDto & {
-  question?: string;
   options?: ShortAnswerOptions;
-  maxCharacters?: number;
-  minCharacters?: number;
-  rubric?: string;
-  requiresManualGrading?: boolean;
 };

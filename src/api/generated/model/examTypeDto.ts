@@ -5,6 +5,7 @@
  * API documentation for Measuring Parent application
  * OpenAPI spec version: 1.0.0
  */
+import type { ExamTypeDtoDepartment } from "./examTypeDtoDepartment";
 import type { ExamTypeDtoExamType } from "./examTypeDtoExamType";
 import type { ExamTypeDtoStatus } from "./examTypeDtoStatus";
 import type { QuestionGroupTypeDto } from "./questionGroupTypeDto";
@@ -12,10 +13,7 @@ import type { QuestionGroupTypeDto } from "./questionGroupTypeDto";
 export interface ExamTypeDto {
   id?: string;
   createdAt?: string;
-  deletedAt?: string;
   status?: ExamTypeDtoStatus;
-  createdById?: string;
-  deletedById?: string;
   name?: string;
   examLevel?: string;
   examType?: ExamTypeDtoExamType;
@@ -28,5 +26,7 @@ export interface ExamTypeDto {
   screenRecordTime?: number;
   maximumScore?: number;
   durationInSeconds?: number;
+  examLanguage?: string;
+  department?: ExamTypeDtoDepartment;
   questionGroupTypes?: QuestionGroupTypeDto[];
 }

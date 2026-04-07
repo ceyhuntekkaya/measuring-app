@@ -9,11 +9,5 @@ import type { BaseQuestionTemplateDto } from "./baseQuestionTemplateDto";
 import type { MultipleResponseOptions } from "./multipleResponseOptions";
 
 export type MultipleResponseTemplateDto = BaseQuestionTemplateDto & {
-  question?: string;
   options?: MultipleResponseOptions;
-  correctOptionIndices?: number[];
-  minSelections?: number;
-  maxSelections?: number;
-  shuffleOptions?: boolean;
-  explanation?: string;
 };

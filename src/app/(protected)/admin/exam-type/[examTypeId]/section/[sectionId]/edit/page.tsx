@@ -17,10 +17,10 @@ export default function ExamSectionEdit() {
     const router = useRouter();
     const queryClient = useQueryClient();
     
-    const {data: sectionData, isLoading: loading} = useGetExamSectionById(sectionId, {
+    const {data: sectionData, isLoading: loading} = useGetExamSectionById<ApiResponseExamSectionDto>(sectionId, {
         query: { enabled: !!sectionId }
     });
-    const selectedExamSection = (sectionData as unknown as ApiResponseExamSectionDto)?.data;
+    const selectedExamSection = sectionData?.data;
     
     const { mutate: updateExamSection, isPending: updating } = useUpdateExamSection({
         mutation: {
@@ -42,8 +42,8 @@ export default function ExamSectionEdit() {
         updateExamSection({ id: sectionId, data });
     };
 
-    const { data: examTypesData } = useGetAllExamTypes(undefined);
-    const examTypes = (examTypesData as unknown as ApiResponseExamTypeListResponse)?.data || null;
+    const { data: examTypesData } = useGetAllExamTypes<ApiResponseExamTypeListResponse>(undefined);
+    const examTypes = examTypesData?.data || null;
 
     if (loading) {
         return <LoadingComp/>;

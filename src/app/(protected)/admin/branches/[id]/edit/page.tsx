@@ -18,11 +18,11 @@ export default function BranchEdit() {
     const router = useRouter();
     const queryClient = useQueryClient();
 
-    const { data: brandsData } = useGetAllBrands();
-    const brands = (brandsData as unknown as ApiResponseListBrandDto)?.data || null;
+    const { data: brandsData } = useGetAllBrands<ApiResponseListBrandDto>();
+    const brands = brandsData?.data || null;
 
-    const { data, isLoading: isLoadingBranch } = useGetBranchById(id);
-    const selectedBranch = (data as unknown as ApiResponseBranchDto)?.data as BranchDto | undefined;
+    const { data, isLoading: isLoadingBranch } = useGetBranchById<ApiResponseBranchDto>(id);
+    const selectedBranch = data?.data as BranchDto | undefined;
 
     const { mutate: updateBranch, isPending: isUpdating } = useUpdateBranch({
         mutation: {

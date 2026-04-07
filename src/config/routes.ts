@@ -13,7 +13,6 @@ import {
     BookOpenCheck,
     BookCheck,
     FileQuestionIcon,
-    Mail,
     HelpCircle, LucideIcon
 } from 'lucide-react';
 import {Department, Permission, Role} from "@/types/auth";
@@ -163,9 +162,9 @@ export const appRoutes: RouteConfig = {
             title: 'Dashboard',
             path: '/app/orders',
             icon: Home,
-            requiredPermissions: ['APPROVAL', 'USER_CREATE', 'GENERAL', 'FINANCE_OPERATION', 'ACCOUNTING_OPERATION', 'DELIVERY_OPERATION', 'CUSTOMER_OPERATION', 'OFFER_OPERATION', 'ORDER_OPERATION', 'SUPPLIER_OPERATION', 'TRANSPORTATION_OPERATION', 'DELIVERY_DOCUMENT', 'SETTING'],
-            requiredDepartments: ['GRADER' , 'SUPERVISOR' , 'MANAGEMENT' , 'IT' , 'AUTHOR_REVIEWER' , 'ADMIN' , 'REVIEWER'],
-            requiredRoles: ['USER'],
+            requiredPermissions: ['ADD', 'DELETE', 'UPDATE', 'LIST', 'VIEW', 'APPROVE'],
+            requiredDepartments: ['TURKISH', 'ENGLISH', 'GERMAN', 'CHINESE', 'ARABIC', 'FRENCH', 'JAPANESE', 'RUSSIAN', 'KOREAN', 'GREEK', 'PERSIAN'],
+            requiredRoles: ['USER', 'MANAGER', 'REFEREE', 'WRITER', 'OBSERVER'],
         }
 
     ]
@@ -193,82 +192,6 @@ export const publicRoutes: RouteConfig = {
 };
 
 
-export const instructorRoutes: RouteConfig = {
-    menuItems: [
-        {
-            title: 'Ana Sayfa',
-            path: '/learner',
-            icon: Home,
-            requiredPermissions: ['APPROVAL', 'USER_CREATE', 'GENERAL', 'FINANCE_OPERATION', 'ACCOUNTING_OPERATION', 'DELIVERY_OPERATION', 'CUSTOMER_OPERATION', 'OFFER_OPERATION', 'ORDER_OPERATION', 'SUPPLIER_OPERATION', 'TRANSPORTATION_OPERATION', 'DELIVERY_DOCUMENT', 'SETTING'],
-            requiredDepartments: ['GRADER' , 'SUPERVISOR' , 'MANAGEMENT' , 'IT' , 'AUTHOR_REVIEWER' , 'ADMIN' , 'REVIEWER'],
-            requiredRoles: ['LEARNER'],
-        },
-        {
-            title: 'Sevkiyatlar',
-            path: '/learner/tasks',
-            icon: UserCog,
-            requiredPermissions: ['APPROVAL', 'USER_CREATE', 'GENERAL', 'FINANCE_OPERATION', 'ACCOUNTING_OPERATION', 'DELIVERY_OPERATION', 'CUSTOMER_OPERATION', 'OFFER_OPERATION', 'ORDER_OPERATION', 'SUPPLIER_OPERATION', 'TRANSPORTATION_OPERATION', 'DELIVERY_DOCUMENT', 'SETTING'],
-            requiredDepartments: ['GRADER' , 'SUPERVISOR' , 'MANAGEMENT' , 'IT' , 'AUTHOR_REVIEWER' , 'ADMIN' , 'REVIEWER'],
-            requiredRoles: ['LEARNER'],
-        },
-        {
-            title: 'Raporlar',
-            path: '/learner/reports',
-            icon: Mail,
-            requiredPermissions: ['APPROVAL', 'USER_CREATE', 'GENERAL', 'FINANCE_OPERATION', 'ACCOUNTING_OPERATION', 'DELIVERY_OPERATION', 'CUSTOMER_OPERATION', 'OFFER_OPERATION', 'ORDER_OPERATION', 'SUPPLIER_OPERATION', 'TRANSPORTATION_OPERATION', 'DELIVERY_DOCUMENT', 'SETTING'],
-            requiredDepartments: ['GRADER' , 'SUPERVISOR' , 'MANAGEMENT' , 'IT' , 'AUTHOR_REVIEWER' , 'ADMIN' , 'REVIEWER'],
-            requiredRoles: ['LEARNER'],
-        },
-        {
-            title: 'Ayarlar',
-            path: '/learner/setting',
-            icon: Mail,
-            requiredPermissions: ['APPROVAL', 'USER_CREATE', 'GENERAL', 'FINANCE_OPERATION', 'ACCOUNTING_OPERATION', 'DELIVERY_OPERATION', 'CUSTOMER_OPERATION', 'OFFER_OPERATION', 'ORDER_OPERATION', 'SUPPLIER_OPERATION', 'TRANSPORTATION_OPERATION', 'DELIVERY_DOCUMENT', 'SETTING'],
-            requiredDepartments: ['GRADER' , 'SUPERVISOR' , 'MANAGEMENT' , 'IT' , 'AUTHOR_REVIEWER' , 'ADMIN' , 'REVIEWER'],
-            requiredRoles: ['LEARNER'],
-        }
-    ]
-};
-
-
-export const observerRoutes: RouteConfig = {
-    menuItems: [
-        {
-            title: 'Dashboard',
-            path: '/learner',
-            icon: Home,
-            requiredPermissions: ['APPROVAL', 'USER_CREATE', 'GENERAL', 'FINANCE_OPERATION', 'ACCOUNTING_OPERATION', 'DELIVERY_OPERATION', 'CUSTOMER_OPERATION', 'OFFER_OPERATION', 'ORDER_OPERATION', 'SUPPLIER_OPERATION', 'TRANSPORTATION_OPERATION', 'DELIVERY_DOCUMENT', 'SETTING'],
-            requiredDepartments: ['GRADER' , 'SUPERVISOR' , 'MANAGEMENT' , 'IT' , 'AUTHOR_REVIEWER' , 'ADMIN' , 'REVIEWER'],
-            requiredRoles: ['LEARNER'],
-        },
-        {
-            title: 'Tasks',
-            path: '/learner/tasks',
-            icon: UserCog,
-            requiredPermissions: ['APPROVAL', 'USER_CREATE', 'GENERAL', 'FINANCE_OPERATION', 'ACCOUNTING_OPERATION', 'DELIVERY_OPERATION', 'CUSTOMER_OPERATION', 'OFFER_OPERATION', 'ORDER_OPERATION', 'SUPPLIER_OPERATION', 'TRANSPORTATION_OPERATION', 'DELIVERY_DOCUMENT', 'SETTING'],
-            requiredDepartments: ['GRADER' , 'SUPERVISOR' , 'MANAGEMENT' , 'IT' , 'AUTHOR_REVIEWER' , 'ADMIN' , 'REVIEWER'],
-            requiredRoles: ['LEARNER'],
-        },
-        {
-            title: 'Reports',
-            path: '/learner/reports',
-            icon: Mail,
-            requiredPermissions: ['APPROVAL', 'USER_CREATE', 'GENERAL', 'FINANCE_OPERATION', 'ACCOUNTING_OPERATION', 'DELIVERY_OPERATION', 'CUSTOMER_OPERATION', 'OFFER_OPERATION', 'ORDER_OPERATION', 'SUPPLIER_OPERATION', 'TRANSPORTATION_OPERATION', 'DELIVERY_DOCUMENT', 'SETTING'],
-            requiredDepartments: ['GRADER' , 'SUPERVISOR' , 'MANAGEMENT' , 'IT' , 'AUTHOR_REVIEWER' , 'ADMIN' , 'REVIEWER'],
-            requiredRoles: ['LEARNER'],
-        },
-        {
-            title: 'Settings',
-            path: '/learner/setting',
-            icon: Mail,
-            requiredPermissions: ['APPROVAL', 'USER_CREATE', 'GENERAL', 'FINANCE_OPERATION', 'ACCOUNTING_OPERATION', 'DELIVERY_OPERATION', 'CUSTOMER_OPERATION', 'OFFER_OPERATION', 'ORDER_OPERATION', 'SUPPLIER_OPERATION', 'TRANSPORTATION_OPERATION', 'DELIVERY_DOCUMENT', 'SETTING'],
-            requiredDepartments: ['GRADER' , 'SUPERVISOR' , 'MANAGEMENT' , 'IT' , 'AUTHOR_REVIEWER' , 'ADMIN' , 'REVIEWER'],
-            requiredRoles: ['LEARNER'],
-        }
-    ]
-};
-
-
 export const learnerRoutes: RouteConfig = {
     menuItems: [
         {
@@ -286,25 +209,10 @@ export const learnerRoutes: RouteConfig = {
     ]
 };
 
-export const companyRoutes: RouteConfig = {
-    menuItems: [
-        {
-            title: 'Ana Sayfa',
-            path: '/company/orders',
-            icon: Home,
-            requiredPermissions: ['APPROVAL', 'USER_CREATE', 'GENERAL', 'FINANCE_OPERATION', 'ACCOUNTING_OPERATION', 'DELIVERY_OPERATION', 'CUSTOMER_OPERATION', 'OFFER_OPERATION', 'ORDER_OPERATION', 'SUPPLIER_OPERATION', 'TRANSPORTATION_OPERATION', 'DELIVERY_DOCUMENT', 'SETTING'],
-            requiredDepartments: ['GRADER' , 'SUPERVISOR' , 'MANAGEMENT' , 'IT' , 'AUTHOR_REVIEWER' , 'ADMIN' , 'REVIEWER'],
-            requiredRoles: ['COMPANY'],
-        }
-    ]
-};
-
 export const getRoutesByRole = (roles: string[]): RouteConfig => {
     if (roles.includes('ADMIN')) return adminRoutes;
-    if (roles.includes('USER')) return appRoutes;
     if (roles.includes('LEARNER')) return learnerRoutes;
-    if (roles.includes('OBSERVER')) return observerRoutes;
-    if (roles.includes('COMPANY')) return companyRoutes;
+    if (roles.includes('USER') || roles.includes('MANAGER') || roles.includes('REFEREE') || roles.includes('WRITER') || roles.includes('OBSERVER')) return appRoutes;
 
     return publicRoutes;
 };
@@ -457,7 +365,7 @@ export const generateBreadcrumbsFromPath = (path: string): MenuItem[] => {
 
 
 export const findMenuItemByPath = (path: string): MenuItem | null => {
-    const allRoutes = [adminRoutes, appRoutes, learnerRoutes, observerRoutes, instructorRoutes, companyRoutes, publicRoutes];
+    const allRoutes = [adminRoutes, appRoutes, learnerRoutes, publicRoutes];
 
     // Helper function to check if a path matches (exact match or starts with for dynamic routes)
     const pathMatches = (menuPath: string, currentPath: string): boolean => {

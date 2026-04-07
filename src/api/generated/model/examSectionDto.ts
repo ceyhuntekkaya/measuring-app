@@ -5,17 +5,20 @@
  * API documentation for Measuring Parent application
  * OpenAPI spec version: 1.0.0
  */
+import type { ExamSectionDtoQuestionSkillType } from "./examSectionDtoQuestionSkillType";
 import type { ExamSectionDtoStatus } from "./examSectionDtoStatus";
 
 export interface ExamSectionDto {
   id?: string;
   createdAt?: string;
-  deletedAt?: string;
   status?: ExamSectionDtoStatus;
-  createdById?: string;
-  deletedById?: string;
   name?: string;
   examType?: unknown;
   orderNumber?: number;
   sectionDescription?: string;
+  isOrder?: boolean;
+  hasTotalTime?: boolean;
+  totalTime?: number;
+  minScore?: number;
+  questionSkillType?: ExamSectionDtoQuestionSkillType;
 }

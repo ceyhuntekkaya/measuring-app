@@ -17,8 +17,8 @@ export default function BrandEdit() {
     const router = useRouter();
     const queryClient = useQueryClient();
 
-    const { data, isLoading: isLoadingBrand } = useGetBrandById(id);
-    const selectedBrand = (data as unknown as ApiResponseBrandDto)?.data as BrandDto | undefined;
+    const { data, isLoading: isLoadingBrand } = useGetBrandById<ApiResponseBrandDto>(id);
+    const selectedBrand = data?.data as BrandDto | undefined;
 
     const { mutate: updateBrand, isPending: isUpdating } = useUpdateBrand({
         mutation: {

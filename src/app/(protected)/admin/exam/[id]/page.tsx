@@ -13,12 +13,12 @@ export default function ExamPreviewPage() {
     const params = useParams();
     const examId = params.id as string;
 
-    const { data, isLoading, error } = useGetExamById(examId, {
+    const { data, isLoading, error } = useGetExamById<ApiResponseExamDto>(examId, {
         query: { enabled: !!examId }
     });
     
     // Extract exam from API response
-    const selectedExam = (data as unknown as ApiResponseExamDto)?.data as ExamDto | undefined;
+    const selectedExam = data?.data as ExamDto | undefined;
 
     if (isLoading) {
         return <LoadingComp/>;

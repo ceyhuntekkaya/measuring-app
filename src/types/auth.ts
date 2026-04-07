@@ -7,49 +7,50 @@ import type {ExamSessionDto} from "@/api/generated/model/examSessionDto";
 import type {UserDto} from "@/api/generated/model/userDto";
 
 // Custom types - these are still needed for type safety in the app
-export type Role = 'ADMIN' | 'USER' | 'LEARNER' | 'INSTRUCTOR' | 'OBSERVER' | 'COMPANY';
+export type Role = 'ADMIN' | 'USER' | 'LEARNER' | 'MANAGER' | 'REFEREE' | 'WRITER' | 'OBSERVER';
 
-export type Department = 'GRADER' | 'SUPERVISOR' | 'MANAGEMENT' | 'IT' | 'AUTHOR_REVIEWER' | 'ADMIN' | 'REVIEWER';
+export type Department =
+    | 'TURKISH'
+    | 'ENGLISH'
+    | 'GERMAN'
+    | 'CHINESE'
+    | 'ARABIC'
+    | 'FRENCH'
+    | 'JAPANESE'
+    | 'RUSSIAN'
+    | 'KOREAN'
+    | 'GREEK'
+    | 'PERSIAN';
 
 export const DepartmentList: Record<Department, string> = {
-    GRADER: 'GRADER',
-    SUPERVISOR: 'SUPERVISOR',
-    MANAGEMENT: 'MANAGEMENT',
-    IT: 'IT',
-    AUTHOR_REVIEWER: 'AUTHOR_REVIEWER',
-    ADMIN: 'ADMIN',
-    REVIEWER: 'REVIEWER'
+    TURKISH: 'TURKISH',
+    ENGLISH: 'ENGLISH',
+    GERMAN: 'GERMAN',
+    CHINESE: 'CHINESE',
+    ARABIC: 'ARABIC',
+    FRENCH: 'FRENCH',
+    JAPANESE: 'JAPANESE',
+    RUSSIAN: 'RUSSIAN',
+    KOREAN: 'KOREAN',
+    GREEK: 'GREEK',
+    PERSIAN: 'PERSIAN',
 };
 
 export type Permission =
-    | 'APPROVAL'
-    | 'USER_CREATE'
-    | 'GENERAL'
-    | 'FINANCE_OPERATION'
-    | 'ACCOUNTING_OPERATION'
-    | 'DELIVERY_OPERATION'
-    | 'CUSTOMER_OPERATION'
-    | 'OFFER_OPERATION'
-    | 'ORDER_OPERATION'
-    | 'SUPPLIER_OPERATION'
-    | 'TRANSPORTATION_OPERATION'
-    | 'DELIVERY_DOCUMENT'
-    | 'SETTING';
+    | 'ADD'
+    | 'DELETE'
+    | 'UPDATE'
+    | 'LIST'
+    | 'VIEW'
+    | 'APPROVE';
 
 export const PermissionList: Record<Permission, string> = {
-    APPROVAL: 'APPROVAL',
-    USER_CREATE: 'USER_CREATE',
-    GENERAL: 'GENERAL',
-    FINANCE_OPERATION: 'FINANCE_OPERATION',
-    ACCOUNTING_OPERATION: 'ACCOUNTING_OPERATION',
-    DELIVERY_OPERATION: 'DELIVERY_OPERATION',
-    CUSTOMER_OPERATION: 'CUSTOMER_OPERATION',
-    OFFER_OPERATION: 'OFFER_OPERATION',
-    ORDER_OPERATION: 'ORDER_OPERATION',
-    SUPPLIER_OPERATION: 'SUPPLIER_OPERATION',
-    TRANSPORTATION_OPERATION: 'TRANSPORTATION_OPERATION',
-    DELIVERY_DOCUMENT: 'DELIVERY_DOCUMENT',
-    SETTING: 'SETTING'
+    ADD: 'ADD',
+    DELETE: 'DELETE',
+    UPDATE: 'UPDATE',
+    LIST: 'LIST',
+    VIEW: 'VIEW',
+    APPROVE: 'APPROVE',
 };
 
 // Helper type aliases for better type safety
@@ -60,23 +61,21 @@ export type User = UserDto;
 export function getUserRoles(user: UserDto | null | undefined): Role[] {
     if (!user?.roleSet) return [];
     return user.roleSet?.filter((role): role is Role => 
-        ['ADMIN', 'USER', 'LEARNER', 'INSTRUCTOR', 'OBSERVER', 'COMPANY'].includes(role as Role)
+        ['ADMIN', 'USER', 'LEARNER', 'MANAGER', 'REFEREE', 'WRITER', 'OBSERVER'].includes(role as Role)
     ) as Role[];
 }
 
 export function getUserDepartments(user: UserDto | null | undefined): Department[] {
     if (!user?.departmentSet) return [];
     return user.departmentSet.filter((dept): dept is Department =>
-        ['GRADER', 'SUPERVISOR', 'MANAGEMENT', 'IT', 'AUTHOR_REVIEWER', 'ADMIN', 'REVIEWER'].includes(dept as Department)
+        ['TURKISH', 'ENGLISH', 'GERMAN', 'CHINESE', 'ARABIC', 'FRENCH', 'JAPANESE', 'RUSSIAN', 'KOREAN', 'GREEK', 'PERSIAN'].includes(dept as Department)
     ) as Department[];
 }
 
 export function getUserPermissions(user: UserDto | null | undefined): Permission[] {
     if (!user?.authoritySet) return [];
     return user.authoritySet.filter((perm): perm is Permission =>
-        ['APPROVAL', 'USER_CREATE', 'GENERAL', 'FINANCE_OPERATION', 'ACCOUNTING_OPERATION', 
-         'DELIVERY_OPERATION', 'CUSTOMER_OPERATION', 'OFFER_OPERATION', 'ORDER_OPERATION',
-         'SUPPLIER_OPERATION', 'TRANSPORTATION_OPERATION', 'DELIVERY_DOCUMENT', 'SETTING'].includes(perm as Permission)
+        ['ADD', 'DELETE', 'UPDATE', 'LIST', 'VIEW', 'APPROVE'].includes(perm as Permission)
     ) as Permission[];
 }
 

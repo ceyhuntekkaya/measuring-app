@@ -16,10 +16,10 @@ export default function QuestionGroupDetailPage() {
     const router = useRouter();
     const queryClient = useQueryClient();
     
-    const {data, isLoading: loading} = useGetQuestionGroupById(groupId, {
+    const {data, isLoading: loading} = useGetQuestionGroupById<ApiResponseQuestionGroupDto>(groupId, {
         query: { enabled: !!groupId }
     });
-    const selectedQuestionGroup = (data as unknown as ApiResponseQuestionGroupDto)?.data || null;
+    const selectedQuestionGroup = data?.data || null;
     
     const { mutate: deleteQuestionGroup } = useDeleteQuestionGroup({
         mutation: {

@@ -17,10 +17,10 @@ export default function ExamTypeDetailPage() {
     const router = useRouter();
     const queryClient = useQueryClient();
 
-    const {data, isLoading: loading} = useGetExamSectionById(examSectionId, {
+    const {data, isLoading: loading} = useGetExamSectionById<ApiResponseExamSectionDto>(examSectionId, {
         query: { enabled: !!examSectionId }
     });
-    const selectedExamSection = (data as unknown as ApiResponseExamSectionDto)?.data || null;
+    const selectedExamSection = data?.data || null;
     
     const { mutate: deleteExamSection } = useDeleteExamSection({
         mutation: {

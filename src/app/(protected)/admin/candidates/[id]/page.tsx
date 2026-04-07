@@ -13,10 +13,10 @@ export default function CandidateDetailPage() {
     const id = params.id as string;
     const router = useRouter();
 
-    const {data, isLoading: loading} = useGetCandidateById(id, {
+    const {data, isLoading: loading} = useGetCandidateById<ApiResponseCandidateDto>(id, {
         query: { enabled: !!id }
     });
-    const selectedCandidate = (data as unknown as ApiResponseCandidateDto)?.data;
+    const selectedCandidate = data?.data;
 
     if (loading) {
         return (

@@ -23,8 +23,6 @@ import type { VideoResponseTemplateDto } from "./videoResponseTemplateDto";
 export interface QuestionTemplateResponse {
   id?: string;
   title?: string;
-  subject?: string;
-  difficulty?: string;
   questionType?: QuestionTemplateResponseQuestionType;
   isActive?: boolean;
   templateData?:

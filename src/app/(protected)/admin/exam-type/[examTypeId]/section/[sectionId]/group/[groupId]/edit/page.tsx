@@ -19,10 +19,10 @@ export default function QuestionGroupTypeEdit() {
     const router = useRouter();
     const queryClient = useQueryClient();
 
-    const {data: typeData, isLoading: loading} = useGetQuestionGroupTypeById(groupId, {
+    const {data: typeData, isLoading: loading} = useGetQuestionGroupTypeById<ApiResponseQuestionGroupTypeDto>(groupId, {
         query: { enabled: !!groupId }
     });
-    const selectedType = (typeData as unknown as ApiResponseQuestionGroupTypeDto)?.data;
+    const selectedType = typeData?.data;
     
     const { mutate: updateQuestionGroupType, isPending: updating } = useUpdateQuestionGroupType({
         mutation: {
@@ -44,10 +44,10 @@ export default function QuestionGroupTypeEdit() {
         updateQuestionGroupType({ id: groupId, data });
     };
 
-    const {data: sectionsData} = useGetExamSectionsByExamType(examTypeId, {
+    const {data: sectionsData} = useGetExamSectionsByExamType<ApiResponseListExamSectionDto>(examTypeId, {
         query: { enabled: !!examTypeId }
     });
-    const examSections = (sectionsData as unknown as ApiResponseListExamSectionDto)?.data || [];
+    const examSections = sectionsData?.data || [];
 
     if (loading) {
         return <LoadingComp/>;

@@ -730,7 +730,19 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
                                     <div className="mt-2 p-3 bg-white rounded-lg border">
                                         {selectedEvaluation &&
                                         selectedEvaluation.question.questionType === 'SHORT_ANSWER' ?
-                                            <div> {(selectedEvaluation.question.questionTemplate as ShortAnswerTemplateDto).question}</div> :
+                                            <div>
+                                                {(selectedEvaluation.question.questionTemplate as ShortAnswerTemplateDto).description && (
+                                                    <MaybeHtml
+                                                        className="text-gray-800"
+                                                        value={(selectedEvaluation.question.questionTemplate as ShortAnswerTemplateDto).description || ''}
+                                                    />
+                                                )}
+                                                {(selectedEvaluation.question.questionTemplate as ShortAnswerTemplateDto).instructions && (
+                                                    <p className="text-gray-800 text-sm whitespace-pre-wrap mt-2">
+                                                        {(selectedEvaluation.question.questionTemplate as ShortAnswerTemplateDto).instructions}
+                                                    </p>
+                                                )}
+                                            </div> :
                                             selectedEvaluation && selectedEvaluation.question.questionType === 'ESSAY' ?
                                                 <div>
                                                     {(selectedEvaluation.question.questionTemplate as EssayTemplateDto).description && (
@@ -772,14 +784,7 @@ const ExamEvaluationPanel: React.FC<ExamTypeFormProps> = ({
                                     </div>
                                 </div>
 
-                                {selectedEvaluation?.question.questionType === 'SHORT_ANSWER' && (
-                                    <div>
-                                        <Label className="font-semibold">Rubrik:</Label>
-                                        <div className="mt-2 p-3 bg-white rounded-lg border">
-                                            <div>{(selectedEvaluation.question.questionTemplate as ShortAnswerTemplateDto).rubric}</div>
-                                        </div>
-                                    </div>
-                                )}
+                                {/* ShortAnswerTemplateDto doesn't expose rubric in ORVAL DTO */}
                             </div>
                         </div>
                     </div>

@@ -29,7 +29,9 @@ export interface CreateQuestionRequest {
   orderNumber?: number;
   isAutomaticallyEvaluated?: boolean;
   maximumScore?: number;
-  durationInSeconds?: number;
+  /** @minimum 1 */
+  timeLimit: number;
+  difficulty?: string;
   questionTemplate:
     | AudioResponseTemplateDto
     | DragAndDropTemplateDto

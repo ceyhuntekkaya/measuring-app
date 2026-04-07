@@ -21,13 +21,13 @@ export default function QuestionGroupUpdate() {
     const router = useRouter();
     const queryClient = useQueryClient();
 
-    const { data: examTypesData } = useGetAllExamTypes(undefined);
-    const examTypes = (examTypesData as unknown as ApiResponseExamTypeListResponse)?.data || null;
+    const { data: examTypesData } = useGetAllExamTypes<ApiResponseExamTypeListResponse>(undefined);
+    const examTypes = examTypesData?.data || null;
 
-    const {data: questionGroupData, isLoading: loading} = useGetQuestionGroupById(groupId, {
+    const {data: questionGroupData, isLoading: loading} = useGetQuestionGroupById<ApiResponseQuestionGroupDto>(groupId, {
         query: { enabled: !!groupId }
     });
-    const selectedQuestionGroup = (questionGroupData as unknown as ApiResponseQuestionGroupDto)?.data;
+    const selectedQuestionGroup = questionGroupData?.data;
     
     const { mutate: updateQuestionGroup, isPending: updating } = useUpdateQuestionGroup({
         mutation: {
@@ -49,16 +49,16 @@ export default function QuestionGroupUpdate() {
     };
 
     const [selectedExamTypeId, setSelectedExamTypeId] = React.useState<string>('');
-    const { data: sectionsData } = useGetExamSectionsByExamType(selectedExamTypeId, {
+    const { data: sectionsData } = useGetExamSectionsByExamType<ApiResponseListExamSectionDto>(selectedExamTypeId, {
         query: { enabled: !!selectedExamTypeId }
     });
-    const sectionsByExamType = (sectionsData as unknown as ApiResponseListExamSectionDto)?.data || [];
+    const sectionsByExamType = sectionsData?.data || [];
 
     const [selectedExamSectionId, setSelectedExamSectionId] = React.useState<string>('');
-    const { data: typesData } = useGetQuestionGroupTypesByExamSection(selectedExamSectionId, {
+    const { data: typesData } = useGetQuestionGroupTypesByExamSection<ApiResponseListQuestionGroupTypeDto>(selectedExamSectionId, {
         query: { enabled: !!selectedExamSectionId }
     });
-    const typesByExamSection = (typesData as unknown as ApiResponseListQuestionGroupTypeDto)?.data || [];
+    const typesByExamSection = typesData?.data || [];
 
     const onExamTypeChange = (examTypeId: string) => {
         setSelectedExamTypeId(examTypeId);

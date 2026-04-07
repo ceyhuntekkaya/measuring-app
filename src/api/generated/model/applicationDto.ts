@@ -12,10 +12,7 @@ import type { ApplicationDtoStatus } from "./applicationDtoStatus";
 export interface ApplicationDto {
   id?: string;
   createdAt?: string;
-  deletedAt?: string;
   status?: ApplicationDtoStatus;
-  createdById?: string;
-  deletedById?: string;
   name?: string;
   code?: string;
   examId?: string;

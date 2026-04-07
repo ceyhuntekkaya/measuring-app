@@ -1,7 +1,7 @@
 import React from 'react';
 import type { ExamTypeDto } from '@/api/generated/model/examTypeDto';
 import {Button} from "@/components/ui/button";
-import { examTypeConverter, approvalStatusConverter, getApprovalStatusColor } from '@/utils/enum-converter';
+import { examTypeConverter } from '@/utils/enum-converter';
 import { EExamType } from '@/types/exam/enum';
 import HtmlRender from '@/components/ui/html-render';
 
@@ -39,6 +39,36 @@ const ExamTypeDetail: React.FC<ExamTypeDetailProps> = ({ selectedExamType, onEdi
             default:
                 return status || 'Belirtilmedi';
         }
+    };
+
+    const departmentTr = (d?: string) => {
+        const map: Record<string, string> = {
+            TURKISH: 'Türkçe',
+            ENGLISH: 'İngilizce',
+            GERMAN: 'Almanca',
+            CHINESE: 'Çince',
+            ARABIC: 'Arapça',
+            FRENCH: 'Fransızca',
+            JAPANESE: 'Japonca',
+            RUSSIAN: 'Rusça',
+            KOREAN: 'Korece',
+            GREEK: 'Yunanca',
+            PERSIAN: 'Farsça',
+        };
+        return d ? map[d] || d : 'Belirtilmedi';
+    };
+
+    const groupTypeTr = (gt?: string) => {
+        const map: Record<string, string> = {
+            LISTENING: 'Dinleme',
+            READING: 'Okuma',
+            SPEAKING: 'Konuşma',
+            WRITING: 'Yazma',
+            GRAMMAR: 'Dilbilgisi',
+            VOCABULARY: 'Kelime',
+            GENERAL: 'Genel',
+        };
+        return gt ? map[gt] || gt : '—';
     };
 
     const formatDuration = (seconds?: number) => {
@@ -140,6 +170,20 @@ const ExamTypeDetail: React.FC<ExamTypeDetailProps> = ({ selectedExamType, onEdi
                     </div>
 
                     <div className="p-4 bg-gray-50 rounded-lg">
+                        <div className="text-sm font-medium text-gray-500">Sınav dili</div>
+                        <div className="text-lg font-semibold text-gray-900">
+                            {selectedExamType.examLanguage?.trim() || 'Belirtilmedi'}
+                        </div>
+                    </div>
+
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                        <div className="text-sm font-medium text-gray-500">Bölüm</div>
+                        <div className="text-lg font-semibold text-gray-900">
+                            {departmentTr(selectedExamType.department)}
+                        </div>
+                    </div>
+
+                    <div className="p-4 bg-gray-50 rounded-lg">
                         <div className="text-sm font-medium text-gray-500">Maksimum Puan</div>
                         <div className="text-lg font-semibold text-gray-900">
                             {selectedExamType.maximumScore || 'Belirtilmedi'}
@@ -209,18 +253,16 @@ const ExamTypeDetail: React.FC<ExamTypeDetailProps> = ({ selectedExamType, onEdi
                                     <div>
                                         <div className="font-medium text-gray-900">{groupType.name}</div>
                                         <div className="text-sm text-gray-500">
-                                            {groupType.groupType} • {groupType.level}
+                                            {groupTypeTr(groupType.groupType as string)} •{' '}
+                                            {groupType.hasInstruction ? 'Yönerge var' : 'Yönerge yok'}
+                                            {groupType.hasGroupDuration ? ' • Süre tanımlı' : ''}
                                         </div>
                                     </div>
                                 </div>
-                                <div className="text-right">
-                                    <div className={`px-2 py-1 rounded text-xs font-medium ${getApprovalStatusColor(groupType.approvalStatus)}`}>
-                                        {approvalStatusConverter(groupType.approvalStatus)}
-                                    </div>
-                                    {groupType.currentApprovalCount && groupType.requiredApprovalCount && (
-                                        <div className="text-xs text-gray-500 mt-1">
-                                            {groupType.currentApprovalCount}/{groupType.requiredApprovalCount} onay
-                                        </div>
+                                <div className="text-right text-xs text-gray-500">
+                                    {groupType.duration != null && <div>Süre: {groupType.duration}</div>}
+                                    {groupType.recordingDuration != null && (
+                                        <div>Kayıt: {groupType.recordingDuration}</div>
                                     )}
                                 </div>
                             </div>

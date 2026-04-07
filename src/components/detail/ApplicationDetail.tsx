@@ -373,13 +373,6 @@ const ApplicationDetailPage: React.FC<ApplicationDetailProps> = ({
                                                 <FileText className="h-5 w-5"/>
                                             </div>
                                         </div>
-                                        <div>
-                                            <p className="font-semibold">Başvuru Oluşturuldu</p>
-                                            <p className="text-sm text-gray-500">{formatDate(application.createdAt || '')}</p>
-                                            {application.createdById && (
-                                                <p className="text-xs text-gray-400">Oluşturan ID: {application.createdById}</p>
-                                            )}
-                                        </div>
                                     </div>
 
                                     {application.startedAt && (
@@ -424,22 +417,7 @@ const ApplicationDetailPage: React.FC<ApplicationDetailProps> = ({
                                         </div>
                                     )}
 
-                                    {application.status === 'DELETED' && application.deletedAt && (
-                                        <div className="flex">
-                                            <div className="mr-4 flex-shrink-0">
-                                                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-red-100 text-red-600">
-                                                    <XCircle className="h-5 w-5"/>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <p className="font-semibold">Başvuru Silindi</p>
-                                                <p className="text-sm text-gray-500">{formatDate(application.deletedAt)}</p>
-                                                {application.deletedById && (
-                                                    <p className="text-xs text-gray-400">Silen ID: {application.deletedById}</p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
+                     
                                 </div>
                             </CardContent>
                         </Card>
@@ -469,14 +447,7 @@ const ApplicationDetailPage: React.FC<ApplicationDetailProps> = ({
                                                             : 'Henüz başlatılmamış'}
                                                 </p>
                                             </div>
-                                            <div>
-                                                <p className="text-sm text-gray-500">Yaşam Süresi</p>
-                                                <p className="font-medium">
-                                                    {application.deletedAt
-                                                        ? `${Math.floor((new Date(application.deletedAt).getTime() - new Date(application.createdAt || '').getTime()) / (1000 * 60 * 60 * 24))} gün`
-                                                        : `${Math.floor((new Date().getTime() - new Date(application.createdAt || '').getTime()) / (1000 * 60 * 60 * 24))} gün`}
-                                                </p>
-                                            </div>
+                                            
                                         </div>
                                     </div>
                                 </div>

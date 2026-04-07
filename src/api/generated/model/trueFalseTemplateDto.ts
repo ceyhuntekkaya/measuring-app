@@ -9,8 +9,6 @@ import type { BaseQuestionTemplateDto } from "./baseQuestionTemplateDto";
 import type { TrueFalseOptions } from "./trueFalseOptions";
 
 export type TrueFalseTemplateDto = BaseQuestionTemplateDto & {
-  statement?: string;
   options?: TrueFalseOptions;
   correctAnswer?: boolean;
-  explanation?: string;
 };

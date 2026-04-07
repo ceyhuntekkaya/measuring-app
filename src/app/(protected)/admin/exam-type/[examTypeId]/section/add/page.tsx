@@ -32,8 +32,8 @@ export default function ExamSectionAdd() {
     });
 
 
-    const { data: examTypesData } = useGetAllExamTypes(undefined);
-    const examTypes = (examTypesData as unknown as ApiResponseExamTypeListResponse)?.data || null;
+    const { data: examTypesData } = useGetAllExamTypes<ApiResponseExamTypeListResponse>(undefined);
+    const examTypes = examTypesData?.data || null;
 
     const handleSubmit = (formData: CreateExamSectionRequest | UpdateExamSectionRequest) => {
         createExamSection({ data: formData as CreateExamSectionRequest });

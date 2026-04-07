@@ -6,25 +6,22 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { ExamSectionDto } from "./examSectionDto";
-import type { QuestionGroupTypeDtoApprovalStatus } from "./questionGroupTypeDtoApprovalStatus";
 import type { QuestionGroupTypeDtoGroupType } from "./questionGroupTypeDtoGroupType";
-import type { QuestionGroupTypeDtoLevel } from "./questionGroupTypeDtoLevel";
 import type { QuestionGroupTypeDtoStatus } from "./questionGroupTypeDtoStatus";
 
 export interface QuestionGroupTypeDto {
   id?: string;
   createdAt?: string;
-  deletedAt?: string;
   status?: QuestionGroupTypeDtoStatus;
-  createdById?: string;
-  deletedById?: string;
   name?: string;
   orderNumber?: number;
-  level?: QuestionGroupTypeDtoLevel;
   examSection?: ExamSectionDto;
   groupType?: QuestionGroupTypeDtoGroupType;
-  approvalStatus?: QuestionGroupTypeDtoApprovalStatus;
-  currentApprovalCount?: number;
-  requiredApprovalCount?: number;
-  approvalCompletedDate?: string;
+  hasInstruction?: boolean;
+  instruction?: string;
+  hasGroupDuration?: boolean;
+  duration?: number;
+  waitingDuration?: number;
+  playbackCount?: number;
+  recordingDuration?: number;
 }

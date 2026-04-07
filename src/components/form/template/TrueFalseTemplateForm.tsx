@@ -9,7 +9,7 @@ import type { TrueFalseTemplateDto, TrueFalseOptions } from "@/api/generated/mod
 import HtmlEditor from "@/components/ui/html-editor";
 
 // Use ORVAL DTO types directly - only template-specific fields
-type TrueFalseTemplateFormData = Pick<TrueFalseTemplateDto, 'statement' | 'options' | 'correctAnswer' | 'explanation'>;
+type TrueFalseTemplateFormData = Pick<TrueFalseTemplateDto, 'statement' | 'options' | 'correctAnswer' >;
 
 interface TrueFalseTemplateFormErrors {
     statement?: string;
@@ -40,8 +40,7 @@ const TrueFalseTemplateForm = forwardRef<TrueFalseTemplateFormHandle, TrueFalseT
             trueFeedback: '', // UI'dan kaldırıldı, her zaman boş string
             falseFeedback: '' // UI'dan kaldırıldı, her zaman boş string
         },
-        correctAnswer: true,
-        explanation: '' // UI'dan kaldırıldı, her zaman boş string
+        correctAnswer: true
     });
 
     const [errors, setErrors] = useState<TrueFalseTemplateFormErrors>({});
@@ -65,8 +64,7 @@ const TrueFalseTemplateForm = forwardRef<TrueFalseTemplateFormHandle, TrueFalseT
                     trueFeedback: '', // UI'dan kaldırıldı, her zaman boş string
                     falseFeedback: '' // UI'dan kaldırıldı, her zaman boş string
                 },
-                correctAnswer: correctAnswer,
-                explanation: '' // UI'dan kaldırıldı, her zaman boş string
+                correctAnswer: correctAnswer
             });
         }
     }, []);
@@ -88,8 +86,7 @@ const TrueFalseTemplateForm = forwardRef<TrueFalseTemplateFormHandle, TrueFalseT
                 trueFeedback: '', // UI'dan kaldırıldı, her zaman boş string
                 falseFeedback: '' // UI'dan kaldırıldı, her zaman boş string
             },
-            correctAnswer: updatedData.correctAnswer,
-            explanation: '' // UI'dan kaldırıldı, her zaman boş string
+            correctAnswer: updatedData.correctAnswer
         });
     };
 

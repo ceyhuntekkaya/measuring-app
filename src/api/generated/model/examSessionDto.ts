@@ -16,10 +16,7 @@ import type { UserDto } from "./userDto";
 export interface ExamSessionDto {
   id?: string;
   createdAt?: string;
-  deletedAt?: string;
   status?: ExamSessionDtoStatus;
-  createdById?: string;
-  deletedById?: string;
   name?: string;
   description?: string;
   quota?: number;

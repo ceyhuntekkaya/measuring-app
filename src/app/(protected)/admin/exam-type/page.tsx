@@ -14,7 +14,7 @@ import {EExamType, EStatus} from "@/types/exam/enum";
 
 export default function ExamTypePage() {
     const router = useRouter();
-    const { data, isLoading, error } = useGetAllExamTypes(undefined, {
+    const { data, isLoading, error } = useGetAllExamTypes<ApiResponseExamTypeListResponse>(undefined, {
         query: {
             refetchOnMount: true,
             refetchOnWindowFocus: false,
@@ -23,7 +23,7 @@ export default function ExamTypePage() {
     });
     
     // Extract examTypes from API response
-    const examTypes = (data as unknown as ApiResponseExamTypeListResponse)?.data || null;
+    const examTypes = data?.data || null;
 
     const columns: Column<RecordType>[] = [
 

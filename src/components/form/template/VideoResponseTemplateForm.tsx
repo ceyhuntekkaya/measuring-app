@@ -47,10 +47,7 @@ const VideoResponseTemplateForm = forwardRef<VideoResponseTemplateFormHandle, Vi
         onChange({
             ...(value || {}),
             maxRecordingDuration: formData.maxRecordingDuration,
-            minRecordingDuration: formData.minRecordingDuration,
-            requiresManualGrading: true,
-            allowedFormats: 'mp4,webm,mov',
-            allowScreenRecording: true,
+            minRecordingDuration: formData.minRecordingDuration
         });
     }, [formData.maxRecordingDuration, formData.minRecordingDuration]);
 

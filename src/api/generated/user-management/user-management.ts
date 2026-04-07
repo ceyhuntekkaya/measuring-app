@@ -1760,7 +1760,14 @@ export function useSearchUsersByName<
  * @summary Get users by role
  */
 export const getUsersByRole = (
-  role: "ADMIN" | "USER" | "LEARNER" | "COMPANY" | "INSTRUCTOR" | "OBSERVER",
+  role:
+    | "ADMIN"
+    | "USER"
+    | "LEARNER"
+    | "MANAGER"
+    | "REFEREE"
+    | "WRITER"
+    | "OBSERVER",
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
@@ -1771,7 +1778,14 @@ export const getUsersByRole = (
 };
 
 export const getGetUsersByRoleQueryKey = (
-  role?: "ADMIN" | "USER" | "LEARNER" | "COMPANY" | "INSTRUCTOR" | "OBSERVER",
+  role?:
+    | "ADMIN"
+    | "USER"
+    | "LEARNER"
+    | "MANAGER"
+    | "REFEREE"
+    | "WRITER"
+    | "OBSERVER",
 ) => {
   return [`/users/role/${role}`] as const;
 };
@@ -1780,7 +1794,14 @@ export const getGetUsersByRoleQueryOptions = <
   TData = Awaited<ReturnType<typeof getUsersByRole>>,
   TError = ErrorType<unknown>,
 >(
-  role: "ADMIN" | "USER" | "LEARNER" | "COMPANY" | "INSTRUCTOR" | "OBSERVER",
+  role:
+    | "ADMIN"
+    | "USER"
+    | "LEARNER"
+    | "MANAGER"
+    | "REFEREE"
+    | "WRITER"
+    | "OBSERVER",
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof getUsersByRole>>, TError, TData>
@@ -1817,7 +1838,14 @@ export function useGetUsersByRole<
   TData = Awaited<ReturnType<typeof getUsersByRole>>,
   TError = ErrorType<unknown>,
 >(
-  role: "ADMIN" | "USER" | "LEARNER" | "COMPANY" | "INSTRUCTOR" | "OBSERVER",
+  role:
+    | "ADMIN"
+    | "USER"
+    | "LEARNER"
+    | "MANAGER"
+    | "REFEREE"
+    | "WRITER"
+    | "OBSERVER",
   options: {
     query: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof getUsersByRole>>, TError, TData>
@@ -1840,7 +1868,14 @@ export function useGetUsersByRole<
   TData = Awaited<ReturnType<typeof getUsersByRole>>,
   TError = ErrorType<unknown>,
 >(
-  role: "ADMIN" | "USER" | "LEARNER" | "COMPANY" | "INSTRUCTOR" | "OBSERVER",
+  role:
+    | "ADMIN"
+    | "USER"
+    | "LEARNER"
+    | "MANAGER"
+    | "REFEREE"
+    | "WRITER"
+    | "OBSERVER",
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof getUsersByRole>>, TError, TData>
@@ -1863,7 +1898,14 @@ export function useGetUsersByRole<
   TData = Awaited<ReturnType<typeof getUsersByRole>>,
   TError = ErrorType<unknown>,
 >(
-  role: "ADMIN" | "USER" | "LEARNER" | "COMPANY" | "INSTRUCTOR" | "OBSERVER",
+  role:
+    | "ADMIN"
+    | "USER"
+    | "LEARNER"
+    | "MANAGER"
+    | "REFEREE"
+    | "WRITER"
+    | "OBSERVER",
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof getUsersByRole>>, TError, TData>
@@ -1882,7 +1924,14 @@ export function useGetUsersByRole<
   TData = Awaited<ReturnType<typeof getUsersByRole>>,
   TError = ErrorType<unknown>,
 >(
-  role: "ADMIN" | "USER" | "LEARNER" | "COMPANY" | "INSTRUCTOR" | "OBSERVER",
+  role:
+    | "ADMIN"
+    | "USER"
+    | "LEARNER"
+    | "MANAGER"
+    | "REFEREE"
+    | "WRITER"
+    | "OBSERVER",
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof getUsersByRole>>, TError, TData>
@@ -2083,20 +2132,7 @@ export function useGetUserByMobilePhone<
  * @summary Get users by permission
  */
 export const getUsersByPermission = (
-  permission:
-    | "APPROVAL"
-    | "USER_CREATE"
-    | "GENERAL"
-    | "FINANCE_OPERATION"
-    | "ACCOUNTING_OPERATION"
-    | "DELIVERY_OPERATION"
-    | "CUSTOMER_OPERATION"
-    | "OFFER_OPERATION"
-    | "ORDER_OPERATION"
-    | "SUPPLIER_OPERATION"
-    | "TRANSPORTATION_OPERATION"
-    | "DELIVERY_DOCUMENT"
-    | "SETTING",
+  permission: "ADD" | "DELETE" | "UPDATE" | "LIST" | "VIEW" | "APPROVE",
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
@@ -2112,20 +2148,7 @@ export const getUsersByPermission = (
 };
 
 export const getGetUsersByPermissionQueryKey = (
-  permission?:
-    | "APPROVAL"
-    | "USER_CREATE"
-    | "GENERAL"
-    | "FINANCE_OPERATION"
-    | "ACCOUNTING_OPERATION"
-    | "DELIVERY_OPERATION"
-    | "CUSTOMER_OPERATION"
-    | "OFFER_OPERATION"
-    | "ORDER_OPERATION"
-    | "SUPPLIER_OPERATION"
-    | "TRANSPORTATION_OPERATION"
-    | "DELIVERY_DOCUMENT"
-    | "SETTING",
+  permission?: "ADD" | "DELETE" | "UPDATE" | "LIST" | "VIEW" | "APPROVE",
 ) => {
   return [`/users/permission/${permission}`] as const;
 };
@@ -2134,20 +2157,7 @@ export const getGetUsersByPermissionQueryOptions = <
   TData = Awaited<ReturnType<typeof getUsersByPermission>>,
   TError = ErrorType<unknown>,
 >(
-  permission:
-    | "APPROVAL"
-    | "USER_CREATE"
-    | "GENERAL"
-    | "FINANCE_OPERATION"
-    | "ACCOUNTING_OPERATION"
-    | "DELIVERY_OPERATION"
-    | "CUSTOMER_OPERATION"
-    | "OFFER_OPERATION"
-    | "ORDER_OPERATION"
-    | "SUPPLIER_OPERATION"
-    | "TRANSPORTATION_OPERATION"
-    | "DELIVERY_DOCUMENT"
-    | "SETTING",
+  permission: "ADD" | "DELETE" | "UPDATE" | "LIST" | "VIEW" | "APPROVE",
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -2189,20 +2199,7 @@ export function useGetUsersByPermission<
   TData = Awaited<ReturnType<typeof getUsersByPermission>>,
   TError = ErrorType<unknown>,
 >(
-  permission:
-    | "APPROVAL"
-    | "USER_CREATE"
-    | "GENERAL"
-    | "FINANCE_OPERATION"
-    | "ACCOUNTING_OPERATION"
-    | "DELIVERY_OPERATION"
-    | "CUSTOMER_OPERATION"
-    | "OFFER_OPERATION"
-    | "ORDER_OPERATION"
-    | "SUPPLIER_OPERATION"
-    | "TRANSPORTATION_OPERATION"
-    | "DELIVERY_DOCUMENT"
-    | "SETTING",
+  permission: "ADD" | "DELETE" | "UPDATE" | "LIST" | "VIEW" | "APPROVE",
   options: {
     query: Partial<
       UseQueryOptions<
@@ -2229,20 +2226,7 @@ export function useGetUsersByPermission<
   TData = Awaited<ReturnType<typeof getUsersByPermission>>,
   TError = ErrorType<unknown>,
 >(
-  permission:
-    | "APPROVAL"
-    | "USER_CREATE"
-    | "GENERAL"
-    | "FINANCE_OPERATION"
-    | "ACCOUNTING_OPERATION"
-    | "DELIVERY_OPERATION"
-    | "CUSTOMER_OPERATION"
-    | "OFFER_OPERATION"
-    | "ORDER_OPERATION"
-    | "SUPPLIER_OPERATION"
-    | "TRANSPORTATION_OPERATION"
-    | "DELIVERY_DOCUMENT"
-    | "SETTING",
+  permission: "ADD" | "DELETE" | "UPDATE" | "LIST" | "VIEW" | "APPROVE",
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -2269,20 +2253,7 @@ export function useGetUsersByPermission<
   TData = Awaited<ReturnType<typeof getUsersByPermission>>,
   TError = ErrorType<unknown>,
 >(
-  permission:
-    | "APPROVAL"
-    | "USER_CREATE"
-    | "GENERAL"
-    | "FINANCE_OPERATION"
-    | "ACCOUNTING_OPERATION"
-    | "DELIVERY_OPERATION"
-    | "CUSTOMER_OPERATION"
-    | "OFFER_OPERATION"
-    | "ORDER_OPERATION"
-    | "SUPPLIER_OPERATION"
-    | "TRANSPORTATION_OPERATION"
-    | "DELIVERY_DOCUMENT"
-    | "SETTING",
+  permission: "ADD" | "DELETE" | "UPDATE" | "LIST" | "VIEW" | "APPROVE",
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -2305,20 +2276,7 @@ export function useGetUsersByPermission<
   TData = Awaited<ReturnType<typeof getUsersByPermission>>,
   TError = ErrorType<unknown>,
 >(
-  permission:
-    | "APPROVAL"
-    | "USER_CREATE"
-    | "GENERAL"
-    | "FINANCE_OPERATION"
-    | "ACCOUNTING_OPERATION"
-    | "DELIVERY_OPERATION"
-    | "CUSTOMER_OPERATION"
-    | "OFFER_OPERATION"
-    | "ORDER_OPERATION"
-    | "SUPPLIER_OPERATION"
-    | "TRANSPORTATION_OPERATION"
-    | "DELIVERY_DOCUMENT"
-    | "SETTING",
+  permission: "ADD" | "DELETE" | "UPDATE" | "LIST" | "VIEW" | "APPROVE",
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -3017,14 +2975,17 @@ export function useGetUserByEmail<
  */
 export const getUsersByDepartment = (
   department:
-    | "AUTHOR"
-    | "GRADER"
-    | "SUPERVISOR"
-    | "MANAGEMENT"
-    | "IT"
-    | "AUTHOR_REVIEWER"
-    | "ADMIN"
-    | "REVIEWER",
+    | "TURKISH"
+    | "ENGLISH"
+    | "GERMAN"
+    | "CHINESE"
+    | "ARABIC"
+    | "FRENCH"
+    | "JAPANESE"
+    | "RUSSIAN"
+    | "KOREAN"
+    | "GREEK"
+    | "PERSIAN",
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
@@ -3041,14 +3002,17 @@ export const getUsersByDepartment = (
 
 export const getGetUsersByDepartmentQueryKey = (
   department?:
-    | "AUTHOR"
-    | "GRADER"
-    | "SUPERVISOR"
-    | "MANAGEMENT"
-    | "IT"
-    | "AUTHOR_REVIEWER"
-    | "ADMIN"
-    | "REVIEWER",
+    | "TURKISH"
+    | "ENGLISH"
+    | "GERMAN"
+    | "CHINESE"
+    | "ARABIC"
+    | "FRENCH"
+    | "JAPANESE"
+    | "RUSSIAN"
+    | "KOREAN"
+    | "GREEK"
+    | "PERSIAN",
 ) => {
   return [`/users/department/${department}`] as const;
 };
@@ -3058,14 +3022,17 @@ export const getGetUsersByDepartmentQueryOptions = <
   TError = ErrorType<unknown>,
 >(
   department:
-    | "AUTHOR"
-    | "GRADER"
-    | "SUPERVISOR"
-    | "MANAGEMENT"
-    | "IT"
-    | "AUTHOR_REVIEWER"
-    | "ADMIN"
-    | "REVIEWER",
+    | "TURKISH"
+    | "ENGLISH"
+    | "GERMAN"
+    | "CHINESE"
+    | "ARABIC"
+    | "FRENCH"
+    | "JAPANESE"
+    | "RUSSIAN"
+    | "KOREAN"
+    | "GREEK"
+    | "PERSIAN",
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -3108,14 +3075,17 @@ export function useGetUsersByDepartment<
   TError = ErrorType<unknown>,
 >(
   department:
-    | "AUTHOR"
-    | "GRADER"
-    | "SUPERVISOR"
-    | "MANAGEMENT"
-    | "IT"
-    | "AUTHOR_REVIEWER"
-    | "ADMIN"
-    | "REVIEWER",
+    | "TURKISH"
+    | "ENGLISH"
+    | "GERMAN"
+    | "CHINESE"
+    | "ARABIC"
+    | "FRENCH"
+    | "JAPANESE"
+    | "RUSSIAN"
+    | "KOREAN"
+    | "GREEK"
+    | "PERSIAN",
   options: {
     query: Partial<
       UseQueryOptions<
@@ -3143,14 +3113,17 @@ export function useGetUsersByDepartment<
   TError = ErrorType<unknown>,
 >(
   department:
-    | "AUTHOR"
-    | "GRADER"
-    | "SUPERVISOR"
-    | "MANAGEMENT"
-    | "IT"
-    | "AUTHOR_REVIEWER"
-    | "ADMIN"
-    | "REVIEWER",
+    | "TURKISH"
+    | "ENGLISH"
+    | "GERMAN"
+    | "CHINESE"
+    | "ARABIC"
+    | "FRENCH"
+    | "JAPANESE"
+    | "RUSSIAN"
+    | "KOREAN"
+    | "GREEK"
+    | "PERSIAN",
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -3178,14 +3151,17 @@ export function useGetUsersByDepartment<
   TError = ErrorType<unknown>,
 >(
   department:
-    | "AUTHOR"
-    | "GRADER"
-    | "SUPERVISOR"
-    | "MANAGEMENT"
-    | "IT"
-    | "AUTHOR_REVIEWER"
-    | "ADMIN"
-    | "REVIEWER",
+    | "TURKISH"
+    | "ENGLISH"
+    | "GERMAN"
+    | "CHINESE"
+    | "ARABIC"
+    | "FRENCH"
+    | "JAPANESE"
+    | "RUSSIAN"
+    | "KOREAN"
+    | "GREEK"
+    | "PERSIAN",
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -3209,14 +3185,17 @@ export function useGetUsersByDepartment<
   TError = ErrorType<unknown>,
 >(
   department:
-    | "AUTHOR"
-    | "GRADER"
-    | "SUPERVISOR"
-    | "MANAGEMENT"
-    | "IT"
-    | "AUTHOR_REVIEWER"
-    | "ADMIN"
-    | "REVIEWER",
+    | "TURKISH"
+    | "ENGLISH"
+    | "GERMAN"
+    | "CHINESE"
+    | "ARABIC"
+    | "FRENCH"
+    | "JAPANESE"
+    | "RUSSIAN"
+    | "KOREAN"
+    | "GREEK"
+    | "PERSIAN",
   options?: {
     query?: Partial<
       UseQueryOptions<

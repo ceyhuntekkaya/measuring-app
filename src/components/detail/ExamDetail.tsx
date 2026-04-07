@@ -96,12 +96,12 @@ const ExamDetail: React.FC<ExamDetailProps> = ({
                             Taşı
                         </Button>
                     )}
-                    {onArchive && exam.status !== 'SUSPENDED' && (
+                    {onArchive && exam.status !== 'DELETED' && (
                         <Button variant="outline" onClick={onArchive}>
                             Arşivle
                         </Button>
                     )}
-                    {onRestore && exam.status === 'SUSPENDED' && (
+                    {onRestore && exam.status === 'DELETED' && (
                         <Button variant="outline" onClick={onRestore}>
                             Geri Yükle
                         </Button>
@@ -260,12 +260,10 @@ const ExamDetail: React.FC<ExamDetailProps> = ({
                                             ? 'bg-green-100 text-green-800'
                                             : exam.status === 'PASSIVE'
                                                 ? 'bg-yellow-100 text-yellow-800'
-                                                : exam.status === 'SUSPENDED'
-                                                    ? 'bg-gray-100 text-gray-800'
-                                                    : 'bg-red-100 text-red-800'}>
+                                                : 'bg-red-100 text-red-800'}>
                                         {exam.status === 'ACTIVE' ? 'Aktif' :
                                             exam.status === 'PASSIVE' ? 'Pasif' :
-                                                exam.status === 'SUSPENDED' ? 'Arşivlenmiş' : 'Silinmiş'}
+                                                'Silinmiş'}
                                     </Badge>
                                 </div>
 
@@ -487,13 +485,11 @@ const ExamDetail: React.FC<ExamDetailProps> = ({
                                         <div>
                                             <p className="font-semibold">Sınav Oluşturuldu</p>
                                             <p className="text-sm text-gray-500">{formatDate(exam.createdAt || '')}</p>
-                                            {exam.createdById && (
-                                                <p className="text-xs text-gray-400">Oluşturan ID: {exam.createdById}</p>
-                                            )}
+                                            
                                         </div>
                                     </div>
 
-                                    {exam.status === 'DELETED' && exam.deletedAt && (
+                                    {exam.status === 'DELETED'  && (
                                         <div className="flex">
                                             <div className="mr-4 flex-shrink-0">
                                                 <div className="flex items-center justify-center h-10 w-10 rounded-full bg-red-100 text-red-600">
@@ -502,10 +498,8 @@ const ExamDetail: React.FC<ExamDetailProps> = ({
                                             </div>
                                             <div>
                                                 <p className="font-semibold">Sınav Silindi</p>
-                                                <p className="text-sm text-gray-500">{formatDate(exam.deletedAt)}</p>
-                                                {exam.deletedById && (
-                                                    <p className="text-xs text-gray-400">Silen ID: {exam.deletedById}</p>
-                                                )}
+                                               
+                                               
                                             </div>
                                         </div>
                                     )}
@@ -527,13 +521,11 @@ const ExamDetail: React.FC<ExamDetailProps> = ({
                                                     ? 'bg-green-100 text-green-800'
                                                     : exam.status === 'PASSIVE'
                                                         ? 'bg-yellow-100 text-yellow-800'
-                                                        : exam.status === 'SUSPENDED'
-                                                            ? 'bg-gray-100 text-gray-800'
-                                                            : 'bg-red-100 text-red-800'
+                                                        : 'bg-red-100 text-red-800'
                                             }>
                                                 {exam.status === 'ACTIVE' ? 'Aktif' :
                                                     exam.status === 'PASSIVE' ? 'Pasif' :
-                                                        exam.status === 'SUSPENDED' ? 'Arşivlenmiş' : 'Silinmiş'}
+                                                        'Silinmiş'}
                                             </Badge>
                                         </div>
                                         <p className="text-sm text-gray-500">
@@ -541,22 +533,15 @@ const ExamDetail: React.FC<ExamDetailProps> = ({
                                                 ? 'Sınav aktif durumda ve kullanıma hazır.'
                                                 : exam.status === 'PASSIVE'
                                                     ? 'Sınav pasif durumda. Aktif etmek için düzenleyiniz.'
-                                                    : exam.status === 'SUSPENDED'
-                                                        ? 'Sınav arşivlenmiş durumda.'
-                                                        : 'Sınav silinmiş durumda. Geri yükleme için yöneticiye başvurun.'}
+                                                    : 'Sınav silinmiş durumda. Geri yükleme için yöneticiye başvurun.'}
                                         </p>
 
                                         <div className="mt-4 pt-4 border-t border-gray-200">
                                             <h4 className="font-medium text-gray-900 mb-2">İşlem Geçmişi</h4>
                                             <div className="text-sm text-gray-600 space-y-1">
                                                 <p>• Oluşturulma: {formatDate(exam.createdAt || '')}</p>
-                                                {exam.deletedAt && (
-                                                    <p>• Silinme: {formatDate(exam.deletedAt)}</p>
-                                                )}
                                                 <p>• Toplam yaşam süresi: {
-                                                    exam.deletedAt
-                                                        ? Math.floor((new Date(exam.deletedAt).getTime() - new Date(exam.createdAt || '').getTime()) / (1000 * 60 * 60 * 24))
-                                                        : Math.floor((new Date().getTime() - new Date(exam.createdAt || '').getTime()) / (1000 * 60 * 60 * 24))
+                                                    Math.floor((new Date().getTime() - new Date(exam.createdAt || '').getTime()) / (1000 * 60 * 60 * 24))
                                                 } gün</p>
                                             </div>
                                         </div>

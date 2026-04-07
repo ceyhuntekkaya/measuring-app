@@ -11,5 +11,4 @@ export type EssayTemplateDto = BaseQuestionTemplateDto & {
   minWords?: number;
   maxWords?: number;
   requiredTopics?: string[];
-  requiresManualGrading?: boolean;
 };

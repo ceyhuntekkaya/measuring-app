@@ -33,14 +33,6 @@ export const statusConverter = (status: EStatus) => {
             return 'BEKLİYOR'            // Onay veya işlem bekliyor
         case EStatus.CONFIRMED:
             return 'ONAYLANDI'           // Yönetici veya sistem tarafından onaylandı
-        case EStatus.REJECTED:
-            return 'REDDEDİLDİ'          // Onay süreci olumsuz sonuçlandı
-        case EStatus.CANCELLED:
-            return 'İPTAL EDİLDİ'        // Kullanıcı veya sistem tarafından iptal edildi
-        case EStatus.PENDING:
-            return 'ASKIDA'              // Beklemede / geçici durdurulmuş
-        case EStatus.SUSPENDED:
-            return 'ASKIYA ALINDI'       // Dondurulmuş veya geçici olarak kapalı
         default:
             return ''
     }

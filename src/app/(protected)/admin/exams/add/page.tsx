@@ -67,9 +67,11 @@ export default function ExamFormPage() {
     const loadExamTypes = React.useCallback(async () => {
         try {
             const response = await getAllExamTypes({});
-            const apiResponse = response as unknown as ApiResponseExamTypeListResponse;
-            if (apiResponse.success && apiResponse.data) {
-                setExamTypes(apiResponse.data.examTypes || []);
+            if (response && typeof response === 'object' && 'success' in (response as object) && 'data' in (response as object)) {
+                const apiResponse = response as ApiResponseExamTypeListResponse;
+                if (apiResponse.success && apiResponse.data) {
+                    setExamTypes(apiResponse.data.examTypes || []);
+                }
             }
         } catch (error) {
             console.error('Error loading exam types:', error);

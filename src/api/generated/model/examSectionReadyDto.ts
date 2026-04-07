@@ -5,6 +5,7 @@
  * API documentation for Measuring Parent application
  * OpenAPI spec version: 1.0.0
  */
+import type { ExamSectionReadyDtoQuestionSkillType } from "./examSectionReadyDtoQuestionSkillType";
 import type { QuestionGroupReadyDto } from "./questionGroupReadyDto";
 
 export interface ExamSectionReadyDto {
@@ -12,6 +13,7 @@ export interface ExamSectionReadyDto {
   name?: string;
   orderNumber?: number;
   sectionDescription?: string;
+  questionSkillType?: ExamSectionReadyDtoQuestionSkillType;
   questionGroups?: QuestionGroupReadyDto[];
   totalQuestions?: number;
   totalScore?: number;

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { ImageResponseTemplateDto } from '@/api/generated/model';
 import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
-import {difficultyConverter} from "@/utils/enum-converter";
 import type {UploadedFileDto} from "@/api/generated/model";
 import {uploadFile} from "@/services/api/upload-file";
 import siteConfig from "@/config/config.json";
@@ -41,6 +40,13 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                                                                          isSubmitted = false,
                                                                          questionId,
                                                                      }) => {
+    // ORVAL ImageResponseTemplateDto currently exposes only `maxFileSize` (+ base fields).
+    // Keep these as UI defaults so the component still works.
+    const requiresDrawing = false;
+    const allowsUpload = true;
+    const requiresManualGrading = false;
+    const allowedFormats: string | undefined = undefined;
+
     const [imageAnswer, setImageAnswer] = useState<ImageAnswerData | null>(initialAnswer);
 
     const [isDrawing, setIsDrawing] = useState<boolean>(false);
@@ -90,7 +96,7 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
         }
 
         // Canvas'a çizim için image yükle
-        if (initialAnswer?.imageUrl && template.requiresDrawing && canvasRef.current) {
+        if (initialAnswer?.imageUrl && requiresDrawing && canvasRef.current) {
             const canvas = canvasRef.current;
             const ctx = canvas.getContext('2d');
             if (ctx) {
@@ -103,10 +109,10 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                 img.src = initialAnswer.imageUrl;
             }
         }
-    }, [initialAnswer, template.requiresDrawing, API_URL]);
+    }, [initialAnswer, requiresDrawing, API_URL]);
 
     useEffect(() => {
-        if (template.requiresDrawing && canvasRef.current) {
+        if (requiresDrawing && canvasRef.current) {
             const canvas = canvasRef.current;
             const ctx = canvas.getContext('2d');
             if (ctx) {
@@ -114,7 +120,7 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                 ctx.lineJoin = 'round';
             }
         }
-    }, [template.requiresDrawing]);
+    }, [requiresDrawing]);
 
     const handleUploadImage = async (imageFile: File): Promise<ImageAnswerData> => {
         // Eğer questionId yoksa veya preview modundaysa upload yapma
@@ -194,21 +200,7 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
 
         setError('');
 
-        // Validate file type
-        if (template.allowedFormats) {
-            const allowedFormats = template.allowedFormats.toLowerCase().split(',').map(f => f.trim());
-            const fileExtension = file.name.split('.').pop()?.toLowerCase() || '';
-            const fileType = file.type.toLowerCase();
-
-            const isValidFormat = allowedFormats.some(format =>
-                fileType.includes(format) || fileExtension === format.replace('.', '')
-            );
-
-            if (!isValidFormat) {
-                setError(`Desteklenmeyen dosya formatı. İzin verilen formatlar: ${template.allowedFormats}`);
-                return;
-            }
-        }
+        // File type validation is omitted (DTO doesn't expose allowed formats)
 
         // Validate file size (maxFileSize from API is bytes)
         if (template.maxFileSize && file.size > template.maxFileSize) {
@@ -428,7 +420,7 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                 <div className="mb-4">
                     <h3 className="text-lg font-semibold text-gray-800">{template.title}</h3>
                     {template.description && (
-                        <p className="text-gray-600 mt-1">{template.description}</p>
+                        <MaybeHtml className="text-gray-600 mt-1" value={template.description} />
                     )}
                 </div>
             )}
@@ -446,24 +438,12 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                         <MaybeHtml className="text-purple-700" value={template.description} />
                     )}
                     {template.instructions && (
-                        <p className="text-purple-700 text-sm whitespace-pre-wrap mt-2">{template.instructions}</p>
+                        <MaybeHtml className="text-purple-700 text-sm whitespace-pre-wrap mt-2" value={template.instructions} />
                     )}
                 </div>
             )}
 
-            {/* Reference Image */}
-            {template.referenceImageUrl && (
-                <div className="mb-6">
-                    {//<h4 className="font-semibold text-gray-700 mb-2">Referans Görsel:</h4>
-                    }
-                    <img
-                        src={template.referenceImageUrl}
-                        alt="Referans görsel"
-                        className="max-w-full h-auto rounded-lg border-2 border-gray-300"
-                        style={{ maxHeight: '400px' }}
-                    />
-                </div>
-            )}
+            {/* Reference image removed (DTO doesn't expose it) */}
 
             {/* Grading Criteria
             {template.gradingCriteria && template.gradingCriteria.length > 0 && (
@@ -502,16 +482,16 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
             {/* File Requirements */}
             <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
                 <div className="space-y-1 text-sm text-blue-800">
-                    {template.allowedFormats && (
-                        <p><strong>Desteklenen Formatlar:</strong> {template.allowedFormats}</p>
+                    {allowedFormats && (
+                        <p><strong>Desteklenen Formatlar:</strong> {allowedFormats}</p>
                     )}
                     {template.maxFileSize && (
                         <p><strong>Maksimum Dosya Boyutu:</strong> {getMaxFileSizeText()}</p>
                     )}
-                    {template.requiresDrawing && (
+                    {requiresDrawing && (
                         <p><strong>Çizim Gerekli:</strong> Evet</p>
                     )}
-                    {template.allowsUpload && (
+                    {allowsUpload && (
                         <p><strong>Yükleme İzni:</strong> Evet</p>
                     )}
                 </div>
@@ -530,7 +510,7 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
             )}
 
             {/* Drawing Canvas */}
-            {template.requiresDrawing && !imageAnswer && (
+            {requiresDrawing && !imageAnswer && (
                 <div className="border-2 border-gray-300 rounded-lg p-4 bg-white">
                     <div className="mb-4 flex items-center justify-between">
                         <h4 className="font-semibold text-gray-700">Çizim Alanı</h4>
@@ -627,14 +607,14 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
             )}
 
             {/* Image Upload / Display */}
-            {(template.allowsUpload || !template.requiresDrawing) && (
+            {(allowsUpload || !requiresDrawing) && (
                 <div>
                     {!imageAnswer ? (
                         <div>
                             <input
                                 ref={fileInputRef}
                                 type="file"
-                                accept={template.allowedFormats || 'image/*'}
+                                accept={allowedFormats || 'image/*'}
                                 onChange={handleFileSelect}
                                 className="hidden"
                                 disabled={isSubmitted && !isPreview}
@@ -656,7 +636,7 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                                             {isDragging ? 'Dosyayı buraya bırakın' : 'Görsel yüklemek için tıklayın veya sürükleyin'}
                                         </p>
                                         <p className="text-gray-500 text-sm mt-2">
-                                            {template.allowedFormats || 'Tüm görsel formatları'} • Maks: {getMaxFileSizeText() || 'Sınırsız'}
+                                            {allowedFormats || 'Tüm görsel formatları'} • Maks: {getMaxFileSizeText() || 'Sınırsız'}
                                         </p>
                                     </div>
                                 </div>
@@ -742,7 +722,7 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                             Görsel yanıtınız başarıyla gönderildi
                         </p>
                     </div>
-                    {template.requiresManualGrading && (
+                    {requiresManualGrading && (
                         <p className="text-green-700 text-sm mt-2">
                             Değerlendirme tamamlandığında sonuçları görebileceksiniz.
                         </p>
@@ -755,61 +735,17 @@ const ImageResponseQuestion: React.FC<ImageResponseQuestionProps> = ({
                 <div className="mt-4 p-4 bg-gray-50 rounded border">
                     <h4 className="font-semibold text-gray-700 mb-2">Soru Bilgileri:</h4>
                     <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                        {template.subject && (
-                            <div><strong>Konu:</strong> {template.subject}</div>
-                        )}
-                        {template.difficulty && (
-                            <div><strong>Zorluk:</strong> {difficultyConverter(template.difficulty)}</div>
-                        )}
-                        {template.points && (
-                            <div><strong>Puan:</strong> {template.points}</div>
-                        )}
-                        {template.timeLimit && (
-                            <div><strong>Süre:</strong> {template.timeLimit} saniye</div>
-                        )}
                         {template.maxFileSize && (
                             <div><strong>Maks. Dosya:</strong> {getMaxFileSizeText()}</div>
                         )}
-                        {template.requiresManualGrading !== undefined && (
-                            <div><strong>Manuel Değerlendirme:</strong> {template.requiresManualGrading ? 'Evet' : 'Hayır'}</div>
-                        )}
-                        {template.requiresDrawing !== undefined && (
-                            <div><strong>Çizim Gerekli:</strong> {template.requiresDrawing ? 'Evet' : 'Hayır'}</div>
-                        )}
-                        {template.allowsUpload !== undefined && (
-                            <div><strong>Yükleme İzni:</strong> {template.allowsUpload ? 'Evet' : 'Hayır'}</div>
-                        )}
-                        {template.tags && template.tags.length > 0 && (
-                            <div className="col-span-2">
-                                <strong>Etiketler:</strong> {template.tags.join(', ')}
-                            </div>
-                        )}
+                        <div><strong>Manuel Değerlendirme:</strong> {requiresManualGrading ? 'Evet' : 'Hayır'}</div>
+                        <div><strong>Çizim Gerekli:</strong> {requiresDrawing ? 'Evet' : 'Hayır'}</div>
+                        <div><strong>Yükleme İzni:</strong> {allowsUpload ? 'Evet' : 'Hayır'}</div>
                     </div>
                 </div>
             )}
 
-            {/* Development Notes - Comment for future exam implementation */}
-            {/*
-        TODO: Real exam implementation
-        - Integrate with exam session management
-        - Implement image upload to backend/cloud storage
-        - Add image compression options
-        - Handle upload progress indication
-        - Add retry mechanism for failed uploads
-        - Support for advanced drawing tools (shapes, text, etc.)
-        - Implement layers for complex drawings
-        - Add undo/redo functionality for drawings
-        - Support for touch devices and stylus
-        - Implement image annotation features
-        - Add AI-based image analysis (optional)
-        - Handle network issues and offline scenarios
-        - Add image filters and effects
-        - Implement collaborative drawing (optional)
-        - Support for multiple images upload
-        - Add accessibility features
-        - Handle browser compatibility issues
-        - Implement auto-save functionality
-      */}
+           
         </div>
     );
 };

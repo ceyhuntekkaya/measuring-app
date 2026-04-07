@@ -17,7 +17,7 @@ export default function QuestionGroupTypePage() {
     const examTypeId = params.examTypeId as string;
     const examSectionId = params.sectionId as string;
     
-    const {data, isLoading: loading} = useGetQuestionGroupTypesByExamSection(examSectionId, {
+    const {data, isLoading: loading} = useGetQuestionGroupTypesByExamSection<ApiResponseListQuestionGroupTypeDto>(examSectionId, {
         query: { 
             enabled: !!examSectionId,
             refetchOnMount: true,
@@ -25,7 +25,7 @@ export default function QuestionGroupTypePage() {
             staleTime: 0,
         }
     });
-    const typesByExamSection = (data as unknown as ApiResponseListQuestionGroupTypeDto)?.data || [];
+    const typesByExamSection = data?.data || [];
 
     const columns: Column<RecordType>[] = [
 

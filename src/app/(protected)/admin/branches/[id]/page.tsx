@@ -13,10 +13,10 @@ export default function BranchDetailPage() {
     const params = useParams();
     const id = params.id as string;
 
-    const { data, isLoading, error } = useGetBranchById(id);
+    const { data, isLoading, error } = useGetBranchById<ApiResponseBranchDto>(id);
     
     // Extract branch from API response
-    const selectedBranch = (data as unknown as ApiResponseBranchDto)?.data as BranchDto | undefined;
+    const selectedBranch = data?.data as BranchDto | undefined;
 
     if (isLoading) {
         return <LoadingComp/>;

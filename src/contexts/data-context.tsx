@@ -4,18 +4,25 @@ import {createContext, useState, useContext} from 'react';
 import {Department, Permission, Role} from '@/types/auth';
 
 const _permissions: Permission[] = [
-    'APPROVAL', 'USER_CREATE', 'GENERAL', 'FINANCE_OPERATION',
-    'ACCOUNTING_OPERATION', 'DELIVERY_OPERATION', 'CUSTOMER_OPERATION',
-    'OFFER_OPERATION', 'ORDER_OPERATION', 'SUPPLIER_OPERATION',
-    'TRANSPORTATION_OPERATION', 'DELIVERY_DOCUMENT', 'SETTING'
+    'ADD', 'DELETE', 'UPDATE', 'LIST', 'VIEW', 'APPROVE'
 ];
 
 const _departments: Department[] = [
-    'GRADER', 'SUPERVISOR', 'MANAGEMENT', 'IT', 'AUTHOR_REVIEWER', 'ADMIN', 'REVIEWER'
+    'TURKISH',
+    'ENGLISH',
+    'GERMAN',
+    'CHINESE',
+    'ARABIC',
+    'FRENCH',
+    'JAPANESE',
+    'RUSSIAN',
+    'KOREAN',
+    'GREEK',
+    'PERSIAN',
 ];
 
 const _roles: Role[] = [
-    'ADMIN', 'USER', 'LEARNER', 'COMPANY', 'INSTRUCTOR', 'OBSERVER'
+    'ADMIN', 'USER', 'LEARNER', 'MANAGER', 'REFEREE', 'WRITER', 'OBSERVER'
 ];
 
 export interface DataContextType {

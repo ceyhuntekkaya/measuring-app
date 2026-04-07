@@ -10,6 +10,4 @@ import type { MatchingOptions } from "./matchingOptions";
 
 export type MatchingTemplateDto = BaseQuestionTemplateDto & {
   options?: MatchingOptions;
-  shuffleItems?: boolean;
-  explanation?: string;
 };

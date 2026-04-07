@@ -5,23 +5,15 @@
  * API documentation for Measuring Parent application
  * OpenAPI spec version: 1.0.0
  */
-import type { QuestionGroupHeaderDtoApprovalStatus } from "./questionGroupHeaderDtoApprovalStatus";
 import type { QuestionGroupHeaderDtoMediaType } from "./questionGroupHeaderDtoMediaType";
 import type { QuestionGroupHeaderDtoStatus } from "./questionGroupHeaderDtoStatus";
 
 export interface QuestionGroupHeaderDto {
   id?: string;
   createdAt?: string;
-  deletedAt?: string;
   status?: QuestionGroupHeaderDtoStatus;
-  createdById?: string;
-  deletedById?: string;
   questionGroup?: unknown;
   orderNumber?: number;
   mediaType?: QuestionGroupHeaderDtoMediaType;
   content?: string;
-  approvalStatus?: QuestionGroupHeaderDtoApprovalStatus;
-  currentApprovalCount?: number;
-  requiredApprovalCount?: number;
-  approvalCompletedDate?: string;
 }

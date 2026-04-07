@@ -79,6 +79,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
     const [confirmPassword, setConfirmPassword] = useState('');
     const [errors, setErrors] = useState<CandidateFormErrors>({});
     const [showPassword, setShowPassword] = useState(false);
+    const [showFormErrorSummary, setShowFormErrorSummary] = useState(false);
 
     function toISODateString(dateStr: string | null): string {
         if (!dateStr) return '';
@@ -179,16 +180,18 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
         };
     }, [formData.name, formData.lastName, mode]);
 
-    // Filter sessions by selected exam type (compare as string - API may return id as number)
+    // Filter sessions by selected exam type.
+    // Some endpoints may omit nested `examType` object; be defensive and also check `examTypeId` if present.
     const filteredExamSessions = useMemo(() => {
-        if (!formData.examTypeId) {
-            return [];
-        }
-        const selectedId = String(formData.examTypeId);
-        return examSessions.filter(examSession => {
-            const sessionExamTypeId = examSession.examType?.id;
-            if (sessionExamTypeId == null || sessionExamTypeId === '') return false;
-            return String(sessionExamTypeId) === selectedId;
+        const selectedId = String(formData.examTypeId || '').trim();
+        if (!selectedId) return [];
+
+        return examSessions.filter((examSession) => {
+            const nestedId = examSession.examType?.id;
+            const looseExamTypeId = (examSession as unknown as { examTypeId?: string | number }).examTypeId;
+            const sessionExamTypeId = nestedId ?? looseExamTypeId;
+            if (sessionExamTypeId == null) return false;
+            return String(sessionExamTypeId).trim() === selectedId;
         });
     }, [examSessions, formData.examTypeId]);
 
@@ -332,13 +335,13 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
         if (!formData.birthPlace || !formData.birthPlace.trim()) newErrors.birthPlace = 'Doğum yeri zorunludur';
 
         setErrors(newErrors);
+        setShowFormErrorSummary(Object.keys(newErrors).length > 0);
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-
+    const handleSubmit = () => {
         if (validateForm()) {
+            setShowFormErrorSummary(false);
             // Directly use formData - no manual mapping needed!
             const submitData: CreateCandidateRequest | UpdateCandidateRequest = {
                 username: formData.username.trim(),
@@ -376,7 +379,12 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
 
 
     return (
-        <>
+        <form
+            onSubmit={(e) => {
+                e.preventDefault();
+                handleSubmit();
+            }}
+        >
             <Card>
                 <CardHeader>
                     <CardTitle>
@@ -385,6 +393,13 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-6">
+                        {showFormErrorSummary && (
+                            <Alert variant="destructive">
+                                <AlertDescription>
+                                    Formda eksik/hatali alanlar var. Lütfen zorunlu alanlari kontrol edin (özellikle Sınav Tipi, Oturum ve Kullanıcı Adı).
+                                </AlertDescription>
+                            </Alert>
+                        )}
                         <div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
@@ -889,7 +904,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
                         {/* Submit Button */}
                         <div className="flex justify-end space-x-4">
                             <Button
-                                onClick={handleSubmit}
+                                type="submit"
                                 className="bg-blue-600 hover:bg-blue-700 text-white"
                                 disabled={loading}
                             >
@@ -900,7 +915,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
                 </CardContent>
             </Card>
 
-        </>
+        </form>
     );
 };
 

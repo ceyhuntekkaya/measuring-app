@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { AudioResponseTemplateDto } from '@/api/generated/model';
 import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
-import {difficultyConverter} from "@/utils/enum-converter";
 import type {UploadedFileDto} from "@/api/generated/model";
 import {uploadAudioFile} from "@/services/api/upload-file";
 import siteConfig from "@/config/config.json";
@@ -483,7 +482,7 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                 }
                    
                     {template.description && (
-                        <p className="text-gray-600 mt-1">{template.description}</p>
+                        <MaybeHtml className="text-gray-600 mt-1" value={template.description} />
                     )}
                 </div>
             )}
@@ -494,7 +493,7 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                         <MaybeHtml className="text-purple-700" value={template.description} />
                     )}
                     {template.instructions && (
-                        <p className="text-purple-700 text-sm whitespace-pre-wrap mt-2">{template.instructions}</p>
+                        <MaybeHtml className="text-purple-700 text-sm whitespace-pre-wrap mt-2" value={template.instructions} />
                     )}
                 </div>
             )}
@@ -708,11 +707,7 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                         </svg>
                         <p className="text-green-800 font-semibold">Sesli yanıtınız başarıyla gönderildi</p>
                     </div>
-                    {template.requiresManualGrading && (
-                        <p className="text-green-700 text-sm mt-2">
-                            Değerlendirme tamamlandığında sonuçları görebileceksiniz.
-                        </p>
-                    )}
+                 
                 </div>
             )}
 
@@ -720,16 +715,9 @@ const AudioResponseQuestion: React.FC<AudioResponseQuestionProps> = ({
                 <div className="mt-4 p-4 bg-gray-50 rounded border">
                     <h4 className="font-semibold text-gray-700 mb-2">Soru Bilgileri:</h4>
                     <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                        {template.subject && <div><strong>Konu:</strong> {template.subject}</div>}
-                        {template.difficulty && <div><strong>Zorluk:</strong> {difficultyConverter(template.difficulty)}</div>}
-                        {template.points && <div><strong>Puan:</strong> {template.points}</div>}
-                        {template.timeLimit && <div><strong>Süre:</strong> {template.timeLimit} saniye</div>}
                         {template.minRecordingDuration && <div><strong>Min. Kayıt:</strong> {formatTime(template.minRecordingDuration)}</div>}
                         {template.maxRecordingDuration && <div><strong>Maks. Kayıt:</strong> {formatTime(template.maxRecordingDuration)}</div>}
-                        {template.requiresManualGrading !== undefined && <div><strong>Manuel Değerlendirme:</strong> {template.requiresManualGrading ? 'Evet' : 'Hayır'}</div>}
-                        {template.tags && template.tags.length > 0 && (
-                            <div className="col-span-2"><strong>Etiketler:</strong> {template.tags.join(', ')}</div>
-                        )}
+                      
                     </div>
                 </div>
             )}

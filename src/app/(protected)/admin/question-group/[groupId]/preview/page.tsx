@@ -332,9 +332,9 @@ export default function QuestionGroupPreviewPage() {
                         <span className="text-gray-500">Puan:</span>
                         <span className="ml-1 font-medium">{question.maximumScore || 'Belirtilmedi'}</span>
                       </div>
-                      {question.durationInSeconds && (
+                      {question.timeLimit && (
                         <div className="text-xs text-gray-500 mt-1">
-                          {formatDuration(question.durationInSeconds)}
+                          {formatDuration(question.timeLimit)}
                         </div>
                       )}
                     </div>

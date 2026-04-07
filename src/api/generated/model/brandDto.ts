@@ -10,10 +10,7 @@ import type { BrandDtoStatus } from "./brandDtoStatus";
 export interface BrandDto {
   id?: string;
   createdAt?: string;
-  deletedAt?: string;
   status?: BrandDtoStatus;
-  createdById?: string;
-  deletedById?: string;
   name?: string;
   code?: string;
   description?: string;

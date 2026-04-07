@@ -326,34 +326,51 @@ const QuestionGroupDetail: React.FC<QuestionGroupDetailProps> = ({ selectedQuest
                 {/* Question Group Type */}
                 {selectedQuestionGroup.questionGroupType && (
                     <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200 lg:col-span-2">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Soru Grup Türü</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Soru Grup Türü (şablon)</h3>
                         <div className="bg-gradient-to-r from-green-50 to-teal-50 rounded-lg p-4 border border-green-200">
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                <div>
-                                    <div className="text-sm font-medium text-green-600">Grup Türü Adı</div>
-                                    <div className="text-lg font-bold text-green-900">
-                                        {selectedQuestionGroup.questionGroupType.name}
+                            {(() => {
+                                const qgt = selectedQuestionGroup.questionGroupType;
+                                return (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        <div>
+                                            <div className="text-sm font-medium text-green-600">Grup Türü Adı</div>
+                                            <div className="text-lg font-bold text-green-900">
+                                                {qgt.name}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div className="text-xs text-green-500">Beceri türü</div>
+                                            <div className="text-green-900 font-semibold">
+                                                {getGroupTypeLabel(qgt.groupType as EQuestionGroupType)}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div className="text-xs text-green-500">Sıra</div>
+                                            <div className="text-green-900 font-semibold">
+                                                {qgt.orderNumber ?? '—'}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div className="text-xs text-green-500">Yönerge</div>
+                                            <div className="text-green-900 font-semibold">
+                                                {qgt.hasInstruction ? 'Var' : 'Yok'}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div className="text-xs text-green-500">Grup süresi (şablon)</div>
+                                            <div className="text-green-900 font-semibold">
+                                                {qgt.hasGroupDuration && qgt.duration != null ? qgt.duration : '—'}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div className="text-xs text-green-500">Kayıt / oynatma</div>
+                                            <div className="text-green-900 font-semibold text-sm">
+                                                Oynatma: {qgt.playbackCount ?? '—'} · Kayıt süresi: {qgt.recordingDuration ?? '—'}
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <div className="text-xs text-green-500">Tür</div>
-                                    <div className="text-green-900 font-semibold">
-                                        {getGroupTypeLabel(selectedQuestionGroup.questionGroupType.groupType as EQuestionGroupType)}
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="text-xs text-green-500">Seviye</div>
-                                    <div className="text-green-900 font-semibold">
-                                        {selectedQuestionGroup.questionGroupType.level}
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="text-xs text-green-500">Sıra</div>
-                                    <div className="text-green-900 font-semibold">
-                                        {selectedQuestionGroup.questionGroupType.orderNumber}
-                                    </div>
-                                </div>
-                            </div>
+                                );
+                            })()}
                         </div>
                     </div>
                 )}

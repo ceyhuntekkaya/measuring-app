@@ -18,10 +18,10 @@ export default function CandidateEdit() {
     const router = useRouter();
     const queryClient = useQueryClient();
 
-    const {data: userData} = useGetUserById(id, {
+    const {data: userData} = useGetUserById<ApiResponseUserDto>(id, {
         query: { enabled: !!id }
     });
-    const selectedUser = (userData as unknown as ApiResponseUserDto)?.data;
+    const selectedUser = userData?.data;
     
     const { mutate: updateUser, isPending: loading } = useUpdateUser({
         mutation: {
@@ -42,8 +42,8 @@ export default function CandidateEdit() {
         updateUser({ id, data });
     };
 
-    const { data: brandsData } = useGetAllBrands();
-    const brands = (brandsData as unknown as ApiResponseListBrandDto)?.data || null;
+    const { data: brandsData } = useGetAllBrands<ApiResponseListBrandDto>();
+    const brands = brandsData?.data || null;
 
     return (
         <div className="space-y-6">

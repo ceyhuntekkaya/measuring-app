@@ -10,10 +10,7 @@ import type { BrandStatus } from "./brandStatus";
 export interface Brand {
   id?: string;
   createdAt?: string;
-  deletedAt?: string;
   status?: BrandStatus;
-  createdBy?: unknown;
-  deletedBy?: unknown;
   name?: string;
   code?: string;
   description?: string;

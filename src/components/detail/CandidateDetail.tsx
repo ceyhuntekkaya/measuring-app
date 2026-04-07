@@ -468,17 +468,7 @@ const CandidateDetailPage: React.FC<CandidateDetailProps> = ({
                                         </div>
                                     )}
 
-                                    {candidate.deletedAt && (
-                                        <div className="flex justify-between items-center p-3 bg-red-50 rounded-md">
-                                            <div className="flex items-center space-x-3">
-                                                <XCircle className="h-5 w-5 text-red-500"/>
-                                                <span>Silinme Tarihi</span>
-                                            </div>
-                                            <p className="text-sm font-medium text-red-600">
-                                                {formatDate(candidate.deletedAt)}
-                                            </p>
-                                        </div>
-                                    )}
+                                
                                 </CardContent>
                             </Card>
                         </div>

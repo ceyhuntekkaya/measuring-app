@@ -49,10 +49,6 @@ const ImageResponseTemplateForm = forwardRef<ImageResponseTemplateFormHandle, Im
         onChange({
             ...(value || {}),
             maxFileSize: mbToBytes(maxFileSizeMb),
-            requiresManualGrading: true,
-            allowedFormats: 'jpg,jpeg,png,gif,bmp',
-            requiresDrawing: false,
-            allowsUpload: true,
         });
     }, [maxFileSizeMb]);
 

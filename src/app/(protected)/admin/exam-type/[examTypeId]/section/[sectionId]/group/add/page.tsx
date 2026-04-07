@@ -35,10 +35,10 @@ export default function QuestionGroupTypeAdd() {
         createQuestionGroupType({ data });
     };
 
-    const {data: sectionsData} = useGetExamSectionsByExamType(examTypeId, {
+    const {data: sectionsData} = useGetExamSectionsByExamType<ApiResponseListExamSectionDto>(examTypeId, {
         query: { enabled: !!examTypeId }
     });
-    const examSections = (sectionsData as unknown as ApiResponseListExamSectionDto)?.data || [];
+    const examSections = sectionsData?.data || [];
 
     return (
         <div className="space-y-6">

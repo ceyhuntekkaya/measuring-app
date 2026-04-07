@@ -118,10 +118,6 @@ export enum EStatus {
     DELETED = "DELETED",
     WAITING = "WAITING",
     CONFIRMED = "CONFIRMED",
-    REJECTED = "REJECTED",
-    CANCELLED = "CANCELLED",
-    PENDING = "PENDING",
-    SUSPENDED = "SUSPENDED"
 }
 
 
@@ -165,25 +161,21 @@ export enum EQuestionGroupTemplateLevel {
 
 
 export type Permission =
-    | 'APPROVAL'
-    | 'USER_CREATE'
-    | 'GENERAL'
-    | 'FINANCE_OPERATION'
-    | 'ACCOUNTING_OPERATION'
-    | 'DELIVERY_OPERATION'
-    | 'CUSTOMER_OPERATION'
-    | 'OFFER_OPERATION'
-    | 'ORDER_OPERATION'
-    | 'SUPPLIER_OPERATION'
-    | 'TRANSPORTATION_OPERATION'
-    | 'DELIVERY_DOCUMENT'
-    | 'SETTING';
+    | 'ADD'
+    | 'DELETE'
+    | 'UPDATE'
+    | 'LIST'
+    | 'VIEW'
+    | 'APPROVE';
 
 export type Role =
     | 'USER'
     | 'ADMIN'
-    | 'CANDIDATE'
-    | 'COMPANY';
+    | 'LEARNER'
+    | 'MANAGER'
+    | 'REFEREE'
+    | 'WRITER'
+    | 'OBSERVER';
 
 export type TokenType =
     | 'BEARER';

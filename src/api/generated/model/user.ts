@@ -7,7 +7,6 @@
  */
 import type { Brand } from "./brand";
 import type { GrantedAuthority } from "./grantedAuthority";
-import type { User as __User } from "./user";
 import type { UserAuthoritySetItem } from "./userAuthoritySetItem";
 import type { UserDepartmentSetItem } from "./userDepartmentSetItem";
 import type { UserRoleSetItem } from "./userRoleSetItem";
@@ -16,10 +15,7 @@ import type { UserStatus } from "./userStatus";
 export interface User {
   id?: string;
   createdAt?: string;
-  deletedAt?: string;
   status?: UserStatus;
-  createdBy?: __User;
-  deletedBy?: __User;
   username?: string;
   password?: string;
   lastLoginTime?: string;

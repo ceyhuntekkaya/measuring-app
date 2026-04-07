@@ -9,7 +9,15 @@ import { Input } from "@/components/ui/input";
 import HtmlEditor from "@/components/ui/html-editor";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { NumberInput } from "@/components/ui/number-input";
-import type { ExamSectionDto, ExamTypeDto, CreateExamSectionRequest, UpdateExamSectionRequest } from "@/api/generated/model";
+import type {
+    ExamSectionDto,
+    ExamTypeDto,
+    CreateExamSectionRequest,
+    UpdateExamSectionRequest,
+    CreateExamSectionRequestQuestionSkillType
+} from "@/api/generated/model";
+import { CreateExamSectionRequestQuestionSkillType as QuestionSkillType } from "@/api/generated/model";
+import TextYesNoCheckbox from "@/components/ui/text-yes-no-checkbox";
 
 
 
@@ -43,7 +51,12 @@ const ExamSectionForm: React.FC<ExamSectionFormProps> = ({
         name: '',
         examTypeId: defaultExamTypeId || '',
         orderNumber: 1,
-        sectionDescription: ''
+        sectionDescription: '',
+        isOrder: false,
+        hasTotalTime: false,
+        totalTime: undefined,
+        minScore: undefined,
+        questionSkillType: undefined,
     });
 
 
@@ -58,7 +71,12 @@ const ExamSectionForm: React.FC<ExamSectionFormProps> = ({
                 name: examSection.name || '',
                 examTypeId: examType?.id || '',
                 orderNumber: examSection.orderNumber || 1,
-                sectionDescription: examSection.sectionDescription || ''
+                sectionDescription: examSection.sectionDescription || '',
+                isOrder: examSection.isOrder ?? false,
+                hasTotalTime: examSection.hasTotalTime ?? false,
+                totalTime: examSection.totalTime,
+                minScore: examSection.minScore,
+                questionSkillType: examSection.questionSkillType,
             });
         } else if (defaultExamTypeId) {
             setFormData(prev => ({
@@ -108,7 +126,12 @@ const ExamSectionForm: React.FC<ExamSectionFormProps> = ({
                 const submitData: UpdateExamSectionRequest = {
                     name: formData.name?.trim(),
                     orderNumber: formData.orderNumber,
-                    sectionDescription: formData.sectionDescription?.trim() || undefined
+                    sectionDescription: formData.sectionDescription?.trim() || undefined,
+                    isOrder: formData.isOrder,
+                    hasTotalTime: formData.hasTotalTime,
+                    totalTime: formData.hasTotalTime ? formData.totalTime : undefined,
+                    minScore: formData.minScore,
+                    questionSkillType: formData.questionSkillType || undefined,
                 };
                 onSubmit(submitData);
             } else {
@@ -117,7 +140,12 @@ const ExamSectionForm: React.FC<ExamSectionFormProps> = ({
                     name: formData.name?.trim(),
                     examTypeId: formData.examTypeId,
                     orderNumber: formData.orderNumber,
-                    sectionDescription: formData.sectionDescription?.trim() || undefined
+                    sectionDescription: formData.sectionDescription?.trim() || undefined,
+                    isOrder: formData.isOrder,
+                    hasTotalTime: formData.hasTotalTime,
+                    totalTime: formData.hasTotalTime ? formData.totalTime : undefined,
+                    minScore: formData.minScore,
+                    questionSkillType: formData.questionSkillType || undefined,
                 };
                 onSubmit(submitData);
             }
@@ -172,6 +200,33 @@ const ExamSectionForm: React.FC<ExamSectionFormProps> = ({
                         </div>
                     </div>
 
+                    <div className="space-y-2">
+                        <Label htmlFor="questionSkillType">Soru / beceri tipi</Label>
+                        <Select
+                            value={formData.questionSkillType || ''}
+                            onValueChange={(value) =>
+                                handleChange(
+                                    'questionSkillType',
+                                    (value ? (value as CreateExamSectionRequestQuestionSkillType) : undefined)
+                                )
+                            }
+                        >
+                            <SelectTrigger id="questionSkillType">
+                                <SelectValue placeholder="Seçin" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                    <SelectItem value="">Seçilmedi</SelectItem>
+                                    {Object.values(QuestionSkillType).map((t) => (
+                                        <SelectItem key={t} value={t}>
+                                            {t}
+                                        </SelectItem>
+                                    ))}
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
                     {/* Sınav Tipi - Sadece yeni oluşturma modunda ve defaultExamTypeId yoksa göster */}
                     {!examSection && !defaultExamTypeId && (
                         <div className="space-y-2">
@@ -200,6 +255,49 @@ const ExamSectionForm: React.FC<ExamSectionFormProps> = ({
                             )}
                         </div>
                     )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <TextYesNoCheckbox
+                            id="sectionIsOrder"
+                            checked={!!formData.isOrder}
+                            onChange={(checked) => handleChange('isOrder', !!checked)}
+                            html="<b>Bölüm sıralı</b><div class='text-gray-600 text-xs mt-1'>Bu bölümde sıra kısıtı uygulanır.</div>"
+                        />
+                        <TextYesNoCheckbox
+                            id="sectionHasTotalTime"
+                            checked={!!formData.hasTotalTime}
+                            onChange={(checked) => handleChange('hasTotalTime', !!checked)}
+                            html="<b>Toplam süre var</b><div class='text-gray-600 text-xs mt-1'>Bölüm için toplam süre tanımlanır.</div>"
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="totalTime">Toplam süre</Label>
+                            <NumberInput
+                                id="totalTime"
+                                inputType="number"
+                                value={formData.totalTime ?? 0}
+                                onChange={(value) => handleChange('totalTime', value || undefined)}
+                                minValue={0}
+                                decimalPlaces={0}
+                                className={!formData.hasTotalTime ? 'opacity-50 pointer-events-none' : ''}
+                            />
+                            <p className="text-xs text-gray-500">Saniye cinsinden (backend alanı).</p>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="minScore">Minimum puan</Label>
+                            <NumberInput
+                                id="minScore"
+                                inputType="number"
+                                value={formData.minScore ?? 0}
+                                onChange={(value) => handleChange('minScore', value)}
+                                minValue={0}
+                                maxValue={1000}
+                                decimalPlaces={2}
+                            />
+                        </div>
+                    </div>
 
                     {/* Bölüm Açıklaması */}
                     <div className="space-y-2">

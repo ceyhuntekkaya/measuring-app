@@ -12,10 +12,7 @@ import type { EvaluationDtoStatus } from "./evaluationDtoStatus";
 export interface EvaluationDto {
   id?: string;
   createdAt?: string;
-  deletedAt?: string;
   status?: EvaluationDtoStatus;
-  createdById?: string;
-  deletedById?: string;
   questionId?: string;
   applicationId?: string;
   graderId?: string;

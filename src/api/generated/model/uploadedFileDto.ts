@@ -5,17 +5,13 @@
  * API documentation for Measuring Parent application
  * OpenAPI spec version: 1.0.0
  */
-import type { UploadedFileDtoApprovalStatus } from "./uploadedFileDtoApprovalStatus";
 import type { UploadedFileDtoDocumentType } from "./uploadedFileDtoDocumentType";
 import type { UploadedFileDtoStatus } from "./uploadedFileDtoStatus";
 
 export interface UploadedFileDto {
   id?: string;
   createdAt?: string;
-  deletedAt?: string;
   status?: UploadedFileDtoStatus;
-  createdById?: string;
-  deletedById?: string;
   path?: string;
   fileOriginalName?: string;
   fileName?: string;
@@ -23,8 +19,4 @@ export interface UploadedFileDto {
   fileSize?: number;
   updatedAt?: string;
   version?: number;
-  approvalStatus?: UploadedFileDtoApprovalStatus;
-  currentApprovalCount?: number;
-  requiredApprovalCount?: number;
-  approvalCompletedDate?: string;
 }

@@ -11,7 +11,4 @@ import type { FillInTheBlanksOptions } from "./fillInTheBlanksOptions";
 export type FillInTheBlanksTemplateDto = BaseQuestionTemplateDto & {
   textWithBlanks?: string;
   options?: FillInTheBlanksOptions;
-  caseSensitive?: boolean;
-  exactMatch?: boolean;
-  explanation?: string;
 };

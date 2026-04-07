@@ -6,19 +6,18 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { NumberInput } from "@/components/ui/number-input";
 import type { QuestionGroupTypeDto, ExamSectionDto, CreateQuestionGroupTypeRequest, UpdateQuestionGroupTypeRequest } from "@/api/generated/model";
-import {EQuestionGroupTemplateLevel, EQuestionGroupType} from "@/types/exam/enum";
+import { EQuestionGroupType } from "@/types/exam/enum";
 import TextSelect from "@/components/ui/text-select";
-
+import TextYesNoCheckbox from "@/components/ui/text-yes-no-checkbox";
 
 
 interface QuestionGroupTypeFormErrors {
     name?: string;
     orderNumber?: string;
-    level?: string;
     groupType?: string;
-    description?: string;
 }
 
 interface QuestionGroupTypeFormProps {
@@ -29,25 +28,29 @@ interface QuestionGroupTypeFormProps {
     loading?: boolean;
 }
 
+const defaultCreateState = (examSectionId?: string): CreateQuestionGroupTypeRequest => ({
+    name: '',
+    examSectionId: examSectionId || '',
+    orderNumber: 1,
+    groupType: EQuestionGroupType.GENERAL as CreateQuestionGroupTypeRequest['groupType'],
+    hasInstruction: false,
+    instruction: '',
+    hasGroupDuration: false,
+    duration: undefined,
+    waitingDuration: undefined,
+    playbackCount: undefined,
+    recordingDuration: undefined,
+});
+
 const QuestionGroupTypeForm: React.FC<QuestionGroupTypeFormProps> = ({
-                                                                         onSubmit,
-                                                                         questionGroupType,
-                                                                         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                                                                         examSections: _examSections = [],
-                                                                         examSectionId,
-                                                                         loading = false
-                                                                     }) => {
-
-
-
-
-    const [formData, setFormData] = useState<CreateQuestionGroupTypeRequest>({
-        name: '',
-        examSectionId: examSectionId || '',
-        orderNumber: 1,
-        level: EQuestionGroupTemplateLevel.GROUP as CreateQuestionGroupTypeRequest['level'],
-        groupType: EQuestionGroupType.GENERAL as CreateQuestionGroupTypeRequest['groupType']
-    });
+    onSubmit,
+    questionGroupType,
+    examSectionId,
+    loading = false
+}) => {
+    const [formData, setFormData] = useState<CreateQuestionGroupTypeRequest>(() =>
+        defaultCreateState(examSectionId)
+    );
 
     const [errors, setErrors] = useState<QuestionGroupTypeFormErrors>({});
 
@@ -57,14 +60,17 @@ const QuestionGroupTypeForm: React.FC<QuestionGroupTypeFormProps> = ({
                 name: questionGroupType.name || '',
                 examSectionId: examSectionId || questionGroupType.examSection?.id || '',
                 orderNumber: questionGroupType.orderNumber || 1,
-                level: questionGroupType.level as CreateQuestionGroupTypeRequest['level'],
-                groupType: questionGroupType.groupType as CreateQuestionGroupTypeRequest['groupType']
+                groupType: questionGroupType.groupType as CreateQuestionGroupTypeRequest['groupType'],
+                hasInstruction: questionGroupType.hasInstruction ?? false,
+                instruction: questionGroupType.instruction || '',
+                hasGroupDuration: questionGroupType.hasGroupDuration ?? false,
+                duration: questionGroupType.duration,
+                waitingDuration: questionGroupType.waitingDuration,
+                playbackCount: questionGroupType.playbackCount,
+                recordingDuration: questionGroupType.recordingDuration,
             });
-        } else if (examSectionId) {
-            setFormData(prev => ({
-                ...prev,
-                examSectionId: examSectionId
-            }));
+        } else {
+            setFormData(defaultCreateState(examSectionId));
         }
     }, [questionGroupType, examSectionId]);
 
@@ -87,10 +93,6 @@ const QuestionGroupTypeForm: React.FC<QuestionGroupTypeFormProps> = ({
             newErrors.name = 'Soru grubu tipi adı en az 3 karakter olmalıdır';
         }
 
-        if (!formData.level) {
-            newErrors.level = 'Seviye seçimi zorunludur';
-        }
-
         if (!formData.groupType) {
             newErrors.groupType = 'Grup tipi seçimi zorunludur';
         }
@@ -101,43 +103,44 @@ const QuestionGroupTypeForm: React.FC<QuestionGroupTypeFormProps> = ({
             newErrors.orderNumber = 'Sıra numarası 100\'den büyük olamaz';
         }
 
-
-
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
     const handleSubmit = () => {
-        if (validateForm()) {
-            if (questionGroupType) {
-                // Update request - examSectionId should not be included
-                const submitData: UpdateQuestionGroupTypeRequest = {
-                    name: formData.name?.trim(),
-                    orderNumber: formData.orderNumber,
-                    level: formData.level,
-                    groupType: formData.groupType
-                };
-                onSubmit(submitData);
-            } else {
-                // Create request - examSectionId is required
-                const finalExamSectionId = examSectionId || formData.examSectionId;
-                const submitData: CreateQuestionGroupTypeRequest = {
-                    name: formData.name?.trim(),
-                    examSectionId: finalExamSectionId,
-                    orderNumber: formData.orderNumber,
-                    level: formData.level,
-                    groupType: formData.groupType
-                };
-                onSubmit(submitData);
-            }
-        }
-    };
+        if (!validateForm()) return;
 
-    const getLevelDisplayName = (level: string): string => {
-        switch (level) {
-            case 'GROUP': return 'Grup';
-            case 'QUESTION': return 'Soru';
-            default: return level;
+        const instructionTrim = formData.instruction?.trim();
+        if (questionGroupType) {
+            const submitData: UpdateQuestionGroupTypeRequest = {
+                name: formData.name?.trim(),
+                orderNumber: formData.orderNumber,
+                groupType: formData.groupType,
+                hasInstruction: formData.hasInstruction,
+                instruction: formData.hasInstruction ? instructionTrim || undefined : undefined,
+                hasGroupDuration: formData.hasGroupDuration,
+                duration: formData.hasGroupDuration ? formData.duration : undefined,
+                waitingDuration: formData.hasGroupDuration ? formData.waitingDuration : undefined,
+                playbackCount: formData.playbackCount,
+                recordingDuration: formData.recordingDuration,
+            };
+            onSubmit(submitData);
+        } else {
+            const finalExamSectionId = examSectionId || formData.examSectionId;
+            const submitData: CreateQuestionGroupTypeRequest = {
+                name: formData.name?.trim(),
+                examSectionId: finalExamSectionId,
+                orderNumber: formData.orderNumber,
+                groupType: formData.groupType,
+                hasInstruction: formData.hasInstruction,
+                instruction: formData.hasInstruction ? instructionTrim || undefined : undefined,
+                hasGroupDuration: formData.hasGroupDuration,
+                duration: formData.hasGroupDuration ? formData.duration : undefined,
+                waitingDuration: formData.hasGroupDuration ? formData.waitingDuration : undefined,
+                playbackCount: formData.playbackCount,
+                recordingDuration: formData.recordingDuration,
+            };
+            onSubmit(submitData);
         }
     };
 
@@ -154,6 +157,8 @@ const QuestionGroupTypeForm: React.FC<QuestionGroupTypeFormProps> = ({
         }
     };
 
+    const durationDisabled = !formData.hasGroupDuration;
+
     return (
         <Card>
             <CardHeader>
@@ -164,7 +169,6 @@ const QuestionGroupTypeForm: React.FC<QuestionGroupTypeFormProps> = ({
             <CardContent>
                 <div className="space-y-6">
                     <div className="grid grid-cols-2 gap-4">
-                        {/* Soru Grubu Tipi Adı */}
                         <div className="space-y-2">
                             <Label htmlFor="name">Soru Grubu Tipi Adı *</Label>
                             <Input
@@ -181,7 +185,6 @@ const QuestionGroupTypeForm: React.FC<QuestionGroupTypeFormProps> = ({
                             )}
                         </div>
 
-                        {/* Sıra Numarası */}
                         <div className="space-y-2">
                             <Label htmlFor="orderNumber">Sıra Numarası *</Label>
                             <NumberInput
@@ -201,35 +204,13 @@ const QuestionGroupTypeForm: React.FC<QuestionGroupTypeFormProps> = ({
                             )}
                         </div>
 
-                        {/* Seviye */}
-                        <div className="space-y-2">
-                            <TextSelect
-                                id="level"
-                                value={formData.level || ''}
-                                onChange={(value) => handleChange('level', value as CreateQuestionGroupTypeRequest['level'])}
-                                placeholder="Seviye seçin"
-                                html="<b>Seviye *</b><div class='text-gray-600 text-xs mt-1'>Soru grubu şablonunun seviyesini belirler.</div>"
-                                className={errors.level ? 'border-red-500' : ''}
-                                options={[
-                                    { value: 'GROUP', label: getLevelDisplayName('GROUP') },
-                                    { value: 'QUESTION', label: getLevelDisplayName('QUESTION') },
-                                ]}
-                            />
-                            {errors.level && (
-                                <Alert variant="destructive">
-                                    <AlertDescription>{errors.level}</AlertDescription>
-                                </Alert>
-                            )}
-                        </div>
-
-                        {/* Grup Tipi */}
-                        <div className="space-y-2">
+                        <div className="space-y-2 col-span-2 md:col-span-1">
                             <TextSelect
                                 id="groupType"
                                 value={formData.groupType || ''}
                                 onChange={(value) => handleChange('groupType', value as CreateQuestionGroupTypeRequest['groupType'])}
                                 placeholder="Grup tipi seçin"
-                                html="<b>Grup Tipi *</b><div class='text-gray-600 text-xs mt-1'>Bu grup tipinin hangi beceri alanına ait olduğunu belirler.</div>"
+                                html="<b>Grup Tipi *</b><div class='text-gray-600 text-xs mt-1'>Beceri alanı.</div>"
                                 className={errors.groupType ? 'border-red-500' : ''}
                                 options={[
                                     { value: 'LISTENING', label: getGroupTypeDisplayName('LISTENING') },
@@ -249,7 +230,83 @@ const QuestionGroupTypeForm: React.FC<QuestionGroupTypeFormProps> = ({
                         </div>
                     </div>
 
-                    {/* Submit Button */}
+                    <div className="space-y-3 border rounded-lg p-4 bg-muted/30">
+                        <TextYesNoCheckbox
+                            id="hasInstruction"
+                            checked={!!formData.hasInstruction}
+                            onChange={(checked) => handleChange('hasInstruction', !!checked)}
+                            html="<b>Yönerge var</b><div class='text-gray-600 text-xs mt-1'>Bu grup tipi için yönerge metni kullanılır.</div>"
+                        />
+                        <div className="space-y-2">
+                            <Label htmlFor="instruction">Yönerge</Label>
+                            <Textarea
+                                id="instruction"
+                                value={formData.instruction || ''}
+                                onChange={(e) => handleChange('instruction', e.target.value)}
+                                disabled={!formData.hasInstruction}
+                                placeholder="Yönerge metni"
+                                className="min-h-[100px]"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-3 border rounded-lg p-4 bg-muted/30">
+                        <TextYesNoCheckbox
+                            id="hasGroupDuration"
+                            checked={!!formData.hasGroupDuration}
+                            onChange={(checked) => handleChange('hasGroupDuration', !!checked)}
+                            html="<b>Grup süresi var</b><div class='text-gray-600 text-xs mt-1'>Süre ve bekleme alanları anlamlı olur.</div>"
+                        />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="duration">Süre</Label>
+                                <NumberInput
+                                    id="duration"
+                                    inputType="number"
+                                    value={formData.duration ?? 0}
+                                    onChange={(v) => handleChange('duration', v)}
+                                    minValue={0}
+                                    decimalPlaces={0}
+                                    className={durationDisabled ? 'opacity-50 pointer-events-none' : ''}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="waitingDuration">Bekleme süresi</Label>
+                                <NumberInput
+                                    id="waitingDuration"
+                                    inputType="number"
+                                    value={formData.waitingDuration ?? 0}
+                                    onChange={(v) => handleChange('waitingDuration', v)}
+                                    minValue={0}
+                                    decimalPlaces={0}
+                                    className={durationDisabled ? 'opacity-50 pointer-events-none' : ''}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="playbackCount">Oynatma sayısı</Label>
+                                <NumberInput
+                                    id="playbackCount"
+                                    inputType="number"
+                                    value={formData.playbackCount ?? 0}
+                                    onChange={(v) => handleChange('playbackCount', v)}
+                                    minValue={0}
+                                    decimalPlaces={0}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="recordingDuration">Kayıt süresi</Label>
+                                <NumberInput
+                                    id="recordingDuration"
+                                    inputType="number"
+                                    value={formData.recordingDuration ?? 0}
+                                    onChange={(v) => handleChange('recordingDuration', v)}
+                                    minValue={0}
+                                    decimalPlaces={0}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="flex justify-end space-x-4">
                         <Button
                             onClick={handleSubmit}

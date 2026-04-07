@@ -10,10 +10,7 @@ import type { BranchDtoStatus } from "./branchDtoStatus";
 export interface BranchDto {
   id?: string;
   createdAt?: string;
-  deletedAt?: string;
   status?: BranchDtoStatus;
-  createdById?: string;
-  deletedById?: string;
   branchName?: string;
   code?: string;
   brandId?: string;

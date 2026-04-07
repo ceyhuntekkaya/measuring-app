@@ -7,7 +7,6 @@
  */
 import type { QuestionGroupHeaderReadyDto } from "./questionGroupHeaderReadyDto";
 import type { QuestionGroupReadyDtoGroupType } from "./questionGroupReadyDtoGroupType";
-import type { QuestionGroupReadyDtoLevel } from "./questionGroupReadyDtoLevel";
 import type { QuestionReadyDto } from "./questionReadyDto";
 
 export interface QuestionGroupReadyDto {
@@ -15,7 +14,6 @@ export interface QuestionGroupReadyDto {
   name?: string;
   groupTypeName?: string;
   groupType?: QuestionGroupReadyDtoGroupType;
-  level?: QuestionGroupReadyDtoLevel;
   maximumScore?: number;
   durationInSeconds?: number;
   headers?: QuestionGroupHeaderReadyDto[];

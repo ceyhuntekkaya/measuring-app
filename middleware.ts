@@ -2,14 +2,14 @@ import {NextResponse} from 'next/server';
 import type {NextRequest} from 'next/server';
 import {isPathAllowed} from '@/config/routes';
 import {jwtDecode} from 'jwt-decode';
-import {Department, Role, User} from "@/types/auth";
+import {Department, Permission, Role, User} from "@/types/auth";
 import type {BrandDto} from "@/api/generated/model";
 
 interface DecodedToken {
     user: User;
     departments: Department[];
     roles: Role[];
-    authorities: Permissions[];
+    authorities: Permission[];
     brands: BrandDto[];
     user_id: string;
     email: string;
@@ -71,12 +71,8 @@ export function middleware(request: NextRequest) {
         // Yetki kontrolü
         if (!isPathAllowed(pathname, roles)) {
             const redirectPath = roles.includes('ADMIN') ? '/admin' :
-                roles.includes('USER') ? '/admin' :
-                    roles.includes('LEARNER') ? '/learner' :
-                        roles.includes('INSTRUCTOR') ? '/instructor' :
-                            roles.includes('OBSERVER') ? '/observer' :
-                        roles.includes('COMPANY') ? '/company' :
-                            '/app';
+                roles.includes('LEARNER') ? '/learner' :
+                    '/app';
 
             return NextResponse.redirect(new URL(redirectPath, request.url));
         }

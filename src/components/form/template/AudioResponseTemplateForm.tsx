@@ -48,8 +48,6 @@ const AudioResponseTemplateForm = forwardRef<AudioResponseTemplateFormHandle, Au
             ...(value || {}),
             maxRecordingDuration: formData.maxRecordingDuration,
             minRecordingDuration: formData.minRecordingDuration,
-            requiresManualGrading: true,
-            allowedFormats: 'mp3,wav,m4a',
         });
     }, [formData.maxRecordingDuration, formData.minRecordingDuration]);
 

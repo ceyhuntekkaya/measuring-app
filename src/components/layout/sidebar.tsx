@@ -4,7 +4,7 @@ import React, {useState, useEffect} from 'react';
 import Link from 'next/link';
 import {usePathname} from 'next/navigation';
 import {ChevronDown, ChevronRight, X} from 'lucide-react';
-import {adminRoutes, companyRoutes, appRoutes, learnerRoutes, instructorRoutes, observerRoutes, MenuItem, publicRoutes} from '@/config/routes';
+import {adminRoutes, appRoutes, learnerRoutes, MenuItem, publicRoutes} from '@/config/routes';
 import {useAuth} from "@/hooks/use-auth";
 import {Department} from "@/types/auth";
 import logo from '@/assets/logo.png';
@@ -32,16 +32,16 @@ export default function Sidebar({isOpen = true, onCloseAction}: SidebarProps) {
     useEffect(() => {
         if (user?.roleSet?.includes('ADMIN')) {
             setRoutes(adminRoutes.menuItems);
-        } else if (user?.roleSet?.includes('USER')) {
+        } else if (
+            user?.roleSet?.includes('USER') ||
+            user?.roleSet?.includes('MANAGER') ||
+            user?.roleSet?.includes('REFEREE') ||
+            user?.roleSet?.includes('WRITER') ||
+            user?.roleSet?.includes('OBSERVER')
+        ) {
             setRoutes(appRoutes.menuItems);
-        } else if (user?.roleSet?.includes('COMPANY')) {
-            setRoutes(companyRoutes.menuItems);
         } else if (user?.roleSet?.includes('LEARNER')) {
             setRoutes(learnerRoutes.menuItems);
-        } else if (user?.roleSet?.includes('OBSERVER')) {
-            setRoutes(observerRoutes.menuItems);
-        } else if (user?.roleSet?.includes('INSTRUCTOR')) {
-            setRoutes(instructorRoutes.menuItems);
         } else {
             setRoutes(publicRoutes.menuItems);
         }

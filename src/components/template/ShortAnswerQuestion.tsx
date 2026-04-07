@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import type { ShortAnswerTemplateDto, AcceptableAnswer } from '@/api/generated/model';
 import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
-import {difficultyConverter} from "@/utils/enum-converter";
 import MaybeHtml from "@/components/ui/maybe-html";
 
 interface ShortAnswerQuestionProps {
@@ -34,11 +33,6 @@ const ShortAnswerQuestion: React.FC<ShortAnswerQuestionProps> = ({
 
     const handleAnswerChange = (value: string) => {
         if (isSubmitted && !isPreview) return;
-
-        // Check character limits
-        if (template.maxCharacters && value.length > template.maxCharacters) {
-            return; // Don't allow input beyond max characters
-        }
 
         setAnswer(value);
         setCharacterCount(value.length);
@@ -111,17 +105,10 @@ const ShortAnswerQuestion: React.FC<ShortAnswerQuestionProps> = ({
     };
 
     const getCharacterCountStyle = () => {
-        if (!template.maxCharacters) return "text-gray-500";
-
-        const percentage = (characterCount / template.maxCharacters) * 100;
-        if (percentage >= 90) return "text-red-600 font-semibold";
-        if (percentage >= 75) return "text-yellow-600";
         return "text-gray-500";
     };
 
     const isCharacterLimitValid = () => {
-        if (template.minCharacters && characterCount < template.minCharacters) return false;
-        if (template.maxCharacters && characterCount > template.maxCharacters) return false;
         return true;
     };
 
@@ -134,7 +121,7 @@ const ShortAnswerQuestion: React.FC<ShortAnswerQuestionProps> = ({
                 <div className="mb-4">
                     <h3 className="text-lg font-semibold text-gray-800">{template.title}</h3>
                     {template.description && (
-                        <p className="text-gray-600 mt-1">{template.description}</p>
+                        <MaybeHtml className="text-gray-600 mt-1" value={template.description} />
                     )}
                 </div>
             )}
@@ -153,18 +140,6 @@ const ShortAnswerQuestion: React.FC<ShortAnswerQuestionProps> = ({
                 </div>
             )}
 
-            {/* Character Limit Info */}
-            {(template.minCharacters || template.maxCharacters) && (
-                <div className="mb-4 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded">
-                    <p className="text-yellow-800 text-sm">
-                        <strong>Karakter Sınırları:</strong>
-                        {template.minCharacters && ` En az ${template.minCharacters} karakter`}
-                        {template.minCharacters && template.maxCharacters && ', '}
-                        {template.maxCharacters && ` En fazla ${template.maxCharacters} karakter`}
-                    </p>
-                </div>
-            )}
-
             {/* Answer Input */}
             <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
@@ -177,7 +152,6 @@ const ShortAnswerQuestion: React.FC<ShortAnswerQuestionProps> = ({
                     placeholder={template.options?.placeholder || (isPreview ? "Cevabınızı buraya yazın..." : "")}
                     disabled={isSubmitted && !isPreview}
                     rows={4}
-                    maxLength={template.maxCharacters}
                 />
                 {!isPreview && (
                     <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
@@ -187,33 +161,21 @@ const ShortAnswerQuestion: React.FC<ShortAnswerQuestionProps> = ({
                 <div className="flex justify-between items-center text-sm">
                     <div className={getCharacterCountStyle()}>
                         {characterCount} karakter
-                        {template.maxCharacters && ` / ${template.maxCharacters}`}
                     </div>
 
                     {/* Character Limit Warning */}
                     {!isCharacterLimitValid() && (
                         <div className="text-red-600 text-sm">
-                            {template.minCharacters && characterCount < template.minCharacters &&
-                                `En az ${template.minCharacters - characterCount} karakter daha gerekli`}
-                            {template.maxCharacters && characterCount > template.maxCharacters &&
-                                `${characterCount - template.maxCharacters} karakter fazla`}
+                            Karakter sınırı aşıldı
                         </div>
                     )}
                 </div>
 
             </div>
 
-            {/* Manual Grading Note
-            {template.requiresManualGrading && (
-                <div className="p-3 bg-orange-50 border-l-4 border-orange-400 rounded">
-                    <p className="text-orange-800 text-sm">
-                        <strong>Not:</strong> Bu soru manuel değerlendirme gerektirir. Cevabınız öğretmen tarafından incelenecektir.
-                    </p>
-                </div>
-            )}
-            */}
+            {/* Manual grading note removed (DTO doesn't expose flag) */}
             {/* Answer Evaluation (only if not manual grading) */}
-            {isSubmitted && showCorrectAnswer && !template.requiresManualGrading && result && (
+            {isSubmitted && showCorrectAnswer && result && (
                 <div className="space-y-4">
                     {/* Score and Result */}
                     <div className="p-4 bg-gray-50 border border-gray-200 rounded">
@@ -286,48 +248,16 @@ const ShortAnswerQuestion: React.FC<ShortAnswerQuestionProps> = ({
                 </div>
             )}
 
-            {/* Rubric (if available) */}
-            {isSubmitted && showCorrectAnswer && template.rubric && (
-                <div className="p-4 bg-purple-50 border-l-4 border-purple-400 rounded">
-                    <h4 className="font-semibold text-purple-800 mb-2">Değerlendirme Kriteri:</h4>
-                    <div className="text-purple-700 text-sm whitespace-pre-line">{template.rubric}</div>
-                </div>
-            )}
-
             {/* Question Metadata (only in preview) */}
             {isPreview && (
                 <div className="mt-4 p-4 bg-gray-50 rounded border">
                     <h4 className="font-semibold text-gray-700 mb-2">Soru Bilgileri:</h4>
                     <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                        {template.subject && (
-                            <div><strong>Konu:</strong> {template.subject}</div>
-                        )}
-                        {template.difficulty && (
-                            <div><strong>Zorluk:</strong> {difficultyConverter(template.difficulty)}</div>
-                        )}
-                        {template.points && (
-                            <div><strong>Puan:</strong> {template.points}</div>
-                        )}
-                        {template.timeLimit && (
-                            <div><strong>Süre:</strong> {template.timeLimit} saniye</div>
-                        )}
-                        {template.minCharacters && (
-                            <div><strong>Min. Karakter:</strong> {template.minCharacters}</div>
-                        )}
-                        {template.maxCharacters && (
-                            <div><strong>Max. Karakter:</strong> {template.maxCharacters}</div>
-                        )}
-                        <div><strong>Manuel Değerlendirme:</strong> {template.requiresManualGrading ? 'Evet' : 'Hayır'}</div>
                         {template.options?.caseSensitive !== undefined && (
                             <div><strong>Büyük/Küçük Harf:</strong> {template.options.caseSensitive ? 'Duyarlı' : 'Duyarlı Değil'}</div>
                         )}
                         {template.options?.exactMatch !== undefined && (
                             <div><strong>Eşleşme Tipi:</strong> {template.options.exactMatch ? 'Tam Eşleşme' : 'Kısmi Eşleşme'}</div>
-                        )}
-                        {template.tags && template.tags.length > 0 && (
-                            <div className="col-span-2">
-                                <strong>Etiketler:</strong> {template.tags.join(', ')}
-                            </div>
                         )}
                     </div>
 
@@ -355,39 +285,10 @@ const ShortAnswerQuestion: React.FC<ShortAnswerQuestionProps> = ({
                         </div>
                     )}
 
-                    {/* Rubric Preview */}
-                    {template.rubric && (
-                        <div className="mt-4 pt-4 border-t border-gray-200">
-                            <h5 className="font-semibold text-gray-700 mb-2">Değerlendirme Kriteri:</h5>
-                            <div className="bg-white p-2 rounded border text-xs whitespace-pre-line">
-                                {template.rubric}
-                            </div>
-                        </div>
-                    )}
                 </div>
             )}
 
-            {/* Development Notes - Comment for future exam implementation */}
-            {/*
-        TODO: Real exam implementation
-        - Integrate with exam session management
-        - Add timer functionality for individual questions
-        - Save answers to backend with proper validation
-        - Handle auto-save for partial answers
-        - Add progress tracking within exam context
-        - Implement navigation between questions
-        - Add exam state management (paused, resumed, etc.)
-        - Security measures for exam integrity
-        - Handle network issues and offline scenarios
-        - Implement advanced text analysis for scoring
-        - Add spell check and grammar suggestions
-        - Support for rich text formatting
-        - Plagiarism detection for longer answers
-        - AI-powered answer evaluation
-        - Support for multiple languages
-        - Export answers for manual review
-        - Batch grading interface for instructors
-      */}
+          
         </div>
     );
 };

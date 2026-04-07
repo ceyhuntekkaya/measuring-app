@@ -2,7 +2,6 @@ import React, {useState, useEffect, useMemo} from 'react';
 import type {FillInTheBlanksTemplateDto} from '@/api/generated/model';
 import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
-import {difficultyConverter} from "@/utils/enum-converter";
 import MaybeHtml from "@/components/ui/maybe-html";
 
 interface FillInTheBlanksQuestionProps {
@@ -72,6 +71,14 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
         }
     }, [questionId, stableInitialAnswer]);
 
+    const blankHintFlags = useMemo(() => {
+        const blanks = template.options?.blanks ?? [];
+        return {
+            anyCaseSensitive: blanks.some(b => b.caseSensitive),
+            anyExact: blanks.some(b => b.exactMatch),
+        };
+    }, [template.options?.blanks]);
+
     useEffect(() => {
         if (isSubmitted && showCorrectAnswer) {
             evaluateAnswers();
@@ -134,19 +141,8 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
             const userAnswer = currentAnswers[blankId] || '';
             const acceptableAnswers = blank.acceptableAnswers || [];
 
-            // Determine case sensitivity
-            const isCaseSensitive = blank.caseSensitive !== undefined
-                ? blank.caseSensitive
-                : template.caseSensitive !== undefined
-                    ? template.caseSensitive
-                    : false;
-
-            // Determine exact match requirement
-            const requiresExactMatch = blank.exactMatch !== undefined
-                ? blank.exactMatch
-                : template.exactMatch !== undefined
-                    ? template.exactMatch
-                    : true;
+            const isCaseSensitive = blank.caseSensitive ?? false;
+            const requiresExactMatch = blank.exactMatch ?? false;
 
             let isCorrect = false;
 
@@ -431,7 +427,7 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
                 <div className="mb-4">
                     <h3 className="text-lg font-semibold text-gray-800">{template.title}</h3>
                     {template.description && (
-                        <p className="text-gray-600 mt-1">{template.description}</p>
+                        <MaybeHtml className="text-gray-600 mt-1" value={template.description} />
                     )}
                 </div>
             )}
@@ -456,11 +452,11 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
                             Aşağıdaki metindeki boşlukları uygun kelimelerle doldurun.
                         </p>
                         <div className="mt-2 space-y-1 text-xs text-blue-700">
-                            {template.caseSensitive && (
-                                <p>• Büyük-küçük harf duyarlıdır</p>
+                            {blankHintFlags.anyCaseSensitive && (
+                                <p>• Bazı boşluklar büyük-küçük harf duyarlıdır</p>
                             )}
-                            {template.exactMatch && (
-                                <p>• Tam eşleşme gereklidir</p>
+                            {blankHintFlags.anyExact && (
+                                <p>• Bazı boşluklarda tam eşleşme gereklidir</p>
                             )}
                             {!isSubmitted && (
                                 <p>• Boşluklar metin içinde ____ ile gösterilmiştir</p>
@@ -506,13 +502,7 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
             {/* Blank Feedback (for incorrect answers) */}
             {renderBlankFeedback()}
 
-            {/* Overall Explanation */}
-            {isSubmitted && showCorrectAnswer && template.explanation && (
-                <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
-                    <h4 className="font-semibold text-yellow-800 mb-2">Genel Açıklama:</h4>
-                    <MaybeHtml className="text-yellow-700" value={template.explanation} />
-                </div>
-            )}
+            {/* Overall explanation removed (DTO doesn't expose it) */}
 
             {/* Score Summary (for submitted state) */}
             {isSubmitted && showCorrectAnswer && blankResults.length > 0 && (
@@ -585,62 +575,7 @@ const FillInTheBlanksQuestion: React.FC<FillInTheBlanksQuestionProps> = ({
                 </div>
             )}
 
-            {/* Question Metadata (only in preview) */}
-            {isPreview && (
-                <div className="mt-4 p-4 bg-gray-50 rounded border">
-                    <h4 className="font-semibold text-gray-700 mb-2">Soru Bilgileri:</h4>
-                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                        {template.subject && (
-                            <div><strong>Konu:</strong> {template.subject}</div>
-                        )}
-                        {template.difficulty && (
-                            <div><strong>Zorluk:</strong> {difficultyConverter(template.difficulty)}</div>
-                        )}
-                        {template.points && (
-                            <div><strong>Puan:</strong> {template.points}</div>
-                        )}
-                        {template.timeLimit && (
-                            <div><strong>Süre:</strong> {template.timeLimit} saniye</div>
-                        )}
-                        {template.options?.blanks && (
-                            <div><strong>Boşluk Sayısı:</strong> {template.options.blanks.length}</div>
-                        )}
-                        {template.caseSensitive !== undefined && (
-                            <div><strong>Harf Duyarlı:</strong> {template.caseSensitive ? 'Evet' : 'Hayır'}</div>
-                        )}
-                        {template.exactMatch !== undefined && (
-                            <div><strong>Tam Eşleşme:</strong> {template.exactMatch ? 'Evet' : 'Hayır'}</div>
-                        )}
-                        {template.tags && template.tags.length > 0 && (
-                            <div className="col-span-2">
-                                <strong>Etiketler:</strong> {template.tags.join(', ')}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
-
-            {/* Development Notes - Comment for future exam implementation */}
-            {/*
-        TODO: Real exam implementation
-        - Integrate with exam session management
-        - Add auto-save functionality for answers
-        - Implement spell check suggestions
-        - Add keyboard shortcuts for navigation
-        - Support for rich text in blanks
-        - Implement partial credit scoring
-        - Add hint system for blanks
-        - Support for multiple acceptable answer variations
-        - Implement answer validation before submission
-        - Add accessibility features for screen readers
-        - Support for RTL languages
-        - Implement answer history/undo functionality
-        - Add collaborative features (optional)
-        - Support for mathematical expressions in blanks
-        - Implement fuzzy matching for answers
-        - Add time tracking per blank
-        - Support for audio/video prompts in blanks
-      */}
+         
         </div>
     );
 };

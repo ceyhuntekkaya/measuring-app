@@ -17,8 +17,12 @@ interface OrderingTemplateFormProps {
     loading?: boolean;
 }
 
-// Use ORVAL DTO types directly - only template-specific fields
-type OrderingTemplateFormData = Pick<OrderingTemplateDto, 'instructions' | 'options' | 'shuffleItems' | 'explanation'>;
+type OrderingTemplateFormData = {
+    instructions: string;
+    options: NonNullable<OrderingTemplateDto['options']>;
+    shuffleItems: boolean;
+    explanation: string;
+};
 
 interface OrderingTemplateFormErrors {
     instructions?: string;
@@ -169,9 +173,7 @@ const OrderingTemplateForm = forwardRef<OrderingTemplateFormHandle, OrderingTemp
                 options: {
                     ...formData.options,
                     orderingType: 'SEQUENTIAL' // UI'dan kaldırıldı, her zaman "SEQUENTIAL"
-                },
-                shuffleItems: true, // UI'dan kaldırıldı, her zaman true
-                explanation: '' // UI'dan kaldırıldı, her zaman boş string
+                }
             };
             onChange(templateData);
         }

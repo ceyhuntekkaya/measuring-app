@@ -12,11 +12,11 @@ export default function ApplicationDetailPage() {
     const params = useParams();
     const id = params.id as string;
 
-    const {data, isLoading: loading} = useGetApplicationById(id, {
+    const {data, isLoading: loading} = useGetApplicationById<ApiResponseApplicationDto>(id, {
         query: { enabled: !!id }
     });
     
-    const selectedApplication = (data as unknown as ApiResponseApplicationDto)?.data;
+    const selectedApplication = data?.data;
 
     if (loading) {
         return (

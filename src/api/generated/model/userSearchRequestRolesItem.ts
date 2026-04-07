@@ -13,7 +13,8 @@ export const UserSearchRequestRolesItem = {
   ADMIN: "ADMIN",
   USER: "USER",
   LEARNER: "LEARNER",
-  COMPANY: "COMPANY",
-  INSTRUCTOR: "INSTRUCTOR",
+  MANAGER: "MANAGER",
+  REFEREE: "REFEREE",
+  WRITER: "WRITER",
   OBSERVER: "OBSERVER",
 } as const;

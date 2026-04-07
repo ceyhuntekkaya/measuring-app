@@ -11,18 +11,10 @@ import type { BaseQuestionTemplateDtoStatus } from "./baseQuestionTemplateDtoSta
 export interface BaseQuestionTemplateDto {
   id?: string;
   title?: string;
-  description?: string;
-  subject?: string;
-  difficulty?: string;
-  points?: number;
-  timeLimit?: number;
-  instructions?: string;
-  tags?: string[];
-  isActive?: boolean;
   questionType?: BaseQuestionTemplateDtoQuestionType;
+  description?: string;
+  instructions?: string;
   createdAt?: string;
-  deletedAt?: string;
   status?: BaseQuestionTemplateDtoStatus;
-  createdById?: string;
-  deletedById?: string;
+  isActive?: boolean;
 }

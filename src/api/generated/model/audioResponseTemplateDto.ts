@@ -10,6 +10,4 @@ import type { BaseQuestionTemplateDto } from "./baseQuestionTemplateDto";
 export type AudioResponseTemplateDto = BaseQuestionTemplateDto & {
   maxRecordingDuration?: number;
   minRecordingDuration?: number;
-  requiresManualGrading?: boolean;
-  allowedFormats?: string;
 };

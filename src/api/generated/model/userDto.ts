@@ -14,10 +14,7 @@ import type { UserDtoStatus } from "./userDtoStatus";
 export interface UserDto {
   id?: string;
   createdAt?: string;
-  deletedAt?: string;
   status?: UserDtoStatus;
-  createdById?: string;
-  deletedById?: string;
   username?: string;
   password?: string;
   lastLoginTime?: string;

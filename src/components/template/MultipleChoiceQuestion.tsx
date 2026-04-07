@@ -3,7 +3,6 @@ import type {MultipleChoiceTemplateDto, ChoiceOption} from '@/api/generated/mode
 import {
     EMediaType, EQuestionType,
 } from "@/types/exam/enum";
-import {difficultyConverter} from "@/utils/enum-converter";
 import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import HtmlRender from "@/components/ui/html-render";
 import MaybeHtml from "@/components/ui/maybe-html";
@@ -31,7 +30,8 @@ const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
                                                                            questionId
                                                                        }) => {
     const [selectedOption, setSelectedOption] = useState<string | null>(initialAnswer);
-    const [shuffledOptions, setShuffledOptions] = useState<ChoiceOption[]>([]);
+
+    const choices = template.options?.choices ?? [];
 
     // initialAnswer içindeki text'i option ID'sine çevir
     const convertTextToId = useCallback((text: string | null): string | null => {
@@ -48,16 +48,6 @@ const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
         // Eğer text bulunamazsa, direkt text'i ID olarak kullan (fallback - belki de backend'den zaten ID geliyor)
         return text;
     }, [template.options?.choices]);
-
-    useEffect(() => {
-        if (template.options?.choices) {
-            // Shuffle options if specified in template and not in preview mode
-            const options = template.shuffleOptions && !isPreview
-                ? [...template.options.choices].sort(() => Math.random() - 0.5)
-                : template.options.choices;
-            setShuffledOptions(options);
-        }
-    }, [template, isPreview]);
 
     // template.options.choices'i stable hale getir - sadece ID'leri kullan
     /*
@@ -86,11 +76,10 @@ const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
 
     // Doğru cevabı bul
     const getCorrectOptionId = (): string | null => {
-        if (template.correctOptionIndex !== undefined && template.correctOptionIndex !== null && shuffledOptions[template.correctOptionIndex]) {
-            return shuffledOptions[template.correctOptionIndex].id || null;
+        if (template.correctOptionIndex !== undefined && template.correctOptionIndex !== null && choices[template.correctOptionIndex]) {
+            return choices[template.correctOptionIndex].id || null;
         }
-        // Alternatif: choices içinde isCorrect: true olanı bul
-        const correctChoice = shuffledOptions.find(opt => opt.isCorrect === true);
+        const correctChoice = choices.find(opt => opt.isCorrect === true);
         return correctChoice?.id || null;
     };
 
@@ -199,7 +188,7 @@ const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
                 <div className="mb-4">
                     <h3 className="text-lg font-semibold text-gray-800">{template.title}</h3>
                     {template.description && (
-                        <p className="text-gray-600 mt-1">{template.description}</p>
+                        <MaybeHtml className="text-gray-600 mt-1" value={template.description} />
                     )}
                 </div>
             )}
@@ -220,7 +209,7 @@ const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
 
             {/* Options */}
             <div className="space-y-3">
-                {shuffledOptions.map((option, index) => (
+                {choices.map((option, index) => (
                     <div
                         key={option.id || index}
                         className={getOptionStyle(option)}
@@ -282,54 +271,19 @@ const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({
                 ))}
             </div>
 
-            {/* Overall Explanation */}
-            {isSubmitted && showCorrectAnswer && template.explanation && (
-                <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
-                    <h4 className="font-semibold text-yellow-800 mb-2">Genel Açıklama:</h4>
-                    <MaybeHtml className="text-yellow-700" value={template.explanation} />
-                </div>
-            )}
+            {/* Overall explanation removed (DTO doesn't expose it) */}
 
             {/* Question Metadata (only in preview) */}
             {isPreview && (
                 <div className="mt-4 p-4 bg-gray-50 rounded border">
                     <h4 className="font-semibold text-gray-700 mb-2">Soru Bilgileri:</h4>
                     <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                        {template.subject && (
-                            <div><strong>Konu:</strong> {template.subject}</div>
-                        )}
-                        {template.difficulty && (
-                            <div><strong>Zorluk:</strong> {difficultyConverter(template.difficulty)}</div>
-                        )}
-                        {template.points && (
-                            <div><strong>Puan:</strong> {template.points}</div>
-                        )}
-                        {template.timeLimit && (
-                            <div><strong>Süre:</strong> {template.timeLimit} saniye</div>
-                        )}
-                        {template.tags && template.tags.length > 0 && (
-                            <div className="col-span-2">
-                                <strong>Etiketler:</strong> {template.tags.join(', ')}
-                            </div>
-                        )}
+                        {/* Metadata fields removed (DTO doesn't expose them) */}
                     </div>
                 </div>
             )}
 
-            {/* Development Notes - Comment for future exam implementation */}
-            {/*
-        TODO: Real exam implementation
-        - Integrate with exam session management
-        - Add timer functionality
-        - Save answers to backend
-        - Handle exam submission
-        - Add progress tracking
-        - Implement navigation between questions
-        - Add exam state management (paused, resumed, etc.)
-        - Security measures for exam integrity
-        - Auto-save functionality
-        - Handle network issues
-      */}
+           
         </div>
     );
 };

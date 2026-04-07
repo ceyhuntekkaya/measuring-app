@@ -2,7 +2,6 @@ import React, {useState, useEffect, useMemo} from 'react';
 import type { MatchingTemplateDto } from '@/api/generated/model';
 import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
-import {difficultyConverter} from "@/utils/enum-converter";
 import MaybeHtml from "@/components/ui/maybe-html";
 
 interface MatchingQuestionProps {
@@ -60,7 +59,7 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
 
     useEffect(() => {
         initializeRightItems();
-    }, [template.options?.pairs, template.options?.distractors, template.shuffleItems]);
+    }, [template.options?.pairs, template.options?.distractors]);
 
     useEffect(() => {
         if (isSubmitted && showCorrectAnswer) {
@@ -97,8 +96,7 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
             });
         }
 
-        // Shuffle if needed
-        if (template.shuffleItems && !isSubmitted) {
+        if (!isSubmitted) {
             const shuffled = [...items].sort(() => Math.random() - 0.5);
             setRightItems(shuffled);
         } else {
@@ -429,7 +427,7 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
                 <div className="mb-4">
                     <h3 className="text-lg font-semibold text-gray-800">{template.title}</h3>
                     {template.description && (
-                        <p className="text-gray-600 mt-1">{template.description}</p>
+                        <MaybeHtml className="text-gray-600 mt-1" value={template.description} />
                     )}
                 </div>
             )}
@@ -590,13 +588,7 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
             {!isPreview && (
                 <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
             )}
-            {/* Overall Explanation */}
-            {isSubmitted && showCorrectAnswer && template.explanation && (
-                <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
-                    <h4 className="font-semibold text-yellow-800 mb-2">Genel Açıklama:</h4>
-                    <MaybeHtml className="text-yellow-700" value={template.explanation} />
-                </div>
-            )}
+            {/* Overall explanation removed (DTO doesn't expose it) */}
 
             {/* Score Summary */}
             {isSubmitted && showCorrectAnswer && matchingResults.length > 0 && (
@@ -669,55 +661,17 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
                 <div className="mt-4 p-4 bg-gray-50 rounded border">
                     <h4 className="font-semibold text-gray-700 mb-2">Soru Bilgileri:</h4>
                     <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                        {template.subject && (
-                            <div><strong>Konu:</strong> {template.subject}</div>
-                        )}
-                        {template.difficulty && (
-                            <div><strong>Zorluk:</strong> {difficultyConverter(template.difficulty)}</div>
-                        )}
-                        {template.points && (
-                            <div><strong>Puan:</strong> {template.points}</div>
-                        )}
-                        {template.timeLimit && (
-                            <div><strong>Süre:</strong> {template.timeLimit} saniye</div>
-                        )}
                         {template.options?.pairs && (
                             <div><strong>Eşleşme Sayısı:</strong> {template.options.pairs.length}</div>
                         )}
                         {template.options?.distractors && (
                             <div><strong>Çeldirici Sayısı:</strong> {template.options.distractors.length}</div>
                         )}
-                        {template.shuffleItems !== undefined && (
-                            <div><strong>Karıştırma:</strong> {template.shuffleItems ? 'Evet' : 'Hayır'}</div>
-                        )}
-                        {template.tags && template.tags.length > 0 && (
-                            <div className="col-span-2">
-                                <strong>Etiketler:</strong> {template.tags.join(', ')}
-                            </div>
-                        )}
                     </div>
                 </div>
             )}
 
-            {/* Development Notes - Comment for future exam implementation */}
-            {/*
-        TODO: Real exam implementation
-        - Integrate with exam session management
-        - Add auto-save functionality
-        - Implement touch device support for mobile
-        - Add keyboard shortcuts for accessibility
-        - Support for partial credit scoring
-        - Implement undo/redo functionality
-        - Add animation for drag and drop feedback
-        - Support for multiple correct matches (if needed)
-        - Implement hint system
-        - Add time tracking per match
-        - Support for group matching (multiple items to one)
-        - Implement collaborative features (optional)
-        - Add accessibility features for screen readers
-        - Support for RTL languages
-        - Implement answer validation before submission
-      */}
+        
         </div>
     );
 };

@@ -10,7 +10,4 @@ import type { BaseQuestionTemplateDto } from "./baseQuestionTemplateDto";
 export type VideoResponseTemplateDto = BaseQuestionTemplateDto & {
   maxRecordingDuration?: number;
   minRecordingDuration?: number;
-  requiresManualGrading?: boolean;
-  allowedFormats?: string;
-  allowScreenRecording?: boolean;
 };

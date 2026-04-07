@@ -10,20 +10,6 @@ import type { CreateQuestionTemplateRequestQuestionType } from "./createQuestion
 export interface CreateQuestionTemplateRequest {
   /** @minLength 1 */
   title: string;
-  description?: string;
-  /** @minLength 1 */
-  subject: string;
-  /**
-   * @minLength 1
-   * @pattern EASY|MEDIUM|HARD
-   */
-  difficulty: string;
-  /** @minimum 1 */
-  points?: number;
-  /** @minimum 1 */
-  timeLimit?: number;
-  instructions?: string;
-  tags?: string[];
   questionType: CreateQuestionTemplateRequestQuestionType;
   templateData: unknown;
 }

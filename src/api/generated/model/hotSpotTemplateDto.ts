@@ -11,7 +11,4 @@ import type { HotSpotOptions } from "./hotSpotOptions";
 export type HotSpotTemplateDto = BaseQuestionTemplateDto & {
   imageUrl?: string;
   options?: HotSpotOptions;
-  maxSelections?: number;
-  allowMultipleSpots?: boolean;
-  explanation?: string;
 };

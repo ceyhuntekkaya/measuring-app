@@ -10,10 +10,7 @@ import type { ApplicationGraderDtoStatus } from "./applicationGraderDtoStatus";
 export interface ApplicationGraderDto {
   id?: string;
   createdAt?: string;
-  deletedAt?: string;
   status?: ApplicationGraderDtoStatus;
-  createdById?: string;
-  deletedById?: string;
   userId?: string;
   userName?: string;
   userLastName?: string;

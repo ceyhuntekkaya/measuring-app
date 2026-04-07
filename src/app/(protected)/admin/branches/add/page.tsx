@@ -14,8 +14,8 @@ export default function BranchAdd() {
     const router = useRouter();
     const queryClient = useQueryClient();
     
-    const { data: brandsData } = useGetAllBrands();
-    const brands = (brandsData as unknown as ApiResponseListBrandDto)?.data || null;
+    const { data: brandsData } = useGetAllBrands<ApiResponseListBrandDto>();
+    const brands = brandsData?.data || null;
 
     const { mutate: createBranch, isPending: loading } = useCreateBranch({
         mutation: {

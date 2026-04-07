@@ -10,7 +10,4 @@ import type { DragAndDropOptions } from "./dragAndDropOptions";
 
 export type DragAndDropTemplateDto = BaseQuestionTemplateDto & {
   options?: DragAndDropOptions;
-  allowMultipleItemsPerZone?: boolean;
-  shuffleDraggableItems?: boolean;
-  explanation?: string;
 };

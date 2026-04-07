@@ -37,7 +37,6 @@ import Checkbox from "@/components/ui/checkbox";
 import FilePreview from "@/components/ui/file-preview";
 import HtmlRender from "@/components/ui/html-render";
 import {getQuestionTypeLabel} from "@/utils/question-type-convert";
-import {approvalStatusConverter} from "@/utils/enum-converter";
 import {hasCorrectAnswer} from "@/utils/question-validation";
 
 export default function QuestionPage() {
@@ -45,12 +44,12 @@ export default function QuestionPage() {
     const params = useParams();
     const groupId = params.groupId as string;
     
-    const {data: questionGroupData, isLoading: loading} = useGetQuestionGroupById(groupId, {
+    const {data: questionGroupData, isLoading: loading} = useGetQuestionGroupById<ApiResponseQuestionGroupDto>(groupId, {
         query: { enabled: !!groupId }
     });
-    const selectedQuestionGroup = (questionGroupData as unknown as ApiResponseQuestionGroupDto)?.data;
+    const selectedQuestionGroup = questionGroupData?.data;
 
-    const {data: questionsData} = useGetQuestionsByGroup(groupId, {
+    const {data: questionsData} = useGetQuestionsByGroup<ApiResponseListQuestionDto>(groupId, {
         query: { 
             enabled: !!groupId,
             refetchOnMount: true,
@@ -58,7 +57,7 @@ export default function QuestionPage() {
             staleTime: 0,
         }
     });
-    const questionsByGroup = (questionsData as unknown as ApiResponseListQuestionDto)?.data || [];
+    const questionsByGroup = questionsData?.data || [];
 
 
 
@@ -108,19 +107,7 @@ export default function QuestionPage() {
                 </div>
             )
         },
-        {
-            key: 'approvalStatus',
-            header: 'Onay Durumu',
-            render: (value, record) => (
-                <div
-                    className="font-medium cursor-pointer hover:text-blue-600"
-                    onClick={() => router.push(`/admin/question-group/${groupId}/question/${record.id}`)}
-                >
-                    {(record as QuestionDto).currentApprovalCount} / {(record as QuestionDto).requiredApprovalCount} {approvalStatusConverter(value as string)}
-                </div>
-            )
-        }
-        ,
+       
         {
             key: 'maximumScore',
             header: 'Puan',

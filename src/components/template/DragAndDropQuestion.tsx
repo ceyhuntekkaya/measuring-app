@@ -2,7 +2,6 @@ import React, {useState, useEffect, useMemo} from 'react';
 import type { DragAndDropTemplateDto } from '@/api/generated/model';
 import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
-import {difficultyConverter} from "@/utils/enum-converter";
 import HtmlRender from "@/components/ui/html-render";
 import MaybeHtml from "@/components/ui/maybe-html";
 
@@ -75,7 +74,7 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
 
     useEffect(() => {
         initializeAvailableItems();
-    }, [template.options, template.shuffleDraggableItems]);
+    }, [template.options]);
 
     useEffect(() => {
         if (isSubmitted && showCorrectAnswer) {
@@ -97,7 +96,7 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
 
         const items = [...options.draggableItems];
 
-        if (template.shuffleDraggableItems && !isSubmitted) {
+        if (!isSubmitted) {
             const shuffled = items.sort(() => Math.random() - 0.5);
             setAvailableItems(shuffled);
         } else {
@@ -161,9 +160,7 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
         const targetItems = newPlacements[targetZoneId] || [];
         const alreadyInTarget = targetItems.includes(draggedItemId);
 
-        // Eğer zone.maxItems > 1 ise, "çoklu öğe" modunu otomatik aktif say
-        const shouldAllowMultipleInThisZone =
-            !!template.allowMultipleItemsPerZone || ((zone?.maxItems ?? 1) > 1);
+        const shouldAllowMultipleInThisZone = (zone?.maxItems ?? 1) > 1;
 
         const maxItemsForZone = zone?.maxItems ?? (shouldAllowMultipleInThisZone ? undefined : 1);
 
@@ -404,7 +401,7 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
                 <div className="mb-4">
                     <h3 className="text-lg font-semibold text-gray-800">{template.title}</h3>
                     {template.description && (
-                        <p className="text-gray-600 mt-1">{template.description}</p>
+                        <MaybeHtml className="text-gray-600 mt-1" value={template.description} />
                     )}
                 </div>
             )}
@@ -435,10 +432,9 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
                                 Aşağıdaki öğeleri uygun alanlara sürükleyip bırakın.
                             </p>
                             <div className="mt-2 space-y-1 text-xs text-blue-700">
-                                {template.allowMultipleItemsPerZone && (
-                                    <p>• Bir alana birden fazla öğe yerleştirebilirsiniz</p>
-                                )}
-                                {!template.allowMultipleItemsPerZone && (
+                                {options?.dropZones?.some(z => (z.maxItems ?? 1) > 1) ? (
+                                    <p>• Tanımlı bölgelerde birden fazla öğe yerleştirilebilir (bölge başına maksimuma bakın)</p>
+                                ) : (
                                     <p>• Her alana sadece bir öğe yerleştirebilirsiniz</p>
                                 )}
                             </div>
@@ -625,13 +621,7 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
             {!isPreview && (
                 <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
             )}
-            {/* Overall Explanation */}
-            {isSubmitted && showCorrectAnswer && template.explanation && (
-                <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
-                    <h4 className="font-semibold text-yellow-800 mb-2">Genel Açıklama:</h4>
-                    <MaybeHtml className="text-yellow-700" value={template.explanation} />
-                </div>
-            )}
+            {/* Overall explanation removed (DTO doesn't expose it) */}
 
             {/* Score Summary */}
             {isSubmitted && showCorrectAnswer && itemResults.length > 0 && (
@@ -704,58 +694,17 @@ const DragAndDropQuestion: React.FC<DragAndDropQuestionProps> = ({
                 <div className="mt-4 p-4 bg-gray-50 rounded border">
                     <h4 className="font-semibold text-gray-700 mb-2">Soru Bilgileri:</h4>
                     <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                        {template.subject && (
-                            <div><strong>Konu:</strong> {template.subject}</div>
-                        )}
-                        {template.difficulty && (
-                            <div><strong>Zorluk:</strong> {difficultyConverter(template.difficulty)}</div>
-                        )}
-                        {template.points && (
-                            <div><strong>Puan:</strong> {template.points}</div>
-                        )}
-                        {template.timeLimit && (
-                            <div><strong>Süre:</strong> {template.timeLimit} saniye</div>
-                        )}
                         {options.draggableItems && (
                             <div><strong>Öğe Sayısı:</strong> {options.draggableItems.length}</div>
                         )}
                         {options.dropZones && (
                             <div><strong>Alan Sayısı:</strong> {options.dropZones.length}</div>
                         )}
-                        {template.allowMultipleItemsPerZone !== undefined && (
-                            <div><strong>Çoklu Öğe:</strong> {template.allowMultipleItemsPerZone ? 'Evet' : 'Hayır'}</div>
-                        )}
-                        {template.shuffleDraggableItems !== undefined && (
-                            <div><strong>Karıştırma:</strong> {template.shuffleDraggableItems ? 'Evet' : 'Hayır'}</div>
-                        )}
-                        {template.tags && template.tags.length > 0 && (
-                            <div className="col-span-2">
-                                <strong>Etiketler:</strong> {template.tags.join(', ')}
-                            </div>
-                        )}
                     </div>
                 </div>
             )}
 
-            {/* Development Notes - Comment for future exam implementation */}
-            {/*
-        TODO: Real exam implementation
-        - Integrate with exam session management
-        - Add auto-save functionality
-        - Implement touch device support for mobile
-        - Add keyboard shortcuts for accessibility
-        - Support for snap-to-grid placement
-        - Implement undo/redo functionality
-        - Add animation for drag and drop feedback
-        - Support for nested drop zones
-        - Implement hint system
-        - Add time tracking per placement
-        - Support for conditional drop zones (only accept certain items)
-        - Implement collaborative features (optional)
-        - Add accessibility features for screen readers
-        - Support for drag handles on specific areas
-        - Implement partial credit scoring
-      */}
+           
         </div>
     );
 };

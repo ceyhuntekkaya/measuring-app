@@ -6,12 +6,17 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { CreateQuestionGroupTypeRequestGroupType } from "./createQuestionGroupTypeRequestGroupType";
-import type { CreateQuestionGroupTypeRequestLevel } from "./createQuestionGroupTypeRequestLevel";
 
 export interface CreateQuestionGroupTypeRequest {
   name?: string;
   examSectionId?: string;
   orderNumber?: number;
-  level?: CreateQuestionGroupTypeRequestLevel;
   groupType?: CreateQuestionGroupTypeRequestGroupType;
+  hasInstruction?: boolean;
+  instruction?: string;
+  hasGroupDuration?: boolean;
+  duration?: number;
+  waitingDuration?: number;
+  playbackCount?: number;
+  recordingDuration?: number;
 }

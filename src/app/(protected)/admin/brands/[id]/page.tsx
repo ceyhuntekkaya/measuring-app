@@ -13,10 +13,10 @@ export default function BrandDetailPage() {
     const params = useParams();
     const id = params.id as string;
 
-    const { data, isLoading, error } = useGetBrandById(id);
+    const { data, isLoading, error } = useGetBrandById<ApiResponseBrandDto>(id);
     
     // Extract brand from API response
-    const selectedBrand = (data as unknown as ApiResponseBrandDto)?.data as BrandDto | undefined;
+    const selectedBrand = data?.data as BrandDto | undefined;
 
     if (isLoading) {
         return <LoadingComp/>;

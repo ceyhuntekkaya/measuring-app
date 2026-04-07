@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import type { TrueFalseTemplateDto } from '@/api/generated/model';
 import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
-import {difficultyConverter} from "@/utils/enum-converter";
 import MaybeHtml from "@/components/ui/maybe-html";
 
 interface TrueFalseQuestionProps {
@@ -132,7 +131,7 @@ const TrueFalseQuestion: React.FC<TrueFalseQuestionProps> = ({
                 <div className="mb-4">
                     <h3 className="text-lg font-semibold text-gray-800">{template.title}</h3>
                     {template.description && (
-                        <p className="text-gray-600 mt-1">{template.description}</p>
+                        <MaybeHtml className="text-gray-600 mt-1" value={template.description} />
                     )}
                 </div>
             )}
@@ -254,13 +253,7 @@ const TrueFalseQuestion: React.FC<TrueFalseQuestionProps> = ({
                 </div>
             </div>
 
-            {/* Overall Explanation */}
-            {isSubmitted && showCorrectAnswer && template.explanation && (
-                <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
-                    <h4 className="font-semibold text-yellow-800 mb-2">Genel Açıklama:</h4>
-                    <MaybeHtml className="text-yellow-700" value={template.explanation} />
-                </div>
-            )}
+            {/* Overall explanation removed (DTO doesn't expose it) */}
 
             {/* Answer Summary (for submitted state) */}
             {isSubmitted && showCorrectAnswer && (
@@ -296,46 +289,14 @@ const TrueFalseQuestion: React.FC<TrueFalseQuestionProps> = ({
                 <div className="mt-4 p-4 bg-gray-50 rounded border">
                     <h4 className="font-semibold text-gray-700 mb-2">Soru Bilgileri:</h4>
                     <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                        {template.subject && (
-                            <div><strong>Konu:</strong> {template.subject}</div>
-                        )}
-                        {template.difficulty && (
-                            <div><strong>Zorluk:</strong> {difficultyConverter(template.difficulty)}</div>
-                        )}
-                        {template.points && (
-                            <div><strong>Puan:</strong> {template.points}</div>
-                        )}
-                        {template.timeLimit && (
-                            <div><strong>Süre:</strong> {template.timeLimit} saniye</div>
-                        )}
                         {template.correctAnswer !== undefined && (
                             <div><strong>Doğru Cevap:</strong> {getOptionText(template.correctAnswer)}</div>
-                        )}
-                        {template.tags && template.tags.length > 0 && (
-                            <div className="col-span-2">
-                                <strong>Etiketler:</strong> {template.tags.join(', ')}
-                            </div>
                         )}
                     </div>
                 </div>
             )}
 
-            {/* Development Notes - Comment for future exam implementation */}
-            {/*
-        TODO: Real exam implementation
-        - Integrate with exam session management
-        - Add timer functionality for individual questions
-        - Save answers to backend with proper validation
-        - Handle exam submission and auto-save
-        - Add progress tracking within exam context
-        - Implement navigation between questions
-        - Add exam state management (paused, resumed, etc.)
-        - Security measures for exam integrity
-        - Handle network issues and offline scenarios
-        - Implement proper scoring logic
-        - Add accessibility features for screen readers
-        - Support for multiple languages/localization
-      */}
+           
         </div>
     );
 };

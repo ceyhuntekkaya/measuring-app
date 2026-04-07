@@ -478,24 +478,7 @@ export default function ApprovalPreviewPage() {
                                                     );
                                                 })}
                                             </div>
-                                            <div className="flex items-center gap-4 text-sm">
-                                                {question.approvalStatus && (
-                                                    <div>
-                                                        <span className="text-gray-500">Durum: </span>
-                                                        <span className="font-medium">
-                                                            {approvalStatusConverter(question.approvalStatus)}
-                                                        </span>
-                                                    </div>
-                                                )}
-                                                {question.approvalCompletedDate && (
-                                                    <div>
-                                                        <span className="text-gray-500">Tamamlanma: </span>
-                                                        <span className="font-medium">
-                                                            {formatDate(question.approvalCompletedDate, 'dateTime')}
-                                                        </span>
-                                                    </div>
-                                                )}
-                                            </div>
+                                          
                                         </div>
                                     </div>
                                     
@@ -514,11 +497,7 @@ export default function ApprovalPreviewPage() {
                                                 <div className="text-sm text-gray-500 mt-1">
                                                     {getQuestionTypeLabel(question.questionType as EQuestionType)}
                                                 </div>
-                                                {question.approvalStatus && (
-                                                    <div className="text-xs text-gray-400 mt-1">
-                                                        Onay Durumu: {approvalStatusConverter(question.approvalStatus)}
-                                                    </div>
-                                                )}
+                                                 
                                             </div>
                                         </div>
                                         <div className="text-right">
@@ -526,9 +505,9 @@ export default function ApprovalPreviewPage() {
                                                 <span className="text-gray-500">Puan:</span>
                                                 <span className="ml-1 font-medium">{question.maximumScore || 'Belirtilmedi'}</span>
                                             </div>
-                                            {question.durationInSeconds && (
+                                            {question.timeLimit && (
                                                 <div className="text-xs text-gray-500 mt-1">
-                                                    {formatDuration(question.durationInSeconds)}
+                                                    {formatDuration(question.timeLimit)}
                                                 </div>
                                             )}
                                         </div>

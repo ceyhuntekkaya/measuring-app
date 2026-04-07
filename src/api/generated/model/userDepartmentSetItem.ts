@@ -10,12 +10,15 @@ export type UserDepartmentSetItem =
   (typeof UserDepartmentSetItem)[keyof typeof UserDepartmentSetItem];
 
 export const UserDepartmentSetItem = {
-  AUTHOR: "AUTHOR",
-  GRADER: "GRADER",
-  SUPERVISOR: "SUPERVISOR",
-  MANAGEMENT: "MANAGEMENT",
-  IT: "IT",
-  AUTHOR_REVIEWER: "AUTHOR_REVIEWER",
-  ADMIN: "ADMIN",
-  REVIEWER: "REVIEWER",
+  TURKISH: "TURKISH",
+  ENGLISH: "ENGLISH",
+  GERMAN: "GERMAN",
+  CHINESE: "CHINESE",
+  ARABIC: "ARABIC",
+  FRENCH: "FRENCH",
+  JAPANESE: "JAPANESE",
+  RUSSIAN: "RUSSIAN",
+  KOREAN: "KOREAN",
+  GREEK: "GREEK",
+  PERSIAN: "PERSIAN",
 } as const;

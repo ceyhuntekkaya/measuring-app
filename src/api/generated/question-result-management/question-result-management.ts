@@ -13,13 +13,101 @@ import type {
   UseMutationResult,
 } from "@tanstack/react-query";
 
-import type { EvaluationDto, QuestionAnswerRequest } from ".././model";
+import type {
+  EvaluationDto,
+  QuestionAnswerRequest,
+  SoruGrupDetayDto,
+} from ".././model";
 
 import { customInstance } from "../../axios-instance";
 import type { ErrorType, BodyType } from "../../axios-instance";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+export const createFromList = (
+  soruGrupDetayDto: BodyType<SoruGrupDetayDto[]>,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<Blob>(
+    {
+      url: `/veri-aktar`,
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      data: soruGrupDetayDto,
+      responseType: "blob",
+      signal,
+    },
+    options,
+  );
+};
+
+export const getCreateFromListMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createFromList>>,
+    TError,
+    { data: BodyType<SoruGrupDetayDto[]> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createFromList>>,
+  TError,
+  { data: BodyType<SoruGrupDetayDto[]> },
+  TContext
+> => {
+  const mutationKey = ["createFromList"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createFromList>>,
+    { data: BodyType<SoruGrupDetayDto[]> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createFromList(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateFromListMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createFromList>>
+>;
+export type CreateFromListMutationBody = BodyType<SoruGrupDetayDto[]>;
+export type CreateFromListMutationError = ErrorType<unknown>;
+
+export const useCreateFromList = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createFromList>>,
+      TError,
+      { data: BodyType<SoruGrupDetayDto[]> },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof createFromList>>,
+  TError,
+  { data: BodyType<SoruGrupDetayDto[]> },
+  TContext
+> => {
+  return useMutation(getCreateFromListMutationOptions(options), queryClient);
+};
 /**
  * Save evaluation for a question result
  * @summary Save evaluation

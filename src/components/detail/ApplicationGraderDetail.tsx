@@ -408,9 +408,7 @@ const ApplicationGraderDetailPage: React.FC<ApplicationGraderDetailProps> = ({
                                         <div>
                                             <p className="font-semibold">Değerlendirici Atandı</p>
                                             <p className="text-sm text-gray-500">{formatDate(grader.createdAt || '')}</p>
-                                            {grader.createdById && (
-                                                <p className="text-xs text-gray-400">Atayan ID: {grader.createdById}</p>
-                                            )}
+                                            
                                         </div>
                                     </div>
 
@@ -442,22 +440,7 @@ const ApplicationGraderDetailPage: React.FC<ApplicationGraderDetailProps> = ({
                                         </div>
                                     )}
 
-                                    {grader.status === 'DELETED' && grader.deletedAt && (
-                                        <div className="flex">
-                                            <div className="mr-4 flex-shrink-0">
-                                                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-red-100 text-red-600">
-                                                    <XCircle className="h-5 w-5"/>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <p className="font-semibold">Atama İptal Edildi</p>
-                                                <p className="text-sm text-gray-500">{formatDate(grader.deletedAt)}</p>
-                                                {grader.deletedById && (
-                                                    <p className="text-xs text-gray-400">İptal Eden ID: {grader.deletedById}</p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
+                                   
                                 </div>
                             </CardContent>
                         </Card>

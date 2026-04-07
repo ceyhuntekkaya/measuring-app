@@ -27,17 +27,17 @@ const UserDetailPageContainer: React.FC = () => {
     const queryClient = useQueryClient();
     const userId = params.id as string;
 
-    const {data: userData, isLoading: loading, error} = useGetUserById(userId, {
+    const {data: userData, isLoading: loading, error} = useGetUserById<ApiResponseUserDto>(userId, {
         query: { enabled: !!userId }
     });
-    const selectedUser = (userData as unknown as ApiResponseUserDto)?.data;
+    const selectedUser = userData?.data;
     
     const deleteUserMutation = useDeleteUser();
     const activateUserMutation = useActivateUser();
     const resetPasswordMutation = useResetPassword1();
 
-    const { data: brandsData } = useGetAllBrands();
-    const brands = (brandsData as unknown as ApiResponseListBrandDto)?.data || null;
+    const { data: brandsData } = useGetAllBrands<ApiResponseListBrandDto>();
+    const brands = brandsData?.data || null;
 
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showActivateDialog, setShowActivateDialog] = useState(false);

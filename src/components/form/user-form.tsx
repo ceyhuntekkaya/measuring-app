@@ -271,7 +271,7 @@ const UserForm: React.FC<UserFormProps> = ({
         }));
     };
 
-    const roles: Role[] = ['ADMIN', 'USER', 'LEARNER', 'INSTRUCTOR', 'OBSERVER', 'COMPANY'];
+    const roles: Role[] = ['ADMIN', 'USER', 'LEARNER', 'MANAGER', 'REFEREE', 'WRITER', 'OBSERVER'];
     const permissions = Object.keys(PermissionList) as Permission[];
     const departments = Object.keys(DepartmentList) as Department[];
 

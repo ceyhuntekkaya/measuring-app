@@ -47,6 +47,10 @@ import type {BaseQuestionTemplateFormData} from "@/components/form/QuestionForm"
 import {Label} from "@/components/ui/label";
 import {Textarea} from "@/components/ui/textarea";
 import HtmlEditor from "@/components/ui/html-editor";
+import {Input} from "@/components/ui/input";
+import Checkbox from "@/components/ui/checkbox";
+import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {BaseQuestionTemplateDtoStatus} from "@/api/generated/model/baseQuestionTemplateDtoStatus";
 
 const STEM_QUESTION_TYPES: EQuestionType[] = [
     EQuestionType.ESSAY,
@@ -63,10 +67,6 @@ function hasStemText(description: string | undefined, instructions: string | und
 
 interface BaseQuestionTemplateFormErrors {
     title?: string;
-    subject?: string;
-    difficulty?: string;
-    points?: string;
-    timeLimit?: string;
     questionType?: string;
     description?: string;
 }
@@ -162,22 +162,6 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
 
         if (!formData.title.trim()) {
             newErrors.title = 'Başlık zorunludur';
-        }
-
-        if (!formData.subject.trim()) {
-            newErrors.subject = 'Konu zorunludur';
-        }
-
-        if (!formData.difficulty) {
-            newErrors.difficulty = 'Zorluk seviyesi seçilmelidir';
-        }
-
-        if (!formData.points || formData.points < 1) {
-            newErrors.points = 'Geçerli bir puan giriniz';
-        }
-
-        if (!formData.timeLimit || formData.timeLimit < 1) {
-            newErrors.timeLimit = 'Geçerli bir süre sınırı giriniz';
         }
 
         if (!formData.questionType) {
@@ -344,6 +328,73 @@ const BaseQuestionTemplateForm = forwardRef<BaseQuestionTemplateFormHandle, Base
     return (
         <div>
             <div className="space-y-0">
+                <div className="space-y-4 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-6 gap-2">
+                        <div className="space-y-2 md:col-span-3">
+                            <Label htmlFor="template-title">Şablon Başlığı *</Label>
+                            <Input
+                                id="template-title"
+                                value={formData.title || ''}
+                                onChange={(e) =>
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        title: e.target.value,
+                                    }))
+                                }
+                                error={!!errors.title}
+                                placeholder="Şablon başlığı"
+                            />
+                            {errors.title && (
+                                <Alert variant="destructive">
+                                    <AlertDescription>{errors.title}</AlertDescription>
+                                </Alert>
+                            )}
+                        </div>
+
+                        <div className="space-y-2 md:col-span-2">
+                            <Label>Şablon Durumu</Label>
+                            <Select
+                                value={formData.status ?? BaseQuestionTemplateDtoStatus.ACTIVE}
+                                onValueChange={(value) =>
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        status: value as BaseQuestionTemplateDtoStatus,
+                                    }))
+                                }
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Durum seçiniz"/>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        {Object.entries(BaseQuestionTemplateDtoStatus).map(([key, value]) => (
+                                            <SelectItem key={key} value={value}>
+                                                {value}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2 md:col-span-1">
+                            <Label>Aktif</Label>
+                            <div className="flex items-center gap-2 h-10 px-3 border rounded-md">
+                                <Checkbox
+                                    checked={formData.isActive ?? true}
+                                    onChange={(checked) =>
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            isActive: !!checked,
+                                        }))
+                                    }
+                                />
+                                <span className="text-sm">Aktif</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {STEM_QUESTION_TYPES.includes(questionType) && (
                     <div className="space-y-4 mb-6">
                         <div className="space-y-2">

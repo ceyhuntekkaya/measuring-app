@@ -188,17 +188,7 @@ const BranchDetailPage: React.FC<BranchDetailProps> = ({
                                     </p>
                                 </div>
 
-                                {branch.deletedAt && (
-                                    <div className="flex justify-between items-center p-3 bg-red-50 rounded-md">
-                                        <div className="flex items-center space-x-3">
-                                            <XCircle className="h-5 w-5 text-red-500"/>
-                                            <span>Silinme Tarihi</span>
-                                        </div>
-                                        <p className="text-sm font-medium text-red-600">
-                                            {formatDate(branch.deletedAt)}
-                                        </p>
-                                    </div>
-                                )}
+                                
                             </CardContent>
                         </Card>
                     </div>
@@ -282,28 +272,11 @@ const BranchDetailPage: React.FC<BranchDetailProps> = ({
                                         <div>
                                             <p className="font-semibold">Şube Oluşturuldu</p>
                                             <p className="text-sm text-gray-500">{formatDate(branch.createdAt || '')}</p>
-                                            {branch.createdById && (
-                                                <p className="text-xs text-gray-400">Oluşturan ID: {branch.createdById}</p>
-                                            )}
+                                           
                                         </div>
                                     </div>
 
-                                    {branch.status === 'DELETED' && branch.deletedAt && (
-                                        <div className="flex">
-                                            <div className="mr-4 flex-shrink-0">
-                                                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-red-100 text-red-600">
-                                                    <XCircle className="h-5 w-5"/>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <p className="font-semibold">Şube Silindi</p>
-                                                <p className="text-sm text-gray-500">{formatDate(branch.deletedAt)}</p>
-                                                {branch.deletedById && (
-                                                    <p className="text-xs text-gray-400">Silen ID: {branch.deletedById}</p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
+                                    
                                 </div>
                             </CardContent>
                         </Card>
@@ -337,22 +310,7 @@ const BranchDetailPage: React.FC<BranchDetailProps> = ({
                                                     : 'Şube durumu belirsiz.'}
                                         </p>
 
-                                        <div className="mt-4 pt-4 border-t border-gray-200">
-                                            <h4 className="font-medium text-gray-900 mb-2">İşlem Geçmişi</h4>
-                                            <div className="text-sm text-gray-600 space-y-1">
-                                                <p>• Oluşturulma: {formatDate(branch.createdAt || '')}</p>
-                                                {branch.deletedAt && (
-                                                    <p>• Silinme: {formatDate(branch.deletedAt)}</p>
-                                                )}
-                                                <p>• Toplam yaşam süresi: {
-                                                    branch.createdAt
-                                                        ? (branch.deletedAt
-                                                            ? Math.floor((new Date(branch.deletedAt).getTime() - new Date(branch.createdAt).getTime()) / (1000 * 60 * 60 * 24))
-                                                            : Math.floor((new Date().getTime() - new Date(branch.createdAt).getTime()) / (1000 * 60 * 60 * 24)))
-                                                        : 'Bilinmiyor'
-                                                } gün</p>
-                                            </div>
-                                        </div>
+                                         
                                     </div>
                                 </div>
                             </CardContent>

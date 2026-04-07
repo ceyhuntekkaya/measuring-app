@@ -17,7 +17,7 @@ export default function ExamSectionPage() {
     const params = useParams();
     const examTypeId = params.examTypeId as string;
     
-    const {data, isLoading: loading} = useGetExamSectionsByExamType(examTypeId, {
+    const {data, isLoading: loading} = useGetExamSectionsByExamType<ApiResponseListExamSectionDto>(examTypeId, {
         query: { 
             enabled: !!examTypeId,
             refetchOnMount: true,
@@ -25,7 +25,7 @@ export default function ExamSectionPage() {
             staleTime: 0,
         }
     });
-    const sectionsByExamType = (data as unknown as ApiResponseListExamSectionDto)?.data || [];
+    const sectionsByExamType = data?.data || [];
 
     const columns: Column<RecordType>[] = [
 

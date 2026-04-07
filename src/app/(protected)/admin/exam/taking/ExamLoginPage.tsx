@@ -61,9 +61,11 @@ export default function ExamLoginPage() {
                     password: formData.password
                 }
             });
-            const applicationData = (result as unknown as ApiResponseApplicationDto)?.data;
-            if (applicationData) {
-                loginSuccess(applicationData);
+            if (result && typeof result === 'object' && 'data' in (result as object)) {
+                const applicationData = (result as ApiResponseApplicationDto).data;
+                if (applicationData) {
+                    loginSuccess(applicationData);
+                }
             }
         } catch (err) {
             const errorMessage = getErrorMessage(err);

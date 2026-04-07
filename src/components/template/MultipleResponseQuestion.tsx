@@ -2,7 +2,6 @@ import React, {useState, useEffect, useMemo, useCallback} from 'react';
 import type {MultipleResponseTemplateDto, ResponseOption} from '@/api/generated/model';
 import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
-import {difficultyConverter} from "@/utils/enum-converter";
 import HtmlRender from "@/components/ui/html-render";
 import MaybeHtml from "@/components/ui/maybe-html";
 
@@ -36,6 +35,9 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
                                                                                showCorrectAnswer = false,
                                                                                showLearnerEvaluation = false
                                                                            }) => {
+    // ORVAL MultipleResponseTemplateDto exposes only question/options/correctOptionIndices (+ base fields)
+    const shuffleOptions = false;
+
     const [selectedOptions, setSelectedOptions] = useState<string[]>(initialAnswer || []);
     const [shuffledOptions, setShuffledOptions] = useState<ResponseOption[]>([]);
     const [optionResults, setOptionResults] = useState<OptionResult[]>([]);
@@ -76,7 +78,7 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
 
     useEffect(() => {
         initializeOptions();
-    }, [template.options?.choices, template.shuffleOptions]);
+    }, [template.options?.choices]);
 
     useEffect(() => {
         if (isSubmitted && showCorrectAnswer) {
@@ -89,7 +91,7 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
 
         const options = [...template.options.choices];
 
-        if (template.shuffleOptions && !isSubmitted) {
+        if (shuffleOptions && !isSubmitted) {
             const shuffled = options.sort(() => Math.random() - 0.5);
             setShuffledOptions(shuffled);
         } else {
@@ -109,11 +111,6 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
             newSelectedOptions = selectedOptions.filter(id => id !== optionId);
         } else {
             // Select
-            // Check max selections
-            if (template.maxSelections && selectedOptions.length >= template.maxSelections) {
-                // Don't allow more selections
-                return;
-            }
             newSelectedOptions = [...selectedOptions, optionId];
         }
 
@@ -380,29 +377,6 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
     };
 
     const getSelectionStatus = (): { status: 'valid' | 'warning' | 'invalid'; message: string } => {
-        const count = selectedOptions.length;
-
-        if (template.minSelections && count < template.minSelections) {
-            return {
-                status: 'invalid',
-                message: `En az ${template.minSelections} seçenek seçmelisiniz`
-            };
-        }
-
-        if (template.maxSelections && count > template.maxSelections) {
-            return {
-                status: 'invalid',
-                message: `Maksimum ${template.maxSelections} seçenek seçebilirsiniz`
-            };
-        }
-
-        if (template.minSelections && template.maxSelections && count >= template.minSelections && count <= template.maxSelections) {
-            return {
-                status: 'valid',
-                message: 'Seçim sayısı uygun'
-            };
-        }
-
         return { status: 'valid', message: '' };
     };
 
@@ -427,7 +401,7 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
                 <div className="mb-4">
                     <h3 className="text-lg font-semibold text-gray-800">{template.title}</h3>
                     {template.description && (
-                        <p className="text-gray-600 mt-1">{template.description}</p>
+                        <MaybeHtml className="text-gray-600 mt-1" value={template.description} />
                     )}
                 </div>
             )}
@@ -457,18 +431,7 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
                             {template.options?.selectionInstruction || 'Doğru olan tüm seçenekleri işaretleyin'}
                         </p>
                         <div className="mt-2 space-y-1 text-xs text-blue-700">
-                            {template.minSelections && template.maxSelections && (
-                                <p>• {template.minSelections} ile {template.maxSelections} arası seçenek seçmelisiniz</p>
-                            )}
-                            {template.minSelections && !template.maxSelections && (
-                                <p>• En az {template.minSelections} seçenek seçmelisiniz</p>
-                            )}
-                            {!template.minSelections && template.maxSelections && (
-                                <p>• Maksimum {template.maxSelections} seçenek seçebilirsiniz</p>
-                            )}
-                            {!template.minSelections && !template.maxSelections && (
-                                <p>• Birden fazla seçenek doğru olabilir</p>
-                            )}
+                            <p>• Birden fazla seçenek doğru olabilir</p>
                         </div>
                     </div>
                 </div>
@@ -482,7 +445,6 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
                         <div className="flex items-center space-x-3">
                             <span className={`text-sm font-semibold ${getSelectionStatusColor()}`}>
                                 {selectedOptions.length} seçildi
-                                {template.maxSelections && ` / ${template.maxSelections}`}
                             </span>
                             {getSelectionStatus().message && (
                                 <span className={`text-xs ${getSelectionStatusColor()}`}>
@@ -542,13 +504,7 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
             {!isPreview && (
                 <button className={"btn btn-success"} onClick={handleSaveAnswer}>KAYDET</button>
             )}
-            {/* Overall Explanation */}
-            {isSubmitted && showCorrectAnswer && template.explanation && (
-                <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
-                    <h4 className="font-semibold text-yellow-800 mb-2">Genel Açıklama:</h4>
-                    <MaybeHtml className="text-yellow-700" value={template.explanation} />
-                </div>
-            )}
+            {/* Overall explanation removed (DTO doesn't expose it) */}
 
             {/* Score Summary */}
             {isSubmitted && showCorrectAnswer && optionResults.length > 0 && (
@@ -645,58 +601,17 @@ const MultipleResponseQuestion: React.FC<MultipleResponseQuestionProps> = ({
                 <div className="mt-4 p-4 bg-gray-50 rounded border">
                     <h4 className="font-semibold text-gray-700 mb-2">Soru Bilgileri:</h4>
                     <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                        {template.subject && (
-                            <div><strong>Konu:</strong> {template.subject}</div>
-                        )}
-                        {template.difficulty && (
-                            <div><strong>Zorluk:</strong> {difficultyConverter(template.difficulty)}</div>
-                        )}
-                        {template.points && (
-                            <div><strong>Puan:</strong> {template.points}</div>
-                        )}
-                        {template.timeLimit && (
-                            <div><strong>Süre:</strong> {template.timeLimit} saniye</div>
-                        )}
                         {shuffledOptions && shuffledOptions.length > 0 && (
                             <div><strong>Seçenek Sayısı:</strong> {shuffledOptions.length}</div>
                         )}
                         {shuffledOptions && shuffledOptions.filter(opt => opt.isCorrect).length > 0 && (
                             <div><strong>Doğru Cevap Sayısı:</strong> {shuffledOptions.filter(opt => opt.isCorrect).length}</div>
                         )}
-                        {template.minSelections && (
-                            <div><strong>Min. Seçim:</strong> {template.minSelections}</div>
-                        )}
-                        {template.maxSelections && (
-                            <div><strong>Maks. Seçim:</strong> {template.maxSelections}</div>
-                        )}
-                        {template.shuffleOptions !== undefined && (
-                            <div><strong>Karıştırma:</strong> {template.shuffleOptions ? 'Evet' : 'Hayır'}</div>
-                        )}
-                        {template.tags && template.tags.length > 0 && (
-                            <div className="col-span-2">
-                                <strong>Etiketler:</strong> {template.tags.join(', ')}
-                            </div>
-                        )}
                     </div>
                 </div>
             )}
 
-            {/* Development Notes - Comment for future exam implementation */}
-            {/*
-        TODO: Real exam implementation
-        - Integrate with exam session management
-        - Add auto-save functionality
-        - Implement keyboard shortcuts (space to toggle)
-        - Support for partial credit scoring
-        - Add accessibility features for screen readers
-        - Implement answer validation before submission
-        - Add time tracking per selection
-        - Support for grouped options (categories)
-        - Implement hint system
-        - Add collaborative features (optional)
-        - Support for conditional logic (show/hide based on selections)
-        - Implement undo/redo functionality
-      */}
+         
         </div>
     );
 };

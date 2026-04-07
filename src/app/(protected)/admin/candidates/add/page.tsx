@@ -34,12 +34,15 @@ export default function CandidateAdd() {
         createCandidate({ data: data as CreateCandidateRequest });
     };
 
-    const { data: examTypesData } = useGetAllExamTypes(undefined);
-    const examTypes = (examTypesData as unknown as ApiResponseExamTypeListResponse)?.data || null;
+    const { data: examTypesData } = useGetAllExamTypes<ApiResponseExamTypeListResponse>(undefined);
+    const examTypes = examTypesData?.data || null;
 
-    const { data: sessionsData } = useGetUpcomingExamSessions({});
-    const rawSessionsData = (sessionsData as unknown as { data?: unknown })?.data;
-    const upcomingExamSessions = (Array.isArray(rawSessionsData) ? rawSessionsData : (sessionsData as unknown as ApiResponseExamSessionListResponse)?.data?.examSessions || []) as ExamSessionDto[];
+    const { data: sessionsData } = useGetUpcomingExamSessions<ApiResponseExamSessionListResponse>({});
+    const upcomingExamSessions = (
+        Array.isArray(sessionsData?.data)
+            ? sessionsData?.data
+            : sessionsData?.data?.examSessions || []
+    ) as ExamSessionDto[];
 
     const examTypesList = examTypes?.examTypes || [];
 

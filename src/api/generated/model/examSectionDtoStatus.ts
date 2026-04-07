@@ -13,8 +13,4 @@ export const ExamSectionDtoStatus = {
   ACTIVE: "ACTIVE",
   PASSIVE: "PASSIVE",
   DELETED: "DELETED",
-  REJECTED: "REJECTED",
-  CANCELLED: "CANCELLED",
-  PENDING: "PENDING",
-  SUSPENDED: "SUSPENDED",
 } as const;

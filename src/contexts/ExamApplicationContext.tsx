@@ -36,10 +36,10 @@ export function ExamApplicationProvider({children}: { children: ReactNode }) {
     const updateApplicationStateMutation = useUpdateApplicationState();
 
     const [examIdForQuery, setExamIdForQuery] = useState<string | null>(null);
-    const { data: examData } = useGetExamById(examIdForQuery || '', {
+    const { data: examData } = useGetExamById<ApiResponseExamDto>(examIdForQuery || '', {
         query: { enabled: !!examIdForQuery }
     });
-    const selectedExam = (examData as unknown as ApiResponseExamDto)?.data as ExamDto | undefined;
+    const selectedExam = examData?.data as ExamDto | undefined;
 
     const [examSession, setExamSession] = useState<ExamSessionDto | null>(null);
     const [application, setApplication] = useState<ApplicationDto | null>(null);

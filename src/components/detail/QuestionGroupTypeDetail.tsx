@@ -1,9 +1,10 @@
 import React from 'react';
 import type { QuestionGroupTypeDto } from '@/api/generated/model/questionGroupTypeDto';
 import type { ExamTypeDto } from '@/api/generated/model/examTypeDto';
-import { EQuestionGroupTemplateLevel, EQuestionGroupType, EExamType } from '@/types/exam/enum';
+import { EQuestionGroupType, EExamType } from '@/types/exam/enum';
 import {Button} from "@/components/ui/button";
 import { examTypeConverter } from '@/utils/enum-converter';
+import HtmlRender from '@/components/ui/html-render';
 
 interface QuestionGroupTypeDetailProps {
     selectedType: QuestionGroupTypeDto | null;
@@ -20,14 +21,6 @@ const QuestionGroupTypeDetail: React.FC<QuestionGroupTypeDetailProps> = ({ selec
         );
     }
 
-    const getLevelLabel = (level?: EQuestionGroupTemplateLevel) => {
-        const levelLabels = {
-            GROUP: 'Grup',
-            QUESTION: 'Soru'
-        };
-        return level ? levelLabels[level] || level : 'Belirtilmedi';
-    };
-
     const getGroupTypeLabel = (groupType?: EQuestionGroupType) => {
         const typeLabels = {
             LISTENING: 'Dinleme',
@@ -41,13 +34,16 @@ const QuestionGroupTypeDetail: React.FC<QuestionGroupTypeDetailProps> = ({ selec
         return groupType ? typeLabels[groupType] || groupType : 'Belirtilmedi';
     };
 
+    const yn = (v?: boolean) =>
+        v === true ? 'Evet' : v === false ? 'Hayır' : 'Belirtilmedi';
+
+    const instructionHtml = (selectedType.instruction || '').trim();
+
     return (
         <div className="mx-auto p-4 space-y-4">
 
             <div className="flex items-center justify-between">
-                <div>
-
-                </div>
+                <div />
                 <div className="flex space-x-3">
                     {onEdit && (
                         <Button variant="outline" onClick={onEdit}>
@@ -63,8 +59,6 @@ const QuestionGroupTypeDetail: React.FC<QuestionGroupTypeDetailProps> = ({ selec
                 </div>
             </div>
 
-
-            {/* Header */}
             <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
                 <div className="flex items-start justify-between mb-4">
                     <div>
@@ -72,19 +66,18 @@ const QuestionGroupTypeDetail: React.FC<QuestionGroupTypeDetailProps> = ({ selec
                             {selectedType.name || 'İsimsiz Soru Grup Türü'}
                         </h1>
                         <div className="flex items-center space-x-4">
-             
-                            {selectedType.orderNumber && (
+                            {selectedType.orderNumber != null && (
                                 <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                  Sıra: {selectedType.orderNumber}
-                </span>
+                                    Sıra: {selectedType.orderNumber}
+                                </span>
                             )}
                             <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                                 selectedType.status === 'ACTIVE'
                                     ? 'bg-green-100 text-green-800'
                                     : 'bg-gray-100 text-gray-800'
                             }`}>
-                {selectedType.status === 'ACTIVE' ? 'Aktif' : selectedType.status}
-              </span>
+                                {selectedType.status === 'ACTIVE' ? 'Aktif' : selectedType.status}
+                            </span>
                         </div>
                     </div>
                     <div className="text-right text-sm text-gray-500">
@@ -96,7 +89,6 @@ const QuestionGroupTypeDetail: React.FC<QuestionGroupTypeDetailProps> = ({ selec
                 </div>
             </div>
 
-            {/* Basic Information */}
             <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Temel Bilgiler</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -108,23 +100,9 @@ const QuestionGroupTypeDetail: React.FC<QuestionGroupTypeDetailProps> = ({ selec
                     </div>
 
                     <div className="p-4 bg-gray-50 rounded-lg">
-                        <div className="text-sm font-medium text-gray-500 mb-1">Seviye</div>
-                        <div className="text-lg font-semibold text-gray-900">
-                            {getLevelLabel(selectedType.level as EQuestionGroupTemplateLevel)}
-                        </div>
-                    </div>
-
-                    <div className="p-4 bg-gray-50 rounded-lg">
                         <div className="text-sm font-medium text-gray-500 mb-1">Grup Türü</div>
                         <div className="text-lg font-semibold text-gray-900">
                             {getGroupTypeLabel(selectedType.groupType as EQuestionGroupType)}
-                        </div>
-                    </div>
-
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                        <div className="text-sm font-medium text-gray-500 mb-1">Sıra Numarası</div>
-                        <div className="text-lg font-semibold text-gray-900">
-                            {selectedType.orderNumber || 'Belirtilmedi'}
                         </div>
                     </div>
 
@@ -135,78 +113,68 @@ const QuestionGroupTypeDetail: React.FC<QuestionGroupTypeDetailProps> = ({ selec
                                 selectedType.status === 'ACTIVE' ? 'bg-green-500' :
                                     selectedType.status === 'PASSIVE' ? 'bg-yellow-500' :
                                         'bg-gray-500'
-                            }`}></div>
+                            }`} />
                             <span className="text-lg font-semibold text-gray-900">
-                {selectedType.status === 'ACTIVE' ? 'Aktif' :
-                    selectedType.status === 'PASSIVE' ? 'Pasif' :
-                        selectedType.status || 'Bilinmiyor'}
-              </span>
+                                {selectedType.status === 'ACTIVE' ? 'Aktif' :
+                                    selectedType.status === 'PASSIVE' ? 'Pasif' :
+                                        selectedType.status || 'Bilinmiyor'}
+                            </span>
                         </div>
                     </div>
-
-                    {selectedType.approvalCompletedDate && (
-                        <div className="p-4 bg-gray-50 rounded-lg">
-                            <div className="text-sm font-medium text-gray-500 mb-1">Onay Tamamlanma</div>
-                            <div className="text-lg font-semibold text-gray-900">
-                                {new Date(selectedType.approvalCompletedDate).toLocaleDateString('tr-TR')}
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
 
-            {/* Approval Status
             <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Onay Durumu</h2>
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                        <div>
-                            <div className="text-sm font-medium text-gray-500">Mevcut Onay Durumu</div>
-                            <div className={`text-lg font-semibold px-3 py-1 rounded-full inline-block border ${getApprovalStatusColor(selectedType.approvalStatus)}`}>
-                                {approvalStatusConverter(selectedType.approvalStatus)}
-                            </div>
-                        </div>
-                        {selectedType.approvalCompletedDate && (
-                            <div className="text-right">
-                                <div className="text-sm text-gray-500">Tamamlanma Tarihi</div>
-                                <div className="text-gray-900 font-medium">
-                                    {new Date(selectedType.approvalCompletedDate).toLocaleDateString('tr-TR', {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric'
-                                    })}
-                                </div>
-                            </div>
-                        )}
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Yönerge ve süre ayarları</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                        <div className="text-sm font-medium text-gray-500 mb-1">Yönerge var</div>
+                        <div className="text-lg font-semibold text-gray-900">{yn(selectedType.hasInstruction)}</div>
                     </div>
-
-                    {(selectedType.currentApprovalCount !== undefined || selectedType.requiredApprovalCount !== undefined) && (
-                        <div className="p-4 bg-gray-50 rounded-lg">
-                            <div className="flex items-center justify-between mb-2">
-                                <div className="text-sm font-medium text-gray-500">Onay İlerlemesi</div>
-                                <div className="text-sm text-gray-600">
-                                    {approvalProgress.current} / {approvalProgress.required} onay
-                                </div>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-3">
-                                <div
-                                    className={`h-3 rounded-full transition-all duration-300 ${
-                                        approvalProgress.percentage === 100 ? 'bg-green-500' :
-                                            approvalProgress.percentage >= 50 ? 'bg-yellow-500' :
-                                                'bg-blue-500'
-                                    }`}
-                                    style={{ width: `${Math.min(approvalProgress.percentage, 100)}%` }}
-                                ></div>
-                            </div>
-                            <div className="text-xs text-gray-500 mt-1">
-                                {approvalProgress.percentage.toFixed(0)}% tamamlandı
-                            </div>
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                        <div className="text-sm font-medium text-gray-500 mb-1">Grup süresi var</div>
+                        <div className="text-lg font-semibold text-gray-900">{yn(selectedType.hasGroupDuration)}</div>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                        <div className="text-sm font-medium text-gray-500 mb-1">Süre</div>
+                        <div className="text-lg font-semibold text-gray-900">
+                            {selectedType.hasGroupDuration && selectedType.duration != null
+                                ? selectedType.duration
+                                : '—'}
                         </div>
-                    )}
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                        <div className="text-sm font-medium text-gray-500 mb-1">Bekleme süresi</div>
+                        <div className="text-lg font-semibold text-gray-900">
+                            {selectedType.hasGroupDuration && selectedType.waitingDuration != null
+                                ? selectedType.waitingDuration
+                                : '—'}
+                        </div>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                        <div className="text-sm font-medium text-gray-500 mb-1">Oynatma sayısı</div>
+                        <div className="text-lg font-semibold text-gray-900">
+                            {selectedType.playbackCount != null ? selectedType.playbackCount : '—'}
+                        </div>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                        <div className="text-sm font-medium text-gray-500 mb-1">Kayıt süresi</div>
+                        <div className="text-lg font-semibold text-gray-900">
+                            {selectedType.recordingDuration != null ? selectedType.recordingDuration : '—'}
+                        </div>
+                    </div>
                 </div>
+                {instructionHtml && selectedType.hasInstruction && (
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                        <div className="text-sm font-medium text-gray-500 mb-2">Yönerge metni</div>
+                        <HtmlRender
+                            className="prose prose-sm max-w-none text-gray-900 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6"
+                            html={instructionHtml}
+                        />
+                    </div>
+                )}
             </div>
- */}
-            {/* Exam Section Information */}
+
             {selectedType.examSection && (
                 <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
                     <h2 className="text-lg font-semibold text-gray-900 mb-4">Bağlı Sınav Bölümü</h2>
@@ -228,7 +196,7 @@ const QuestionGroupTypeDetail: React.FC<QuestionGroupTypeDetailProps> = ({ selec
                                 <div>
                                     <div className="text-sm font-medium text-purple-600">Sıra Numarası</div>
                                     <div className="text-purple-900 font-semibold">
-                                        {selectedType.examSection.orderNumber || 'Belirtilmedi'}
+                                        {selectedType.examSection.orderNumber ?? 'Belirtilmedi'}
                                     </div>
                                 </div>
 
@@ -238,9 +206,8 @@ const QuestionGroupTypeDetail: React.FC<QuestionGroupTypeDetailProps> = ({ selec
                                         {selectedType.examSection.status === 'ACTIVE' ? 'Aktif' : selectedType.examSection.status}
                                     </div>
                                 </div>
-                            </div> 
+                            </div>
 
-                           
                             {selectedType.examSection.examType ? (
                                 <div className="mt-4 p-4 bg-white/70 rounded-lg border border-purple-200">
                                     <div className="text-sm font-medium text-purple-600 mb-2">Sınav Türü Bilgileri</div>
@@ -264,7 +231,7 @@ const QuestionGroupTypeDetail: React.FC<QuestionGroupTypeDetailProps> = ({ selec
                     </div>
                 </div>
             )}
-            
+
         </div>
     );
 };

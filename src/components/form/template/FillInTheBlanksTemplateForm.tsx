@@ -13,7 +13,7 @@ import {Plus, Trash2} from "lucide-react";
 import Checkbox from "@/components/ui/checkbox";
 
 // Use ORVAL DTO types directly - only template-specific fields
-type FillInTheBlanksTemplateFormData = Pick<FillInTheBlanksTemplateDto, 'textWithBlanks' | 'options' | 'caseSensitive' | 'exactMatch' | 'explanation'>;
+type FillInTheBlanksTemplateFormData = Pick<FillInTheBlanksTemplateDto, 'textWithBlanks' | 'options'>;
 
 interface FillInTheBlanksTemplateFormErrors {
     textWithBlanks?: string;
@@ -39,9 +39,6 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
     const [formData, setFormData] = useState<FillInTheBlanksTemplateFormData>({
         textWithBlanks: '',
         options: {blanks: []},
-        caseSensitive: false,
-        exactMatch: false,
-        explanation: ''
     });
 
     const [errors, setErrors] = useState<FillInTheBlanksTemplateFormErrors>({});
@@ -55,15 +52,9 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
             setFormData({
                 textWithBlanks: value.textWithBlanks || '',
                 options: value.options || {blanks: []},
-                caseSensitive: value.caseSensitive || false,
-                exactMatch: value.exactMatch || false,
-                explanation: '' // UI'dan kaldırıldı, her zaman boş string
             });
         }
     }, [value]);
-
-    // NOT: caseSensitive ve exactMatch güncellemeleri artık textWithBlanks useEffect'inde yapılıyor
-    // Bu useEffect'i kaldırdık çünkü sonsuz döngüye neden oluyordu
 
     // Form data değiştiğinde parent'a bildir (Anlık güncelleme)
     // useRef ile son gönderilen değeri takip ederek gereksiz güncellemeleri önle
@@ -74,11 +65,8 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
         // İlk render'da boş form için onChange tetikleme
         const blanksLength = formData.options?.blanks?.length || 0;
         if (formData.textWithBlanks || blanksLength > 0) {
-            // Tüm boşlukların feedback'ini boş string yap ve ana şablon ayarlarını uygula
-            const blanksWithDefaults = formData.options?.blanks?.map(blank => ({
+            const blanksWithFeedbackCleared = formData.options?.blanks?.map(blank => ({
                 ...blank,
-                caseSensitive: formData.caseSensitive,
-                exactMatch: formData.exactMatch,
                 feedback: ''
             })) || [];
 
@@ -87,25 +75,21 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
                 textWithBlanks: formData.textWithBlanks,
                 options: {
                     ...formData.options,
-                    blanks: blanksWithDefaults
-                },
-                caseSensitive: formData.caseSensitive,
-                exactMatch: formData.exactMatch,
-                explanation: ''
+                    blanks: blanksWithFeedbackCleared
+                }
             };
-            
-            // Basit bir key oluştur (sonsuz döngüyü önlemek için)
-            const dataKey = `${formData.textWithBlanks}|${formData.caseSensitive}|${formData.exactMatch}|${blanksLength}`;
-            
+
+            const dataKey = `${formData.textWithBlanks}|${blanksLength}|${JSON.stringify(formData.options?.blanks || [])}`;
+
             if (dataKey !== lastSentRef.current) {
                 lastSentRef.current = dataKey;
                 onChange(templateData);
             }
         }
-    }, [formData.textWithBlanks, formData.caseSensitive, formData.exactMatch, formData.options, onChange, value]);
+    }, [formData.textWithBlanks, formData.options, onChange, value]);
 
     // Boşlukları güncelleme fonksiyonu
-    const updateBlanksFromText = (text: string, currentBlanks: BlankAnswer[], caseSensitive: boolean, exactMatch: boolean): BlankAnswer[] => {
+    const updateBlanksFromText = (text: string, currentBlanks: BlankAnswer[]): BlankAnswer[] => {
         const blankIdsInText = extractBlankIdsFromText(text);
         
         // Mevcut boşlukların ID'lerini al
@@ -160,8 +144,6 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
                 return {
                     ...blank,
                     blankId: formattedId,
-                    caseSensitive: caseSensitive,
-                    exactMatch: exactMatch,
                     feedback: ''
                 };
             });
@@ -176,8 +158,6 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
                 return {
                     ...temporaryBlank,
                     blankId: blankId,
-                    caseSensitive: caseSensitive, // Güncel ayarları uygula
-                    exactMatch: exactMatch, // Güncel ayarları uygula
                     feedback: '' // Feedback'i sıfırla
                 };
             }
@@ -185,8 +165,8 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
             return {
                 blankId: blankId,
                 acceptableAnswers: [''],
-                caseSensitive: caseSensitive,
-                exactMatch: exactMatch,
+                caseSensitive: false,
+                exactMatch: false,
                 score: 1,
                 feedback: ''
             };
@@ -255,23 +235,8 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
                 
                 const updatedBlanks = updateBlanksFromText(
                     newValue as string,
-                    prev.options?.blanks || [],
-                    prev.caseSensitive ?? false,
-                    prev.exactMatch ?? false
+                    prev.options?.blanks || []
                 );
-                updatedData.options = {
-                    ...prev.options,
-                    blanks: updatedBlanks
-                };
-            }
-            // Eğer caseSensitive veya exactMatch değiştiyse, tüm boşlukları güncelle
-            else if (field === 'caseSensitive' || field === 'exactMatch') {
-                const updatedBlanks = (prev.options?.blanks || []).map(blank => ({
-                    ...blank,
-                    caseSensitive: field === 'caseSensitive' ? (newValue as boolean) : (prev.caseSensitive ?? false),
-                    exactMatch: field === 'exactMatch' ? (newValue as boolean) : (prev.exactMatch ?? false),
-                    feedback: ''
-                }));
                 updatedData.options = {
                     ...prev.options,
                     blanks: updatedBlanks
@@ -452,27 +417,6 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
                         )}
                     </div>
 
-                    {/* Genel Ayarlar */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="flex items-center space-x-2">
-                            <Checkbox
-                                id="caseSensitive"
-                                checked={formData.caseSensitive}
-                                onChange={(checked) => handleChange('caseSensitive', !!checked)}
-                            />
-                            <Label htmlFor="caseSensitive">Büyük/Küçük Harf Duyarlı</Label>
-                        </div>
-
-                        <div className="flex items-center space-x-2">
-                            <Checkbox
-                                id="exactMatch"
-                                checked={formData.exactMatch}
-                                onChange={(checked) => handleChange('exactMatch', !!checked)}
-                            />
-                            <Label htmlFor="exactMatch">Tam Eşleşme Gerekli</Label>
-                        </div>
-                    </div>
-
                     {/* Boşluk Tanımları */}
                     <div className="space-y-4">
                         <div className="flex justify-between items-center">
@@ -506,7 +450,26 @@ const FillInTheBlanksTemplateForm = forwardRef<FillInTheBlanksTemplateFormHandle
                                         />
                                     </div>
 
-                                    <div className="col-span-8 flex justify-end">
+                                    <div className="col-span-4 flex flex-col gap-2">
+                                        <div className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id={`caseSensitive-${blankIndex}`}
+                                                checked={blank.caseSensitive ?? false}
+                                                onChange={(checked) => updateBlank(blankIndex, 'caseSensitive', !!checked)}
+                                            />
+                                            <Label htmlFor={`caseSensitive-${blankIndex}`} className="font-normal">Büyük/küçük harf duyarlı</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id={`exactMatch-${blankIndex}`}
+                                                checked={blank.exactMatch ?? false}
+                                                onChange={(checked) => updateBlank(blankIndex, 'exactMatch', !!checked)}
+                                            />
+                                            <Label htmlFor={`exactMatch-${blankIndex}`} className="font-normal">Tam eşleşme</Label>
+                                        </div>
+                                    </div>
+
+                                    <div className="col-span-4 flex justify-end">
                                         <p className="text-sm text-gray-500 self-center">
                                             Boşluğu silmek için metinden [blank_X] ifadesini kaldırın.
                                         </p>

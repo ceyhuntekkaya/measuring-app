@@ -15,7 +15,6 @@ import type { MatchingTemplateDto } from "./matchingTemplateDto";
 import type { MultipleChoiceTemplateDto } from "./multipleChoiceTemplateDto";
 import type { MultipleResponseTemplateDto } from "./multipleResponseTemplateDto";
 import type { OrderingTemplateDto } from "./orderingTemplateDto";
-import type { QuestionDtoApprovalStatus } from "./questionDtoApprovalStatus";
 import type { QuestionDtoQuestionType } from "./questionDtoQuestionType";
 import type { QuestionDtoStatus } from "./questionDtoStatus";
 import type { QuestionGroupDto } from "./questionGroupDto";
@@ -26,17 +25,15 @@ import type { VideoResponseTemplateDto } from "./videoResponseTemplateDto";
 export interface QuestionDto {
   id?: string;
   createdAt?: string;
-  deletedAt?: string;
   status?: QuestionDtoStatus;
-  createdById?: string;
-  deletedById?: string;
   name?: string;
   questionGroup?: QuestionGroupDto;
   questionType?: QuestionDtoQuestionType;
   orderNumber?: number;
   isAutomaticallyEvaluated?: boolean;
   maximumScore?: number;
-  durationInSeconds?: number;
+  timeLimit?: number;
+  difficulty?: string;
   questionTemplate?:
     | AudioResponseTemplateDto
     | DragAndDropTemplateDto
@@ -51,8 +48,4 @@ export interface QuestionDto {
     | ShortAnswerTemplateDto
     | TrueFalseTemplateDto
     | VideoResponseTemplateDto;
-  approvalStatus?: QuestionDtoApprovalStatus;
-  currentApprovalCount?: number;
-  requiredApprovalCount?: number;
-  approvalCompletedDate?: string;
 }

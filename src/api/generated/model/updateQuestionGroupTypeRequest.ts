@@ -6,11 +6,16 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { UpdateQuestionGroupTypeRequestGroupType } from "./updateQuestionGroupTypeRequestGroupType";
-import type { UpdateQuestionGroupTypeRequestLevel } from "./updateQuestionGroupTypeRequestLevel";
 
 export interface UpdateQuestionGroupTypeRequest {
   name?: string;
   orderNumber?: number;
-  level?: UpdateQuestionGroupTypeRequestLevel;
   groupType?: UpdateQuestionGroupTypeRequestGroupType;
+  hasInstruction?: boolean;
+  instruction?: string;
+  hasGroupDuration?: boolean;
+  duration?: number;
+  waitingDuration?: number;
+  playbackCount?: number;
+  recordingDuration?: number;
 }

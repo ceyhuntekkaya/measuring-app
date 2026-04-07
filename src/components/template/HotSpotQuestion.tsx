@@ -2,7 +2,6 @@ import React, {useState, useEffect, useRef, useMemo} from 'react';
 import type { HotSpotTemplateDto, HotSpotArea } from '@/api/generated/model';
 import type {QuestionTemplateType} from "@/types/exam/questionTemplateTypes";
 import {EMediaType, EQuestionType} from "@/types/exam/enum";
-import {difficultyConverter} from "@/utils/enum-converter";
 import MaybeHtml from "@/components/ui/maybe-html";
 
 interface HotSpotQuestionProps {
@@ -49,6 +48,14 @@ const HotSpotQuestion: React.FC<HotSpotQuestionProps> = ({
     const imageRef = useRef<HTMLImageElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
+    const templateConfig = template as unknown as {
+        allowMultipleSpots?: boolean;
+        maxSelections?: number;
+    };
+    const allowMultipleSpots =
+        templateConfig.allowMultipleSpots ?? template.options?.selectionType === 'MULTIPLE';
+    const maxSelections = templateConfig.maxSelections;
+
     const stableInitialAnswer = useMemo(
         () => normalizedInitialAnswer,
         [JSON.stringify(normalizedInitialAnswer)]
@@ -81,9 +88,9 @@ const HotSpotQuestion: React.FC<HotSpotQuestionProps> = ({
             newSelectedSpots = selectedSpots.filter(id => id !== spotId);
         } else {
             // Select
-            if (template.allowMultipleSpots) {
+            if (allowMultipleSpots) {
                 // Check max selections
-                if (template.maxSelections && selectedSpots.length >= template.maxSelections) {
+                if (maxSelections && selectedSpots.length >= maxSelections) {
                     // Remove first selection and add new one
                     newSelectedSpots = [...selectedSpots.slice(1), spotId];
                 } else {
@@ -438,7 +445,7 @@ const HotSpotQuestion: React.FC<HotSpotQuestionProps> = ({
                 <div className="mb-4">
                     <h3 className="text-lg font-semibold text-gray-800">{template.title}</h3>
                     {template.description && (
-                        <p className="text-gray-600 mt-1">{template.description}</p>
+                        <MaybeHtml className="text-gray-600 mt-1" value={template.description} />
                     )}
                 </div>
             )}
@@ -469,13 +476,13 @@ const HotSpotQuestion: React.FC<HotSpotQuestionProps> = ({
                                 Görseldeki doğru bölgeleri tıklayarak seçin.
                             </p>
                             <div className="mt-2 space-y-1 text-xs text-blue-700">
-                                {template.allowMultipleSpots && (
+                                {allowMultipleSpots && (
                                     <p>• Birden fazla bölge seçebilirsiniz</p>
                                 )}
-                                {template.maxSelections && (
-                                    <p>• Maksimum {template.maxSelections} bölge seçebilirsiniz</p>
+                                {maxSelections && (
+                                    <p>• Maksimum {maxSelections} bölge seçebilirsiniz</p>
                                 )}
-                                {!template.allowMultipleSpots && (
+                                {!allowMultipleSpots && (
                                     <p>• Sadece bir bölge seçebilirsiniz</p>
                                 )}
                             </div>
@@ -492,18 +499,18 @@ const HotSpotQuestion: React.FC<HotSpotQuestionProps> = ({
                         <div className="flex items-center space-x-3">
                             <span className="text-sm text-gray-600">
                                 {selectedSpots.length}
-                                {template.maxSelections && ` / ${template.maxSelections}`} seçildi
+                                {maxSelections && ` / ${maxSelections}`} seçildi
                             </span>
-                            {template.maxSelections && (
+                            {maxSelections && (
                                 <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
                                     <div
                                         className={`h-full transition-all duration-300 ${
-                                            selectedSpots.length >= template.maxSelections
+                                            selectedSpots.length >= maxSelections
                                                 ? 'bg-green-500'
                                                 : 'bg-blue-500'
                                         }`}
                                         style={{
-                                            width: `${(selectedSpots.length / template.maxSelections) * 100}%`
+                                            width: `${(selectedSpots.length / maxSelections) * 100}%`
                                         }}
                                     />
                                 </div>
@@ -624,13 +631,7 @@ const HotSpotQuestion: React.FC<HotSpotQuestionProps> = ({
                 </div>
             )}
 
-            {/* Overall Explanation */}
-            {isSubmitted && showCorrectAnswer && template.explanation && (
-                <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
-                    <h4 className="font-semibold text-yellow-800 mb-2">Genel Açıklama:</h4>
-                    <MaybeHtml className="text-yellow-700" value={template.explanation} />
-                </div>
-            )}
+            {/* Overall explanation removed (DTO doesn't expose it) */}
 
             {/* Score Summary */}
             {isSubmitted && showCorrectAnswer && spotResults.length > 0 && (
@@ -709,58 +710,22 @@ const HotSpotQuestion: React.FC<HotSpotQuestionProps> = ({
                 <div className="mt-4 p-4 bg-gray-50 rounded border">
                     <h4 className="font-semibold text-gray-700 mb-2">Soru Bilgileri:</h4>
                     <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                        {template.subject && (
-                            <div><strong>Konu:</strong> {template.subject}</div>
-                        )}
-                        {template.difficulty && (
-                            <div><strong>Zorluk:</strong> {difficultyConverter(template.difficulty)}</div>
-                        )}
-                        {template.points && (
-                            <div><strong>Puan:</strong> {template.points}</div>
-                        )}
-                        {template.timeLimit && (
-                            <div><strong>Süre:</strong> {template.timeLimit} saniye</div>
-                        )}
                         {template.options?.hotSpots && (
                             <div><strong>Hot Spot Sayısı:</strong> {template.options.hotSpots.length}</div>
                         )}
-                        {template.maxSelections && (
-                            <div><strong>Maks. Seçim:</strong> {template.maxSelections}</div>
+                        {maxSelections && (
+                            <div><strong>Maks. Seçim:</strong> {maxSelections}</div>
                         )}
-                        {template.allowMultipleSpots !== undefined && (
-                            <div><strong>Çoklu Seçim:</strong> {template.allowMultipleSpots ? 'Evet' : 'Hayır'}</div>
+                        {allowMultipleSpots !== undefined && (
+                            <div><strong>Çoklu Seçim:</strong> {allowMultipleSpots ? 'Evet' : 'Hayır'}</div>
                         )}
                         {template.options?.selectionType && (
                             <div><strong>Seçim Türü:</strong> {template.options.selectionType}</div>
-                        )}
-                        {template.tags && template.tags.length > 0 && (
-                            <div className="col-span-2">
-                                <strong>Etiketler:</strong> {template.tags.join(', ')}
-                            </div>
                         )}
                     </div>
                 </div>
             )}
 
-            {/* Development Notes - Comment for future exam implementation */}
-            {/*
-        TODO: Real exam implementation
-        - Integrate with exam session management
-        - Add zoom functionality for detailed viewing
-        - Implement touch device support for mobile
-        - Add keyboard shortcuts for accessibility
-        - Support for animated hotspots
-        - Implement hint system showing hotspot areas
-        - Add time tracking per selection
-        - Support for video hotspots
-        - Implement undo/redo functionality
-        - Add drawing tools for complex shapes
-        - Support for 3D image hotspots
-        - Implement collaborative features (optional)
-        - Add accessibility features for screen readers
-        - Support for timed hotspot reveals
-        - Implement partial credit scoring
-      */}
         </div>
     );
 };

@@ -6,17 +6,12 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { SearchQuestionGroupTypesGroupType } from "./searchQuestionGroupTypesGroupType";
-import type { SearchQuestionGroupTypesLevel } from "./searchQuestionGroupTypesLevel";
 
 export type SearchQuestionGroupTypesParams = {
   /**
    * Name filter
    */
   name?: string;
-  /**
-   * Level filter
-   */
-  level?: SearchQuestionGroupTypesLevel;
   /**
    * Group type filter
    */
